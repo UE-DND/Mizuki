@@ -1,6 +1,6 @@
 ---
 import { Icon } from "astro-icon/components";
-import { navBarConfig, siteConfig } from "../config";
+import { navBarConfig, siteConfig, animeConfig } from "../config";
 import { LinkPresets } from "../constants/link-presets";
 import { LinkPreset, type NavBarLink } from "../types/config";
 import { url } from "../utils/url-utils";
@@ -19,14 +19,33 @@ const navbarTransparentMode =
 // 检查是否为首页
 const isHomePage = Astro.url.pathname === "/" || Astro.url.pathname === "";
 
-let links: NavBarLink[] = navBarConfig.links.map(
-	(item: NavBarLink | LinkPreset): NavBarLink => {
+// 处理链接，根据配置过滤功能
+function processNavLinks(links: (NavBarLink | LinkPreset)[]): NavBarLink[] {
+	return links.map((item: NavBarLink | LinkPreset): NavBarLink | null => {
 		if (typeof item === "number") {
+			// 如果是追番链接且追番功能被禁用或不在导航栏显示，则返回 null
+			if (item === LinkPreset.Anime && (!animeConfig.enable || !animeConfig.showInNavbar)) {
+				return null;
+			}
 			return LinkPresets[item];
 		}
+		// 处理有子菜单的链接
+		if (item.children) {
+			const filteredChildren = processNavLinks(item.children).filter(Boolean);
+			// 如果子菜单全部被过滤掉，则不显示父菜单
+			if (filteredChildren.length === 0) {
+				return null;
+			}
+			return {
+				...item,
+				children: filteredChildren
+			};
+		}
 		return item;
-	},
-);
+	}).filter(Boolean) as NavBarLink[];
+}
+
+let links: NavBarLink[] = processNavLinks(navBarConfig.links);
 ---
 <div id="navbar" class="z-50 onload-animation" data-transparent-mode={navbarTransparentMode} data-is-home={isHomePage}>
     <div class="absolute h-8 left-0 right-0 -top-8 bg-[var(--card-bg)] transition"></div> <!-- used for onload animation -->
@@ -40,6 +59,17 @@ let links: NavBarLink[] = navBarConfig.links.map(
             </div>
         </a>
         <div class="hidden md:flex items-center space-x-1">
+            {navBarConfig.showHomeButton && (
+                <a 
+                    aria-label="首页" 
+                    href={url('/')} 
+                    class="btn-plain scale-animation rounded-lg h-11 font-semibold text-base px-5 active:scale-95"
+                >
+                    <div class="flex items-center">
+                        首页
+                    </div>
+                </a>
+            )}
             {links.map((l) => {
                 return <DropdownMenu link={l} />;
             })}

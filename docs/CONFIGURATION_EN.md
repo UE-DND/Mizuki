@@ -19,20 +19,57 @@ Edit `src/config.ts` to customize your blog:
 
 ```typescript
 export const siteConfig: SiteConfig = {
-  title: "Your Blog Name",
-  subtitle: "Your Blog Description",
-  lang: "en-US", // or "zh-CN", "ja", etc.
+  title: "Mizuki",
+  subtitle: "One demo website",
+  
+  lang: "zh_CN", // Language code, used for HTML lang attribute and RSS
+  
   themeColor: {
-    hue: 210, // 0-360, theme hue
-    fixed: false, // Hide theme color picker
+    hue: 210, // Default theme hue, range from 0 to 360
   },
   banner: {
-    enable: true,
-    src: ["assets/banner/1.webp"], // Banner images
-    carousel: {
-      enable: true,
-      interval: 0.8, // seconds
+    enable: true, // Enable banner functionality
+    
+    // Support different banner images for desktop and mobile
+    src: {
+      desktop: [
+        "assets/desktop-banner/1.webp",
+        "assets/desktop-banner/2.webp",
+        // More images...
+      ], // Desktop banner images
+      mobile: [
+        "assets/mobile-banner/1.webp",
+        "assets/mobile-banner/2.webp",
+        // More images...
+      ], // Mobile banner images
     },
+    
+    position: "center", // Image position: 'top', 'center', 'bottom'
+    
+    carousel: {
+      enable: true, // Enable carousel functionality
+      interval: 2, // Carousel interval time (seconds)
+    },
+    
+    homeText: {
+      enable: true, // Display custom text on homepage
+      title: "Mizuki", // Homepage banner main title
+      subtitle: [
+        "One demo website",
+        "Carousel Text1",
+        "Carousel Text2",
+      ], // Homepage banner subtitle, supports multiple texts
+      typewriter: {
+        enable: true, // Enable subtitle typewriter effect
+        speed: 100, // Typing speed (milliseconds)
+        deleteSpeed: 50, // Deletion speed (milliseconds)
+        pauseTime: 2000, // Pause time after full display (milliseconds)
+      },
+    },
+  },
+  toc: {
+    enable: true, // Enable table of contents functionality
+    depth: 3, // TOC depth, 1-6
   },
 };
 ```
@@ -43,35 +80,23 @@ export const siteConfig: SiteConfig = {
 
 - **title**: Blog title, displayed in page title and navigation bar
 - **subtitle**: Blog subtitle, displayed on homepage
-- **lang**: Site default language, supports `en-US`, `zh-CN`, `ja-JP`, etc.
+- **lang**: Site language identifier (for HTML lang attribute, i18n functionality has been removed)
 
-#### Theme Colors
+#### Theme Color System
 
-- **hue**: Theme hue value (0-360 degrees)
-  - 0: Red
-  - 60: Yellow
-  - 120: Green
-  - 180: Cyan
-  - 240: Blue
-  - 300: Purple
-- **fixed**: Whether to hide theme color picker, when set to `true` users cannot change theme color
-
-#### Translation Feature
-
-- **enable**: Whether to enable real-time translation
-- **service**: Translation service type, currently supports `"client.edge"`
-- **defaultLanguage**: Default translation language
-  - `"english"`: English
-  - `"chinese_simplified"`: Simplified Chinese
-  - `"japanese"`: Japanese
-  - `"korean"`: Korean
+- **hue**: Default theme hue value (used as initial value only)
+- **Auto Rotation**: System uses automatic theme color rotation based on Material Design 3 specifications
+  - Automatically switches different theme colors daily (based on day of week)
+  - Uses 7 scientific color schemes to ensure good visual experience
 
 #### Banner Settings
 
 - **enable**: Whether to enable banner
-- **src**: Banner image path array, supports multiple images for carousel
+- **src**: Banner image paths, supports different configurations for desktop and mobile
+- **position**: Image position ('top', 'center', 'bottom')
 - **carousel.enable**: Whether to enable carousel functionality
 - **carousel.interval**: Carousel interval time (seconds)
+- **homeText**: Homepage text configuration, including title, subtitle and typewriter effect
 
 ## 📝 Article Frontmatter Format
 
@@ -203,132 +228,3 @@ public/
 - Place in `public/` directory
 - Reference directly using `/images/` path
 - Suitable for static resources and icons
-
-## 🧩 Markdown Extensions
-
-Mizuki supports enhanced features beyond standard GitHub Flavored Markdown:
-
-### 📝 Enhanced Writing
-
-#### Callout Boxes
-
-Use special syntax to create beautiful callout boxes:
-
-```markdown
-> [!NOTE]
-> This is a note information
-
-> [!TIP]
-> This is a tip
-
-> [!WARNING]
-> This is a warning
-
-> [!DANGER]
-> This is a danger warning
-```
-
-#### Math Formulas
-
-Support LaTeX math formulas:
-
-```markdown
-Inline formula: $E = mc^2$
-
-Block formula:
-$$
-\int_{-\infty}^{\infty} e^{-x^2} dx = \sqrt{\pi}
-$$
-```
-
-#### GitHub Cards
-
-Embed GitHub repository cards:
-
-```markdown
-::github{repo="username/repository"}
-```
-
-### 🎨 Visual Elements
-
-#### Image Galleries
-
-- Automatic PhotoSwipe integration
-- Support image zoom viewing
-- Auto-generate thumbnails
-
-#### Collapsible Sections
-
-Create expandable content blocks:
-
-```markdown
-<details>
-<summary>Click to expand</summary>
-
-This is the collapsed content
-
-</details>
-```
-
-### 📊 Content Organization
-
-#### Auto Table of Contents
-
-- Auto-generated from article headings
-- Support smooth scroll positioning
-- Display reading progress
-
-#### Reading Time
-
-- Automatically calculate article reading time
-- Based on average reading speed
-- Display in article header
-
-## ⚡ Development Commands
-
-| Command | Action |
-|:--------|:-------|
-| `pnpm install` | Install dependencies |
-| `pnpm dev` | Start development server |
-| `pnpm build` | Build production version |
-| `pnpm preview` | Preview build results |
-| `pnpm check` | Run type checking |
-| `pnpm format` | Format code |
-| `pnpm lint` | Code quality check |
-| `pnpm new-post <filename>` | Create new article |
-
-## 🔍 Troubleshooting
-
-### Common Issues
-
-1. **Images not displaying**
-   - Check if image path is correct
-   - Confirm image file exists
-   - Verify image format support
-
-2. **Translation feature not working**
-   - Check network connection
-   - Confirm translation service configuration
-   - Check browser console for errors
-
-3. **Style abnormalities**
-   - Clear browser cache
-   - Rebuild project
-   - Check CSS file integrity
-
-### Performance Optimization Tips
-
-1. **Image Optimization**
-   - Use WebP format
-   - Compress image size
-   - Enable lazy loading
-
-2. **Code Optimization**
-   - Run `pnpm format` regularly
-   - Use TypeScript type checking
-   - Follow coding standards
-
-3. **Build Optimization**
-   - Enable production mode build
-   - Use CDN acceleration
-   - Configure caching strategy

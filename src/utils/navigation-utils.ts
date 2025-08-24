@@ -34,13 +34,14 @@ export function navigateToPage(url: string, options?: {
   }
 
   // 检查 Swup 是否可用
-  if (typeof window !== 'undefined' && (window as any).swup) {
+  if (typeof window !== 'undefined' && (window as unknown as { swup?: { navigate: (url: string, options?: { history?: boolean }) => void } }).swup) {
     try {
+      const swup = (window as unknown as { swup: { navigate: (url: string, options?: { history?: boolean }) => void } }).swup;
       // 使用 Swup 进行无刷新跳转
       if (options?.replace) {
-        (window as any).swup.navigate(url, { history: false });
+        swup.navigate(url, { history: false });
       } else {
-        (window as any).swup.navigate(url);
+        swup.navigate(url);
       }
     } catch (error) {
       console.error('Swup navigation failed:', error);
@@ -72,14 +73,14 @@ function fallbackNavigation(url: string, options?: {
  * 检查 Swup 是否已准备就绪
  */
 export function isSwupReady(): boolean {
-  return typeof window !== 'undefined' && !!(window as any).swup;
+  return typeof window !== 'undefined' && !!(window as unknown as { swup?: unknown }).swup;
 }
 
 /**
  * 等待 Swup 准备就绪
  * @param timeout 超时时间（毫秒）
  */
-export function waitForSwup(timeout: number = 5000): Promise<boolean> {
+export function waitForSwup(timeout = 5000): Promise<boolean> {
   return new Promise((resolve) => {
     if (isSwupReady()) {
       resolve(true);
@@ -117,9 +118,10 @@ export function preloadPage(url: string): void {
   }
 
   // 如果 Swup 可用，使用其预加载功能
-  if (isSwupReady() && (window as any).swup.preload) {
+  const swup = (window as unknown as { swup?: { preload?: (url: string) => void } }).swup;
+  if (isSwupReady() && swup?.preload) {
     try {
-      (window as any).swup.preload(url);
+      swup.preload(url);
     } catch (error) {
       console.warn('Failed to preload page:', error);
     }

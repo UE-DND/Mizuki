@@ -1,8 +1,15 @@
 ---
 import ImageWrapper from "../components/misc/ImageWrapper.astro";
-import I18nKey from "../i18n/i18nKey";
-import { i18n } from "../i18n/translation";
 import MainGridLayout from "../layouts/MainGridLayout.astro";
+import { animeConfig } from "../config";
+
+// 检查追番功能是否启用
+if (!animeConfig.enable) {
+	return Astro.redirect("/404");
+}
+
+// 使用配置中的自定义标题，如果没有则使用默认值
+const pageTitle = animeConfig.customTitle || "追番";
 
 // 追番数据
 const animeList = [
@@ -52,16 +59,16 @@ const animeList = [
 function getStatusText(status: string): string {
 	switch (status) {
 		case "watching":
-			return i18n(I18nKey.animeStatusWatching);
+			return "在看";
 		case "completed":
-			return i18n(I18nKey.animeStatusCompleted);
+			return "已看完";
 		default:
 			return status;
 	}
 }
 ---
 
-<MainGridLayout title={i18n(I18nKey.anime)} description="我的追番记录">
+<MainGridLayout title={pageTitle} description="我的追番记录">
 	<div class="flex w-full rounded-[var(--radius-large)] overflow-hidden relative min-h-32">
 		<div class="card-base z-10 px-9 py-6 relative w-full">
 			<div class="relative">
@@ -70,7 +77,7 @@ function getStatusText(status: string): string {
 						<svg class="w-6 h-6 mr-2 text-90" fill="currentColor" viewBox="0 0 24 24">
 							<path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/>
 						</svg>
-						<span>{i18n(I18nKey.anime)}</span>
+						<span>{pageTitle}</span>
 					</div>
 				</div>
 
@@ -78,15 +85,15 @@ function getStatusText(status: string): string {
 				<div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
 					<div class="card-base p-4 text-center">
 						<div class="text-2xl font-bold text-[var(--primary)]">{animeList.length}</div>
-						<div class="text-sm text-75">{i18n(I18nKey.animeTotal)}</div>
+						<div class="text-sm text-75">总数</div>
 					</div>
 					<div class="card-base p-4 text-center">
 						<div class="text-2xl font-bold text-[oklch(0.65_0.15_140)] dark:text-[oklch(0.75_0.15_140)]">{animeList.filter(anime => anime.status === 'watching').length}</div>
-						<div class="text-sm text-75">{i18n(I18nKey.animeWatching)}</div>
+						<div class="text-sm text-75">在看</div>
 					</div>
 					<div class="card-base p-4 text-center">
 						<div class="text-2xl font-bold text-[oklch(0.65_0.15_240)] dark:text-[oklch(0.75_0.15_240)]">{animeList.filter(anime => anime.status === 'completed').length}</div>
-						<div class="text-sm text-75">{i18n(I18nKey.animeCompleted)}</div>
+						<div class="text-sm text-75">已看完</div>
 					</div>
 				</div>
 

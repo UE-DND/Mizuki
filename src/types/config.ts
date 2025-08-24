@@ -18,7 +18,6 @@ export type SiteConfig = {
 
 	themeColor: {
 		hue: number;
-		fixed: boolean;
 	};
 	banner: {
 		enable: boolean;
@@ -90,6 +89,7 @@ export type NavBarLink = {
 
 export type NavBarConfig = {
 	links: (NavBarLink | LinkPreset)[];
+	showHomeButton?: boolean; // 是否显示首页按钮，默认为 false
 };
 
 export type ProfileConfig = {
@@ -227,6 +227,13 @@ export type SidebarLayoutConfig = {
 			desktop: "sidebar"; // 桌面端布局模式
 		};
 	};
+};
+
+export type AnimeConfig = {
+	enable: boolean; // 是否启用追番功能
+	showInNavbar?: boolean; // 是否在导航栏显示追番链接
+	customTitle?: string; // 自定义页面标题
+	defaultRating?: number; // 默认评分（1-10）
 };
 
 export type SakuraConfig = {

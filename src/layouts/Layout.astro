@@ -107,7 +107,7 @@ const bannerOffset =
 
 <!DOCTYPE html>
 <html lang={siteLang} class="bg-[var(--page-bg)] transition text-[14px] md:text-[16px]"
-	  data-overlayscrollbars-initialize
+	data-overlayscrollbars-initialize
 >
 	<head>
 
@@ -136,9 +136,9 @@ const bannerOffset =
 		<meta name="generator" content={Astro.generator} />
 		{favicons.map(favicon => (
 			<link rel="icon"
-				  href={favicon.src.startsWith('/') ? url(favicon.src) : favicon.src}
-				  sizes={favicon.sizes}
-				  media={favicon.theme && `(prefers-color-scheme: ${favicon.theme})`}
+				href={favicon.src.startsWith('/') ? url(favicon.src) : favicon.src}
+				sizes={favicon.sizes}
+				media={favicon.theme && `(prefers-color-scheme: ${favicon.theme})`}
 			/>
 		))}
 
@@ -1070,12 +1070,12 @@ import { initThemeEasterEgg, cleanupThemeEasterEgg } from '../utils/theme-easter
 
 const setupThemeEasterEgg = () => {
 	initThemeEasterEgg();
-	
+
 	if (window.swup) {
 		window.swup!.hooks.on("content:replace", () => {
 			cleanupThemeEasterEgg();
 		}, { before: true });
-		
+
 		window.swup!.hooks.on("page:view", () => {
 			setTimeout(initThemeEasterEgg, 50);
 		});

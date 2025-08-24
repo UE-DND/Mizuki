@@ -38,7 +38,11 @@ const postUrl = sourceLink || decodeURIComponent(Astro.url.toString());
         </div>
         <div>
             <div class="transition text-black/30 dark:text-white/30 text-sm">{"版权信息"}</div>
-            <a href={licenseName ? (licenseUrl || undefined) : licenseConf.url} target="_blank" class="link text-[var(--primary)] line-clamp-2">{licenseName || licenseConf.name}</a>
+            {(licenseName || licenseConf.name) === "Unlicensed" ? (
+                <span class="text-black/75 dark:text-white/75 line-clamp-2">{licenseName || licenseConf.name}</span>
+            ) : (
+                <a href={licenseName ? (licenseUrl || undefined) : licenseConf.url} target="_blank" class="link text-[var(--primary)] line-clamp-2">{licenseName || licenseConf.name}</a>
+            )}
         </div>
     </div>
     <Icon name="fa6-brands:creative-commons" class="transition text-[15rem] absolute pointer-events-none right-6 top-1/2 -translate-y-1/2 text-black/5 dark:text-white/5"></Icon>

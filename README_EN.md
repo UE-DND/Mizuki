@@ -87,7 +87,7 @@ A modern, feature-rich static blog template built with [Astro](https://astro.bui
    - Edit `src/config.ts` to customize blog settings
    - Update site information, theme colors, banner images, and social links
    - Configure translation settings and special page features
-   - For detailed configuration instructions, please refer to: [📖 Configuration Documentation](Configuration_EN.md)
+   - For detailed configuration instructions, please refer to: [📖 Configuration Documentation](docs/CONFIGURATION_EN.md)
 
 4. **Start the development server:**
 
@@ -156,7 +156,7 @@ All commands are run from the root of the project:
 
 ## 🎯 Configuration Guide
 
-For detailed configuration instructions, please refer to: [📖 Configuration Documentation](CONFIGURATION_EN.md)
+For detailed configuration instructions, please refer to: [📖 Configuration Documentation](docs/CONFIGURATION_EN.md)
 
 ## ✏️ Contributing
 

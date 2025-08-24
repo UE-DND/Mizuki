@@ -1,7 +1,5 @@
 ---
 import ImageWrapper from "../components/misc/ImageWrapper.astro";
-import I18nKey from "../i18n/i18nKey";
-import { i18n } from "../i18n/translation";
 import MainGridLayout from "../layouts/MainGridLayout.astro";
 
 // 示例即刻短文数据
@@ -23,19 +21,19 @@ function formatTime(dateString: string): string {
 	);
 
 	if (diffInMinutes < 60) {
-		return `${diffInMinutes}${i18n(I18nKey.diaryMinutesAgo)}`;
+		return `${diffInMinutes}分钟前`;
 	}
 	if (diffInMinutes < 1440) {
 		// 24小时
 		const hours = Math.floor(diffInMinutes / 60);
-		return `${hours}${i18n(I18nKey.diaryHoursAgo)}`;
+		return `${hours}小时前`;
 	}
 	const days = Math.floor(diffInMinutes / 1440);
-	return `${days}${i18n(I18nKey.diaryDaysAgo)}`;
+	return `${days}天前`;
 }
 ---
 
-<MainGridLayout title={i18n(I18nKey.diary)} description="即刻短文">
+<MainGridLayout title="日记" description="即刻短文">
 	<div class="flex w-full rounded-[var(--radius-large)] overflow-hidden relative min-h-32">
 		<div class="card-base z-10 px-4 py-4 md:px-6 md:py-5 relative w-full">
 			<div class="relative max-w-4xl mx-auto">
@@ -43,13 +41,13 @@ function formatTime(dateString: string): string {
 				<div class="moments-header mb-6">
 					<div class="header-content">
 						<div class="header-info">
-							<h1 class="moments-title text-xl md:text-2xl lg:text-3xl font-bold text-90 mb-1">{i18n(I18nKey.diary)}</h1>
-							<p class="moments-subtitle text-sm md:text-base lg:text-lg text-75">{i18n(I18nKey.diarySubtitle)}</p>
+							<h1 class="moments-title text-xl md:text-2xl lg:text-3xl font-bold text-90 mb-1">日记</h1>
+							<p class="moments-subtitle text-sm md:text-base lg:text-lg text-75">记录生活中的美好瞬间</p>
 						</div>
 						<div class="header-stats">
 							<div class="stat-item text-center">
 								<span class="stat-number text-lg md:text-xl lg:text-2xl font-bold text-[var(--primary)]">{moments.length}</span>
-								<span class="stat-label text-xs md:text-sm lg:text-base text-75">{i18n(I18nKey.diaryCount)}</span>
+								<span class="stat-label text-xs md:text-sm lg:text-base text-75">条动态</span>
 							</div>
 						</div>
 					</div>
@@ -59,17 +57,17 @@ function formatTime(dateString: string): string {
 				<div class="moments-timeline">
 					<div class="timeline-list space-y-4">
 						{moments.map(moment => (
-							<div class="moment-item card-base p-4 md:p-6 lg:p-8 hover:shadow-lg transition-all" key={moment.id}>
+						<div class="moment-item card-base p-4 md:p-6 lg:p-8 hover:shadow-lg transition-all">
 								<div class="moment-content">
 									<p class="moment-text text-sm md:text-base lg:text-lg text-90 leading-relaxed mb-3 md:mb-4">{moment.content}</p>
 									
 									{moment.images && moment.images.length > 0 && (
 				<div class="moment-images grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2 md:gap-3 lg:gap-4 mb-3 md:mb-4">
 					{moment.images.map((image, index) => (
-						<div class="image-item relative rounded-md overflow-hidden aspect-square cursor-pointer hover:scale-105 transition-transform" key={index}>
+						<div class="image-item relative rounded-md overflow-hidden aspect-square cursor-pointer hover:scale-105 transition-transform">
 							<ImageWrapper 
 								src={image} 
-								alt={i18n(I18nKey.diaryImage)}
+								alt="日记图片"
 								class="w-full h-full object-cover"
 							/>
 						</div>
@@ -88,7 +86,7 @@ function formatTime(dateString: string): string {
 										</time>
 									</div>
 									<div class="moment-actions">
-										<button class="action-btn reply-btn p-1.5 md:p-2 lg:p-3 rounded-md hover:bg-[var(--btn-regular-bg)] transition-colors" title={i18n(I18nKey.diaryReply)}>
+										<button class="action-btn reply-btn p-1.5 md:p-2 lg:p-3 rounded-md hover:bg-[var(--btn-regular-bg)] transition-colors" title="回复">
 											<i class="reply-icon text-xs md:text-sm lg:text-base">💬</i>
 										</button>
 									</div>
@@ -100,7 +98,7 @@ function formatTime(dateString: string): string {
 
 				<!-- 底部提示 -->
 				<div class="moments-tips text-center mt-6 md:mt-8 lg:mt-10 text-75 text-xs md:text-sm lg:text-base italic">
-					{i18n(I18nKey.diaryTips)}
+					记录每一个值得纪念的时刻
 				</div>
 			</div>
 		</div>

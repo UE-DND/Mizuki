@@ -675,11 +675,6 @@ onDestroy(() => {
             </div>
             <div class="flex items-center gap-1">
                 <button class="btn-plain w-8 h-8 rounded-lg flex items-center justify-center"
-                        on:click={toggleHidden}
-                        title="隐藏播放器">
-                    <Icon icon="material-symbols:visibility-off" class="text-lg" />
-                </button>
-                <button class="btn-plain w-8 h-8 rounded-lg flex items-center justify-center"
                         on:click={toggleExpanded}>
                     <Icon icon="material-symbols:expand-more" class="text-lg" />
                 </button>

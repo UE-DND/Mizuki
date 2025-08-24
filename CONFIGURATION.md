@@ -19,20 +19,57 @@
 
 ```typescript
 export const siteConfig: SiteConfig = {
-  title: "您的博客名称",
-  subtitle: "您的博客描述",
-  lang: "zh-CN", // 或 "en"、"ja" 等
+  title: "Mizuki",
+  subtitle: "One demo website",
+  
+  lang: "zh_CN", // 语言代码，用于HTML lang属性和RSS等
+  
   themeColor: {
-    hue: 210, // 0-360，主题色调
-    fixed: false, // 隐藏主题色选择器
+    hue: 210, // 主题色的默认色相，范围从 0 到 360
   },
   banner: {
-    enable: true,
-    src: ["assets/banner/1.webp"], // 横幅图片
-    carousel: {
-      enable: true,
-      interval: 0.8, // 秒
+    enable: true, // 启用横幅功能
+
+    // 支持桌面和移动端不同的横幅图片
+    src: {
+      desktop: [
+        "assets/desktop-banner/1.webp",
+        "assets/desktop-banner/2.webp",
+        // 更多图片...
+      ], // 桌面横幅图片
+      mobile: [
+        "assets/mobile-banner/1.webp",
+        "assets/mobile-banner/2.webp",
+        // 更多图片...
+      ], // 移动横幅图片
     },
+
+    position: "center", // 图片位置：'top', 'center', 'bottom'
+
+    carousel: {
+      enable: true, // 启用轮播功能
+      interval: 2, // 轮播间隔时间（秒）
+    },
+
+    homeText: {
+      enable: true, // 在主页显示自定义文本
+      title: "Mizuki", // 主页横幅主标题
+      subtitle: [
+        "One demo website",
+        "Carousel Text1",
+        "Carousel Text2",
+      ], // 主页横幅副标题，支持多文本
+      typewriter: {
+        enable: true, // 启用副标题打字机效果
+        speed: 100, // 打字速度（毫秒）
+        deleteSpeed: 50, // 删除速度（毫秒）
+        pauseTime: 2000, // 完全显示后的暂停时间（毫秒）
+      },
+    },
+  },
+  toc: {
+    enable: true, // 启用目录功能
+    depth: 3, // 目录深度，1-6
   },
 };
 ```
@@ -43,35 +80,23 @@ export const siteConfig: SiteConfig = {
 
 - **title**: 博客标题，显示在页面标题和导航栏
 - **subtitle**: 博客副标题，显示在首页
-- **lang**: 站点默认语言，支持 `zh-CN`、`en-US`、`ja-JP` 等
+- **lang**: 站点语言标识（用于HTML lang属性，系统已移除i18n功能）
 
-#### 主题色彩
+#### 主题色系统
 
-- **hue**: 主题色调值（0-360度）
-  - 0: 红色
-  - 60: 黄色
-  - 120: 绿色
-  - 180: 青色
-  - 240: 蓝色
-  - 300: 紫色
-- **fixed**: 是否隐藏主题色选择器，设为 `true` 时用户无法更改主题色
-
-#### 翻译功能
-
-- **enable**: 是否启用实时翻译功能
-- **service**: 翻译服务类型，目前支持 `"client.edge"`
-- **defaultLanguage**: 默认翻译语言
-  - `"chinese_simplified"`: 简体中文
-  - `"english"`: 英语
-  - `"japanese"`: 日语
-  - `"korean"`: 韩语
+- **hue**: 默认主题色相值（仅作为初始值）
+- **自动轮换**: 系统采用基于 Material Design 3 规范的自动主题色轮换
+  - 每天自动切换不同的主题色（基于星期几）
+  - 使用7种科学配色方案，确保良好的视觉体验
 
 #### 横幅设置
 
 - **enable**: 是否启用横幅
-- **src**: 横幅图片路径数组，支持多张图片轮播
+- **src**: 横幅图片路径，支持桌面和移动端不同配置
+- **position**: 图片位置（'top', 'center', 'bottom'）
 - **carousel.enable**: 是否启用轮播功能
 - **carousel.interval**: 轮播间隔时间（秒）
+- **homeText**: 主页文本配置，包含标题、副标题和打字机效果
 
 ## 📝 文章前言格式
 
@@ -203,132 +228,3 @@ public/
 - 放置在 `public/` 目录下
 - 直接使用 `/images/` 路径引用
 - 适合静态资源和图标
-
-## 🧩 Markdown 扩展语法
-
-Mizuki 支持超越标准 GitHub Flavored Markdown 的增强功能：
-
-### 📝 增强写作
-
-#### 提示框
-
-使用特殊语法创建精美的标注框：
-
-```markdown
-> [!NOTE]
-> 这是一个提示信息
-
-> [!TIP]
-> 这是一个技巧提示
-
-> [!WARNING]
-> 这是一个警告信息
-
-> [!DANGER]
-> 这是一个危险警告
-```
-
-#### 数学公式
-
-支持 LaTeX 数学公式：
-
-```markdown
-行内公式：$E = mc^2$
-
-块级公式：
-$$
-\int_{-\infty}^{\infty} e^{-x^2} dx = \sqrt{\pi}
-$$
-```
-
-#### GitHub 卡片
-
-嵌入 GitHub 仓库卡片：
-
-```markdown
-::github{repo="用户名/仓库名"}
-```
-
-### 🎨 视觉元素
-
-#### 图片画廊
-
-- 自动 PhotoSwipe 集成
-- 支持图片放大查看
-- 自动生成缩略图
-
-#### 可折叠部分
-
-创建可展开的内容块：
-
-```markdown
-<details>
-<summary>点击展开</summary>
-
-这里是折叠的内容
-
-</details>
-```
-
-### 📊 内容组织
-
-#### 自动目录
-
-- 从文章标题自动生成
-- 支持平滑滚动定位
-- 显示阅读进度
-
-#### 阅读时间
-
-- 自动计算文章阅读时间
-- 基于平均阅读速度
-- 显示在文章头部
-
-## ⚡ 开发命令
-
-| 命令 | 操作 |
-|:-----|:-----|
-| `pnpm install` | 安装依赖 |
-| `pnpm dev` | 启动开发服务器 |
-| `pnpm build` | 构建生产版本 |
-| `pnpm preview` | 预览构建结果 |
-| `pnpm check` | 运行类型检查 |
-| `pnpm format` | 格式化代码 |
-| `pnpm lint` | 代码质量检查 |
-| `pnpm new-post <文件名>` | 创建新文章 |
-
-## 🔍 故障排除
-
-### 常见问题
-
-1. **图片不显示**
-   - 检查图片路径是否正确
-   - 确认图片文件存在
-   - 验证图片格式支持
-
-2. **翻译功能不工作**
-   - 检查网络连接
-   - 确认翻译服务配置
-   - 查看浏览器控制台错误
-
-3. **样式异常**
-   - 清除浏览器缓存
-   - 重新构建项目
-   - 检查 CSS 文件完整性
-
-### 性能优化建议
-
-1. **图片优化**
-   - 使用 WebP 格式
-   - 压缩图片大小
-   - 启用懒加载
-
-2. **代码优化**
-   - 定期运行 `pnpm format`
-   - 使用 TypeScript 类型检查
-   - 遵循代码规范
-
-3. **构建优化**
-   - 启用生产模式构建
-   - 使用 CDN 加速
-   - 配置缓存策略

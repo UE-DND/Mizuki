@@ -1,19 +1,34 @@
 <script lang="ts">
-import { AUTO_MODE, DARK_MODE, LIGHT_MODE } from "@constants/constants.ts";
+import { AUTO_MODE, DARK_MODE, LIGHT_MODE } from "@constants/constants";
 import Icon from "@iconify/svelte";
 import {
 	applyThemeToDocument,
 	getStoredTheme,
 	setTheme,
-} from "@utils/setting-utils.ts";
+} from "@utils/setting-utils";
 import { onMount } from "svelte";
-import type { LIGHT_DARK_MODE } from "@/types/config.ts";
+import type { LIGHT_DARK_MODE } from "@/types/config";
 
 const seq: LIGHT_DARK_MODE[] = [LIGHT_MODE, DARK_MODE, AUTO_MODE];
 let mode: LIGHT_DARK_MODE = $state(AUTO_MODE);
 
+// 根据当前时间判断初始模式（6点到18点为白天，使用浅色模式）
+function getInitialModeByTime(): LIGHT_DARK_MODE {
+	const hour = new Date().getHours();
+	return (hour >= 6 && hour < 18) ? LIGHT_MODE : DARK_MODE;
+}
+
 onMount(() => {
-	mode = getStoredTheme();
+	// 先尝试从存储中获取主题
+	const storedTheme = getStoredTheme();
+	
+	// 如果没有存储的主题或者是自动模式，则基于时间选择
+	if (!storedTheme || storedTheme === AUTO_MODE) {
+		mode = getInitialModeByTime();
+		setTheme(mode);
+	} else {
+		mode = storedTheme;
+	}
 	const darkModePreference = window.matchMedia("(prefers-color-scheme: dark)");
 	const changeThemeWhenSchemeChanged: Parameters<
 		typeof darkModePreference.addEventListener<"change">
@@ -35,23 +50,29 @@ function switchScheme(newMode: LIGHT_DARK_MODE) {
 }
 
 function toggleScheme() {
-	let i = 0;
-	for (; i < seq.length; i++) {
-		if (seq[i] === mode) {
-			break;
-		}
+	// 只在浅色和深色模式之间切换，跳过自动模式
+	if (mode === LIGHT_MODE) {
+		switchScheme(DARK_MODE);
+	} else if (mode === DARK_MODE) {
+		switchScheme(LIGHT_MODE);
+	} else {
+		// 如果当前是自动模式，根据时间决定切换到哪个模式
+		switchScheme(getInitialModeByTime() === LIGHT_MODE ? DARK_MODE : LIGHT_MODE);
 	}
-	switchScheme(seq[(i + 1) % seq.length]);
 }
 
 function showPanel() {
 	const panel = document.querySelector("#light-dark-panel");
-	panel.classList.remove("float-panel-closed");
+	if (panel) {
+		panel.classList.remove("float-panel-closed");
+	}
 }
 
 function hidePanel() {
 	const panel = document.querySelector("#light-dark-panel");
-	panel.classList.add("float-panel-closed");
+	if (panel) {
+		panel.classList.add("float-panel-closed");
+	}
 }
 </script>
 
@@ -90,7 +111,7 @@ function hidePanel() {
                     onclick={() => switchScheme(AUTO_MODE)}
             >
                 <Icon icon="material-symbols:radio-button-partial-outline" class="text-[1.25rem] mr-3"></Icon>
-                {"系统模式"}
+                {"跟随系统"}
             </button>
         </div>
     </div>

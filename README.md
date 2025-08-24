@@ -87,7 +87,7 @@
    - 编辑 `src/config.ts` 自定义博客设置
    - 更新站点信息、主题色彩、横幅图片和社交链接
    - 配置翻译设置和特色页面功能
-   - 详细配置说明请参考：[📖 配置文档](docs/Configuration.md)
+   - 详细配置说明请参考：[📖 配置文档](CONFIGURATION.md)
 
 4. **启动开发服务器：**
 
@@ -156,7 +156,8 @@ Mizuki 支持超越标准 GitHub Flavored Markdown 的增强功能：
 
 ## 🎯 配置指南
 
-详细的配置说明请参考：[📖 配置文档](CONFIGURATION.md)
+详细的配置说明请参考：
+- [📖 配置文档](CONFIGURATION.md)
 
 ## ✏️ 贡献
 

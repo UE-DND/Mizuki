@@ -1,4 +1,5 @@
 import type {
+	AnimeConfig,
 	AnnouncementConfig,
 	CommentConfig,
 	ExpressiveCodeConfig,
@@ -12,8 +13,6 @@ import type {
 } from "./types/config";
 import { LinkPreset } from "./types/config";
 
-// 移除i18n导入以避免循环依赖
-
 // 定义站点语言
 const SITE_LANG = "zh_CN"; // 语言代码，例如：'en', 'zh_CN', 'ja' 等。
 
@@ -25,7 +24,6 @@ export const siteConfig: SiteConfig = {
 
 	themeColor: {
 		hue: 210, // 主题色的默认色相，范围从 0 到 360。例如：红色：0，青色：200，蓝绿色：250，粉色：345
-		fixed: false, // 对访问者隐藏主题色选择器
 	},
 	banner: {
 		enable: true, // 暂时禁用横幅以提高加载速度
@@ -105,10 +103,9 @@ export const siteConfig: SiteConfig = {
 };
 
 export const navBarConfig: NavBarConfig = {
+	showHomeButton: false, // 是否显示顶部栏的"首页"按钮，默认关闭
 	links: [
-		LinkPreset.Home,
 		LinkPreset.Archive,
-		// 支持自定义导航栏链接,并且支持多级菜单,3.1版本新加
 		{
 			name: "链接",
 			url: "/links/",
@@ -162,7 +159,7 @@ export const navBarConfig: NavBarConfig = {
 };
 
 export const profileConfig: ProfileConfig = {
-	avatar: "assets/images/avatar.jpg", // 相对于 /src 目录。如果以 '/' 开头，则相对于 /public 目录
+	avatar: "assets/images/avatar.jpg",
 	name: "Mizuki",
 	bio: "这是一个描述",
 	links: [
@@ -237,6 +234,13 @@ export const footerConfig: FooterConfig = {
 };
 
 // 直接编辑 FooterConfig.html 文件来添加备案号等自定义内容
+
+export const animeConfig: AnimeConfig = {
+	enable: false, // 是否启用追番功能
+	showInNavbar: true, // 是否在导航栏显示追番链接
+	customTitle: "我的追番", // 自定义页面标题
+	defaultRating: 5, // 默认评分（1-10）
+};
 
 /**
  * 侧边栏布局配置
@@ -359,4 +363,5 @@ export const widgetConfigs = {
 	announcement: announcementConfig,
 	music: musicPlayerConfig,
 	layout: sidebarLayoutConfig,
+	anime: animeConfig,
 } as const;
