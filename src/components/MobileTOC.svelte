@@ -1,8 +1,6 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
 	import Icon from '@iconify/svelte';
-	import { i18n } from '../i18n/translation';
-	import I18nKey from '../i18n/i18nKey';
 	import { navigateToPage } from '../utils/navigation-utils';
 
 	let tocItems: Array<{id: string, text: string, level: number}> = [];
@@ -34,8 +32,12 @@
 
 		headings.forEach((heading) => {
 			if (heading.id) {
-				const level = parseInt(heading.tagName.charAt(1));
-				const text = heading.textContent?.trim() || '';
+				const level = Number.parseInt(heading.tagName.charAt(1), 10);
+				let text = heading.textContent?.trim() || '';
+				// 移除标题末尾的 # 号
+				if (text.endsWith('#')) {
+					text = text.substring(0, text.length - 1).trim();
+				}
 				items.push({ id: heading.id, text, level });
 			}
 		});
@@ -149,12 +151,12 @@
 	const checkSwupAvailability = () => {
 		if (typeof window !== 'undefined') {
 			// 检查Swup是否已加载
-			swupReady = !!(window as any).swup;
+			swupReady = !!(window as Window & { swup?: unknown }).swup;
 			
 			// 如果Swup还未加载，监听其加载事件
 			if (!swupReady) {
 				const checkSwup = () => {
-					if ((window as any).swup) {
+					if ((window as Window & { swup?: unknown }).swup) {
 						swupReady = true;
 						document.removeEventListener('swup:enable', checkSwup);
 					}
@@ -165,7 +167,7 @@
 				
 				// 设置超时检查
 				setTimeout(() => {
-					if ((window as any).swup) {
+					if ((window as Window & { swup?: unknown }).swup) {
 						swupReady = true;
 						document.removeEventListener('swup:enable', checkSwup);
 					}
@@ -203,7 +205,7 @@
 
 	// 导出初始化函数供外部调用
 	if (typeof window !== 'undefined') {
-		(window as any).mobileTOCInit = init;
+		(window as Window & { mobileTOCInit?: () => void }).mobileTOCInit = init;
 	}
 </script>
 
@@ -224,7 +226,7 @@
 		top-20 left-4 md:left-[unset] right-4 shadow-2xl rounded-2xl p-4"
 >
 	<div class="flex items-center justify-between mb-4">
-		<h3 class="text-lg font-bold text-[var(--primary)]">{isHomePage ? i18n(I18nKey.postList) : i18n(I18nKey.tableOfContents)}</h3>
+		<h3 class="text-lg font-bold text-[var(--primary)]">{isHomePage ? "文章列表" : "目录"}</h3>
 		<button 
 			on:click={togglePanel}
 			aria-label="Close TOC"

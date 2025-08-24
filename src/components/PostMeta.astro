@@ -1,8 +1,6 @@
 ---
 import { Icon } from "astro-icon/components";
 import { profileConfig } from "../config";
-import I18nKey from "../i18n/i18nKey";
-import { i18n } from "../i18n/translation";
 import { formatDateToYYYYMMDD } from "../utils/date-utils";
 import { getCategoryUrl, getTagUrl } from "../utils/url-utils";
 
@@ -61,7 +59,7 @@ const umamiRegion = profileConfig.umami?.region || "eu";
             <a href={getCategoryUrl(category)} aria-label={`View all posts in the ${category} category`}
                class="link-lg transition text-50 text-sm font-medium
                             hover:text-[var(--primary)] dark:hover:text-[var(--primary)] whitespace-nowrap">
-                {category || i18n(I18nKey.uncategorized)}
+                {category || "未分类"}
             </a>
         </div>
     </div>
@@ -81,7 +79,7 @@ const umamiRegion = profileConfig.umami?.region || "eu";
                     {tag.trim()}
                 </a>
             ))}
-            {!(tags && tags.length > 0) && <div class="transition text-50 text-sm font-medium">{i18n(I18nKey.noTags)}</div>}
+            {!(tags && tags.length > 0) && <div class="transition text-50 text-sm font-medium">无标签</div>}
         </div>
     </div>
         <!-- 访问量（首页不显示，且umami.enable为true时显示） -->

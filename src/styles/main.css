@@ -45,15 +45,34 @@ html {
         @apply pointer-events-none text-black/10 dark:text-white/10
     }
     .btn-plain {
-        @apply transition relative flex items-center justify-center bg-none
-        text-black/75 hover:text-[var(--primary)] dark:text-white/75 dark:hover:text-[var(--primary)];
+        @apply transition flex items-center justify-center text-black/75 dark:text-white/75;
         &:not(.scale-animation) {
             @apply hover:bg-[var(--btn-plain-bg-hover)] active:bg-[var(--btn-plain-bg-active)]
+        }
+        /* 深色模式下的主题菜单项样式调整 */
+        .dark &.theme-menu-item {
+            &:not(.current-theme-btn):hover {
+                &:before {
+                    background: rgba(255, 255, 255, 0.06) !important;
+                }
+            }
         }
         &.scale-animation {
             @apply expand-animation;
             &.current-theme-btn {
                 @apply before:scale-100 before:opacity-100 before:bg-[var(--btn-plain-bg-hover)] text-[var(--primary)]
+            }
+            /* MD3规范：已选中项的悬停状态使用不同的视觉处理 */
+            &.theme-menu-item {
+                &:not(.current-theme-btn):hover {
+                    @apply before:scale-100 before:opacity-60;
+                    &:before {
+                        background: rgba(0, 0, 0, 0.04);
+                    }
+                }
+                &.current-theme-btn:hover {
+                    @apply before:opacity-80;
+                }
             }
         }
     }

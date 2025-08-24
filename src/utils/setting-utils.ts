@@ -1,30 +1,21 @@
+import type { LIGHT_DARK_MODE } from "@/types/config";
+import { expressiveCodeConfig } from "@/config";
 import {
 	AUTO_MODE,
 	DARK_MODE,
 	DEFAULT_THEME,
 	LIGHT_MODE,
-} from "@constants/constants.ts";
-import { expressiveCodeConfig } from "@/config";
-import type { LIGHT_DARK_MODE } from "@/types/config";
+} from "@constants/constants";
+import { applyAutoTheme, getDailyHue } from "./auto-theme-utils";
 
-export function getDefaultHue(): number {
-	const fallback = "250";
-	const configCarrier = document.getElementById("config-carrier");
-	return Number.parseInt(configCarrier?.dataset.hue || fallback);
-}
-
-export function getHue(): number {
-	const stored = localStorage.getItem("hue");
-	return stored ? Number.parseInt(stored) : getDefaultHue();
-}
-
-export function setHue(hue: number): void {
-	localStorage.setItem("hue", String(hue));
+export function initializeTheme(): void {
+	// 页面加载时应用自动主题色
+	applyAutoTheme();
+	const currentHue = getDailyHue();
 	const r = document.querySelector(":root") as HTMLElement;
-	if (!r) {
-		return;
+	if (r) {
+		r.style.setProperty("--hue", String(currentHue));
 	}
-	r.style.setProperty("--hue", String(hue));
 }
 
 export function applyThemeToDocument(theme: LIGHT_DARK_MODE) {

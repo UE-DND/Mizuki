@@ -1,6 +1,4 @@
 ---
-import { i18n } from '../../i18n/translation';
-import I18nKey from '../../i18n/i18nKey';
 import Icon from '../misc/Icon.astro';
 
 export interface Props {
@@ -48,13 +46,13 @@ const getLevelColor = (level: string) => {
 const getLevelText = (level: string) => {
   switch (level) {
     case 'expert':
-      return i18n(I18nKey.skillsExpert);
+      return '专家';
     case 'advanced':
-      return i18n(I18nKey.skillsAdvanced);
+      return '高级';
     case 'intermediate':
-      return i18n(I18nKey.skillsIntermediate);
+      return '中级';
     case 'beginner':
-      return i18n(I18nKey.skillsBeginner);
+      return '初级';
     default:
       return level;
   }
@@ -156,7 +154,7 @@ const skillColor = skill.color || '#3B82F6';
         {showProgress && (
           <div class="mb-3">
             <div class="flex justify-between text-sm mb-1">
-              <span class="text-black/60 dark:text-white/60">{i18n(I18nKey.skillsExperience)}</span>
+              <span class="text-black/60 dark:text-white/60">经验</span>
               <span class="text-black/80 dark:text-white/80">{skill.experience}</span>
             </div>
             <div class={`w-full bg-gray-200 dark:bg-gray-700 rounded-full ${sizeClasses.progress}`}>
@@ -184,7 +182,7 @@ const skillColor = skill.color || '#3B82F6';
         <!-- 相关项目 -->
         {skill.relatedProjects && skill.relatedProjects.length > 0 && (
           <div class="text-sm text-black/60 dark:text-white/60">
-            {i18n(I18nKey.skillsProjects)}: {skill.relatedProjects.length}
+            相关项目: {skill.relatedProjects.length}
           </div>
         )}
       </div>

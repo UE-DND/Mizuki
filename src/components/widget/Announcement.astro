@@ -1,15 +1,13 @@
 ---
 import { Icon } from "astro-icon/components";
 import { announcementConfig } from "../../config";
-import I18nKey from "../../i18n/i18nKey";
-import { i18n } from "../../i18n/translation";
 import WidgetLayout from "./WidgetLayout.astro";
 
 const config = announcementConfig;
 
 interface Props {
-	class?: string;
-	style?: string;
+    class?: string;
+    style?: string;
 }
 const className = Astro.props.class;
 const style = Astro.props.style;
@@ -17,7 +15,7 @@ const style = Astro.props.style;
 
 <!-- 组件显示现在由sidebarLayoutConfig统一控制，无需检查config.enable -->
 <WidgetLayout 
-    name={config.title || i18n(I18nKey.announcement)} 
+    name={config.title || '公告'} 
     id="announcement"
     class={className} 
     style={style}
@@ -48,7 +46,7 @@ const style = Astro.props.style;
                 <button 
                     class="btn-regular rounded-lg h-8 w-8 text-sm hover:bg-red-100 dark:hover:bg-red-900/30 transition-colors"
                     onclick="closeAnnouncement()"
-                    aria-label={i18n(I18nKey.announcementClose)}
+                    aria-label="关闭公告"
                 >
                     <Icon name="fa6-solid:xmark" class="text-sm" />
                 </button>
@@ -60,7 +58,7 @@ const style = Astro.props.style;
 <script>
     function closeAnnouncement() {
         // 通过data-id属性找到整个widget-layout元素
-        const widgetLayout = document.querySelector('widget-layout[data-id="announcement"]');
+        const widgetLayout = document.querySelector('widget-layout[data-id="announcement"]') as HTMLElement;
         if (widgetLayout) {
             // 隐藏整个widget-layout元素
             widgetLayout.style.display = 'none';
@@ -71,12 +69,12 @@ const style = Astro.props.style;
 
     // 页面加载时检查是否已关闭
     document.addEventListener('DOMContentLoaded', function() {
-        const widgetLayout = document.querySelector('widget-layout[data-id="announcement"]');
+        const widgetLayout = document.querySelector('widget-layout[data-id="announcement"]') as HTMLElement;
         if (widgetLayout && localStorage.getItem('announcementClosed') === 'true') {
             widgetLayout.style.display = 'none';
         }
     });
 
     // 使公告栏函数全局可用
-    window.closeAnnouncement = closeAnnouncement;
+    (window as any).closeAnnouncement = closeAnnouncement;
 </script>

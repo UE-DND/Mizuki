@@ -1,16 +1,14 @@
 ---
 import { Icon } from "astro-icon/components";
-import I18nKey from "../i18n/i18nKey";
-import { i18n } from "../i18n/translation";
 import MainGridLayout from "../layouts/MainGridLayout.astro";
 ---
 
-<MainGridLayout title={i18n(I18nKey.notFound)} description={i18n(I18nKey.notFoundDescription)}>
+<MainGridLayout title="页面未找到" description="抱歉，您访问的页面不存在。">
     <div class="flex w-full rounded-[var(--radius-large)] overflow-hidden relative min-h-96">
         <div class="card-base z-10 px-9 py-12 relative w-full flex flex-col items-center justify-center text-center">
             <!-- 404 大号数字 -->
             <div class="text-8xl md:text-9xl font-bold text-[var(--primary)] opacity-20 mb-4">
-                {i18n(I18nKey.notFound)}
+                404
             </div>
             
             <!-- 404 图标 -->
@@ -20,12 +18,12 @@ import MainGridLayout from "../layouts/MainGridLayout.astro";
             
             <!-- 标题 -->
             <h1 class="text-3xl md:text-4xl font-bold mb-4 text-90">
-                {i18n(I18nKey.notFoundTitle)}
+                页面未找到
             </h1>
             
             <!-- 描述 -->
             <p class="text-lg text-75 mb-8 max-w-md">
-                {i18n(I18nKey.notFoundDescription)}
+                抱歉，您访问的页面不存在。
             </p>
             
             <!-- 返回首页按钮 -->
@@ -34,7 +32,7 @@ import MainGridLayout from "../layouts/MainGridLayout.astro";
                 class="inline-flex items-center gap-2 px-6 py-3 bg-[var(--primary)] text-white rounded-[var(--radius-large)] hover:bg-[var(--primary-dark)] transition-colors duration-200 font-medium"
             >
                 <Icon name="material-symbols:home" class="text-xl" />
-                {i18n(I18nKey.backToHome)}
+                返回首页
             </a>
             
             <!-- 装饰性元素 -->

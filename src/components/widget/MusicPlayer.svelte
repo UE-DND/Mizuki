@@ -7,9 +7,6 @@ import { onDestroy, onMount } from "svelte";
 import { slide } from "svelte/transition";
 // 从配置文件中导入音乐播放器配置
 import { musicPlayerConfig } from "../../config";
-// 导入国际化相关的 Key 和 i18n 实例
-import Key from "../../i18n/i18nKey";
-import { i18n } from "../../i18n/translation";
 
 // 音乐播放器模式，可选 "local" 或 "meting"，从本地配置中获取或使用默认值 "meting"
 let mode = musicPlayerConfig.mode ?? "meting";
@@ -27,8 +24,8 @@ let meting_type = musicPlayerConfig.type ?? "playlist";
 let isPlaying = false;
 // 播放器是否展开，默认为 false
 let isExpanded = false;
-// 播放器是否隐藏，默认为 false
-let isHidden = false;
+// 播放器是否隐藏，从配置中获取或默认为 false
+let isHidden = musicPlayerConfig.initiallyHidden ?? false;
 // 是否显示播放列表，默认为 false
 let showPlaylist = false;
 // 当前播放时间，默认为 0
@@ -49,6 +46,12 @@ let isRepeating = 0;
 let errorMessage = "";
 // 是否显示错误信息，默认为 false
 let showError = false;
+// 是否正在拖动进度条
+let isDraggingProgress = false;
+let isDraggingVolume = false;
+let wasPlayingBeforeDrag = false;
+let progressAnimationFrame: number | null = null;
+let volumeAnimationFrame: number | null = null;
 
 // 当前歌曲信息
 let currentSong = {
@@ -59,13 +62,23 @@ let currentSong = {
 	duration: 0,
 };
 
-let playlist = [];
+// 定义歌曲类型
+interface Song {
+	id: number | string;
+	title: string;
+	artist: string;
+	cover: string;
+	url: string;
+	duration: number;
+}
+
+let playlist: Song[] = [];
 let currentIndex = 0;
 let audio: HTMLAudioElement;
 let progressBar: HTMLElement;
 let volumeBar: HTMLElement;
 
-const localPlaylist = [
+const localPlaylist: Song[] = [
 	{
 		id: 1,
 		title: "ひとり上手",
@@ -148,8 +161,14 @@ function toggleExpanded() {
 }
 
 function toggleHidden() {
-	isHidden = !isHidden;
 	if (isHidden) {
+		// 从隐藏状态显示时，先显示迷你播放器
+		isHidden = false;
+		isExpanded = false;
+		showPlaylist = false;
+	} else {
+		// 从显示状态隐藏时，直接隐藏
+		isHidden = true;
 		isExpanded = false;
 		showPlaylist = false;
 	}
@@ -247,7 +266,7 @@ function handleLoadSuccess() {
 	}
 }
 
-function handleLoadError(event: Event) {
+function handleLoadError(_event: Event) {
 	isLoading = false;
 	showErrorMessage(`无法播放 "${currentSong.title}"，正在尝试下一首...`);
 	if (playlist.length > 1) setTimeout(() => nextSong(), 1000);
@@ -263,29 +282,189 @@ function showErrorMessage(message: string) {
 		showError = false;
 	}, 3000);
 }
+
 function hideError() {
 	showError = false;
 }
 
-function setProgress(event: MouseEvent) {
-	if (!audio || !progressBar) return;
+function setProgress(event: MouseEvent | Touch) {
+	if (!progressBar || duration <= 0) return;
 	const rect = progressBar.getBoundingClientRect();
-	const percent = (event.clientX - rect.left) / rect.width;
-	const newTime = percent * duration;
-	audio.currentTime = newTime;
-	currentTime = newTime;
+	const clientX = "clientX" in event ? event.clientX : (event as Touch).clientX;
+	if (clientX === undefined) return;
+	const percent = Math.max(0, Math.min(1, (clientX - rect.left) / rect.width));
+	// 拖动时只更新UI，不更新音频位置
+	currentTime = percent * duration;
 }
 
-function setVolume(event: MouseEvent) {
+function handleProgressMouseDown(event: MouseEvent) {
+	if (event.button !== 0) return; // 只响应左键
+	if (typeof document === "undefined") return; // 服务器端渲染检查
+	// 记录拖动前的播放状态并暂停
+	wasPlayingBeforeDrag = isPlaying;
+	if (audio && isPlaying) {
+		audio.pause();
+	}
+	isDraggingProgress = true;
+	setProgress(event);
+	document.addEventListener("mousemove", handleProgressMouseMove);
+	document.addEventListener("mouseup", handleProgressMouseUp);
+	event.preventDefault();
+}
+
+function handleProgressMouseMove(event: MouseEvent) {
+	if (!isDraggingProgress) return;
+	// 使用 requestAnimationFrame 优化性能
+	if (progressAnimationFrame) {
+		cancelAnimationFrame(progressAnimationFrame);
+	}
+	progressAnimationFrame = requestAnimationFrame(() => {
+		setProgress(event);
+		progressAnimationFrame = null;
+	});
+	event.preventDefault();
+}
+
+function handleProgressMouseUp() {
+	if (typeof document === "undefined") return; // 服务器端渲染检查
+	isDraggingProgress = false;
+	// 清除动画帧
+	if (progressAnimationFrame) {
+		cancelAnimationFrame(progressAnimationFrame);
+	}
+	// 拖动结束时才更新音频位置
+	if (audio && duration > 0) {
+		audio.currentTime = currentTime;
+		// 如果拖动前正在播放，则恢复播放
+		if (wasPlayingBeforeDrag) {
+			audio.play().catch(() => {});
+		}
+	}
+	document.removeEventListener("mousemove", handleProgressMouseMove);
+	document.removeEventListener("mouseup", handleProgressMouseUp);
+}
+
+function handleProgressTouchStart(event: TouchEvent) {
+	// 记录拖动前的播放状态并暂停
+	wasPlayingBeforeDrag = isPlaying;
+	if (audio && isPlaying) {
+		audio.pause();
+	}
+	isDraggingProgress = true;
+	if (event.touches.length > 0) {
+		setProgress(event.touches[0]);
+	}
+	event.preventDefault();
+}
+
+function handleProgressTouchMove(event: TouchEvent) {
+	if (!isDraggingProgress) return;
+	if (event.touches.length > 0) {
+		// 使用 requestAnimationFrame 优化性能
+		if (progressAnimationFrame) {
+			cancelAnimationFrame(progressAnimationFrame);
+		}
+		const touch = event.touches[0];
+		progressAnimationFrame = requestAnimationFrame(() => {
+			setProgress(touch);
+			progressAnimationFrame = null;
+		});
+	}
+	event.preventDefault();
+}
+
+function handleProgressTouchEnd() {
+	isDraggingProgress = false;
+	// 清除动画帧
+	if (progressAnimationFrame) {
+		cancelAnimationFrame(progressAnimationFrame);
+	}
+	// 触摸结束时更新音频位置
+	if (audio && duration > 0) {
+		audio.currentTime = currentTime;
+		// 如果拖动前正在播放，则恢复播放
+		if (wasPlayingBeforeDrag) {
+			audio.play().catch(() => {});
+		}
+	}
+}
+
+function setVolume(event: MouseEvent | Touch) {
 	if (!audio || !volumeBar) return;
 	const rect = volumeBar.getBoundingClientRect();
-	const percent = Math.max(
-		0,
-		Math.min(1, (event.clientX - rect.left) / rect.width),
-	);
+	const clientX = "clientX" in event ? event.clientX : (event as Touch).clientX;
+	if (clientX === undefined) return;
+	const percent = Math.max(0, Math.min(1, (clientX - rect.left) / rect.width));
+	// 立即更新UI
 	volume = percent;
 	audio.volume = volume;
 	isMuted = volume === 0;
+}
+
+function handleVolumeMouseDown(event: MouseEvent) {
+	if (event.button !== 0) return; // 只响应左键
+	if (typeof document === "undefined") return; // 服务器端渲染检查
+	isDraggingVolume = true;
+	setVolume(event);
+	document.addEventListener("mousemove", handleVolumeMouseMove);
+	document.addEventListener("mouseup", handleVolumeMouseUp);
+	event.preventDefault();
+}
+
+function handleVolumeMouseMove(event: MouseEvent) {
+	if (!isDraggingVolume) return;
+	// 使用 requestAnimationFrame 优化性能
+	if (volumeAnimationFrame) {
+		cancelAnimationFrame(volumeAnimationFrame);
+	}
+	volumeAnimationFrame = requestAnimationFrame(() => {
+		setVolume(event);
+		volumeAnimationFrame = null;
+	});
+	event.preventDefault();
+}
+
+function handleVolumeMouseUp() {
+	if (typeof document === "undefined") return; // 服务器端渲染检查
+	isDraggingVolume = false;
+	// 清除动画帧
+	if (volumeAnimationFrame) {
+		cancelAnimationFrame(volumeAnimationFrame);
+	}
+	document.removeEventListener("mousemove", handleVolumeMouseMove);
+	document.removeEventListener("mouseup", handleVolumeMouseUp);
+}
+
+function handleVolumeTouchStart(event: TouchEvent) {
+	isDraggingVolume = true;
+	if (event.touches.length > 0) {
+		setVolume(event.touches[0]);
+	}
+	event.preventDefault();
+}
+
+function handleVolumeTouchMove(event: TouchEvent) {
+	if (!isDraggingVolume) return;
+	if (event.touches.length > 0) {
+		// 使用 requestAnimationFrame 优化性能
+		if (volumeAnimationFrame) {
+			cancelAnimationFrame(volumeAnimationFrame);
+		}
+		const touch = event.touches[0];
+		volumeAnimationFrame = requestAnimationFrame(() => {
+			setVolume(touch);
+			volumeAnimationFrame = null;
+		});
+	}
+	event.preventDefault();
+}
+
+function handleVolumeTouchEnd() {
+	isDraggingVolume = false;
+	// 清除动画帧
+	if (volumeAnimationFrame) {
+		cancelAnimationFrame(volumeAnimationFrame);
+	}
 }
 
 function toggleMute() {
@@ -326,7 +505,7 @@ function handleAudioEvents() {
 			isPlaying = false;
 		}
 	});
-	audio.addEventListener("error", (event) => {
+	audio.addEventListener("error", (_event) => {
 		isLoading = false;
 	});
 	audio.addEventListener("stalled", () => {});
@@ -334,21 +513,34 @@ function handleAudioEvents() {
 }
 
 onMount(() => {
+	if (typeof window === "undefined") return; // 服务器端渲染检查
 	audio = new Audio();
 	audio.volume = volume;
 	handleAudioEvents();
-	if (mode === "meting") {
-		fetchMetingPlaylist();
-	} else {
-		playlist = localPlaylist;
-		if (playlist.length > 0) loadSong(playlist[0]);
+	playlist = [...localPlaylist];
+	if (playlist.length > 0) {
+		currentSong = { ...playlist[0] };
+		loadSong(currentSong);
 	}
 });
 
 onDestroy(() => {
 	if (audio) {
 		audio.pause();
-		audio.src = "";
+		audio = null as unknown as HTMLAudioElement;
+	}
+	// 清除动画帧
+	if (progressAnimationFrame) {
+		cancelAnimationFrame(progressAnimationFrame);
+	}
+	if (volumeAnimationFrame) {
+		cancelAnimationFrame(volumeAnimationFrame);
+	}
+	if (typeof document !== "undefined") {
+		document.removeEventListener("mousemove", handleProgressMouseMove);
+		document.removeEventListener("mouseup", handleProgressMouseUp);
+		document.removeEventListener("mousemove", handleVolumeMouseMove);
+		document.removeEventListener("mouseup", handleVolumeMouseUp);
 	}
 });
 </script>
@@ -370,7 +562,7 @@ onDestroy(() => {
      class:expanded={isExpanded}
      class:hidden-mode={isHidden}>
     <!-- 隐藏状态的小圆球 -->
-    <div class="orb-player w-12 h-12 bg-[var(--primary)] rounded-full shadow-lg cursor-pointer transition-all duration-500 ease-in-out flex items-center justify-center hover:scale-110 active:scale-95"
+    <div class="orb-player w-12 h-12 bg-[var(--primary)] rounded-full shadow-lg cursor-pointer flex items-center justify-center hover:scale-110 active:scale-95"
          class:opacity-0={!isHidden}
          class:scale-0={!isHidden}
          class:pointer-events-none={!isHidden}
@@ -397,26 +589,35 @@ onDestroy(() => {
         {/if}
     </div>
     <!-- 收缩状态的迷你播放器（封面圆形） -->
-    <div class="mini-player card-base bg-[var(--float-panel-bg)] shadow-xl rounded-2xl p-3 transition-all duration-500 ease-in-out"
-         class:opacity-0={isExpanded || isHidden}
-         class:scale-95={isExpanded || isHidden}
-         class:pointer-events-none={isExpanded || isHidden}
-         on:click={toggleExpanded}
-         on:keydown={(e) => {
+    <div class="mini-player card-base bg-[var(--float-panel-bg)] shadow-xl rounded-2xl p-3 transition-all duration-200 ease-in-out"
+        class:opacity-0={isExpanded || isHidden}
+        class:scale-95={isExpanded || isHidden}
+        class:pointer-events-none={isExpanded || isHidden}
+        on:click={toggleExpanded}
+        on:keydown={(e) => {
             if (e.key === 'Enter' || e.key === ' ') {
                 e.preventDefault();
                 toggleExpanded();
             }
-         }}
-         role="button"
-         tabindex="0"
-         aria-label="展开音乐播放器">
-        <div class="flex items-center gap-3 cursor-pointer">
-            <div class="cover-container relative w-12 h-12 rounded-full overflow-hidden">
+        }}
+        role="button"
+        tabindex="0"
+        aria-label="展开音乐播放器">
+        <div class="flex items-center gap-3">
+            <div class="cover-container relative w-12 h-12 rounded-lg overflow-hidden cursor-pointer"
+                on:click|stopPropagation={togglePlay}
+                on:keydown={(e) => {
+                    if (e.key === 'Enter' || e.key === ' ') {
+                        e.preventDefault();
+                        togglePlay();
+                    }
+                }}
+                role="button"
+                tabindex="0"
+                aria-label="播放/暂停音乐">
                 <img src={getAssetPath(currentSong.cover)} alt="封面"
-                     class="w-full h-full object-cover transition-transform duration-300"
-                     class:spinning={isPlaying && !isLoading}
-                     class:animate-pulse={isLoading} />
+                    class="w-full h-full object-cover"
+                    class:animate-pulse={isLoading} />
                 <div class="absolute inset-0 bg-black/20 flex items-center justify-center opacity-0 hover:opacity-100 transition-opacity">
                     {#if isLoading}
                         <Icon icon="eos-icons:loading" class="text-white text-xl" />
@@ -427,7 +628,17 @@ onDestroy(() => {
                     {/if}
                 </div>
             </div>
-            <div class="flex-1 min-w-0">
+            <div class="flex-1 min-w-0 cursor-pointer"
+                on:click|stopPropagation={toggleExpanded}
+                on:keydown={(e) => {
+                    if (e.key === 'Enter' || e.key === ' ') {
+                        e.preventDefault();
+                        toggleExpanded();
+                    }
+                }}
+                role="button"
+                tabindex="0"
+                aria-label="展开音乐播放器">
                 <div class="text-sm font-medium text-90 truncate">{currentSong.title}</div>
                 <div class="text-xs text-50 truncate">{currentSong.artist}</div>
             </div>
@@ -445,16 +656,15 @@ onDestroy(() => {
         </div>
     </div>
     <!-- 展开状态的完整播放器（封面圆形） -->
-    <div class="expanded-player card-base bg-[var(--float-panel-bg)] shadow-xl rounded-2xl p-4 transition-all duration-500 ease-in-out"
-         class:opacity-0={!isExpanded}
-         class:scale-95={!isExpanded}
-         class:pointer-events-none={!isExpanded}>
+    <div class="expanded-player card-base bg-[var(--float-panel-bg)] shadow-xl rounded-2xl p-4 transition-all duration-200 ease-in-out"
+        class:opacity-0={!isExpanded}
+        class:scale-95={!isExpanded}
+        class:pointer-events-none={!isExpanded}>
         <div class="flex items-center gap-4 mb-4">
-            <div class="cover-container relative w-16 h-16 rounded-full overflow-hidden flex-shrink-0">
+            <div class="cover-container relative w-16 h-16 rounded-lg overflow-hidden flex-shrink-0">
                 <img src={getAssetPath(currentSong.cover)} alt="封面"
-                     class="w-full h-full object-cover transition-transform duration-300"
-                     class:spinning={isPlaying && !isLoading}
-                     class:animate-pulse={isLoading} />
+                    class="w-full h-full object-cover"
+                    class:animate-pulse={isLoading} />
             </div>
             <div class="flex-1 min-w-0">
                 <div class="song-title text-lg font-bold text-90 truncate mb-1">{currentSong.title}</div>
@@ -476,15 +686,23 @@ onDestroy(() => {
             </div>
         </div>
         <div class="progress-section mb-4">
-            <div class="progress-bar flex-1 h-2 bg-[var(--btn-regular-bg)] rounded-full cursor-pointer"
+            <div class="progress-bar relative flex-1 h-2 bg-[var(--btn-regular-bg)] rounded-full cursor-pointer"
                  bind:this={progressBar}
-                 on:click={setProgress}
+                 on:mousedown={handleProgressMouseDown}
+                 on:touchstart={handleProgressTouchStart}
+                 on:touchmove={handleProgressTouchMove}
+                 on:touchend={handleProgressTouchEnd}
                  on:keydown={(e) => {
-                     if (e.key === 'Enter' || e.key === ' ') {
+                     if (e.key === 'ArrowLeft') {
                          e.preventDefault();
-                         const rect = progressBar.getBoundingClientRect();
-                         const percent = 0.5;
-                         const newTime = percent * duration;
+                         const newTime = Math.max(0, currentTime - 5);
+                         if (audio) {
+                             audio.currentTime = newTime;
+                             currentTime = newTime;
+                         }
+                     } else if (e.key === 'ArrowRight') {
+                         e.preventDefault();
+                         const newTime = Math.min(duration, currentTime + 5);
                          if (audio) {
                              audio.currentTime = newTime;
                              currentTime = newTime;
@@ -496,9 +714,16 @@ onDestroy(() => {
                  aria-label="播放进度"
                  aria-valuemin="0"
                  aria-valuemax="100"
-                 aria-valuenow={duration > 0 ? (currentTime / duration * 100) : 0}>
-                <div class="h-full bg-[var(--primary)] rounded-full transition-all duration-100"
-                     style="width: {duration > 0 ? (currentTime / duration) * 100 : 0}%"></div>
+                 aria-valuenow={duration > 0 ? (currentTime / duration * 100) : 0}
+                 class:dragging={isDraggingProgress}>
+                <div class="absolute inset-0 rounded-full overflow-hidden">
+                    <div class="h-full bg-[var(--primary)] rounded-full"
+                         class:transition-width={!isDraggingProgress}
+                         style="width: {duration > 0 ? (currentTime / duration) * 100 : 0}%"></div>
+                </div>
+                <div class="progress-thumb absolute top-1/2 w-4 h-4 bg-[var(--primary)] rounded-full border-2 border-white aspect-square"
+                     style="left: calc({duration > 0 ? (currentTime / duration) * 100 : 0}%)">
+                </div>
             </div>
         </div>
         <div class="controls flex items-center justify-center gap-2 mb-4">
@@ -554,23 +779,43 @@ onDestroy(() => {
                     <Icon icon="material-symbols:volume-up" class="text-lg" />
                 {/if}
             </button>
-            <div class="flex-1 h-2 bg-[var(--btn-regular-bg)] rounded-full cursor-pointer"
-                 bind:this={volumeBar}
-                 on:click={setVolume}
-                 on:keydown={(e) => {
-                     if (e.key === 'Enter' || e.key === ' ') {
-                         e.preventDefault();
-                         if (e.key === 'Enter') toggleMute();
-                     }
-                 }}
-                 role="slider"
-                 tabindex="0"
-                 aria-label="音量控制"
-                 aria-valuemin="0"
-                 aria-valuemax="100"
-                 aria-valuenow={volume * 100}>
-                <div class="h-full bg-[var(--primary)] rounded-full transition-all duration-100"
-                     style="width: {volume * 100}%"></div>
+            <div class="volume-bar relative flex-1 h-2 bg-[var(--btn-regular-bg)] rounded-full cursor-pointer"
+                bind:this={volumeBar}
+                on:mousedown={handleVolumeMouseDown}
+                on:touchstart={handleVolumeTouchStart}
+                on:touchmove={handleVolumeTouchMove}
+                on:touchend={handleVolumeTouchEnd}
+                on:keydown={(e) => {
+                    if (e.key === 'ArrowLeft') {
+                        e.preventDefault();
+                        volume = Math.max(0, volume - 0.05);
+                        if (audio) audio.volume = volume;
+                        isMuted = volume === 0;
+                    } else if (e.key === 'ArrowRight') {
+                        e.preventDefault();
+                        volume = Math.min(1, volume + 0.05);
+                        if (audio) audio.volume = volume;
+                        isMuted = false;
+                    } else if (e.key === 'Enter') {
+                        e.preventDefault();
+                        toggleMute();
+                    }
+                }}
+                role="slider"
+                tabindex="0"
+                aria-label="音量控制"
+                aria-valuemin="0"
+                aria-valuemax="100"
+                 aria-valuenow={volume * 100}
+                class:dragging={isDraggingVolume}>
+                <div class="absolute inset-0 rounded-full overflow-hidden">
+                    <div class="h-full bg-[var(--primary)] rounded-full"
+                        class:transition-width={!isDraggingVolume}
+                         style="width: {volume * 100}%"></div>
+                </div>
+                <div class="volume-thumb absolute top-1/2 w-4 h-4 bg-[var(--primary)] rounded-full border-2 border-white aspect-square"
+                     style="left: calc({volume * 100}%)">
+                </div>
             </div>
             <button class="btn-plain w-8 h-8 rounded-lg"
                     class:text-[var(--primary)]={showPlaylist}
@@ -581,9 +826,9 @@ onDestroy(() => {
     </div>
     {#if showPlaylist}
         <div class="playlist-panel float-panel fixed bottom-20 left-4 w-80 max-h-96 overflow-hidden z-50"
-             transition:slide={{ duration: 300, axis: 'y' }}>
+            transition:slide={{ duration: 300, axis: 'y' }}>
             <div class="playlist-header flex items-center justify-between p-4 border-b border-[var(--line-divider)]">
-                <h3 class="text-lg font-semibold text-90">{i18n(Key.playlist)}</h3>
+                <h3 class="text-lg font-semibold text-90">播放列表</h3>
                 <button class="btn-plain w-8 h-8 rounded-lg" on:click={togglePlaylist}>
                     <Icon icon="material-symbols:close" class="text-lg" />
                 </button>
@@ -591,18 +836,18 @@ onDestroy(() => {
             <div class="playlist-content overflow-y-auto max-h-80">
                 {#each playlist as song, index}
                     <div class="playlist-item flex items-center gap-3 p-3 hover:bg-[var(--btn-plain-bg-hover)] cursor-pointer transition-colors"
-                         class:bg-[var(--btn-plain-bg)]={index === currentIndex}
-                         class:text-[var(--primary)]={index === currentIndex}
-                         on:click={() => playSong(index)}
-                         on:keydown={(e) => {
-                             if (e.key === 'Enter' || e.key === ' ') {
-                                 e.preventDefault();
-                                 playSong(index);
-                             }
-                         }}
-                         role="button"
-                         tabindex="0"
-                         aria-label="播放 {song.title} - {song.artist}">
+                        class:bg-[var(--btn-plain-bg)]={index === currentIndex}
+                        class:text-[var(--primary)]={index === currentIndex}
+                        on:click={() => playSong(index)}
+                        on:keydown={(e) => {
+                            if (e.key === 'Enter' || e.key === ' ') {
+                                e.preventDefault();
+                                playSong(index);
+                            }
+                        }}
+                        role="button"
+                        tabindex="0"
+                        aria-label="播放 {song.title} - {song.artist}">
                         <div class="w-6 h-6 flex items-center justify-center">
                             {#if index === currentIndex && isPlaying}
                                 <Icon icon="material-symbols:graphic-eq" class="text-[var(--primary)] animate-pulse" />
@@ -691,11 +936,50 @@ onDestroy(() => {
         opacity: 0.5;
     }
 }
-.progress-section div:hover,
-.bottom-controls > div:hover {
-    transform: scaleY(1.2);
-    transition: transform 0.2s ease;
+/* 进度条和音量条的拖动指示器样式 */
+.progress-thumb,
+.volume-thumb {
+    pointer-events: none;
+    transform: translateY(-50%) translateX(-50%);
+    opacity: 0;
+    transition: opacity 0.15s ease;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+    /* 强制保持正圆形 */
+    width: 16px !important;
+    height: 16px !important;
+    min-width: 16px;
+    min-height: 16px;
+    max-width: 16px;
+    max-height: 16px;
+    border-radius: 50% !important;
 }
+
+.progress-bar:hover .progress-thumb,
+.volume-bar:hover .volume-thumb,
+.progress-bar.dragging .progress-thumb,
+.volume-bar.dragging .volume-thumb {
+    opacity: 1;
+}
+
+.progress-bar.dragging .progress-thumb,
+.volume-bar.dragging .volume-thumb {
+    transform: translateY(-50%) translateX(-50%) scale(1.2);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+    /* 拖动时也保持正圆形 */
+    width: 16px !important;
+    height: 16px !important;
+}
+
+/* 进度条和音量条宽度过渡 */
+.transition-width {
+    transition: width 0.1s ease;
+}
+
+.progress-bar.dragging,
+.volume-bar.dragging {
+    cursor: grabbing;
+}
+
 @media (max-width: 768px) {
     .music-player {
         max-width: 280px;
@@ -787,15 +1071,6 @@ onDestroy(() => {
     to {
         transform: rotate(360deg);
     }
-}
-
-.cover-container img {
-    animation: spin-continuous 3s linear infinite;
-    animation-play-state: paused;
-}
-
-.cover-container img.spinning {
-    animation-play-state: running;
 }
 
 /* 让主题色按钮更有视觉反馈 */

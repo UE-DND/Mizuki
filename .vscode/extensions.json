@@ -1,3 +1,13 @@
 {
-  "recommendations": ["biomejs.biome", "astro-build.astro-vscode"]
+  "recommendations": [
+    "biomejs.biome",
+    "astro-build.astro-vscode",
+    "svelte.svelte-vscode",
+    "bradlc.vscode-tailwindcss",
+    "eamodio.gitlens",
+    "yzhang.markdown-all-in-one",
+    "GitHub.vscode-pull-request-github",
+    "mikestead.dotenv",
+    "dbaeumer.vscode-eslint"
+  ]
 }

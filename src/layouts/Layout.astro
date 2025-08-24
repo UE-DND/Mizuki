@@ -6,8 +6,6 @@ import "@fontsource/roboto/700.css";
 import ConfigCarrier from "@components/ConfigCarrier.astro";
 import MusicPlayer from "@components/widget/MusicPlayer.svelte";
 import { profileConfig, siteConfig } from "@/config";
-import {widgetConfigs} from '../config';
-import type {SakuraConfig} from '../types/config';
 
 import {
 	AUTO_MODE,
@@ -163,8 +161,18 @@ const bannerOffset =
 					}
 			}
 
-			// Load the hue from local storage
-			const hue = localStorage.getItem('hue') || configHue;
+			// 自动主题色功能
+			const schemes = [
+				{ name: "蓝", hue: 210 },
+				{ name: "绿", hue: 120 },
+				{ name: "橙", hue: 30 },
+				{ name: "紫", hue: 270 },
+				{ name: "红", hue: 330 },
+				{ name: "黄", hue: 60 },
+				{ name: "蓝", hue: 200 }
+			];
+			const today = new Date().getDay();
+			const hue = schemes[today].hue;
 			document.documentElement.style.setProperty('--hue', hue);
 
 			// calculate the --banner-height-extend, which needs to be a multiple of 4 to avoid blurry text
@@ -190,371 +198,13 @@ const bannerOffset =
 	>
 		<ConfigCarrier></ConfigCarrier>
 		<slot />
-		
+
 		<!-- Music Player -->
 		<MusicPlayer client:load />
 
 		<!-- increase the page height during page transition to prevent the scrolling animation from jumping -->
 		<div id="page-height-extend" class="hidden h-[300vh]"></div>
 
-		<!-- Sakura Effect -->
-		{(widgetConfigs.sakura as SakuraConfig)?.enable && (
-			<script define:vars={{ sakuraConfig: widgetConfigs.sakura }}>
-				// 樱花对象类
-				class Sakura {
-					constructor(x, y, s, r, fn, idx, img, limitArray, config) {
-						this.x = x;
-						this.y = y;
-						this.s = s;
-						this.r = r;
-						this.fn = fn;
-						this.idx = idx;
-						this.img = img;
-						this.limitArray = limitArray;
-						this.config = config;
-					}
-
-					draw(cxt) {
-						cxt.save();
-						cxt.translate(this.x, this.y);
-						cxt.rotate(this.r);
-						cxt.drawImage(this.img, 0, 0, 40 * this.s, 40 * this.s);
-						cxt.restore();
-					}
-
-					update() {
-						this.x = this.fn.x(this.x, this.y);
-						this.y = this.fn.y(this.y, this.y);
-						this.r = this.fn.r(this.r);
-
-						// 如果樱花越界，重新调整位置
-						if (
-							this.x > window.innerWidth ||
-							this.x < 0 ||
-							this.y > window.innerHeight ||
-							this.y < 0
-						) {
-							// 如果樱花不做限制
-							if (this.limitArray[this.idx] === -1) {
-								this.resetPosition();
-							}
-							// 否则樱花有限制
-							else {
-								if (this.limitArray[this.idx] > 0) {
-									this.resetPosition();
-									this.limitArray[this.idx]--;
-								}
-							}
-						}
-					}
-
-					resetPosition() {
-						this.r = getRandom('fnr', this.config);
-						if (Math.random() > 0.4) {
-							this.x = getRandom('x', this.config);
-							this.y = 0;
-							this.s = getRandom('s', this.config);
-							this.r = getRandom('r', this.config);
-						} else {
-							this.x = window.innerWidth;
-							this.y = getRandom('y', this.config);
-							this.s = getRandom('s', this.config);
-							this.r = getRandom('r', this.config);
-						}
-					}
-				}
-
-				// 樱花列表类
-				class SakuraList {
-					constructor() {
-						this.list = [];
-					}
-
-					push(sakura) {
-						this.list.push(sakura);
-					}
-
-					update() {
-						for (let i = 0, len = this.list.length; i < len; i++) {
-							this.list[i].update();
-						}
-					}
-
-					draw(cxt) {
-						for (let i = 0, len = this.list.length; i < len; i++) {
-							this.list[i].draw(cxt);
-						}
-					}
-
-					get(i) {
-						return this.list[i];
-					}
-
-					size() {
-						return this.list.length;
-					}
-				}
-
-				// 获取随机值的函数
-				function getRandom(option, config) {
-					let ret;
-					let random;
-
-					switch (option) {
-						case 'x':
-							ret = Math.random() * window.innerWidth;
-							break;
-						case 'y':
-							ret = Math.random() * window.innerHeight;
-							break;
-						case 's':
-							ret = config.size.min + Math.random() * (config.size.max - config.size.min);
-							break;
-						case 'r':
-							ret = Math.random() * 6;
-							break;
-						case 'fnx':
-							random = config.speed.horizontal.min + Math.random() * (config.speed.horizontal.max - config.speed.horizontal.min);
-							ret = function (x, y) {
-								return x + random;
-							};
-							break;
-						case 'fny':
-							random = config.speed.vertical.min + Math.random() * (config.speed.vertical.max - config.speed.vertical.min);
-							ret = function (x, y) {
-								return y + random;
-							};
-							break;
-						case 'fnr':
-							ret = function (r) {
-								return r + config.speed.rotation;
-							};
-							break;
-					}
-					return ret;
-				}
-
-				// 樱花管理器类
-				class SakuraManager {
-					constructor(config) {
-						this.config = config;
-						this.canvas = null;
-						this.ctx = null;
-						this.sakuraList = null;
-						this.animationId = null;
-						this.img = null;
-						this.isRunning = false;
-					}
-
-					// 初始化樱花特效
-					async init() {
-						if (!this.config.enable || this.isRunning) {
-							return;
-						}
-
-						// 创建图片对象
-						this.img = new Image();
-						this.img.src = '/sakura.png'; // 使用樱花图片
-
-						// 等待图片加载完成
-						await new Promise((resolve, reject) => {
-							if (this.img) {
-								this.img.onload = () => resolve();
-								this.img.onerror = () => reject(new Error('Failed to load sakura image'));
-							}
-						});
-
-						this.createCanvas();
-						this.createSakuraList();
-						this.startAnimation();
-						this.isRunning = true;
-					}
-
-					// 创建画布
-					createCanvas() {
-						this.canvas = document.createElement('canvas');
-						this.canvas.height = window.innerHeight;
-						this.canvas.width = window.innerWidth;
-						this.canvas.setAttribute('style', `position: fixed; left: 0; top: 0; pointer-events: none; z-index: ${this.config.zIndex};`);
-						this.canvas.setAttribute('id', 'canvas_sakura');
-						document.body.appendChild(this.canvas);
-						this.ctx = this.canvas.getContext('2d');
-
-						// 监听窗口大小变化
-						window.addEventListener('resize', this.handleResize.bind(this));
-					}
-
-					// 创建樱花列表
-					createSakuraList() {
-						if (!this.img || !this.ctx) return;
-
-						this.sakuraList = new SakuraList();
-						const limitArray = new Array(this.config.sakuraNum).fill(this.config.limitTimes);
-
-						for (let i = 0; i < this.config.sakuraNum; i++) {
-							const randomX = getRandom('x', this.config);
-							const randomY = getRandom('y', this.config);
-							const randomR = getRandom('r', this.config);
-							const randomS = getRandom('s', this.config);
-							const randomFnx = getRandom('fnx', this.config);
-							const randomFny = getRandom('fny', this.config);
-							const randomFnR = getRandom('fnr', this.config);
-
-							const sakura = new Sakura(
-								randomX,
-								randomY,
-								randomS,
-								randomR,
-								{
-									x: randomFnx,
-									y: randomFny,
-									r: randomFnR,
-								},
-								i,
-								this.img,
-								limitArray,
-								this.config
-							);
-
-							sakura.draw(this.ctx);
-							this.sakuraList.push(sakura);
-						}
-					}
-
-					// 开始动画
-					startAnimation() {
-						if (!this.ctx || !this.canvas || !this.sakuraList) return;
-
-						const animate = () => {
-							if (!this.ctx || !this.canvas || !this.sakuraList) return;
-
-							this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
-							this.sakuraList.update();
-							this.sakuraList.draw(this.ctx);
-							this.animationId = requestAnimationFrame(animate);
-						};
-
-						this.animationId = requestAnimationFrame(animate);
-					}
-
-					// 处理窗口大小变化
-					handleResize() {
-						if (this.canvas) {
-							this.canvas.width = window.innerWidth;
-							this.canvas.height = window.innerHeight;
-						}
-					}
-
-					// 停止樱花特效
-					stop() {
-						if (this.animationId) {
-							cancelAnimationFrame(this.animationId);
-							this.animationId = null;
-						}
-
-						if (this.canvas) {
-							document.body.removeChild(this.canvas);
-							this.canvas = null;
-						}
-
-						window.removeEventListener('resize', this.handleResize.bind(this));
-						this.isRunning = false;
-					}
-
-					// 切换樱花特效
-					toggle() {
-						if (this.isRunning) {
-							this.stop();
-						} else {
-							this.init();
-						}
-					}
-
-					// 更新配置
-					updateConfig(newConfig) {
-						const wasRunning = this.isRunning;
-						if (wasRunning) {
-							this.stop();
-						}
-						this.config = newConfig;
-						if (wasRunning && newConfig.enable) {
-							this.init();
-						}
-					}
-
-					// 获取运行状态
-					getIsRunning() {
-						return this.isRunning;
-					}
-				}
-
-				// 创建全局樱花管理器实例
-				let globalSakuraManager = null;
-
-				// 初始化樱花特效
-				function initSakura(config) {
-					if (globalSakuraManager) {
-						globalSakuraManager.updateConfig(config);
-					} else {
-						globalSakuraManager = new SakuraManager(config);
-						if (config.enable) {
-							globalSakuraManager.init();
-						}
-					}
-				}
-
-				// 樱花特效初始化
-				(function() {
-					// 全局标记，确保樱花特效只初始化一次
-					if (window.sakuraInitialized) {
-						return;
-					}
-					
-					// 初始化樱花特效的函数
-					const setupSakura = () => {
-						if (sakuraConfig.enable && !window.sakuraInitialized) {
-							initSakura(sakuraConfig);
-							window.sakuraInitialized = true;
-						}
-					};
-					
-					// 页面加载完成后初始化樱花特效
-					if (document.readyState === 'loading') {
-						document.addEventListener('DOMContentLoaded', setupSakura);
-					} else {
-						setupSakura();
-					}
-				})();
-			</script>
-		)}
-		
-		<!-- Translate.js integration - lazy loading -->
-		{siteConfig.translate?.enable && (
-			<script>
-				// 懒加载translate.js，只有在需要时才加载
-				window.loadTranslateScript = function() {
-					if (window.translate || document.getElementById('translate-script')) {
-						return Promise.resolve();
-					}
-					
-					return new Promise((resolve, reject) => {
-						const script = document.createElement('script');
-						script.src = '/translate.js';
-						script.id = 'translate-script';
-						script.async = true;
-						script.onload = () => {
-							if (typeof window.translate !== 'undefined') {
-								resolve();
-							} else {
-								reject(new Error('translate.js loaded but window.translate not available'));
-							}
-						};
-						script.onerror = reject;
-						document.head.appendChild(script);
-					});
-				};
-			</script>
-		)}
 	</body>
 </html>
 
@@ -590,7 +240,7 @@ const bannerOffset =
 	.navbar-hidden {
 		@apply opacity-0 -translate-y-16
 	}
-	
+
 	/* Water waves animation */
 	.waves > .parallax use {
 		animation: wave 25s cubic-bezier(0.5, 0.5, 0.45, 0.5) infinite;
@@ -615,7 +265,8 @@ import {
 	// SizeObserverPlugin,
 	// ClickScrollPlugin
 } from 'overlayscrollbars';
-import {getHue, getStoredTheme, setHue, setTheme} from "../utils/setting-utils";
+import {getStoredTheme, setTheme} from "../utils/setting-utils";
+import {applyAutoTheme} from "../utils/auto-theme-utils";
 import {pathsEqual, url} from "../utils/url-utils";
 import {
 	BANNER_HEIGHT,
@@ -695,16 +346,13 @@ function loadTheme() {
 	setTheme(theme)
 }
 
-function loadHue() {
-	setHue(getHue())
-}
 
 function initCustomScrollbar() {
 	// 延迟初始化滚动条以提升性能
 	requestIdleCallback(() => {
 		const bodyElement = document.querySelector('body');
 		if (!bodyElement) return;
-		
+
 		// 简化配置以提升性能
 		OverlayScrollbars(
 			{
@@ -790,7 +438,7 @@ function showBanner() {
 
 function initCarousel() {
 	const carouselItems = document.querySelectorAll('.carousel-item');
-	
+
 	// 根据屏幕尺寸过滤有效的轮播项
 	const isMobile = window.innerWidth < 1024; // lg breakpoint
 	const validItems = Array.from(carouselItems).filter(item => {
@@ -802,7 +450,7 @@ function initCarousel() {
 			return item.querySelector('.hidden.lg\\:block');
 		}
 	});
-	
+
 	// Check if carousel is disabled but we have multiple images - show random image
 	if (validItems.length > 1 && !siteConfig.banner.carousel?.enable) {
 		// Hide all images first
@@ -810,16 +458,16 @@ function initCarousel() {
 			item.classList.add('opacity-0', 'scale-110');
 			item.classList.remove('opacity-100', 'scale-100');
 		});
-		
+
 		// Show random valid image
 		const randomIndex = Math.floor(Math.random() * validItems.length);
 		const randomItem = validItems[randomIndex];
-		
+
 		randomItem.classList.add('opacity-100', 'scale-100');
 		randomItem.classList.remove('opacity-0', 'scale-110');
 		return;
 	}
-	
+
 	if (validItems.length > 1 && siteConfig.banner.carousel?.enable) {
 		let currentIndex = 0;
 		const interval = siteConfig.banner.carousel?.interval || 6;
@@ -841,7 +489,7 @@ function initCarousel() {
 
 			// 更新索引
 			currentIndex = index;
-			
+
 			// 显示新图片
 			const nextItem = validItems[currentIndex];
 			nextItem.classList.add('opacity-100', 'scale-100');
@@ -853,7 +501,7 @@ function initCarousel() {
 			item.classList.add('opacity-0', 'scale-110');
 			item.classList.remove('opacity-100', 'scale-100');
 		});
-		
+
 		// 显示第一张有效图片
 		if (validItems.length > 0) {
 			validItems[0].classList.add('opacity-100', 'scale-100');
@@ -872,10 +520,10 @@ function initCarousel() {
 
 			carousel.addEventListener('touchmove', (e) => {
 				if (!startX || !startY) return;
-				
+
 				const diffX = Math.abs(e.touches[0].clientX - startX);
 				const diffY = Math.abs(e.touches[0].clientY - startY);
-				
+
 				// 判断是否为水平滑动
 				if (diffX > diffY && diffX > 30) {
 					isSwiping = true;
@@ -889,10 +537,10 @@ function initCarousel() {
 					startCarousel();
 					return;
 				}
-				
+
 				const endX = e.changedTouches[0].clientX;
 				const diffX = startX - endX;
-				
+
 				// 滑动距离超过50px才切换
 				if (Math.abs(diffX) > 50) {
 					if (diffX > 0) {
@@ -905,12 +553,12 @@ function initCarousel() {
 					switchToSlide(prevIndex);
 				}
 				}
-				
+
 				startX = 0;
 				startY = 0;
 				isSwiping = false;
 				isPaused = false;
-				
+
 				// 重新开始自动轮播
 				startCarousel();
 			}, { passive: true });
@@ -945,73 +593,14 @@ function initCarousel() {
 	}
 }
 
-function initTranslate() {
-	if (!siteConfig.translate?.enable || typeof window.translate === 'undefined') return;
-	
-	// 配置translate.js
-	if (siteConfig.translate.service && window.translate) {
-		window.translate.service.use(siteConfig.translate.service);
-	}
-	
-	if (siteConfig.translate.defaultLanguage && window.translate) {
-		window.translate.language.setLocal(siteConfig.translate.defaultLanguage);
-	}
-	
-	if (siteConfig.translate.autoDiscriminate && window.translate) {
-		window.translate.setAutoDiscriminateLocalLanguage();
-	}
-	
-	// 设置忽略的类名和标签
-	if (siteConfig.translate.ignoreClasses && window.translate) {
-		siteConfig.translate.ignoreClasses.forEach(className => {
-			window.translate.ignore.class.push(className);
-		});
-	}
-	
-	if (siteConfig.translate.ignoreTags && window.translate) {
-		siteConfig.translate.ignoreTags.forEach(tagName => {
-			window.translate.ignore.tag.push(tagName);
-		});
-	}
-	
-	// 不显示默认的select选择框
-	if (siteConfig.translate.showSelectTag === false && window.translate) {
-		window.translate.selectLanguageTag.show = false;
-	}
-	
-	// 禁用自动保存翻译状态到localStorage
-	if (window.translate) {
-		window.translate.storage.set = function() {
-			// 空函数，阻止保存状态
-		};
-	
-		// 启动翻译监听
-		window.translate.listener.start();
-	
-		// 执行翻译初始化
-		window.translate.execute();
-	}
-}
-
-// 懒加载并初始化翻译功能
-async function loadAndInitTranslate() {
-	if (!siteConfig.translate?.enable) return;
-	
-	try {
-		await window.loadTranslateScript();
-		initTranslate();
-	} catch (error) {
-		console.error('Failed to load translate.js:', error);
-	}
-}
 
 function init() {
 	// disableAnimation()()		// TODO
 	loadTheme();
-	loadHue();
+	applyAutoTheme(); // 应用自动主题色
 	initCustomScrollbar();
 	showBanner();
-	
+
 	// 翻译功能改为懒加载，不在页面初始化时加载
 }
 
@@ -1031,7 +620,7 @@ const setup = () => {
 		}
 	})
 */
-	window.swup.hooks.on('link:click', () => {
+	window.swup!.hooks.on('link:click', () => {
 		// Remove the delay for the first time page load
 		document.documentElement.style.setProperty('--content-delay', '0ms')
 
@@ -1046,36 +635,30 @@ const setup = () => {
 			}
 		}
 	})
-	window.swup.hooks.on('content:replace', () => {
+	window.swup!.hooks.on('content:replace', () => {
 		initCustomScrollbar();
-		
+
 		// 重新初始化 TOC 组件
 		const tocElement = document.querySelector('table-of-contents');
 		if (tocElement && typeof tocElement.init === 'function') {
 			setTimeout(() => {
-				tocElement.init();
+				(tocElement as any).init();
 			}, 100);
 		}
-		
+
 		// 重新初始化移动端 TOC 组件
 		if (typeof window.mobileTOCInit === 'function') {
 			setTimeout(() => {
-				window.mobileTOCInit();
+				(window as any).mobileTOCInit();
 			}, 100);
 		}
-		
-		// 页面内容替换后重新执行翻译（仅在翻译已加载时）
-		setTimeout(() => {
-			if (siteConfig.translate?.enable && typeof window.translate !== 'undefined') {
-				window.translate.execute();
-			}
-		}, 100);
+
 	})
-	window.swup.hooks.on('visit:start', (visit: {to: {url: string}}) => {
+	window.swup!.hooks.on('visit:start', (visit: {to: {url: string}}) => {
 		// change banner height immediately when a link is clicked
 		const bodyElement = document.querySelector('body')
 		const isHomePage = pathsEqual(visit.to.url, url('/'))
-		
+
 		if (isHomePage) {
 			bodyElement!.classList.add('lg:is-home');
 		} else {
@@ -1101,7 +684,7 @@ const setup = () => {
 		// Control mobile banner visibility based on page with improved staging animation
 		const bannerWrapper = document.getElementById('banner-wrapper')
 		const mainContentWrapper = document.querySelector('.absolute.w-full.z-30')
-		
+
 		if (bannerWrapper && mainContentWrapper) {
 			if (isHomePage) {
 				// 首页：延迟移除隐藏类，让banner和内容优雅地出现
@@ -1133,19 +716,19 @@ const setup = () => {
 			toc.classList.add('toc-not-ready')
 		}
 	});
-	window.swup.hooks.on('page:view', () => {
+	window.swup!.hooks.on('page:view', () => {
 		// hide the temp high element when the transition is done
 		const heightExtend = document.getElementById('page-height-extend')
 		if (heightExtend) {
 			heightExtend.classList.remove('hidden')
 		}
-		
+
 		// 确保页面滚动到顶部，特别是移动端banner关闭时
 		window.scrollTo({
 			top: 0,
 			behavior: 'instant'
 		});
-		
+
 		// 检查当前页面是否为文章页面，如果是则触发自定义事件用于初始化评论系统
 		setTimeout(() => {
 			if (document.getElementById('tcomment')) {
@@ -1161,7 +744,7 @@ const setup = () => {
 			}
 		}, 300);
 	});
-	window.swup.hooks.on('visit:end', (_visit: {to: {url: string}}) => {
+	window.swup!.hooks.on('visit:end', (_visit: {to: {url: string}}) => {
 		setTimeout(() => {
 			const heightExtend = document.getElementById('page-height-extend')
 			if (heightExtend) {
@@ -1226,7 +809,7 @@ function scrollFunction() {
 			const isHome = document.body.classList.contains('lg:is-home') && window.innerWidth >= 1024;
 			const currentBannerHeight = isHome ? BANNER_HEIGHT_HOME : BANNER_HEIGHT;
 			const threshold = window.innerHeight * (currentBannerHeight / 100) - 88;
-			
+
 			if (scrollTop >= threshold) {
 				navbar.classList.add('navbar-hidden')
 			} else {
@@ -1259,7 +842,7 @@ function createPhotoSwipe() {
 	lightbox = new PhotoSwipeLightbox({
 		gallery: ".custom-md img, #post-cover img, .moment-images img",
 		pswpModule: () => pswp,
-		closeSVG: '<svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px" fill="#ffffff"><path d="M480-424 284-228q-11 11-28 11t-28-11q-11-11-11-28t11-28l196-196-196-196q-11-11-11-28t11-28q11-11 28-11t28 11l196 196 196-196q11-11 11-28t28 11q11 11 11 28t-11 28L536-480l196 196q11 11 11 28t-11 28q-11 11-28 11t-28-11L480-424Z"/></svg>',
+		closeSVG: '<svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px" fill="#ffffff"><path d="M480-424 284-228q-11 11-28 11t-28-11q-11-11-11-28t11-28l196-196-196-196q-11-11-11-28t11-28q11-11 28-11t28 11l196 196 196-196q11-11 11-28t-11-28L536-480l196 196q11 11 11 28t-11 28q-11 11-28 11t-28-11L480-424Z"/></svg>',
 		zoomSVG: '<svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px" fill="#ffffff"><path d="M340-540h-40q-17 0-28.5-11.5T260-580q0-17 11.5-28.5T300-620h40v-40q0-17 11.5-28.5T380-700q17 0 28.5 11.5T420-660v40h40q17 0 28.5 11.5T500-580q0 17-11.5 28.5T460-540h-40v40q0 17-11.5 28.5T380-460q-17 0-28.5-11.5T340-500v-40Zm40 220q-109 0-184.5-75.5T120-580q0-109 75.5-184.5T380-840q109 0 184.5 75.5T640-580q0 44-14 83t-38 69l224 224q11 11 11 28t-11 28q-11 11-28 11t-28-11L532-372q-30 24-69 38t-83 14Zm0-80q75 0 127.5-52.5T560-580q0-75-52.5-127.5T380-760q-75 0-127.5 52.5T200-580q0 75 52.5 127.5T380-400Z"/></svg>',
 		padding: { top: 20, bottom: 20, left: 20, right: 20 },
 		wheelToZoom: true,
@@ -1292,11 +875,11 @@ const setup = () => {
 	if (!lightbox) {
 		createPhotoSwipe()
 	}
-	window.swup.hooks.on("page:view", () => {
+	window.swup!.hooks.on("page:view", () => {
 		createPhotoSwipe()
 	})
 
-	window.swup.hooks.on(
+	window.swup!.hooks.on(
 		"content:replace",
 		() => {
 			lightbox?.destroy?.()
@@ -1315,6 +898,9 @@ if (window.swup) {
 <script>
 // 全局相册功能 - 重构版本
 class GalleryManager {
+	isInitialized: boolean;
+	clickHandler: ((e: Event) => void) | null;
+
 	constructor() {
 		this.isInitialized = false;
 		this.clickHandler = null;
@@ -1386,17 +972,17 @@ class GalleryManager {
 		modal.className = 'gallery-modal fixed inset-0 bg-black bg-opacity-90 flex items-center justify-center z-50 p-4';
 		modal.style.opacity = '0';
 		modal.style.transition = 'opacity 0.3s ease';
-		
+
 		const modalContent = document.createElement('div');
 		modalContent.className = 'relative max-w-full max-h-full';
-		
+
 		const img = document.createElement('img');
 		img.src = imageSrc;
 		img.alt = '查看图片';
 		img.className = 'max-w-full max-h-full object-contain rounded-lg';
 		img.style.transform = 'scale(0.9)';
 		img.style.transition = 'transform 0.3s ease';
-		
+
 		const closeBtn = document.createElement('button');
 		closeBtn.className = 'close-btn absolute top-4 right-4 bg-black bg-opacity-50 text-white p-2 rounded-full hover:bg-opacity-70 transition-colors';
 		closeBtn.innerHTML = `
@@ -1404,18 +990,18 @@ class GalleryManager {
 				<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
 			</svg>
 		`;
-		
+
 		modalContent.appendChild(img);
 		modalContent.appendChild(closeBtn);
 		modal.appendChild(modalContent);
 		document.body.appendChild(modal);
-		
+
 		// 显示动画
 		requestAnimationFrame(() => {
 			modal.style.opacity = '1';
 			img.style.transform = 'scale(1)';
 		});
-		
+
 		// 事件处理
 		const closeModal = () => {
 			modal.style.opacity = '0';
@@ -1427,11 +1013,11 @@ class GalleryManager {
 				document.removeEventListener('keydown', handleEsc);
 			}, 300);
 		};
-		
+
 		const handleEsc = (e) => {
 			if (e.key === 'Escape') closeModal();
 		};
-		
+
 		closeBtn.addEventListener('click', closeModal);
 		modal.addEventListener('click', (e) => {
 			if (e.target === modal) closeModal();
@@ -1447,22 +1033,22 @@ window.galleryManager = new GalleryManager();
 
 // 相册初始化函数
 const initGallery = () => {
-	window.galleryManager.init();
+	window.galleryManager!.init();
 };
 
 // Swup集成
 const setupGalleryWithSwup = () => {
 	initGallery();
-	
+
 	if (window.swup) {
-		window.swup.hooks.on("page:view", () => {
+		window.swup!.hooks.on("page:view", () => {
 			// 页面切换后重新初始化
 			setTimeout(initGallery, 50);
 		});
-		
-		window.swup.hooks.on("content:replace", () => {
+
+		window.swup!.hooks.on("content:replace", () => {
 			// 页面内容替换前清理
-			window.galleryManager.cleanup();
+			window.galleryManager!.cleanup();
 		}, { before: true });
 	}
 };
@@ -1477,5 +1063,29 @@ if (document.readyState === 'loading') {
 // Swup启用时的处理
 if (!window.swup) {
 	document.addEventListener("swup:enable", setupGalleryWithSwup);
+}
+
+// 初始化主题彩蛋功能
+import { initThemeEasterEgg, cleanupThemeEasterEgg } from '../utils/theme-easter-egg';
+
+const setupThemeEasterEgg = () => {
+	initThemeEasterEgg();
+	
+	if (window.swup) {
+		window.swup!.hooks.on("content:replace", () => {
+			cleanupThemeEasterEgg();
+		}, { before: true });
+		
+		window.swup!.hooks.on("page:view", () => {
+			setTimeout(initThemeEasterEgg, 50);
+		});
+	}
+};
+
+// 初始化主题彩蛋
+if (document.readyState === 'loading') {
+	document.addEventListener('DOMContentLoaded', setupThemeEasterEgg);
+} else {
+	setupThemeEasterEgg();
 }
 </script>

@@ -1,25 +1,26 @@
 ---
-title: Markdown Mermaid
+title: Markdown Mermaid 图表
 published: 2023-10-01
 pinned: false
-description: A simple example of a Markdown blog post with Mermaid.
-tags: [Markdown, Blogging, Mermaid]
-category: Examples
+description: 一个包含 Mermaid 图表的 Markdown 博客文章示例。
+tags: [Markdown, 博客, Mermaid]
+category: 示例
 draft: false
 ---
-# Complete Guide to Markdown with Mermaid Diagrams
+# Markdown 与 Mermaid 图表完整指南
 
-This article demonstrates how to create various complex diagrams using Mermaid in Markdown documents, including flowcharts, sequence diagrams, Gantt charts, class diagrams, and state diagrams.
+本文演示如何在 Markdown 文档中使用 Mermaid 创建各种复杂图表，包括流程图、序列图、甘特图、类图和状态图。
 
-## Flowchart Example
+## 流程图示例
 
-Flowcharts are excellent for representing processes or algorithm steps.
-
-
-
+流程图非常适合表示流程或算法步骤。
 
 ```mermaid
 graph TD
+    A[开始] --> B{条件检查}
+    B -->|是| C[流程步骤 1]
+    B -->|否| D[流程步骤 2]
+    C --> E[子流程]
     A[Start] --> B{Condition Check}
     B -->|Yes| C[Process Step 1]
     B -->|No| D[Process Step 2]

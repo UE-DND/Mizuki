@@ -1,6 +1,4 @@
 ---
-import { i18n } from '../../i18n/translation';
-import I18nKey from '../../i18n/i18nKey';
 import Icon from '../misc/Icon.astro';
 
 export interface Props {
@@ -62,10 +60,10 @@ const getTypeColor = (type: string) => {
 // 类型文本映射
 const getTypeText = (type: string) => {
   switch (type) {
-    case 'education': return i18n(I18nKey.timelineEducation);
-    case 'work': return i18n(I18nKey.timelineWork);
-    case 'project': return i18n(I18nKey.timelineProject);
-    case 'achievement': return i18n(I18nKey.timelineAchievement);
+    case 'education': return '教育';
+    case 'work': return '工作';
+    case 'project': return '项目';
+    case 'achievement': return '成就';
     default: return type;
   }
 };
@@ -94,16 +92,16 @@ const getDuration = (startDate: string, endDate?: string) => {
   const diffMonths = Math.ceil(diffTime / (1000 * 60 * 60 * 24 * 30));
   
   if (diffMonths < 12) {
-    return `${diffMonths} ${i18n(I18nKey.timelineMonths)}`;
-  } else {
-    const years = Math.floor(diffMonths / 12);
-    const months = diffMonths % 12;
-    if (months === 0) {
-      return `${years} ${i18n(I18nKey.timelineYears)}`;
-    } else {
-      return `${years} ${i18n(I18nKey.timelineYears)} ${months} ${i18n(I18nKey.timelineMonths)}`;
-    }
+    return `${diffMonths} 个月`;
   }
+  
+  const years = Math.floor(diffMonths / 12);
+  const months = diffMonths % 12;
+  if (months === 0) {
+    return `${years} 年`;
+  }
+  
+  return `${years} 年 ${months} 个月`;
 };
 
 // 尺寸样式映射
@@ -188,7 +186,7 @@ const itemColor = item.color || '#3B82F6';
         <!-- 时间和地点信息 -->
         <div class={`flex items-center gap-4 mb-3 text-black/60 dark:text-white/60 ${sizeClasses.meta}`}>
           <div>
-            {formatDate(item.startDate)} - {item.endDate ? formatDate(item.endDate) : i18n(I18nKey.timelinePresent)}
+            {formatDate(item.startDate)} - {item.endDate ? formatDate(item.endDate) : '至今'}
           </div>
           <div>•</div>
           <div>{getDuration(item.startDate, item.endDate)}</div>
@@ -209,7 +207,7 @@ const itemColor = item.color || '#3B82F6';
         {item.achievements && item.achievements.length > 0 && (
           <div class="mb-4">
             <h4 class={`font-semibold text-black/80 dark:text-white/80 mb-2 ${sizeClasses.meta}`}>
-              {i18n(I18nKey.timelineAchievements)}
+              成就
             </h4>
             <ul class="space-y-1">
               {item.achievements.map((achievement) => (
@@ -290,7 +288,7 @@ const itemColor = item.color || '#3B82F6';
       
       <!-- 时间信息 -->
       <div class={`text-black/70 dark:text-white/70 mb-3 ${sizeClasses.meta}`}>
-        {formatDate(item.startDate)} - {item.endDate ? formatDate(item.endDate) : i18n(I18nKey.timelinePresent)} ({getDuration(item.startDate, item.endDate)})
+        {formatDate(item.startDate)} - {item.endDate ? formatDate(item.endDate) : '至今'} ({getDuration(item.startDate, item.endDate)})
       </div>
       
       <!-- 描述 -->
@@ -302,7 +300,7 @@ const itemColor = item.color || '#3B82F6';
       {item.achievements && item.achievements.length > 0 && (
         <div class="mb-4">
           <h4 class={`font-semibold text-black/80 dark:text-white/80 mb-2 ${sizeClasses.meta}`}>
-            {i18n(I18nKey.timelineAchievements)}
+            成就
           </h4>
           <ul class="space-y-1">
             {item.achievements.slice(0, 3).map((achievement) => (
@@ -358,10 +356,10 @@ const itemColor = item.color || '#3B82F6';
 
 <script>
   // 加载 Iconify 图标库
-  if (typeof window !== 'undefined' && !window.iconifyLoaded) {
+  if (typeof window !== 'undefined' && !(window as any).iconifyLoaded) {
     const script = document.createElement('script');
     script.src = 'https://code.iconify.design/iconify-icon/1.0.7/iconify-icon.min.js';
     document.head.appendChild(script);
-    window.iconifyLoaded = true;
+    (window as any).iconifyLoaded = true;
   }
 </script>

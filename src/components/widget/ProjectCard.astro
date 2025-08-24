@@ -1,7 +1,4 @@
 ---
-import { i18n } from '../../i18n/translation';
-import I18nKey from '../../i18n/i18nKey';
-
 export interface Props {
   project: {
     id: string;
@@ -48,11 +45,11 @@ const getStatusStyle = (status: string) => {
 const getStatusText = (status: string) => {
   switch (status) {
     case 'completed':
-      return i18n(I18nKey.projectsCompleted);
+      return '已完成';
     case 'in-progress':
-      return i18n(I18nKey.projectsInProgress);
+      return '进行中';
     case 'planned':
-      return i18n(I18nKey.projectsPlanned);
+      return '计划中';
     default:
       return status;
   }
@@ -166,7 +163,7 @@ const sizeClasses = getSizeClasses(size);
           rel="noopener noreferrer"
           class={`text-blue-600 dark:text-blue-400 hover:underline font-medium transition-colors ${sizeClasses.links}`}
         >
-          {i18n(I18nKey.projectsDemo)}
+          演示
         </a>
       )}
       {project.sourceUrl && (
@@ -176,7 +173,7 @@ const sizeClasses = getSizeClasses(size);
           rel="noopener noreferrer"
           class={`text-gray-600 dark:text-gray-400 hover:underline font-medium transition-colors ${sizeClasses.links}`}
         >
-          {i18n(I18nKey.projectsSource)}
+          源码
         </a>
       )}
     </div>
@@ -185,7 +182,7 @@ const sizeClasses = getSizeClasses(size);
     {project.featured && (
       <div class="absolute top-3 left-3">
         <span class="px-2 py-1 text-xs bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400 rounded-full flex items-center gap-1">
-          ⭐ {i18n(I18nKey.projectsFeatured)}
+          ⭐ 精选
         </span>
       </div>
     )}

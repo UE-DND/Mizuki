@@ -20,15 +20,6 @@ export type SiteConfig = {
 		hue: number;
 		fixed: boolean;
 	};
-	translate?: {
-		enable: boolean; // 是否启用翻译功能
-		service?: string; // 翻译服务类型，如 'client.edge'
-		defaultLanguage?: string; // 默认语言
-		showSelectTag?: boolean; // 是否显示语言选择下拉框
-		autoDiscriminate?: boolean; // 是否自动识别用户语言
-		ignoreClasses?: string[]; // 忽略翻译的CSS类名
-		ignoreTags?: string[]; // 忽略翻译的HTML标签
-	};
 	banner: {
 		enable: boolean;
 		src:
@@ -58,6 +49,9 @@ export type SiteConfig = {
 			enable: boolean;
 			text: string;
 			url?: string;
+		};
+		navbar?: {
+			transparentMode?: "semi" | "full"; // 导航栏透明模式
 		};
 	};
 	toc: {
@@ -174,6 +168,12 @@ export type AnnouncementConfig = {
 
 export type MusicPlayerConfig = {
 	enable: boolean; // 是否启用音乐播放器功能
+	mode?: "local" | "meting"; // 播放模式：本地或 Meting API
+	meting_api?: string; // Meting API 地址
+	id?: string; // Meting 歌单/音乐 ID
+	server?: string; // Meting 服务器：netease、tencent、kugou 等
+	type?: string; // Meting 类型：playlist、song 等
+	initiallyHidden?: boolean; // 初始状态是否隐藏播放器
 };
 
 export type FooterConfig = {
@@ -203,7 +203,7 @@ export type WidgetComponentConfig = {
 		hidden?: ("mobile" | "tablet" | "desktop")[]; // 在指定设备上隐藏
 		collapseThreshold?: number; // 折叠阈值
 	};
-	customProps?: Record<string, any>; // 自定义属性，用于扩展组件功能
+	customProps?: Record<string, unknown>; // 自定义属性，用于扩展组件功能
 };
 
 export type SidebarLayoutConfig = {
