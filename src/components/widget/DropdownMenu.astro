@@ -3,6 +3,7 @@ import { Icon } from "astro-icon/components";
 import { type NavBarLink, LinkPreset } from "../../types/config";
 import { LinkPresets } from "../../constants/link-presets";
 import { url } from "../../utils/url-utils";
+import { navBarConfig } from "../../config";
 
 interface Props {
 	link: NavBarLink;
@@ -22,6 +23,15 @@ const processedLink = {
 	})
 };
 
+// 图标渲染配置
+const iconsEnable = !!navBarConfig.icons?.enable;
+const iconSet = navBarConfig.icons?.defaultSet ?? "material-symbols";
+const iconSize = navBarConfig.icons?.size ?? 18;
+function getIconName(i?: string) {
+  if (!i) return null;
+  return i.includes(":") ? i : `${iconSet}:${i}`;
+}
+
 const hasChildren = processedLink.children && processedLink.children.length > 0;
 
 ---
@@ -35,7 +45,10 @@ const hasChildren = processedLink.children && processedLink.children.length > 0;
 			data-dropdown-trigger
 		>
 			<div class="flex items-center">
-				{processedLink.name}
+				{iconsEnable && processedLink.icon && (
+					<Icon name={getIconName(processedLink.icon)} style={`font-size: ${iconSize}px`} class="mr-2 -translate-y-[1px]" />
+				)}
+				<span>{processedLink.name}</span>
 				<Icon name="material-symbols:keyboard-arrow-down-rounded" class="text-[1.25rem] transition-transform duration-200 dropdown-arrow" />
 			</div>
 		</button>
@@ -48,7 +61,12 @@ const hasChildren = processedLink.children && processedLink.children.length > 0;
 						class="dropdown-item"
 						aria-label={child.name}
 					>
-						<span>{child.name}</span>
+						<div class="flex items-center">
+							{iconsEnable && child.icon && (
+								<Icon name={getIconName(child.icon)} style={`font-size: ${iconSize}px`} class="mr-2 -translate-y-[1px]" />
+							)}
+							<span>{child.name}</span>
+						</div>
 						{child.external && (
 							<Icon name="fa6-solid:arrow-up-right-from-square" class="text-[0.75rem] text-black/25 dark:text-white/25" />
 						)}
@@ -64,7 +82,10 @@ const hasChildren = processedLink.children && processedLink.children.length > 0;
 			class="btn-plain scale-animation rounded-lg h-11 font-semibold text-base px-5 active:scale-95"
 		>
 			<div class="flex items-center">
-				{processedLink.name}
+				{iconsEnable && processedLink.icon && (
+					<Icon name={getIconName(processedLink.icon)} style={`font-size: ${iconSize}px`} class="mr-2 -translate-y-[1px]" />
+				)}
+				<span>{processedLink.name}</span>
 				{processedLink.external && <Icon name="fa6-solid:arrow-up-right-from-square" class="text-[0.875rem] transition -translate-y-[1px] ml-1 text-black/[0.2] dark:text-white/[0.2]" />}
 			</div>
 		</a>
@@ -101,6 +122,26 @@ const hasChildren = processedLink.children && processedLink.children.length > 0;
 	.dropdown-container:hover .dropdown-arrow,
 	.dropdown-container:focus-within .dropdown-arrow {
 		@apply rotate-180;
+	}
+
+	/* 基于点击的显隐控制：
+	 * - [data-open="true"] 强制展开（非悬停也可见）
+	 * - [data-open="false"] 强制收起（覆盖 :hover/:focus-within）
+	 */
+	.dropdown-container[data-open="true"] .dropdown-menu {
+		@apply opacity-100 visible pointer-events-auto translate-y-0;
+	}
+
+	.dropdown-container[data-open="true"] .dropdown-arrow {
+		@apply rotate-180;
+	}
+
+	.dropdown-container[data-open="false"] .dropdown-menu {
+		@apply opacity-0 invisible pointer-events-none translate-y-[-8px];
+	}
+
+	.dropdown-container[data-open="false"] .dropdown-arrow {
+		@apply rotate-0;
 	}
 
 	.dropdown-content {
@@ -167,6 +208,40 @@ const hasChildren = processedLink.children && processedLink.children.length > 0;
 					}
 				} else if (e.key === 'Escape') {
 					closeDropdown(dropdown, trigger, menu);
+					// 避免 :focus-within 导致再次显示
+					(trigger as HTMLElement).blur();
+				}
+			});
+			
+			// 点击按钮切换（覆盖 :hover 展示）
+			trigger.addEventListener('click', function(e) {
+				e.preventDefault();
+				const state = dropdown.getAttribute('data-open');
+				if (state === 'true') {
+					closeDropdown(dropdown, trigger, menu);
+					// 关闭后移除焦点，避免 :focus-within 再次显示
+					(trigger as HTMLElement).blur();
+				} else if (state === 'false') {
+					openDropdown(dropdown, trigger, menu);
+				} else {
+					// 当前可能因 :hover 可见 -> 置为关闭以覆盖 :hover
+					closeDropdown(dropdown, trigger, menu);
+					// 关闭后移除焦点
+					(trigger as HTMLElement).blur();
+				}
+			});
+
+			// 悬停再次进入时，若之前是强制关闭，则清理以恢复悬停逻辑
+			dropdown.addEventListener('pointerenter', () => {
+				if (dropdown.getAttribute('data-open') === 'false') {
+					dropdown.removeAttribute('data-open');
+				}
+			});
+
+			// 离开容器时，如果处于强制关闭，则清理该状态，恢复默认悬停
+			dropdown.addEventListener('pointerleave', () => {
+				if (dropdown.getAttribute('data-open') === 'false') {
+					dropdown.removeAttribute('data-open');
 				}
 			});
 			
@@ -197,6 +272,10 @@ const hasChildren = processedLink.children && processedLink.children.length > 0;
 					const menu = dropdown.querySelector('[data-dropdown-menu]');
 					if (trigger && menu) {
 						closeDropdown(dropdown, trigger, menu);
+						// 移除焦点，避免 :focus-within 造成菜单常驻
+						(trigger as HTMLElement).blur();
+						// 重置为默认悬停逻辑，避免下次悬停被“强制关闭”拦截
+						dropdown.removeAttribute('data-open');
 					}
 				}
 			});
@@ -204,23 +283,24 @@ const hasChildren = processedLink.children && processedLink.children.length > 0;
 	});
 	
 	function toggleDropdown(dropdown, trigger, menu) {
-		const isOpen = trigger.getAttribute('aria-expanded') === 'true';
-		if (isOpen) {
+		const state = dropdown.getAttribute('data-open');
+		if (state === 'true') {
 			closeDropdown(dropdown, trigger, menu);
-		} else {
+		} else if (state === 'false') {
 			openDropdown(dropdown, trigger, menu);
+		} else {
+			// 无显式状态（可能因悬停而显示），切换为关闭
+			closeDropdown(dropdown, trigger, menu);
 		}
 	}
 	
 	function openDropdown(dropdown, trigger, menu) {
 		trigger.setAttribute('aria-expanded', 'true');
-		menu.classList.remove('opacity-0', 'invisible', 'pointer-events-none', 'translate-y-[-8px]');
-		menu.classList.add('opacity-100', 'visible', 'pointer-events-auto', 'translate-y-0');
+		dropdown.setAttribute('data-open', 'true');
 	}
 	
 	function closeDropdown(dropdown, trigger, menu) {
 		trigger.setAttribute('aria-expanded', 'false');
-		menu.classList.add('opacity-0', 'invisible', 'pointer-events-none', 'translate-y-[-8px]');
-		menu.classList.remove('opacity-100', 'visible', 'pointer-events-auto', 'translate-y-0');
+		dropdown.setAttribute('data-open', 'false');
 	}
 </script>

@@ -47,18 +47,18 @@ function processNavLinks(links: (NavBarLink | LinkPreset)[]): NavBarLink[] {
 
 let links: NavBarLink[] = processNavLinks(navBarConfig.links);
 ---
-<div id="navbar" class="z-50 onload-animation" data-transparent-mode={navbarTransparentMode} data-is-home={isHomePage}>
+<div id="navbar" class="z-50 onload-animation" data-transparent-mode={navbarTransparentMode} data-default-mode={navbarTransparentMode} data-is-home={isHomePage}>
     <div class="absolute h-8 left-0 right-0 -top-8 bg-[var(--card-bg)] transition"></div> <!-- used for onload animation -->
     <div class:list={[
         className,
         "!overflow-visible max-w-[var(--page-width)] h-[4.5rem] mx-auto flex items-center justify-between px-4"]}>
-        <a href={url('/')} class="btn-plain scale-animation rounded-lg h-[3.25rem] px-5 font-bold active:scale-95">
-            <div class="flex flex-row text-[var(--primary)] items-center text-lg font-semibold">
-                <Icon name="material-symbols:home-outline-rounded" class="text-[1.75rem] mb-1 mr-2" />
-                {siteConfig.title}
+        <a href={url('/')} class="navbar-brand btn-plain scale-animation rounded-xl h-[3.25rem] px-5 font-bold active:scale-95 transition-all duration-300 ease-in-out">
+            <div class="navbar-brand-content flex flex-row items-center text-lg font-bold">
+                <Icon name="material-symbols:home-outline-rounded" class="navbar-brand-icon text-[1.75rem] mb-1 mr-2 transition-transform duration-300" />
+                <span class="navbar-brand-text">{siteConfig.title}</span>
             </div>
         </a>
-        <div class="hidden md:flex items-center space-x-1">
+        <div class="navbar-links hidden md:flex items-center space-x-1">
             {navBarConfig.showHomeButton && (
                 <a 
                     aria-label="首页" 
@@ -118,7 +118,104 @@ function loadButtonScript() {
     }
 }
 
+// 全局变量，避免重复绑定事件
+let scrollListener: ((e: Event) => void) | null = null;
+let rafId: number | null = null;
+
+// 导航栏透明模式动态切换逻辑
+function initNavbarTransparency() {
+    const navbar = document.getElementById('navbar');
+    if (!navbar) return;
+    
+    // 清理之前的监听器
+    if (scrollListener) {
+        window.removeEventListener('scroll', scrollListener);
+        scrollListener = null;
+    }
+    if (rafId) {
+        cancelAnimationFrame(rafId);
+        rafId = null;
+    }
+    
+    // 动态判断是否为首页
+    const currentPath = window.location.pathname;
+    const isHomePage = currentPath === '/' || currentPath === '' || currentPath === '/index' || currentPath === '/index.html';
+    const originalMode = navbar.dataset.defaultMode || 'semi';
+    
+    // 更新 data-is-home 属性
+    navbar.dataset.isHome = isHomePage.toString();
+    
+    // 非首页始终使用semi模式，立即设置并返回
+    if (!isHomePage) {
+        navbar.dataset.transparentMode = 'semi';
+        return;
+    }
+    
+    // 首页根据滚动位置动态切换
+    let scrollThreshold = 50; // 滚动阈值，单位：像素
+    
+    function updateNavbarMode() {
+        if (!navbar) return;
+        
+        const scrollTop = window.pageYOffset || document.documentElement.scrollTop;
+        
+        // 当滚动位置大于阈值时，切换到semi模式
+        if (scrollTop > scrollThreshold) {
+            if (navbar.dataset.transparentMode !== 'semi') {
+                navbar.dataset.transparentMode = 'semi';
+            }
+        } else {
+            // 在顶部时恢复原始模式
+            if (navbar.dataset.transparentMode !== originalMode) {
+                navbar.dataset.transparentMode = originalMode;
+            }
+        }
+    }
+    
+    // 使用防抖优化性能
+    let ticking = false;
+    scrollListener = function() {
+        if (!ticking) {
+            rafId = window.requestAnimationFrame(function() {
+                updateNavbarMode();
+                ticking = false;
+            });
+            ticking = true;
+        }
+    };
+    
+    // 初始化时检查一次
+    updateNavbarMode();
+    // 在页面切换或滚动复位后再校准一次（双 rAF 确保布局与滚动状态已稳定）
+    requestAnimationFrame(() => {
+        requestAnimationFrame(() => updateNavbarMode());
+    });
+    
+    // 监听滚动事件（仅在首页）
+    window.addEventListener('scroll', scrollListener, { passive: true });
+}
+
 loadButtonScript();
+
+// 立即执行初始化
+document.addEventListener('DOMContentLoaded', () => {
+    initNavbarTransparency();
+});
+
+// 如果 DOM 已经加载完成，立即执行
+if (document.readyState !== 'loading') {
+    initNavbarTransparency();
+}
+
+// 监听 Astro 页面切换事件
+document.addEventListener('astro:page-load', () => {
+    initNavbarTransparency();
+});
+
+// 监听 Astro View Transitions API
+document.addEventListener('astro:after-swap', () => {
+    initNavbarTransparency();
+});
 </script>
 
 {import.meta.env.PROD && <script is:inline define:vars={{scriptUrl: url('/pagefind/pagefind.js')}}>

@@ -76,6 +76,7 @@ let playlist: Song[] = [];
 let currentIndex = 0;
 let audio: HTMLAudioElement;
 let progressBar: HTMLElement;
+let progressThumb: HTMLElement;
 let volumeBar: HTMLElement;
 
 const localPlaylist: Song[] = [
@@ -297,6 +298,32 @@ function setProgress(event: MouseEvent | Touch) {
 	currentTime = percent * duration;
 }
 
+// 点击/轻触进度条时立即跳转
+function seekByEvent(event: MouseEvent | Touch) {
+	if (!progressBar || duration <= 0) return;
+	const rect = progressBar.getBoundingClientRect();
+	const clientX = "clientX" in event ? event.clientX : (event as Touch).clientX;
+	if (clientX === undefined) return;
+	const percent = Math.max(0, Math.min(1, (clientX - rect.left) / rect.width));
+	currentTime = percent * duration;
+	if (audio && duration > 0) {
+		audio.currentTime = currentTime;
+	}
+}
+
+function handleBarClick(event: MouseEvent) {
+	// 仅处理进度条的点击跳转（拖拽由指示器负责）
+	seekByEvent(event);
+}
+
+function handleBarTouchStart(event: TouchEvent) {
+	// 仅处理“点按跳转”，指示器的触摸拖拽会 stopPropagation
+	if (event.touches.length > 0) {
+		seekByEvent(event.touches[0]);
+	}
+	event.preventDefault();
+}
+
 function handleProgressMouseDown(event: MouseEvent) {
 	if (event.button !== 0) return; // 只响应左键
 	if (typeof document === "undefined") return; // 服务器端渲染检查
@@ -354,6 +381,10 @@ function handleProgressTouchStart(event: TouchEvent) {
 	if (event.touches.length > 0) {
 		setProgress(event.touches[0]);
 	}
+	if (typeof document !== "undefined") {
+		document.addEventListener("touchmove", handleProgressTouchMove, { passive: false });
+		document.addEventListener("touchend", handleProgressTouchEnd);
+	}
 	event.preventDefault();
 }
 
@@ -386,6 +417,10 @@ function handleProgressTouchEnd() {
 		if (wasPlayingBeforeDrag) {
 			audio.play().catch(() => {});
 		}
+	}
+	if (typeof document !== "undefined") {
+		document.removeEventListener("touchmove", handleProgressTouchMove);
+		document.removeEventListener("touchend", handleProgressTouchEnd);
 	}
 }
 
@@ -489,8 +524,9 @@ function handleAudioEvents() {
 		isPlaying = false;
 	});
 	audio.addEventListener("timeupdate", () => {
-		currentTime = audio.currentTime;
-	});
+        if (isDraggingProgress) return;
+        currentTime = audio.currentTime;
+    });
 	audio.addEventListener("ended", () => {
 		if (isRepeating === 1) {
 			audio.currentTime = 0;
@@ -683,10 +719,9 @@ onDestroy(() => {
         <div class="progress-section mb-4">
             <div class="progress-bar relative flex-1 h-2 bg-[var(--btn-regular-bg)] rounded-full cursor-pointer"
                  bind:this={progressBar}
+                 on:click={handleBarClick}
                  on:mousedown={handleProgressMouseDown}
                  on:touchstart={handleProgressTouchStart}
-                 on:touchmove={handleProgressTouchMove}
-                 on:touchend={handleProgressTouchEnd}
                  on:keydown={(e) => {
                      if (e.key === 'ArrowLeft') {
                          e.preventDefault();
@@ -717,6 +752,10 @@ onDestroy(() => {
                          style="width: {duration > 0 ? (currentTime / duration) * 100 : 0}%"></div>
                 </div>
                 <div class="progress-thumb absolute top-1/2 w-4 h-4 bg-[var(--primary)] rounded-full border-2 border-white aspect-square"
+                     bind:this={progressThumb}
+                     role="none"
+                     on:mousedown|stopPropagation={handleProgressMouseDown}
+                     on:touchstart|stopPropagation={handleProgressTouchStart}
                      style="left: calc({duration > 0 ? (currentTime / duration) * 100 : 0}%)">
                 </div>
             </div>

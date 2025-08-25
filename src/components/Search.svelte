@@ -155,15 +155,33 @@ $: if (initialized && keywordMobile) {
 </script>
 
 <!-- search bar for desktop view -->
-<div id="search-bar" class="hidden lg:flex transition-all items-center h-11 mr-2 rounded-lg
-      bg-black/[0.04] hover:bg-black/[0.06] focus-within:bg-black/[0.06]
-      dark:bg-white/5 dark:hover:bg-white/10 dark:focus-within:bg-white/10
-">
-    <Icon icon="material-symbols:search" class="absolute text-[1.25rem] pointer-events-none ml-3 transition my-auto text-black/30 dark:text-white/30"></Icon>
-    <input placeholder="搜索" bind:value={keywordDesktop} on:focus={() => search(keywordDesktop, true)}
-           class="transition-all pl-10 text-sm bg-transparent outline-0
-         h-full w-40 active:w-60 focus:w-60 text-black/50 dark:text-white/50"
-    >
+<div
+  id="search-bar"
+  role="search"
+  class="hidden lg:flex relative items-center h-11 mr-2 rounded-full
+    bg-white/40 dark:bg-white/10 backdrop-blur-md
+    border border-white/40 dark:border-white/15
+    shadow-[0_1px_2px_rgba(0,0,0,0.06),0_2px_6px_rgba(0,0,0,0.05)]
+    hover:bg-white/60 focus-within:bg-white/60 dark:hover:bg-white/15 dark:focus-within:bg-white/15
+    focus-within:ring-2 focus-within:ring-black/10 dark:focus-within:ring-white/20
+    transition-all duration-300 ease-out group
+    w-40 hover:w-60 focus-within:w-60 hover:ml-[-5rem] focus-within:ml-[-5rem]"
+  style="transition-timing-function:cubic-bezier(0.2,0,0,1)"
+>
+  <Icon
+    icon="material-symbols:search"
+    class="absolute left-3 text-[1.25rem] pointer-events-none my-auto
+      text-black/60 dark:text-white/60 transition-colors duration-300
+      group-focus-within:text-black/80 dark:group-focus-within:text-white/80"
+  />
+  <input
+    placeholder="搜索"
+    bind:value={keywordDesktop}
+    on:focus={() => search(keywordDesktop, true)}
+    class="pl-10 pr-3 text-sm bg-transparent outline-0 h-full w-full
+      text-black/90 dark:text-white/90 placeholder:text-black/50 dark:placeholder:text-white/50"
+    type="search"
+  />
 </div>
 
 <!-- toggle btn for phone/tablet view -->
@@ -177,15 +195,28 @@ $: if (initialized && keywordMobile) {
 top-20 left-4 md:left-[unset] right-4 shadow-2xl rounded-2xl p-2">
 
     <!-- search bar inside panel for phone/tablet -->
-    <div id="search-bar-inside" class="flex relative lg:hidden transition-all items-center h-11 rounded-xl
-      bg-black/[0.04] hover:bg-black/[0.06] focus-within:bg-black/[0.06]
-      dark:bg-white/5 dark:hover:bg-white/10 dark:focus-within:bg-white/10
-  ">
-        <Icon icon="material-symbols:search" class="absolute text-[1.25rem] pointer-events-none ml-3 transition my-auto text-black/30 dark:text-white/30"></Icon>
-        <input placeholder="Search" bind:value={keywordMobile}
-               class="pl-10 absolute inset-0 text-sm bg-transparent outline-0
-               focus:w-60 text-black/50 dark:text-white/50"
-        >
+    <div
+      id="search-bar-inside"
+      class="flex relative lg:hidden items-center h-11 rounded-full px-0
+        bg-[var(--btn-regular-bg)] border border-black/10 dark:border-white/10
+        shadow-[0_1px_2px_rgba(0,0,0,0.06),0_2px_6px_rgba(0,0,0,0.05)]
+        focus-within:bg-[var(--btn-regular-bg-hover)] hover:bg-[var(--btn-regular-bg-hover)]
+        focus-within:ring-2 focus-within:ring-[var(--primary)] focus-within:ring-opacity-60
+        transition-all duration-300 ease-out"
+      style="transition-timing-function:cubic-bezier(0.2,0,0,1)"
+    >
+      <Icon
+        icon="material-symbols:search"
+        class="absolute left-3 text-[1.25rem] pointer-events-none my-auto
+          text-black/60 dark:text-white/60 transition-colors duration-300"
+      />
+      <input
+        placeholder="搜索"
+        bind:value={keywordMobile}
+        class="pl-10 pr-3 flex-1 h-full text-sm bg-transparent outline-0
+          text-black/90 dark:text-white/90 placeholder:text-black/50 dark:placeholder:text-white/50"
+        type="search"
+      />
     </div>
 
     <!-- search results -->

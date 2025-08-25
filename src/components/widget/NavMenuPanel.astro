@@ -3,6 +3,7 @@ import { Icon } from "astro-icon/components";
 import { type NavBarLink, LinkPreset } from "../../types/config";
 import { LinkPresets } from "../../constants/link-presets";
 import { url } from "../../utils/url-utils";
+import { navBarConfig } from "../../config";
 
 interface Props {
 	links: NavBarLink[];
@@ -18,6 +19,15 @@ const processedLinks = Astro.props.links.map((link: NavBarLink): NavBarLink => (
 		return child;
 	})
 }));
+
+// 图标渲染配置
+const iconsEnable = !!navBarConfig.icons?.enable;
+const iconSet = navBarConfig.icons?.defaultSet ?? "material-symbols";
+const iconSize = navBarConfig.icons?.size ?? 18;
+function getIconName(i?: string) {
+  if (!i) return null;
+  return i.includes(":") ? i : `${iconSet}:${i}`;
+}
 ---
 <div id="nav-menu-panel" class:list={["float-panel float-panel-closed absolute transition-all fixed right-4 px-2 py-2 max-h-[80vh] overflow-y-auto"]}>
     {processedLinks.map((link) => (
@@ -31,22 +41,28 @@ const processedLinks = Astro.props.links.map((link: NavBarLink): NavBarLink => (
                         data-mobile-dropdown-trigger
                         aria-expanded="false"
                     >
-                        <div class="transition text-black/75 dark:text-white/75 font-bold group-hover:text-[var(--primary)] group-active:text-[var(--primary)]">
-                            {link.name}
+                        <div class="flex items-center transition text-black/75 dark:text-white/75 font-bold group-hover:text-[var(--primary)] group-active:text-[var(--primary)]">
+                            {iconsEnable && link.icon && (
+                                <Icon name={getIconName(link.icon)} style={`font-size: ${iconSize}px`} class="mr-2 -translate-y-[1px]" />
+                            )}
+                            <span>{link.name}</span>
                         </div>
                         <Icon name="material-symbols:keyboard-arrow-down-rounded"
                               class="transition text-[1.25rem] text-[var(--primary)] mobile-dropdown-arrow duration-200"
                         />
                     </button>
                     <div class="mobile-submenu" data-mobile-submenu>
-                        {link.children.map((child) => (
+                        {(link.children as NavBarLink[]).map((child) => (
                             <a href={child.external ? child.url : url(child.url)} 
                                class="group flex justify-between items-center py-2 pl-6 pr-1 rounded-lg gap-8
                                    hover:bg-[var(--btn-plain-bg-hover)] active:bg-[var(--btn-plain-bg-active)] transition"
                                target={child.external ? "_blank" : null}
                             >
-                                <div class="transition text-black/60 dark:text-white/60 font-medium group-hover:text-[var(--primary)] group-active:text-[var(--primary)]">
-                                    {child.name}
+                                <div class="flex items-center transition text-black/60 dark:text-white/60 font-medium group-hover:text-[var(--primary)] group-active:text-[var(--primary)]">
+                                    {iconsEnable && child.icon && (
+                                        <Icon name={getIconName(child.icon)} style={`font-size: ${iconSize}px`} class="mr-2 -translate-y-[1px]" />
+                                    )}
+                                    <span>{child.name}</span>
                                 </div>
                                 {child.external && <Icon name="fa6-solid:arrow-up-right-from-square"
                                       class="transition text-[0.75rem] text-black/25 dark:text-white/25 -translate-x-1"
@@ -62,8 +78,11 @@ const processedLinks = Astro.props.links.map((link: NavBarLink): NavBarLink => (
                 "
                    target={link.external ? "_blank" : null}
                 >
-                    <div class="transition text-black/75 dark:text-white/75 font-bold group-hover:text-[var(--primary)] group-active:text-[var(--primary)]">
-                        {link.name}
+                    <div class="flex items-center transition text-black/75 dark:text-white/75 font-bold group-hover:text-[var(--primary)] group-active:text-[var(--primary)]">
+                        {iconsEnable && link.icon && (
+                            <Icon name={getIconName(link.icon)} style={`font-size: ${iconSize}px`} class="mr-2 -translate-y-[1px]" />
+                        )}
+                        <span>{link.name}</span>
                     </div>
                     {!link.external && <Icon name="material-symbols:chevron-right-rounded"
                           class="transition text-[1.25rem] text-[var(--primary)]"

@@ -44,11 +44,11 @@ const style = Astro.props.style;
             
             {config.closable && (
                 <button 
-                    class="btn-regular rounded-lg h-8 w-8 text-sm hover:bg-red-100 dark:hover:bg-red-900/30 transition-colors"
+                    class="close-announcement-btn btn-regular rounded-lg h-8 w-8 text-sm transition-all duration-200 ease-out relative overflow-hidden"
                     onclick="closeAnnouncement()"
                     aria-label="关闭公告"
                 >
-                    <Icon name="fa6-solid:xmark" class="text-sm" />
+                    <Icon name="fa6-solid:xmark" class="text-sm transition-transform duration-200 ease-out" />
                 </button>
             )}
         </div>
@@ -78,3 +78,82 @@ const style = Astro.props.style;
     // 使公告栏函数全局可用
     (window as any).closeAnnouncement = closeAnnouncement;
 </script>
+
+<style>
+    /* MD3规范关闭按钮样式 */
+    .close-announcement-btn {
+        color: var(--primary); /* 使用主题色 */
+    }
+    
+    .close-announcement-btn::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: #dc2626; /* red-600 */
+        opacity: 0;
+        transition: opacity 200ms cubic-bezier(0.4, 0, 0.2, 1);
+        border-radius: inherit;
+    }
+    
+    .close-announcement-btn:hover {
+        color: #991b1b; /* red-800 */
+        background: rgba(220, 38, 38, 0.08); /* red-600/8% */
+        transform: scale(1.05);
+    }
+    
+    .close-announcement-btn:hover::before {
+        opacity: 0.08;
+    }
+    
+    .close-announcement-btn:hover .text-sm {
+        transform: scale(1.1);
+    }
+    
+    .close-announcement-btn:active {
+        background: rgba(220, 38, 38, 0.12); /* red-600/12% */
+        transform: scale(0.95);
+    }
+    
+    .close-announcement-btn:active::before {
+        opacity: 0.12;
+    }
+    
+    /* 暗色主题适配 */
+    :root.dark .close-announcement-btn {
+        color: var(--primary); /* 使用主题色 */
+    }
+    
+    :root.dark .close-announcement-btn::before {
+        background: #f87171; /* red-400 */
+    }
+    
+    :root.dark .close-announcement-btn:hover {
+        color: #fca5a5; /* red-300 */
+        background: rgba(248, 113, 113, 0.12); /* red-400/12% */
+    }
+    
+    :root.dark .close-announcement-btn:hover::before {
+        opacity: 0.12;
+    }
+    
+    :root.dark .close-announcement-btn:active {
+        background: rgba(248, 113, 113, 0.16); /* red-400/16% */
+    }
+    
+    :root.dark .close-announcement-btn:active::before {
+        opacity: 0.16;
+    }
+    
+    /* 焦点状态 - 无障碍支持 */
+    .close-announcement-btn:focus-visible {
+        outline: 2px solid #dc2626;
+        outline-offset: 2px;
+    }
+    
+    :root.dark .close-announcement-btn:focus-visible {
+        outline-color: #f87171;
+    }
+</style>

@@ -26,7 +26,7 @@ export const siteConfig: SiteConfig = {
 		hue: 210, // 主题色的默认色相，范围从 0 到 360。例如：红色：0，青色：200，蓝绿色：250，粉色：345
 	},
 	banner: {
-		enable: true, // 暂时禁用横幅以提高加载速度
+		enable: true,
 
 		// 支持单张图片或图片数组，当数组长度 > 1 时自动启用轮播
 		src: {
@@ -85,7 +85,7 @@ export const siteConfig: SiteConfig = {
 		},
 
 		navbar: {
-			transparentMode: "semi", // 导航栏透明模式："semi" 半透明加圆角，"full" 完全透明
+			transparentMode: "full", // 导航栏透明模式："semi" 半透明加圆角，"full" 完全透明
 		},
 	},
 	toc: {
@@ -104,50 +104,33 @@ export const siteConfig: SiteConfig = {
 
 export const navBarConfig: NavBarConfig = {
 	showHomeButton: false, // 是否显示顶部栏的"首页"按钮，默认关闭
+	icons: {
+		enable: true,
+		defaultSet: "material-symbols",
+		size: 18,
+	},
 	links: [
 		LinkPreset.Archive,
 		{
-			name: "链接",
-			url: "/links/",
-			children: [
-				{
-					name: "GitHub",
-					url: "https://github.com/matsuzaka-yuki/Mizuki",
-					external: true,
-				},
-				{
-					name: "Bilibili",
-					url: "https://space.bilibili.com/701864046",
-					external: true,
-				},
-				{
-					name: "Gitee",
-					url: "https://gitee.com/matsuzakayuki/Mizuki",
-					external: true,
-				},
-			],
-		},
-		{
 			name: "我的",
 			url: "/content/",
+			icon: "material-symbols:person-outline-rounded",
 			children: [LinkPreset.Anime, LinkPreset.Diary, LinkPreset.Gallery],
 		},
 		{
 			name: "关于",
 			url: "/content/",
+			icon: "material-symbols:info-outline-rounded",
 			children: [LinkPreset.About, LinkPreset.Friends],
 		},
 		{
 			name: "其他",
 			url: "#",
+			icon: "material-symbols:more-horiz",
 			children: [
 				{
 					name: "项目展示",
 					url: "/projects/",
-				},
-				{
-					name: "技能展示",
-					url: "/skills/",
 				},
 				{
 					name: "时间线",
@@ -169,6 +152,11 @@ export const profileConfig: ProfileConfig = {
 			url: "https://github.com/matsuzaka-yuki",
 		},
 		{
+			name: "X",
+			icon: "fa6-brands:x-twitter",
+			url: "https://x.com/your-x-id",
+		},
+		{
 			name: "Bilibli",
 			icon: "fa6-brands:bilibili",
 			url: "https://space.bilibili.com/your-bilibili-id",
@@ -177,6 +165,12 @@ export const profileConfig: ProfileConfig = {
 			name: "Steam",
 			icon: "fa6-brands:steam",
 			url: "https://steamcommunity.com/id/your-steam-id",
+		},
+		{
+			name: "Email",
+			icon: "material-symbols:mail-outline",
+			url: "mailto:your-email@example.com",
+			external: true,
 		},
 	],
 	// Umami统计部份，记得在layout插入Umami的head标签

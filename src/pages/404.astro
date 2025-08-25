@@ -10,31 +10,31 @@ import MainGridLayout from "../layouts/MainGridLayout.astro";
             <div class="text-8xl md:text-9xl font-bold text-[var(--primary)] opacity-20 mb-4">
                 404
             </div>
-            
+
             <!-- 404 图标 -->
             <div class="mb-6">
                 <Icon name="material-symbols:error-outline" class="text-6xl text-[var(--primary)]" />
             </div>
-            
+
             <!-- 标题 -->
             <h1 class="text-3xl md:text-4xl font-bold mb-4 text-90">
                 页面未找到
             </h1>
-            
+
             <!-- 描述 -->
             <p class="text-lg text-75 mb-8 max-w-md">
                 抱歉，您访问的页面不存在。
             </p>
-            
+
             <!-- 返回首页按钮 -->
-            <a 
-                href="/" 
-                class="inline-flex items-center gap-2 px-6 py-3 bg-[var(--primary)] text-white rounded-[var(--radius-large)] hover:bg-[var(--primary-dark)] transition-colors duration-200 font-medium"
+            <a
+                href="/"
+                class="home-button inline-flex items-center gap-2 px-6 py-3 bg-[var(--primary)] text-white rounded-[var(--radius-large)] transition-all duration-300 ease-out font-medium relative overflow-hidden"
             >
-                <Icon name="material-symbols:home" class="text-xl" />
+                <Icon name="material-symbols:home" class="text-xl transition-transform duration-300 ease-out" />
                 返回首页
             </a>
-            
+
             <!-- 装饰性元素 -->
             <div class="absolute top-4 left-4 opacity-10">
                 <Icon name="material-symbols:sentiment-sad" class="text-4xl text-[var(--primary)]" />
@@ -51,7 +51,7 @@ import MainGridLayout from "../layouts/MainGridLayout.astro";
     .card-base {
         animation: fadeInUp 0.6s ease-out;
     }
-    
+
     @keyframes fadeInUp {
         from {
             opacity: 0;
@@ -62,10 +62,62 @@ import MainGridLayout from "../layouts/MainGridLayout.astro";
             transform: translateY(0);
         }
     }
-    
-    /* 按钮悬停效果 */
-    a:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 4px 12px rgba(var(--primary-rgb), 0.3);
+
+    .home-button {
+        /* MD3 Elevation Level 1 */
+        box-shadow: 0 1px 2px rgba(0, 0, 0, 0.3), 0 1px 3px 1px rgba(0, 0, 0, 0.15);
+    }
+
+    .home-button::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: rgba(255, 255, 255, 0.08);
+        opacity: 0;
+        transition: opacity 300ms cubic-bezier(0.4, 0, 0.2, 1);
+        border-radius: inherit;
+    }
+
+    .home-button:hover {
+        /* MD3 Elevation Level 2 */
+        box-shadow: 0 1px 2px rgba(0, 0, 0, 0.3), 0 2px 6px 2px rgba(0, 0, 0, 0.15);
+        background: oklch(0.62 0.14 var(--hue));
+        transform: translateY(-1px);
+    }
+
+    .home-button:hover::before {
+        opacity: 1;
+    }
+
+    .home-button:hover .text-xl {
+        transform: scale(1.05);
+    }
+
+    .home-button:active {
+        /* MD3 Elevation Level 0 */
+        box-shadow: 0 1px 2px rgba(0, 0, 0, 0.3), 0 1px 3px 1px rgba(0, 0, 0, 0.15);
+        transform: translateY(0);
+        background: oklch(0.58 0.14 var(--hue));
+    }
+
+    .home-button:active::before {
+        opacity: 0.12;
+    }
+
+    /* 暗色主题适配 */
+    :root.dark .home-button {
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.5), 0 1px 2px rgba(0, 0, 0, 0.25);
+    }
+
+    :root.dark .home-button:hover {
+        box-shadow: 0 2px 6px rgba(0, 0, 0, 0.6), 0 1px 3px rgba(0, 0, 0, 0.3);
+        background: oklch(0.68 0.14 var(--hue));
+    }
+
+    :root.dark .home-button:active {
+        background: oklch(0.65 0.14 var(--hue));
     }
 </style>

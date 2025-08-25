@@ -77,7 +77,7 @@ Preview:
 
 ---
 
-This will be not  
+This will be not
 inline.
 
 ---
@@ -244,10 +244,10 @@ Preview:
 
 ---
 
-> ## This is a header.
+> ## This is a header
 >
-> 1.  This is the first list item.
-> 2.  This is the second list item.
+> 1. This is the first list item.
+> 2. This is the second list item.
 >
 > Here's some example code:
 >
@@ -313,9 +313,9 @@ Preview:
 
 ---
 
-1.  Bird
-2.  McHale
-3.  Parish
+1. Bird
+2. McHale
+3. Parish
 
 ---
 
@@ -893,7 +893,7 @@ Preview:
 
 ---
 
-https://github.com/emn178/markdown
+<https://github.com/emn178/markdown>
 
 ---
 

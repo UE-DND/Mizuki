@@ -76,36 +76,28 @@ export enum LinkPreset {
 	Diary = 5,
 	Gallery = 6,
 	Projects = 7,
-	Skills = 8,
-	Timeline = 9,
+	Timeline = 8,
 }
 
 export type NavBarLink = {
 	name: string;
 	url: string;
+	icon?: string;
 	external?: boolean;
 	children?: (NavBarLink | LinkPreset)[]; // 支持子菜单，可以是NavBarLink或LinkPreset
+};
+
+// 顶部栏图标配置
+export type NavBarIconsConfig = {
+	enable: boolean; // 是否在顶部栏菜单显示图标
+	defaultSet?: string; // 图标库前缀，默认 material-symbols
+	size?: number; // 可选：统一图标尺寸（px）
 };
 
 export type NavBarConfig = {
 	links: (NavBarLink | LinkPreset)[];
 	showHomeButton?: boolean; // 是否显示首页按钮，默认为 false
-};
-
-export type ProfileConfig = {
-	avatar?: string;
-	name: string;
-	bio?: string;
-	links: {
-		name: string;
-		url: string;
-		icon: string;
-	}[];
-	umami?: {
-		enable?: boolean;
-		shareId: string;
-		region: string;
-	};
+	icons?: NavBarIconsConfig; // 顶部栏图标开关
 };
 
 export type LicenseConfig = {
@@ -179,6 +171,26 @@ export type MusicPlayerConfig = {
 export type FooterConfig = {
 	enable: boolean; // 是否启用Footer HTML注入功能
 	customHtml?: string; // 自定义HTML内容，用于添加备案号等信息
+};
+
+// 个人档案/侧栏资料卡配置
+export type ProfileLink = {
+	name: string;
+	icon?: string;
+	url: string;
+	external?: boolean;
+};
+
+export type ProfileConfig = {
+	avatar: string;
+	name: string;
+	bio?: string;
+	links?: ProfileLink[];
+	umami?: {
+		enable: boolean;
+		shareId: string;
+		region?: string;
+	};
 };
 
 // 组件配置类型定义
