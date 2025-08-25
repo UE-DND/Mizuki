@@ -158,6 +158,20 @@ export class WidgetManager {
 	}
 
 	/**
+	 * 对外只读访问当前配置
+	 */
+	getConfig(): SidebarLayoutConfig {
+		return this.config;
+	}
+
+	/**
+	 * 对外只读访问启用组件列表
+	 */
+	getEnabledComponentsList(): WidgetComponentConfig[] {
+		return this.enabledComponents;
+	}
+
+	/**
 	 * 更新组件配置
 	 * @param newConfig 新的配置
 	 */
@@ -223,7 +237,7 @@ export const widgetManager = new WidgetManager();
  * @param componentType 组件类型
  */
 export function getComponentConfig(componentType: WidgetComponentType): WidgetComponentConfig | undefined {
-	return widgetManager.config.components.find(c => c.type === componentType);
+	return widgetManager.getConfig().components.find(c => c.type === componentType);
 }
 
 /**
@@ -239,5 +253,5 @@ export function isComponentEnabled(componentType: WidgetComponentType): boolean 
  * 工具函数：获取所有启用的组件类型
  */
 export function getEnabledComponentTypes(): WidgetComponentType[] {
-	return widgetManager.enabledComponents.map(c => c.type);
+	return widgetManager.getEnabledComponentsList().map(c => c.type);
 }

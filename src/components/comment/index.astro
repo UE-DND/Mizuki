@@ -2,6 +2,7 @@
 import type { CollectionEntry } from "astro:content";
 import { commentConfig } from "@/config";
 import Twikoo from "./Twikoo.astro";
+import Builtin from "./Builtin.astro";
 
 interface Props {
 	post: CollectionEntry<"posts">;
@@ -13,13 +14,18 @@ const path = `/posts/${slug}`;
 const url = `${Astro.site?.href}${path}`;
 
 let commentService = "";
-if (commentConfig?.enable && commentConfig?.twikoo) {
-	commentService = "twikoo";
+if (commentConfig?.enable) {
+	const provider = commentConfig?.provider ?? "builtin";
+	if (provider === "twikoo" && commentConfig?.twikoo) {
+		commentService = "twikoo";
+	} else {
+		commentService = "builtin";
+	}
 }
 ---
 {commentConfig?.enable && (
   <div class="card-base p-6 mb-4">
     {commentService === 'twikoo' && <Twikoo path={path} />}
-    {commentService === '' && null}
+    {commentService === 'builtin' && <Builtin path={path} />}
   </div>
 )}

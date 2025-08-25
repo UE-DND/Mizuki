@@ -173,12 +173,6 @@ export const profileConfig: ProfileConfig = {
 			external: true,
 		},
 	],
-	// Umami统计部份，记得在layout插入Umami的head标签
-	umami: {
-		enable: false, // 是否显示umami统计
-		shareId: "", //填入共享URL最后面那一串  比如：https://eu.umami.is/api/share/2dKQ5T0WrUn6AYtr 你就填入2dKQ5T0WrUn6AYtr
-		region: "eu", //Umami有两个区域，按需选择即可  比如：https://eu.umami.is 你就填入eu
-	},
 };
 
 export const licenseConfig: LicenseConfig = {
@@ -194,9 +188,24 @@ export const expressiveCodeConfig: ExpressiveCodeConfig = {
 };
 
 export const commentConfig: CommentConfig = {
-	enable: false, // 启用评论功能。当设置为 false 时，评论组件将不会显示在文章区域。
+	enable: true, // 启用评论功能。当设置为 false 时，评论组件将不会显示在文章区域。
+	provider: "builtin", // 默认使用内置评论
 	twikoo: {
 		envId: "https://twikoo.vercel.app",
+	},
+	builtin: {
+		messages: {
+			loading: "加载中...",
+			loadError: "加载评论失败",
+			empty: "暂无评论，快来抢沙发~",
+			submitting: "提交中...",
+			success: "评论提交成功",
+			failure: "评论提交失败",
+			rateLimited: "操作过于频繁，5分钟后再试~",
+		},
+		ui: {
+			toastDuration: 3000,
+		},
 	},
 };
 
@@ -214,7 +223,7 @@ export const announcementConfig: AnnouncementConfig = {
 
 export const musicPlayerConfig: MusicPlayerConfig = {
 	enable: true, // 启用音乐播放器功能
-	mode: "meting", // 默认使用 Meting API 模式
+	mode: "local", // 默认使用 Meting API 模式
 	meting_api:
 		"https://www.bilibili.uno/api?server=:server&type=:type&id=:id&auth=:auth&r=:r", // 默认 Meting API 地址
 	id: "14164869977", // 默认歌单 ID

@@ -9,6 +9,8 @@
 		"strictNullChecks": true,
 		"allowJs": false,
 		"declaration": true,
+		"esModuleInterop": true,
+		"allowSyntheticDefaultImports": true,
 		"plugins": [
 			{
 				"name": "@astrojs/ts-plugin"
@@ -24,5 +26,5 @@
 			"@/*": ["src/*"]
 		}
 	},
-	"include": ["src/**/*"]
+	"include": ["src/**/*", "api/**/*"]
 }

@@ -32,8 +32,8 @@ let showPlaylist = false;
 let currentTime = 0;
 // 歌曲总时长，默认为 0
 let duration = 0;
-// 音量，默认为 0.7
-let volume = 0.7;
+// 音量，默认为 0.3
+let volume = 0.3;
 // 是否静音，默认为 false
 let isMuted = false;
 // 是否正在加载，默认为 false
@@ -82,27 +82,27 @@ let volumeBar: HTMLElement;
 const localPlaylist: Song[] = [
 	{
 		id: 1,
-		title: "ひとり上手",
-		artist: "Kaya",
-		cover: "assets/music/cover/hitori.jpg",
-		url: "assets/music/url/hitori.mp3",
+		title: "繋いでいく未来",
+		artist: "赤月ゆむ",
+		cover: "assets/music/cover/Lose.jpg",
+		url: "assets/music/url/繋いでいく未来.flac",
 		duration: 240,
 	},
 	{
 		id: 2,
-		title: "眩耀夜行",
-		artist: "スリーズブーケ",
-		cover: "assets/music/cover/xryx.jpg",
-		url: "assets/music/url/xryx.mp3",
-		duration: 180,
+		title: "レイル・ロマネスク",
+		artist: "ハチロク",
+		cover: "assets/music/cover/Lose.jpg",
+		url: "assets/music/url/レイル・ロマネスク.flac",
+		duration: 200,
 	},
 	{
 		id: 3,
-		title: "春雷の頃",
-		artist: "22/7",
-		cover: "assets/music/cover/cl.jpg",
-		url: "assets/music/url/cl.mp3",
-		duration: 200,
+		title: "INSIDE IDENTITY",
+		artist: "Black Raison d'être",
+		cover: "assets/music/cover/INSIDE IDENTITY.jpg",
+		url: "assets/music/url/INSIDE IDENTITY.flac",
+		duration: 180,
 	},
 ];
 
@@ -382,7 +382,9 @@ function handleProgressTouchStart(event: TouchEvent) {
 		setProgress(event.touches[0]);
 	}
 	if (typeof document !== "undefined") {
-		document.addEventListener("touchmove", handleProgressTouchMove, { passive: false });
+		document.addEventListener("touchmove", handleProgressTouchMove, {
+			passive: false,
+		});
 		document.addEventListener("touchend", handleProgressTouchEnd);
 	}
 	event.preventDefault();
@@ -524,9 +526,9 @@ function handleAudioEvents() {
 		isPlaying = false;
 	});
 	audio.addEventListener("timeupdate", () => {
-        if (isDraggingProgress) return;
-        currentTime = audio.currentTime;
-    });
+		if (isDraggingProgress) return;
+		currentTime = audio.currentTime;
+	});
 	audio.addEventListener("ended", () => {
 		if (isRepeating === 1) {
 			audio.currentTime = 0;

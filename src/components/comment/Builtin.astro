@@ -1,0 +1,215 @@
+---
+import { commentConfig } from "@/config";
+
+interface Props {
+  path: string;
+}
+
+const initialPath = Astro.props.path;
+const builtin = commentConfig?.builtin ?? {};
+const messages = {
+  loading: builtin.messages?.loading ?? "加载中...",
+  loadError: builtin.messages?.loadError ?? "加载评论失败",
+  empty: builtin.messages?.empty ?? "暂无评论，快来抢沙发~",
+  submitting: builtin.messages?.submitting ?? "提交中...",
+  success: builtin.messages?.success ?? "提交成功",
+  failure: builtin.messages?.failure ?? "提交失败",
+  rateLimited: builtin.messages?.rateLimited ?? "操作过于频繁，请于 5 分钟后再试",
+};
+const toastDuration = builtin.ui?.toastDuration ?? 3000;
+---
+<div class="space-y-4">
+  <div id="builtin-comments-list" class="space-y-3"></div>
+
+  <form id="builtin-comment-form" class="space-y-3">
+    <div class="flex flex-col gap-2">
+      <label class="text-sm text-neutral-500" for="builtin-author">昵称</label>
+      <input id="builtin-author" name="author" type="text" maxlength="32"
+        class="w-full rounded-lg px-3 py-2 bg-neutral-50 dark:bg-neutral-800 border border-neutral-200/60 dark:border-neutral-700/60 outline-none focus:border-[var(--primary)]"
+        placeholder="输入昵称" required />
+    </div>
+    <div class="flex flex-col gap-2">
+      <label class="text-sm text-neutral-500" for="builtin-content">评论</label>
+      <textarea id="builtin-content" name="content" rows="4" maxlength="1000"
+        class="w-full rounded-lg px-3 py-2 bg-neutral-50 dark:bg-neutral-800 border border-neutral-200/60 dark:border-neutral-700/60 outline-none focus:border-[var(--primary)]"
+        placeholder="仅支持纯文本" required></textarea>
+    </div>
+    <div class="flex items-center gap-3">
+      <button id="builtin-submit" type="submit" class="btn-regular rounded-lg px-4 h-10 active:scale-95">提交</button>
+      <span id="builtin-status" class="text-sm text-neutral-500"></span>
+      <!-- 内联提示条 -->
+      <div id="builtin-snackbar"
+           role="status" aria-live="polite" aria-atomic="true"
+           class="hidden opacity-0 translate-x-2 transition-all duration-200 ease-out">
+        <div id="builtin-snackbar-inner"
+          class="rounded-md shadow-lg px-3 py-2 text-sm flex items-center gap-2
+                 bg-neutral-900 text-white dark:bg-neutral-50 dark:text-neutral-900
+                 data-[variant=error]:bg-red-600 data-[variant=error]:text-white
+                 data-[variant=success]:bg-emerald-600 data-[variant=success]:text-white
+                 data-[variant=info]:bg-neutral-900 data-[variant=info]:text-white">
+          <span id="builtin-snackbar-text" class="leading-5 whitespace-nowrap"></span>
+        </div>
+      </div>
+    </div>
+  </form>
+</div>
+
+
+<script is:inline define:vars={{ initialPath, messages, toastDuration }}>
+  function showToast(text, variant = 'info') {
+    try {
+      const wrapper = document.getElementById('builtin-snackbar');
+      const inner = document.getElementById('builtin-snackbar-inner');
+      const textEl = document.getElementById('builtin-snackbar-text');
+      if (!wrapper || !inner || !textEl) return;
+      textEl.textContent = String(text || '');
+      inner.setAttribute('data-variant', String(variant));
+      // 入场动画：显示、右移、渐显
+      wrapper.classList.remove('hidden');
+      requestAnimationFrame(() => {
+        wrapper.classList.remove('opacity-0', 'translate-x-2');
+        wrapper.classList.add('opacity-100', 'translate-x-0');
+      });
+      clearTimeout(window.__mizuki_toast_timer__);
+      window.__mizuki_toast_timer__ = setTimeout(() => {
+        // 退场动画
+        wrapper.classList.remove('opacity-100', 'translate-x-0');
+        wrapper.classList.add('opacity-0', 'translate-x-2');
+        setTimeout(() => {
+          wrapper.classList.add('hidden');
+        }, 180);
+      }, toastDuration || 3000);
+    } catch (_) {}
+  }
+  function normalizePath(pathname) {
+    if (!pathname) return '/';
+    if (pathname.length > 1 && pathname.endsWith('/')) return pathname.slice(0, -1);
+    return pathname;
+  }
+
+  function getCurrentPath() {
+    return normalizePath(window.location.pathname || initialPath || '/');
+  }
+
+  function getVisitorId() {
+    try {
+      const key = 'mizuki_vid';
+      let id = localStorage.getItem(key);
+      if (!id) {
+        id = (crypto?.randomUUID?.() || Math.random().toString(36).slice(2)) + '-' + Date.now();
+        localStorage.setItem(key, id);
+      }
+      return id;
+    } catch (_) {
+      return 'anon';
+    }
+  }
+
+  function escapeHTML(str) {
+    return str
+      .replaceAll('&', '&amp;')
+      .replaceAll('<', '&lt;')
+      .replaceAll('>', '&gt;')
+      .replaceAll('"', '&quot;')
+      .replaceAll("'", '&#039;');
+  }
+
+  async function loadComments() {
+    const listEl = document.getElementById('builtin-comments-list');
+    if (!listEl) return;
+    listEl.innerHTML = `<div class="text-sm text-neutral-500">${messages?.loading || '加载中...'}</div>`;
+    try {
+      const path = getCurrentPath();
+      const res = await fetch(`/api/comments/?` + new URLSearchParams({ path }), { method: 'GET', cache: 'no-store' });
+      if (!res.ok) throw new Error('加载失败');
+      const data = await res.json();
+      const comments = Array.isArray(data?.comments) ? data.comments : [];
+      if (comments.length === 0) {
+        listEl.innerHTML = `<div class=\"text-sm text-neutral-500\">${messages?.empty || '暂无评论，快来抢沙发~'}</div>`;
+        return;
+      }
+      listEl.innerHTML = '';
+      for (const c of comments) {
+        const item = document.createElement('div');
+        item.className = 'card-base p-3';
+        const author = escapeHTML(String(c.author || '访客'));
+        const content = escapeHTML(String(c.content || ''));
+        const time = new Date(c.createdAt || Date.now());
+        const timeText = isNaN(time.getTime()) ? '' : time.toLocaleString();
+        item.innerHTML = `
+          <div class="text-sm font-medium text-neutral-600 dark:text-neutral-300">${author}</div>
+          <div class="text-[0.8rem] text-neutral-400 mb-1">${timeText}</div>
+          <div class="whitespace-pre-wrap text-neutral-700 dark:text-neutral-200">${content}</div>
+        `;
+        listEl.appendChild(item);
+      }
+    } catch (err) {
+      listEl.innerHTML = `<div class=\"text-sm text-red-500\">${messages?.loadError || '加载评论失败'}</div>`;
+    }
+  }
+
+  async function submitComment(e) {
+    e.preventDefault();
+    const btn = document.getElementById('builtin-submit');
+    const status = document.getElementById('builtin-status');
+    const authorEl = document.getElementById('builtin-author');
+    const contentEl = document.getElementById('builtin-content');
+    const author = authorEl.value.trim();
+    const content = contentEl.value.trim();
+    if (!author || !content) return;
+    try {
+      btn.disabled = true; if (status) status.textContent = '';
+      showToast(messages?.submitting || '提交中...', 'info');
+      const path = getCurrentPath();
+      const visitorId = getVisitorId();
+      const res = await fetch('/api/comments/', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ path, author, content, visitorId }),
+      });
+      if (res.status === 429) {
+        showToast(messages?.rateLimited || '操作过于频繁，请于 5 分钟后再试', 'error');
+        return;
+      }
+      if (!res.ok) throw new Error('提交失败');
+      showToast(messages?.success || '提交成功', 'success');
+      contentEl.value = '';
+      await loadComments();
+    } catch (err) {
+      showToast(messages?.failure || '提交失败', 'error');
+    } finally {
+      btn.disabled = false;
+    }
+  }
+
+  function setup() {
+    loadComments();
+    const form = document.getElementById('builtin-comment-form');
+    if (form && !form.dataset?.bound) {
+      form.addEventListener('submit', submitComment);
+      form.dataset.bound = '1';
+    }
+  }
+
+  if (document.readyState !== 'loading') {
+    setup();
+  } else {
+    document.addEventListener('DOMContentLoaded', setup);
+  }
+
+  function setupSwupHooks() {
+    if (window.swup && window.swup.hooks) {
+      window.swup.hooks.on('content:replace', () => {
+        // 内容替换后需要重新绑定事件并加载评论
+        setTimeout(setup, 0);
+      });
+      window.swup.hooks.on('visit:start', () => {
+        const listEl = document.getElementById('builtin-comments-list');
+        if (listEl) listEl.innerHTML = '';
+      });
+    }
+  }
+  if (window.swup) setupSwupHooks(); else document.addEventListener('swup:enable', setupSwupHooks);
+
+  document.addEventListener('mizuki:page:loaded', () => setTimeout(setup, 0));
+</script>

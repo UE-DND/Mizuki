@@ -109,13 +109,30 @@ export type LicenseConfig = {
 
 export type CommentConfig = {
 	enable: boolean; // 是否启用评论功能
+	provider: "builtin" | "twikoo"; // 评论提供方：内置 or Twikoo
 	twikoo?: TwikooConfig;
+	builtin?: BuiltinCommentConfig; // 内置评论前端可配置项
 };
 
 type TwikooConfig = {
 	envId: string;
 	region?: string;
 	lang?: string;
+};
+
+export type BuiltinCommentConfig = {
+	messages?: {
+		loading?: string;      // 加载中列表
+		loadError?: string;    // 加载失败
+		empty?: string;        // 列表为空
+		submitting?: string;   // 提交中
+		success?: string;      // 提交成功
+		failure?: string;      // 提交失败
+		rateLimited?: string;  // 触发限流
+	};
+	ui?: {
+		toastDuration?: number; // Snackbar/Toast 展示时长（毫秒）
+	};
 };
 
 export type LIGHT_DARK_MODE =
@@ -186,11 +203,6 @@ export type ProfileConfig = {
 	name: string;
 	bio?: string;
 	links?: ProfileLink[];
-	umami?: {
-		enable: boolean;
-		shareId: string;
-		region?: string;
-	};
 };
 
 // 组件配置类型定义
