@@ -222,8 +222,8 @@ export const announcementConfig: AnnouncementConfig = {
 };
 
 export const musicPlayerConfig: MusicPlayerConfig = {
-	enable: true, // 启用音乐播放器功能
-	mode: "local", // 默认使用 Meting API 模式
+	enable: true,
+	mode: "meting",
 	meting_api:
 		"https://www.bilibili.uno/api?server=:server&type=:type&id=:id&auth=:auth&r=:r", // 默认 Meting API 地址
 	id: "14164869977", // 默认歌单 ID

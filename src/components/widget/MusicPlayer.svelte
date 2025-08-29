@@ -85,7 +85,7 @@ const localPlaylist: Song[] = [
 		title: "繋いでいく未来",
 		artist: "赤月ゆむ",
 		cover: "assets/music/cover/Lose.jpg",
-		url: "assets/music/url/繋いでいく未来.flac",
+		url: "assets/music/url/繋いでいく未来.mp3",
 		duration: 240,
 	},
 	{
@@ -93,7 +93,7 @@ const localPlaylist: Song[] = [
 		title: "レイル・ロマネスク",
 		artist: "ハチロク",
 		cover: "assets/music/cover/Lose.jpg",
-		url: "assets/music/url/レイル・ロマネスク.flac",
+		url: "assets/music/url/レイル・ロマネスク.mp3",
 		duration: 200,
 	},
 	{
@@ -101,7 +101,7 @@ const localPlaylist: Song[] = [
 		title: "INSIDE IDENTITY",
 		artist: "Black Raison d'être",
 		cover: "assets/music/cover/INSIDE IDENTITY.jpg",
-		url: "assets/music/url/INSIDE IDENTITY.flac",
+		url: "assets/music/url/INSIDE IDENTITY.mp3",
 		duration: 180,
 	},
 ];
