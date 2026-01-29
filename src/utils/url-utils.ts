@@ -35,12 +35,16 @@ export function getPostUrlByAlias(alias: string): string {
 	return url(`/posts/${cleanAlias}/`);
 }
 
+type PostUrlInput =
+	| CollectionEntry<"posts">
+	| { id: string; data: { alias?: string; permalink?: string } };
+
 export function getPostUrl(post: CollectionEntry<"posts">): string;
 export function getPostUrl(post: {
 	id: string;
 	data: { alias?: string; permalink?: string };
 }): string;
-export function getPostUrl(post: any): string {
+export function getPostUrl(post: PostUrlInput): string {
 	// 如果文章有自定义 permalink，优先使用（在根目录下）
 	if (post.data.permalink) {
 		const slug = post.data.permalink
@@ -65,7 +69,9 @@ export function getPostUrl(post: any): string {
 }
 
 export function getTagUrl(tag: string): string {
-	if (!tag) {return url("/archive/");}
+	if (!tag) {
+		return url("/archive/");
+	}
 	return url(`/archive/?tag=${encodeURIComponent(tag.trim())}`);
 }
 
@@ -75,8 +81,9 @@ export function getCategoryUrl(category: string | null): string {
 		category.trim() === "" ||
 		category.trim().toLowerCase() ===
 			i18n(I18nKey.uncategorized).toLowerCase()
-	)
-		{return url("/archive/?uncategorized=true");}
+	) {
+		return url("/archive/?uncategorized=true");
+	}
 	return url(`/archive/?category=${encodeURIComponent(category.trim())}`);
 }
 
