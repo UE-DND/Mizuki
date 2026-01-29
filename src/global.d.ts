@@ -3,7 +3,7 @@ import type { SiteConfig } from "./types/config";
 export {};
 
 interface SwupHooks {
-	on: (event: string, callback: () => void) => void;
+	on: (event: string, callback: (...args: unknown[]) => void) => void;
 }
 
 interface SwupInstance {

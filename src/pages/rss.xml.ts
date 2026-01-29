@@ -1,5 +1,6 @@
 import { getImage } from "astro:assets";
 // import { getCollection } from "astro:content";
+import type { CollectionEntry } from "astro:content";
 import type { RSSFeedItem } from "@astrojs/rss";
 import rss from "@astrojs/rss";
 import type { APIContext, ImageMetadata } from "astro";
@@ -25,7 +26,7 @@ export async function GET(context: APIContext) {
 
 	// Use the same ordering as site listing (pinned first, then by published desc)
 	const posts = (await getSortedPosts()).filter(
-		(post) => !post.data.encrypted,
+		(post: CollectionEntry<"posts">) => !post.data.encrypted,
 	);
 
 	// 初始化文章 ID 映射（用于 permalink 功能）
@@ -43,7 +44,9 @@ export async function GET(context: APIContext) {
 
 		for (const img of images) {
 			const src = img.getAttribute("src");
-			if (!src) {continue;}
+			if (!src) {
+				continue;
+			}
 
 			// Handle content-relative images and convert them to built _astro paths
 			if (

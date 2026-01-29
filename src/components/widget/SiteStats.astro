@@ -49,7 +49,7 @@ for (const post of posts) {
 		// 按空白字符分割，计算单词数量
 		const nonCjkWords = nonCjkText
 			.split(/\s+/)
-			.filter((word) => word.trim().length > 0);
+			.filter((word: string) => word.trim().length > 0);
 
 		totalWords += cjkCount + nonCjkWords.length;
 	}
@@ -61,10 +61,13 @@ function formatNumber(num: number): string {
 }
 
 // 获取最新文章日期（忽略置顶状态，只按发布日期排序）
-const latestPost = posts.reduce((latest, post) => {
-	if (!latest) {return post;}
-	return post.data.published > latest.data.published ? post : latest;
-}, posts[0]);
+const latestPost = posts.reduce(
+	(latest: (typeof posts)[number] | undefined, post: (typeof posts)[number]) => {
+		if (!latest) {return post;}
+		return post.data.published > latest.data.published ? post : latest;
+	},
+	posts[0],
+);
 
 const lastPostDate = latestPost
 	? latestPost.data.published.toISOString()

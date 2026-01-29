@@ -954,6 +954,10 @@ function disableAnimation() {
 	}
 
 	const setup = () => {
+		const swup = window.swup;
+		if (!swup?.hooks) {
+			return;
+		}
 		// TODO: temp solution to change the height of the banner
 		/*
     window.swup.hooks.on('animation:out:start', () => {
@@ -966,7 +970,7 @@ function disableAnimation() {
         }
     })
 */
-		window.swup.hooks.on("link:click", () => {
+		swup.hooks.on("link:click", () => {
 			// Remove the delay for the first time page load
 			document.documentElement.style.setProperty(
 				"--content-delay",
@@ -986,7 +990,7 @@ function disableAnimation() {
 			}
 		});
 
-		window.swup.hooks.on("content:replace", () => {
+		swup.hooks.on("content:replace", () => {
 			// 初始化新页面的图片、公式、滚动条和TOC
 			initFancybox();
 			checkKatex();
@@ -1034,7 +1038,7 @@ function disableAnimation() {
 			}
 		});
 
-		window.swup.hooks.on(
+		swup.hooks.on(
 			"visit:start",
 			(visit: { to: { url: string } }) => {
 				// 清理上一页的 Fancybox
@@ -1128,7 +1132,7 @@ function disableAnimation() {
 			},
 		);
 
-		window.swup.hooks.on("page:view", () => {
+		swup.hooks.on("page:view", () => {
 			// hide the temp high element when the transition is done
 			const heightExtend = document.getElementById("page-height-extend");
 			if (heightExtend) {
@@ -1195,7 +1199,7 @@ function disableAnimation() {
 			}, 300);
 		});
 
-		window.swup.hooks.on("visit:end", (_visit: { to: { url: string } }) => {
+		swup.hooks.on("visit:end", (_visit: { to: { url: string } }) => {
 			setTimeout(() => {
 				const heightExtend =
 					document.getElementById("page-height-extend");

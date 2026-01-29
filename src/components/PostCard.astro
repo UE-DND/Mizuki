@@ -105,7 +105,7 @@ const { remarkPluginFrontmatter } = await render(entry);
 		<div class="flex flex-wrap gap-2 mt-2">
 			{
 				tags && tags.length > 0 ? (
-					tags.map((tag) => (
+					tags.map((tag: string) => (
 						<a
 							href={getTagUrl(tag)}
 							class:list={[
