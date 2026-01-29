@@ -249,7 +249,8 @@ const transparentClass = shouldEnableTransparency
 
 	// 立即执行，在页面渲染前应用壁纸模式和布局模式，避免闪烁
 	(function() {
-		const wallpaperMode = localStorage.getItem('wallpaperMode') || defaultWallpaperMode;
+		// 壁纸模式由配置控制，不再从 localStorage 读取
+		const wallpaperMode = defaultWallpaperMode;
 		const body = document.body;
 		
 		// 定义 banner 高度常量（与 constants.ts 保持一致）
@@ -325,7 +326,6 @@ const transparentClass = shouldEnableTransparency
 	})();
 	
 	// 根据壁纸模式动态设置 banner 和全屏壁纸的显示
-	// const wallpaperMode = localStorage.getItem('wallpaperMode') || defaultWallpaperMode;
 	
 	// 在 DOM 加载后执行
 	if (document.readyState === 'loading') {
@@ -335,7 +335,8 @@ const transparentClass = shouldEnableTransparency
 	}
 	
 	function applyWallpaperMode() {
-		var wallpaperMode = localStorage.getItem('wallpaperMode') || defaultWallpaperMode;
+		// 壁纸模式由配置控制，不再从 localStorage 读取
+		var wallpaperMode = defaultWallpaperMode;
 		var bannerWrapper = document.getElementById('banner-wrapper');
 		var fullscreenWallpaper = document.querySelector('[data-fullscreen-wallpaper]');
 		var navbar = document.getElementById('navbar');

@@ -91,11 +91,13 @@ const renderGroups = [
 	]}
 	style={`z-index: ${zIndex}; opacity: ${opacity}; transform: translateZ(0); perspective: 1000px;`}
 	data-fullscreen-wallpaper
+	data-default-mode={siteConfig.wallpaperMode.defaultMode}
 >
 	<script is:inline>
 	// 立即执行脚本：防止闪烁
 	(function() {
-		const mode = localStorage.getItem('wallpaperMode') || 'banner';
+		// 壁纸模式由配置控制，不再从 localStorage 读取
+		const mode = document.currentScript.parentElement.dataset.defaultMode || 'banner';
 		if (mode !== 'fullscreen') {
 			document.currentScript.parentElement.style.display = 'none';
 		}

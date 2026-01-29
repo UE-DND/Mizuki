@@ -152,14 +152,11 @@ export function getStoredTheme(): LIGHT_DARK_MODE {
 }
 
 export function getStoredWallpaperMode(): WALLPAPER_MODE {
-	return (
-		(localStorage.getItem("wallpaperMode") as WALLPAPER_MODE) ||
-		siteConfig.wallpaperMode.defaultMode
-	);
+	// 壁纸模式由配置控制，不再从 localStorage 读取
+	return siteConfig.wallpaperMode.defaultMode;
 }
 
 export function setWallpaperMode(mode: WALLPAPER_MODE): void {
-	localStorage.setItem("wallpaperMode", mode);
 	// 触发自定义事件通知其他组件壁纸模式已改变
 	window.dispatchEvent(
 		new CustomEvent("wallpaper-mode-change", { detail: { mode } }),
