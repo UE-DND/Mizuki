@@ -301,7 +301,7 @@ const useJapaneseBadge = siteConfig.toc.useJapaneseBadge;
 		}
 
 		private updateProgress() {
-			if (!this.btn) return;
+			if (!this.btn) {return;}
 
 			const scrollTop =
 				window.scrollY || document.documentElement.scrollTop;
@@ -328,7 +328,7 @@ const useJapaneseBadge = siteConfig.toc.useJapaneseBadge;
 		}
 
 		private updateActiveHeading() {
-			if (!this.content || this.headings.length === 0) return;
+			if (!this.content || this.headings.length === 0) {return;}
 			const scrollY = window.scrollY;
 			const offsetTop = 150;
 
@@ -436,7 +436,7 @@ const useJapaneseBadge = siteConfig.toc.useJapaneseBadge;
 			let minLevel = 6;
 			allHeadings.forEach((h) => {
 				const level = parseInt(h.tagName[1]);
-				if (level < minLevel) minLevel = level;
+				if (level < minLevel) {minLevel = level;}
 			});
 
 			let html = "";
@@ -444,7 +444,7 @@ const useJapaneseBadge = siteConfig.toc.useJapaneseBadge;
 			allHeadings.forEach((heading) => {
 				const level = parseInt(heading.tagName[1]);
 
-				if (level >= minLevel + maxLevel) return;
+				if (level >= minLevel + maxLevel) {return;}
 
 				this.headings.push(heading as HTMLElement);
 
@@ -505,7 +505,7 @@ const useJapaneseBadge = siteConfig.toc.useJapaneseBadge;
 				}
 			});
 			document.addEventListener("keydown", (e) => {
-				if (e.key === "Escape" && this.isOpen) this.close();
+				if (e.key === "Escape" && this.isOpen) {this.close();}
 			});
 			if ((window as any).swup) {
 				(window as any).swup.hooks.on("page:view", () => {

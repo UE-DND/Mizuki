@@ -199,7 +199,7 @@ const getCategoryText = (category: string) => {
       <div class="space-y-8">
         {categories.map((category) => {
           const categoryProjects = projectsByCategory[category];
-          if (categoryProjects.length === 0) return null;
+          if (categoryProjects.length === 0) {return null;}
           
           return (
             <div>

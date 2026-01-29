@@ -110,7 +110,7 @@ if (entry.data.image) {
 		const files = import.meta.glob<ImageMetadata>("../../**", {
 			import: "default",
 		});
-		let normalizedPath = path
+		const normalizedPath = path
 			.normalize(path.join("../../", basePath, entry.data.image))
 			.replace(/\\/g, "/");
 		const file = files[normalizedPath];
@@ -134,7 +134,7 @@ if (profileConfig.avatar) {
 		const files = import.meta.glob<ImageMetadata>("../../**", {
 			import: "default",
 		});
-		let normalizedPath = path
+		const normalizedPath = path
 			.normalize(path.join("../../", profileConfig.avatar))
 			.replace(/\\/g, "/");
 		const file = files[normalizedPath];
@@ -146,7 +146,7 @@ if (profileConfig.avatar) {
 }
 
 // 判断是否为加密文章
-let isEncrypted = entry.data.encrypted && entry.data.password;
+const isEncrypted = entry.data.encrypted && entry.data.password;
 
 dayjs.extend(utc);
 const lastModified = dayjs(entry.data.updated || entry.data.published)
@@ -371,7 +371,7 @@ const jsonLd = {
                 <script is:inline>
                     function runtime() {
                         const lastModifiedElement = document.getElementById('last-modified');
-                        if (!lastModifiedElement) return;  // 如果元素不存在，直接返回
+                        if (!lastModifiedElement) {return;}  // 如果元素不存在，直接返回
                         
                         const startDate = new Date(lastModifiedElement.dataset.lastModified);
                         const currentDate = new Date();

@@ -654,8 +654,8 @@ const transparentClass = shouldEnableTransparency
                 (function() {
                     const getRandomImage = (images, storageKey) => {
                         if (Array.isArray(images)) {
-                            if (images.length === 0) return null;
-                            if (images.length === 1) return images[0];
+                            if (images.length === 0) {return null;}
+                            if (images.length === 1) {return images[0];}
                             
                             const lastIndex = sessionStorage.getItem(storageKey);
                             let newIndex;

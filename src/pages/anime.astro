@@ -574,7 +574,7 @@ const hiddenAnimeList = animeList.slice(INITIAL_DISPLAY_COUNT);
 				const animeListContainer = document.getElementById(
 					"anime-list-container",
 				);
-				if (!animeListContainer) return false;
+				if (!animeListContainer) {return false;}
 				const currentLayout =
 					localStorage.getItem("postListLayout") || "list";
 				updateAnimeListLayout(currentLayout, false);
@@ -587,7 +587,7 @@ const hiddenAnimeList = animeList.slice(INITIAL_DISPLAY_COUNT);
 			let retryCount = 0;
 			const maxRetries = 10;
 			function tryInit() {
-				if (initAnimeLayout()) return;
+				if (initAnimeLayout()) {return;}
 				if (retryCount < maxRetries) {
 					retryCount++;
 					const delay = Math.min(
@@ -621,7 +621,7 @@ const hiddenAnimeList = animeList.slice(INITIAL_DISPLAY_COUNT);
 				const animeListContainer = document.getElementById(
 					"anime-list-container",
 				);
-				if (!animeListContainer) return;
+				if (!animeListContainer) {return;}
 				animeListContainer.dataset.currentLayout = layout;
 
 				const animeItems = Array.from(
@@ -692,16 +692,16 @@ const hiddenAnimeList = animeList.slice(INITIAL_DISPLAY_COUNT);
 
 				void animeListContainer.offsetHeight;
 				if (!shouldAnimate) {
-					if (style.parentNode) style.parentNode.removeChild(style);
+					if (style.parentNode) {style.parentNode.removeChild(style);}
 					return;
 				}
 
 				requestAnimationFrame(() => {
-					if (style.parentNode) style.parentNode.removeChild(style);
+					if (style.parentNode) {style.parentNode.removeChild(style);}
 
 					visibleItems.forEach((item) => {
 						const first = firstPositions.get(item);
-						if (!first) return;
+						if (!first) {return;}
 						const last = item.getBoundingClientRect();
 
 						const deltaX = Math.round(first.left - last.left);
@@ -715,7 +715,7 @@ const hiddenAnimeList = animeList.slice(INITIAL_DISPLAY_COUNT);
 							Math.abs(deltaW - 1) < 0.01 &&
 							Math.abs(deltaH - 1) < 0.01
 						)
-							return;
+							{return;}
 
 						item.style.willChange = "transform";
 						item.style.transition = "none";
@@ -770,7 +770,7 @@ const hiddenAnimeList = animeList.slice(INITIAL_DISPLAY_COUNT);
 
 			filterTags.forEach((tag) => {
 				const clickHandler = function () {
-					if (this.classList.contains("anime-active")) return;
+					if (this.classList.contains("anime-active")) {return;}
 
 					filterTags.forEach((t) =>
 						t.classList.remove("anime-active"),
@@ -790,7 +790,7 @@ const hiddenAnimeList = animeList.slice(INITIAL_DISPLAY_COUNT);
 						listContainer.appendChild(fragment);
 					}
 
-					if (sentinel) sentinel.style.display = "none";
+					if (sentinel) {sentinel.style.display = "none";}
 					const initialHidden =
 						listContainer.querySelectorAll(".initial-hidden");
 					initialHidden.forEach((el) => {
@@ -817,7 +817,7 @@ const hiddenAnimeList = animeList.slice(INITIAL_DISPLAY_COUNT);
 								? itemsToKeep.push(item)
 								: itemsToShow.push(item);
 						} else {
-							if (isCurrentlyVisible) itemsToHide.push(item);
+							if (isCurrentlyVisible) {itemsToHide.push(item);}
 						}
 					});
 					const firstPositions = new Map();
@@ -840,7 +840,7 @@ const hiddenAnimeList = animeList.slice(INITIAL_DISPLAY_COUNT);
 						});
 						itemsToKeep.forEach((item) => {
 							const first = firstPositions.get(item);
-							if (!first) return;
+							if (!first) {return;}
 
 							const rect = item.getBoundingClientRect();
 							const deltaX = Math.round(first.left - rect.left);

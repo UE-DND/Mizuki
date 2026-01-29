@@ -12,15 +12,15 @@ async function getRawSortedPosts() {
 
 	const sorted = allBlogPosts.sort((a, b) => {
 		// 首先按置顶状态排序，置顶文章在前
-		if (a.data.pinned && !b.data.pinned) return -1;
-		if (!a.data.pinned && b.data.pinned) return 1;
+		if (a.data.pinned && !b.data.pinned) {return -1;}
+		if (!a.data.pinned && b.data.pinned) {return 1;}
 
 		// 如果置顶状态相同，优先按 Priority 排序（数值越小越靠前）
 		if (a.data.pinned && b.data.pinned) {
 			const priorityA = a.data.priority;
 			const priorityB = b.data.priority;
 			if (priorityA !== undefined && priorityB !== undefined) {
-				if (priorityA !== priorityB) return priorityA - priorityB;
+				if (priorityA !== priorityB) {return priorityA - priorityB;}
 			} else if (priorityA !== undefined) {
 				return -1;
 			} else if (priorityB !== undefined) {
@@ -83,7 +83,7 @@ export async function getTagList(): Promise<Tag[]> {
 	const countMap: { [key: string]: number } = {};
 	allBlogPosts.forEach((post: { data: { tags: string[] } }) => {
 		post.data.tags.forEach((tag: string) => {
-			if (!countMap[tag]) countMap[tag] = 0;
+			if (!countMap[tag]) {countMap[tag] = 0;}
 			countMap[tag]++;
 		});
 	});

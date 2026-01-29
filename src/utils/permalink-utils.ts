@@ -121,7 +121,7 @@ export function generatePermalinkSlug(post: CollectionEntry<"posts">): string {
 export function hasCustomPermalink(
 	post: CollectionEntry<"posts"> | { data: { permalink?: string } },
 ): boolean {
-	return !!post.data.permalink;
+	return Boolean(post.data.permalink);
 }
 
 /**

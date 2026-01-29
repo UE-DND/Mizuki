@@ -40,7 +40,7 @@ const componentMap = {
 function renderComponent(component: any, index: number, _components: any[]) {
 	const ComponentToRender =
 		componentMap[component.type as keyof typeof componentMap];
-	if (!ComponentToRender) return null;
+	if (!ComponentToRender) {return null;}
 
 	const componentClass = widgetManager.getComponentClass(component, index);
 	const componentStyle = widgetManager.getComponentStyle(component, index);
@@ -64,7 +64,7 @@ function renderComponent(component: any, index: number, _components: any[]) {
       <div class="flex flex-col w-full gap-4 mb-4">
         {topComponents.map((component, index) => {
           const renderData = renderComponent(component, index, topComponents);
-          if (!renderData) return null;
+          if (!renderData) {return null;}
 
           const { Component, props } = renderData;
           return <Component {...props} />;
@@ -86,7 +86,7 @@ function renderComponent(component: any, index: number, _components: any[]) {
             index,
             stickyComponents
           );
-          if (!renderData) return null;
+          if (!renderData) {return null;}
 
           const { Component, props } = renderData;
           return <Component {...props} />;

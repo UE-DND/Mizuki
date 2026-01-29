@@ -114,7 +114,7 @@ const recentPosts = posts.slice(0, 6);
             if (copyBtn) {
                 copyBtn.addEventListener('click', async function() {
                     const url = this.getAttribute('data-url');
-                    if (!url) return;
+                    if (!url) {return;}
                     try {
                         await navigator.clipboard.writeText(url);
                         const originalText = this.textContent || "Copy Link";

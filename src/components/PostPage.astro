@@ -45,7 +45,7 @@ const initialLayoutClass = defaultLayout === "grid" ? "grid-mode" : "list-mode";
 			const postListContainer = document.getElementById(
 				"post-list-container",
 			);
-			if (!postListContainer) return;
+			if (!postListContainer) {return;}
 
 			// 读取偏好
 			const savedLayout = localStorage.getItem("postListLayout");
@@ -79,7 +79,7 @@ const initialLayoutClass = defaultLayout === "grid" ? "grid-mode" : "list-mode";
 
 	function updatePostListLayout(layout: string) {
 		const container = document.getElementById("post-list-container");
-		if (!container) return;
+		if (!container) {return;}
 
 		container.classList.add("layout-switching");
 
@@ -92,10 +92,10 @@ const initialLayoutClass = defaultLayout === "grid" ? "grid-mode" : "list-mode";
 			const rightSidebar = document.querySelector(
 				".right-sidebar-container",
 			);
-			if (rightSidebar) rightSidebar.classList.add("hidden-in-grid-mode");
+			if (rightSidebar) {rightSidebar.classList.add("hidden-in-grid-mode");}
 
 			const mainGrid = document.getElementById("main-grid");
-			if (mainGrid) mainGrid.setAttribute("data-layout-mode", "grid");
+			if (mainGrid) {mainGrid.setAttribute("data-layout-mode", "grid");}
 		} else {
 			container.classList.remove("grid-mode");
 			container.classList.add("list-mode");
@@ -105,10 +105,10 @@ const initialLayoutClass = defaultLayout === "grid" ? "grid-mode" : "list-mode";
 				".right-sidebar-container",
 			);
 			if (rightSidebar)
-				rightSidebar.classList.remove("hidden-in-grid-mode");
+				{rightSidebar.classList.remove("hidden-in-grid-mode");}
 
 			const mainGrid = document.getElementById("main-grid");
-			if (mainGrid) mainGrid.setAttribute("data-layout-mode", "list");
+			if (mainGrid) {mainGrid.setAttribute("data-layout-mode", "list");}
 		}
 
 		container.classList.add("js-initialized");
@@ -121,7 +121,7 @@ const initialLayoutClass = defaultLayout === "grid" ? "grid-mode" : "list-mode";
 
 	// 监听布局变化
 	window.addEventListener("layoutChange", (event: any) => {
-		if (event.detail?.layout) updatePostListLayout(event.detail.layout);
+		if (event.detail?.layout) {updatePostListLayout(event.detail.layout);}
 	});
 
 	// Resize 防抖
@@ -142,11 +142,11 @@ const initialLayoutClass = defaultLayout === "grid" ? "grid-mode" : "list-mode";
 
 	// 初始化
 	document.addEventListener("DOMContentLoaded", initLayout);
-	if (document.readyState !== "loading") initLayout();
+	if (document.readyState !== "loading") {initLayout();}
 
 	// Swup 集成
 	function setupSwupListeners() {
-		if ((window as any)._postListSwupListenerAttached) return;
+		if ((window as any)._postListSwupListenerAttached) {return;}
 
 		function trySetupSwup() {
 			if (typeof window !== "undefined" && (window as any).swup) {

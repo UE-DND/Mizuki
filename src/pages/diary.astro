@@ -18,7 +18,7 @@ const diaryStats = getDiaryStats();
 function formatTime(dateString: string): string {
 	var TG = 8;
 	if (siteConfig.timeZone >= -12 && siteConfig.timeZone <= 12)
-		TG = siteConfig.timeZone;
+		{TG = siteConfig.timeZone;}
 	const timeGap = TG;
 
 	// const lang = siteConfig.lang;

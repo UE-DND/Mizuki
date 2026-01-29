@@ -82,7 +82,7 @@ function fallbackNavigation(
  * 检查 Swup 是否已准备就绪
  */
 export function isSwupReady(): boolean {
-	return typeof window !== "undefined" && !!(window as any).swup;
+	return typeof window !== "undefined" && Boolean((window as any).swup);
 }
 
 /**

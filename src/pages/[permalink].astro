@@ -73,7 +73,7 @@ const { remarkPluginFrontmatter } = await render(entry);
 
 // 处理加密逻辑
 let encryptedContent = "";
-let isEncrypted = entry.data.encrypted && entry.data.password;
+const isEncrypted = entry.data.encrypted && entry.data.password;
 
 if (isEncrypted) {
     const contentToEncrypt = "MIZUKI-VERIFY:" + entry.body;
@@ -263,7 +263,7 @@ const jsonLd = {
                 <script is:inline>
                     function runtime() {
                         const lastModifiedElement = document.getElementById('last-modified');
-                        if (!lastModifiedElement) return;  // 如果元素不存在，直接返回
+                        if (!lastModifiedElement) {return;}  // 如果元素不存在，直接返回
                         
                         const startDate = new Date(lastModifiedElement.dataset.lastModified);
                         const currentDate = new Date();
