@@ -575,9 +575,7 @@ const hiddenAnimeList = animeList.slice(INITIAL_DISPLAY_COUNT);
 					"anime-list-container",
 				);
 				if (!animeListContainer) {return false;}
-				const currentLayout =
-					localStorage.getItem("postListLayout") || "list";
-				updateAnimeListLayout(currentLayout, false);
+				updateAnimeListLayout(false);
 				requestAnimationFrame(() => {
 					animeListContainer.classList.remove("opacity-0");
 				});
@@ -601,10 +599,7 @@ const hiddenAnimeList = animeList.slice(INITIAL_DISPLAY_COUNT);
 							"anime-list-container",
 						);
 						if (animeListContainer) {
-							const currentLayout =
-								localStorage.getItem("postListLayout") ||
-								"list";
-							updateAnimeListLayout(currentLayout, false);
+						updateAnimeListLayout(false);
 							animeListContainer.classList.remove("opacity-0");
 						}
 					}, 2000);
@@ -617,12 +612,12 @@ const hiddenAnimeList = animeList.slice(INITIAL_DISPLAY_COUNT);
 				tryInit();
 			}
 
-			function updateAnimeListLayout(layout, shouldAnimate = true) {
+			function updateAnimeListLayout(shouldAnimate = true) {
 				const animeListContainer = document.getElementById(
 					"anime-list-container",
 				);
 				if (!animeListContainer) {return;}
-				animeListContainer.dataset.currentLayout = layout;
+				animeListContainer.dataset.currentLayout = "list";
 
 				const animeItems = Array.from(
 					document.querySelectorAll("[data-anime-status]"),
@@ -656,38 +651,21 @@ const hiddenAnimeList = animeList.slice(INITIAL_DISPLAY_COUNT);
 					"lg:grid-cols-3",
 				);
 
-				if (layout === "grid") {
-					animeListContainer.classList.add("anime-grid-mode");
-					const rightSidebar = document.querySelector(
-						".right-sidebar-container",
-					);
-					if (rightSidebar) {
-						rightSidebar.style.display = "none";
-						rightSidebar.classList.add("hidden-in-grid-mode");
-					}
-					const mainGrid = document.getElementById("main-grid");
-					if (mainGrid) {
-						mainGrid.style.gridTemplateColumns = "17.5rem 1fr";
-						mainGrid.classList.add("two-column-layout");
-					}
-				} else {
-					animeListContainer.classList.add("anime-list-mode");
-					animeListContainer.classList.add(
-						"grid-cols-1",
-						"lg:grid-cols-2",
-					);
-					const rightSidebar = document.querySelector(
-						".right-sidebar-container",
-					);
-					if (rightSidebar) {
-						rightSidebar.style.display = "";
-						rightSidebar.classList.remove("hidden-in-grid-mode");
-					}
-					const mainGrid = document.getElementById("main-grid");
-					if (mainGrid) {
-						mainGrid.style.gridTemplateColumns = "";
-						mainGrid.classList.remove("two-column-layout");
-					}
+				animeListContainer.classList.add("anime-list-mode");
+				animeListContainer.classList.add(
+					"grid-cols-1",
+					"lg:grid-cols-2",
+				);
+				const rightSidebar = document.querySelector(
+					".right-sidebar-container",
+				);
+				if (rightSidebar) {
+					rightSidebar.style.display = "";
+				}
+				const mainGrid = document.getElementById("main-grid");
+				if (mainGrid) {
+					mainGrid.style.gridTemplateColumns = "";
+					mainGrid.classList.remove("two-column-layout");
 				}
 
 				void animeListContainer.offsetHeight;
@@ -742,9 +720,6 @@ const hiddenAnimeList = animeList.slice(INITIAL_DISPLAY_COUNT);
 				});
 			}
 
-			window.addEventListener("layoutChange", (event) => {
-				updateAnimeListLayout(event.detail.layout);
-			});
 		})();
 	</script>
 
