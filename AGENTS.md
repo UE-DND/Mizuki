@@ -1,4 +1,4 @@
-# AGENTS
+# FOR AGENTS
 
 ## 范围
 
@@ -89,7 +89,7 @@ pnpm format
 ## 环境
 
 - 启用内容分离或设置分析密钥时，将 .env.example 复制为 .env。
-- ENABLE_CONTENT_SYNC 控制同步行为；CONTENT_REPO_URL 与 CONTENT_DIR 配置内容仓库。
+- CONTENT_REPO_URL 与 CONTENT_DIR 配置内容仓库。
 - UMAMI_API_KEY 与 INDEXNOW_* 为可选项，来自 env。
 
 ## 备注

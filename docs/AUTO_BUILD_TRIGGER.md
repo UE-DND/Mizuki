@@ -1,16 +1,16 @@
 # 内容仓库更新自动触发构建 - 快速参考
 
-## 🎯 问题
+##   问题
 
 启用内容分离后,内容仓库 (Mizuki-Content) 更新不会自动触发代码仓库 (Mizuki) 的重新部署。
 
-## ✅ 解决方案 (推荐)
+##   解决方案 (推荐)
 
 使用 **Repository Dispatch** 让内容更新时自动触发构建,适用于所有部署平台。
 
 ---
 
-## 📝 5 步快速配置
+##   5 步快速配置
 
 ### Step 1: 创建 GitHub Token
 
@@ -18,8 +18,8 @@
 
 - 点击 **Generate new token (classic)**
 - Note: `Mizuki Content Trigger`
-- Scopes: 勾选 ✅ `repo`
-- 点击生成并**复制 Token** ⚠️ (只显示一次)
+- Scopes: 勾选   `repo`
+- 点击生成并**复制 Token**    (只显示一次)
 
 ### Step 2: 添加 Secret
 
@@ -53,7 +53,7 @@ on:
   push:
     branches:
       - main
-  repository_dispatch:  # 👈 添加这个
+  repository_dispatch:  #   添加这个
     types:
       - content-updated
   workflow_dispatch:
@@ -75,7 +75,7 @@ git push
 
 ---
 
-## 🔍 故障排查
+##   故障排查
 
 ### Token 问题
 
@@ -104,7 +104,7 @@ git push
 
 ---
 
-## 📚 详细文档
+##   详细文档
 
 需要更多配置选项? 查看:
 - [部署指南 - 完整说明](./DEPLOYMENT.md#内容仓库更新触发构建) - 包含 Webhook、定时构建等其他方案
@@ -112,14 +112,14 @@ git push
 
 ---
 
-## 💡 提示
+##   提示
 
 配置成功后:
-- ✅ 内容仓库每次推送都会自动触发部署
-- ✅ 可在 Actions 页面查看触发历史
-- ✅ 支持手动触发 (workflow_dispatch)
+-   内容仓库每次推送都会自动触发部署
+-   可在 Actions 页面查看触发历史
+-   支持手动触发 (workflow_dispatch)
 
 ---
 
 **配置时间**: 约 5 分钟  
-**一次配置,长期有效** ✨
+**一次配置,长期有效**  

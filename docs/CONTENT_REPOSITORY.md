@@ -2,7 +2,7 @@
 
 本文档说明如何创建和组织 Mizuki 博客的内容仓库。
 
-## 📁 推荐的目录结构
+##   推荐的目录结构
 
 ```
 Mizuki-Content/
@@ -27,7 +27,7 @@ Mizuki-Content/
 └── README.md
 ```
 
-## 🚀 快速开始
+##   快速开始
 
 ### 1. 创建新的内容仓库
 
@@ -73,7 +73,7 @@ git branch -M main
 git push -u origin main
 ```
 
-## 🔗 连接到 Mizuki 代码仓库
+##   连接到 Mizuki 代码仓库
 
 ### 方式一: Git Submodule (推荐)
 
@@ -114,7 +114,7 @@ USE_SUBMODULE=false
 pnpm run sync-content
 ```
 
-## 📝 内容编写指南
+##   内容编写指南
 
 ### 文章前言 (Frontmatter)
 
@@ -149,7 +149,7 @@ posts/
     └── diagram.png                   # 文章中的图片
 ```
 
-## 🔄 更新工作流
+##   更新工作流
 
 ### 本地开发
 
@@ -184,7 +184,7 @@ pnpm run sync-content
     USE_SUBMODULE: true
 ```
 
-## 📦 数据文件说明
+##   数据文件说明
 
 ### anime.ts
 番剧数据配置,包含你观看的动画列表。
@@ -198,7 +198,7 @@ pnpm run sync-content
 ### timeline.ts
 时间线数据,记录重要事件。
 
-## 🎨 图片管理
+##   图片管理
 
 ### 目录说明
 
@@ -218,14 +218,14 @@ pnpm run sync-content
 ![描述](/images/posts/image.jpg)
 ```
 
-## ⚠️ 注意事项
+##    注意事项
 
 1. **不要**在内容仓库中包含代码文件
 2. **保持**目录结构与主仓库一致
 3. **定期**备份重要内容
 4. **使用** Git LFS 管理大型图片文件(可选)
 
-## 🔐 私有内容仓库
+##   私有内容仓库
 
 如果你的内容仓库是私有的，需要配置访问权限。详细的配置方法请参考：
 
@@ -244,7 +244,7 @@ USE_SUBMODULE=true
 - GitHub Actions: 使用 `GITHUB_TOKEN` (同账号) 或 SSH 密钥
 - Vercel/Netlify: 授权访问或使用 Token
 
-## 📚 参考资源
+##   参考资源
 
 - [Git Submodule 文档](https://git-scm.com/book/zh/v2/Git-%E5%B7%A5%E5%85%B7-%E5%AD%90%E6%A8%A1%E5%9D%97)
 - [Mizuki 文档](https://docs.mizuki.mysqil.com/)
@@ -252,4 +252,4 @@ USE_SUBMODULE=true
 
 ---
 
-💡 **提示**: 建议先在本地测试内容同步流程,确保一切正常后再配置自动化部署。
+  **提示**: 建议先在本地测试内容同步流程,确保一切正常后再配置自动化部署。
