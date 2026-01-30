@@ -281,14 +281,9 @@ export const en: Translation = {
 	[Key.decryptionError]: "An error occurred during decryption:",
 
 	// Last Modified Time Card
-	[Key.lastModifiedPrefix]: "Time since last edit: ",
+	[Key.lastModifiedPrefix]: "Time since last edit",
 	[Key.lastModifiedOutdated]: "Some information may be outdated",
-	[Key.year]: "y",
-	[Key.month]: "m",
-	[Key.day]: "d",
-	[Key.hour]: "h",
-	[Key.minute]: "min",
-	[Key.second]: "s",
+	[Key.daysOnly]: "%{days} days",
 
 	// Site Stats
 	[Key.siteStats]: "Site Statistics",

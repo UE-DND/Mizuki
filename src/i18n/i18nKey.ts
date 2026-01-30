@@ -224,12 +224,7 @@ enum I18nKey {
 	//最后编辑时间卡片
 	lastModifiedPrefix = "lastModifiedPrefix",
 	lastModifiedOutdated = "lastModifiedOutdated",
-	year = "year",
-	month = "month",
-	day = "day",
-	hour = "hour",
-	minute = "minute",
-	second = "second",
+	daysOnly = "daysOnly",
 
 	// RSS and Atom
 	rss = "rss",

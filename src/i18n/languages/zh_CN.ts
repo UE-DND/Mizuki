@@ -224,14 +224,9 @@ export const zh_CN: Translation = {
 	[Key.decryptionError]: "解密过程中发生错误:",
 
 	//最后编辑时间卡片
-	[Key.lastModifiedPrefix]: "距离上次编辑: ",
+	[Key.lastModifiedPrefix]: "距离上次编辑",
 	[Key.lastModifiedOutdated]: "部分信息可能已经过时",
-	[Key.year]: "年",
-	[Key.month]: "月",
-	[Key.day]: "天",
-	[Key.hour]: "小时",
-	[Key.minute]: "分",
-	[Key.second]: "秒",
+	[Key.daysOnly]: "共 %{days} 天",
 
 	// RSS 页面
 	[Key.rss]: "RSS 订阅",

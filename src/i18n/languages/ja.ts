@@ -284,14 +284,9 @@ export const ja: Translation = {
 	[Key.decryptionError]: "復号中にエラーが発生しました:",
 
 	// 最終更新時間カード
-	[Key.lastModifiedPrefix]: "最終編集からの時間: ",
+	[Key.lastModifiedPrefix]: "最終編集からの時間",
 	[Key.lastModifiedOutdated]: "一部の情報は古い可能性があります",
-	[Key.year]: "年",
-	[Key.month]: "月",
-	[Key.day]: "日",
-	[Key.hour]: "時間",
-	[Key.minute]: "分",
-	[Key.second]: "秒",
+	[Key.daysOnly]: "%{days} 日",
 
 	// サイトの統計
 	[Key.siteStats]: "サイトの統計",
