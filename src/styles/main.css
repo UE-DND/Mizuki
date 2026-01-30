@@ -17,10 +17,10 @@
   font-display: swap;
 }
 
-/* 导入 萝莉体 第二版 字体 */
+/* 导入 LoliTi-SecondEdition 字体 */
 @font-face {
-  font-family: "萝莉体 第二版";
-  src: url("/assets/font/萝莉体 第二版.woff2") format("woff2");
+  font-family: "LoliTi-SecondEdition";
+  src: url("/assets/font/LoliTi-SecondEdition.woff2") format("woff2");
   font-style: normal;
   font-weight: 400;
   font-display: swap;

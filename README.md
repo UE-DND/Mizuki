@@ -164,7 +164,6 @@ Mizuki 支持超越标准 GitHub Flavored Markdown 的增强功能：
 - **阅读时间：** 自动计算和显示
 - **文章元数据：** 丰富的前言支持，包含分类和标签
 
-
 ## 配置指南
 
 ### 基础配置
@@ -238,6 +237,16 @@ pnpm run sync-content
 **迁移教程**: [从单仓库迁移到分离模式](docs/MIGRATION_GUIDE.md)
 **更多文档**: [文档索引](docs/README.md)
 
+## 贡献者
+
+感谢以下源项目作者对本项目做出的贡献
+
+[![源项目贡献者](https://contrib.rocks/image?repo=matsuzaka-yuki/Mizuki)](https://github.com/matsuzaka-yuki/Mizuki/graphs/contributors)
+
+感谢以下本项目作者对本项目做出的贡献
+
+[![本项目贡献者](https://contrib.rocks/image?repo=CiaLliChannel/Mizuki)](https://github.com/CiaLliChannel/Mizuki/graphs/contributors)
+
 ## 致谢
 
 - 基于原始 [Fuwari](https://github.com/saicaca/fuwari) 模板
@@ -254,15 +263,7 @@ pnpm run sync-content
 - **[Firefly](https://github.com/CuteLeaf/Firefly)** - 感谢提供优秀的布局设计思路，双侧边栏布局、文章双列网格等布局，及部分小组件的设计与实现，让 Mizuki 的界面更加丰富。
 - **[Twilight](https://github.com/spr-aachen/Twilight)** - 感谢提供灵感和技术支持。Twilight 的动态壁纸模式切换系统、响应式设计和过渡效果显著提升了 Mizuki 的使用体验。
 
-### 贡献者
-
-感谢以下源项目作者对本项目做出的贡献
-
-<a href="https://github.com/matsuzaka-yuki/Mizuki/graphs/contributors">
-  <img src="https://contrib.rocks/image?repo=matsuzaka-yuki/Mizuki" />
-</a>
-
-## 📄 许可证
+## 许可证
 
 本项目基于 Apache 许可证 2.0 - 查看 [LICENSE](LICENSE) 文件了解详情。
 
