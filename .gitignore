@@ -50,3 +50,7 @@ src/data/bilibili-data.json
 
 # Upstream code branch reference
 ref-upstream/
+
+# AGETNS
+.claude/
+.spec-workflow/

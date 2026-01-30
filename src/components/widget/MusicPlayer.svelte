@@ -43,6 +43,16 @@ let isLoading = false;
 let isShuffled = false;
 // 循环模式，0: 不循环, 1: 单曲循环, 2: 列表循环，默认为 0
 let isRepeating = 0;
+// 播放器显示模式存储键
+const displayModeStorageKey = "music-player:display-mode";
+type PlayerDisplayMode = "mini" | "expanded" | "orb";
+// 播放歌曲状态存储键
+const playbackStateStorageKey = "music-player:playback-state";
+type PlaybackState = {
+	index?: number;
+	songId?: number | string;
+	time?: number;
+};
 // 错误信息，默认为空字符串
 let errorMessage = "";
 // 是否显示错误信息，默认为 false
@@ -128,7 +138,10 @@ async function fetchMetingPlaylist() {
 			};
 		});
 		if (playlist.length > 0) {
-			loadSong(playlist[0]);
+			const restored = applyPlaybackState();
+			if (!restored) {
+				loadSong(playlist[0]);
+			}
 		}
 		isLoading = false;
 	} catch (e) {
@@ -148,10 +161,11 @@ function togglePlay() {
 
 function toggleExpanded() {
 	isExpanded = !isExpanded;
+	showPlaylist = false;
 	if (isExpanded) {
-		showPlaylist = false;
 		isHidden = false;
 	}
+	persistDisplayMode();
 }
 
 function toggleHidden() {
@@ -160,10 +174,119 @@ function toggleHidden() {
 		isExpanded = false;
 		showPlaylist = false;
 	}
+	persistDisplayMode();
 }
 
 function togglePlaylist() {
 	showPlaylist = !showPlaylist;
+}
+
+function applyDisplayMode(mode: PlayerDisplayMode): void {
+	if (mode === "expanded") {
+		isExpanded = true;
+		isHidden = false;
+		showPlaylist = false;
+		return;
+	}
+	if (mode === "orb") {
+		isHidden = true;
+		isExpanded = false;
+		showPlaylist = false;
+		return;
+	}
+	isExpanded = false;
+	isHidden = false;
+	showPlaylist = false;
+}
+
+function getDisplayMode(): PlayerDisplayMode {
+	if (isHidden) return "orb";
+	if (isExpanded) return "expanded";
+	return "mini";
+}
+
+function persistDisplayMode(): void {
+	try {
+		if (typeof localStorage === "undefined") return;
+		localStorage.setItem(displayModeStorageKey, getDisplayMode());
+	} catch (error) {
+		console.warn("音乐播放器显示模式持久化失败:", error);
+	}
+}
+
+function readDisplayMode(): PlayerDisplayMode | null {
+	try {
+		if (typeof localStorage === "undefined") return null;
+		const stored = localStorage.getItem(displayModeStorageKey);
+		if (stored === "mini" || stored === "expanded" || stored === "orb") {
+			return stored;
+		}
+	} catch (error) {
+		console.warn("音乐播放器显示模式读取失败:", error);
+	}
+	return null;
+}
+
+let pendingRestoreTime: number | null = null;
+let persistTimer: number | null = null;
+
+function persistPlaybackState(): void {
+	try {
+		if (typeof localStorage === "undefined") return;
+		const state: PlaybackState = {
+			index: currentIndex,
+			songId: playlist[currentIndex]?.id,
+			time: currentTime,
+		};
+		localStorage.setItem(playbackStateStorageKey, JSON.stringify(state));
+	} catch (error) {
+		console.warn("音乐播放器播放状态持久化失败:", error);
+	}
+}
+
+function schedulePlaybackPersist(): void {
+	if (persistTimer !== null) return;
+	persistTimer = window.setTimeout(() => {
+		persistPlaybackState();
+		persistTimer = null;
+	}, 1000);
+}
+
+function readPlaybackState(): PlaybackState | null {
+	try {
+		if (typeof localStorage === "undefined") return null;
+		const stored = localStorage.getItem(playbackStateStorageKey);
+		if (!stored) return null;
+		const parsed = JSON.parse(stored) as PlaybackState;
+		if (parsed && typeof parsed === "object") {
+			return parsed;
+		}
+	} catch (error) {
+		console.warn("音乐播放器播放状态读取失败:", error);
+	}
+	return null;
+}
+
+function applyPlaybackState(): boolean {
+	const stored = readPlaybackState();
+	if (!stored || playlist.length === 0) return false;
+	let targetIndex = -1;
+	if (stored.songId !== undefined) {
+		targetIndex = playlist.findIndex(
+			(song) => String(song.id) === String(stored.songId),
+		);
+	}
+	if (targetIndex < 0 && typeof stored.index === "number") {
+		targetIndex = Math.min(Math.max(stored.index, 0), playlist.length - 1);
+	}
+	if (targetIndex < 0) return false;
+	currentIndex = targetIndex;
+	willAutoPlay = false;
+	loadSong(playlist[targetIndex]);
+	if (typeof stored.time === "number" && stored.time > 0) {
+		pendingRestoreTime = stored.time;
+	}
+	return true;
 }
 
 function toggleShuffle() {
@@ -183,12 +306,14 @@ function toggleRepeat() {
 function previousSong() {
 	if (playlist.length <= 1) return;
 	const newIndex = currentIndex > 0 ? currentIndex - 1 : playlist.length - 1;
-	playSong(newIndex);
+	playSong(newIndex, isPlaying);
 }
 
-function nextSong(autoPlay: boolean = true) {
+function nextSong(autoPlay?: boolean) {
 	if (playlist.length <= 1) return;
 	
+    const shouldPlay = autoPlay ?? isPlaying;
+
 	let newIndex: number;
 	if (isShuffled) {
 		do {
@@ -197,7 +322,7 @@ function nextSong(autoPlay: boolean = true) {
 	} else {
 		newIndex = currentIndex < playlist.length - 1 ? currentIndex + 1 : 0;
 	}
-	playSong(newIndex, autoPlay);
+	playSong(newIndex, shouldPlay);
 }
 
 // 记录切歌时的播放意图，用于解决加载失败时的状态传递问题
@@ -206,9 +331,10 @@ let willAutoPlay = false;
 function playSong(index: number, autoPlay = true) {
 	if (index < 0 || index >= playlist.length) return;
 	
-    willAutoPlay = autoPlay;
+	willAutoPlay = autoPlay;
 	currentIndex = index;
 	loadSong(playlist[currentIndex]);
+	persistPlaybackState();
 }
 
 function getAssetPath(path: string): string {
@@ -238,6 +364,15 @@ function handleLoadSuccess() {
 		duration = Math.floor(audio.duration);
 		if (playlist[currentIndex]) playlist[currentIndex].duration = duration;
 		currentSong.duration = duration;
+	}
+
+	if (pendingRestoreTime !== null && audio) {
+		const clampedTime = audio.duration
+			? Math.min(pendingRestoreTime, audio.duration)
+			: pendingRestoreTime;
+		audio.currentTime = clampedTime;
+		currentTime = clampedTime;
+		pendingRestoreTime = null;
 	}
 
 	if (willAutoPlay || isPlaying) {
@@ -290,6 +425,7 @@ function handleAudioEnded() {
 	} else {
 		isPlaying = false;
 	}
+	persistPlaybackState();
 }
 
 function showErrorMessage(message: string) {
@@ -310,6 +446,7 @@ function setProgress(event: MouseEvent) {
 	const newTime = percent * duration;
 	audio.currentTime = newTime;
 	currentTime = newTime;
+	persistPlaybackState();
 }
 
 let isVolumeDragging = false;
@@ -387,13 +524,24 @@ onMount(() => {
 	if (!musicPlayerConfig.enable) {
 		return;
 	}
+	const storedMode = readDisplayMode();
+	if (storedMode) {
+		applyDisplayMode(storedMode);
+	}
+	if (typeof sessionStorage !== "undefined") {
+		sessionStorage.removeItem(displayModeStorageKey);
+		sessionStorage.removeItem(playbackStateStorageKey);
+	}
 	if (mode === "meting") {
 		fetchMetingPlaylist();
 	} else {
 		// 使用本地播放列表，不发送任何API请求
 		playlist = [...localPlaylist];
 		if (playlist.length > 0) {
-			loadSong(playlist[0]);
+			const restored = applyPlaybackState();
+			if (!restored) {
+				loadSong(playlist[0]);
+			}
 		} else {
 			showErrorMessage("本地播放列表为空");
 		}
@@ -414,9 +562,16 @@ onDestroy(() => {
 	src={getAssetPath(currentSong.url)}
 	bind:volume
 	bind:muted={isMuted}
-	on:play={() => isPlaying = true}
-	on:pause={() => isPlaying = false}
-	on:timeupdate={() => currentTime = audio.currentTime}
+	on:play={() => {
+		isPlaying = true;
+	}}
+	on:pause={() => {
+		isPlaying = false;
+	}}
+	on:timeupdate={() => {
+		currentTime = audio.currentTime;
+		schedulePlaybackPersist();
+	}}
 	on:ended={handleAudioEnded}
 	on:error={handleLoadError}
 	on:loadeddata={handleLoadSuccess}
@@ -447,7 +602,7 @@ onDestroy(() => {
      class:hidden-mode={isHidden}>
 
     <!-- 隐藏状态的小圆球 -->
-    <div class="orb-player w-12 h-12 bg-[var(--primary)] rounded-full shadow-lg cursor-pointer transition-all duration-500 ease-in-out flex items-center justify-center hover:scale-110 active:scale-95"
+    <div class="orb-player w-12 h-12 bg-[var(--primary)] rounded-full shadow-2xl cursor-pointer transition-all duration-500 ease-in-out flex items-center justify-center hover:scale-110 active:scale-95"
          class:opacity-0={!isHidden}
          class:scale-0={!isHidden}
          class:pointer-events-none={!isHidden}
@@ -474,13 +629,13 @@ onDestroy(() => {
         {/if}
     </div>
     <!-- 收缩状态的迷你播放器（封面圆形） -->
-    <div class="mini-player card-base bg-[var(--float-panel-bg)] shadow-xl rounded-2xl p-3 transition-all duration-500 ease-in-out"
+    <div class="mini-player card-base bg-[var(--float-panel-bg)] shadow-2xl rounded-2xl p-3 transition-all duration-500 ease-in-out"
          class:opacity-0={isExpanded || isHidden}
          class:scale-95={isExpanded || isHidden}
          class:pointer-events-none={isExpanded || isHidden}>
         <div class="flex items-center gap-3">
             <!-- 封面区域：点击控制播放/暂停 -->
-            <div class="cover-container relative w-12 h-12 rounded-full overflow-hidden cursor-pointer"
+            <div class="cover-container relative w-12 h-12 rounded-lg overflow-hidden cursor-pointer"
                  on:click={togglePlay}
                  on:keydown={(e) => {
                     if (e.key === 'Enter' || e.key === ' ') {
@@ -493,7 +648,6 @@ onDestroy(() => {
                  aria-label={isPlaying ? i18n(Key.musicPlayerPause) : i18n(Key.musicPlayerPlay)}>
                 <img src={getAssetPath(currentSong.cover)} alt={i18n(Key.musicPlayerCover)}
                      class="w-full h-full object-cover transition-transform duration-300"
-                     class:spinning={isPlaying && !isLoading}
                      class:animate-pulse={isLoading} />
                 <div class="absolute inset-0 bg-black/20 flex items-center justify-center opacity-0 hover:opacity-100 transition-opacity">
                     {#if isLoading}
@@ -534,15 +688,66 @@ onDestroy(() => {
         </div>
     </div>
     <!-- 展开状态的完整播放器（封面圆形） -->
-    <div class="expanded-player card-base bg-[var(--float-panel-bg)] shadow-xl rounded-2xl p-4 transition-all duration-500 ease-in-out"
+    <div class="expanded-player transition-all duration-500 ease-in-out"
          class:opacity-0={!isExpanded}
          class:scale-95={!isExpanded}
          class:pointer-events-none={!isExpanded}>
+        
+		{#if showPlaylist}
+			<div class="playlist-panel absolute bottom-full left-0 mb-4 w-full max-h-96 overflow-hidden z-50"
+				 transition:slide={{ duration: 300, axis: 'y' }}>
+                <div class="playlist-header flex items-center justify-between p-4 border-b border-[var(--line-divider)]">
+                    <h3 class="text-lg font-semibold text-90">{i18n(Key.musicPlayerPlaylist)}</h3>
+                    <button class="btn-plain w-8 h-8 rounded-lg" on:click={togglePlaylist}>
+                        <Icon icon="material-symbols:close" class="text-lg" />
+                    </button>
+                </div>
+                <div class="playlist-content overflow-y-auto max-h-80">
+                    {#each playlist as song, index}
+                        <div class="playlist-item flex items-center gap-3 p-3 hover:bg-[var(--btn-plain-bg-hover)] cursor-pointer transition-colors"
+                             class:bg-[var(--btn-plain-bg)]={index === currentIndex}
+                             class:text-[var(--primary)]={index === currentIndex}
+                             on:click={() => playSong(index)}
+                             on:keydown={(e) => {
+                                 if (e.key === 'Enter' || e.key === ' ') {
+                                     e.preventDefault();
+                                     playSong(index);
+                                 }
+                             }}
+                             role="button"
+                             tabindex="0"
+                             aria-label="播放 {song.title} - {song.artist}">
+                            <div class="w-6 h-6 flex items-center justify-center">
+                                {#if index === currentIndex && isPlaying}
+                                    <Icon icon="material-symbols:graphic-eq" class="text-[var(--primary)] animate-pulse" />
+                                {:else if index === currentIndex}
+                                    <Icon icon="material-symbols:pause" class="text-[var(--primary)]" />
+                                {:else}
+                                    <span class="text-sm text-[var(--content-meta)]">{index + 1}</span>
+                                {/if}
+                            </div>
+                            <div class="w-10 h-10 rounded-lg overflow-hidden bg-[var(--btn-regular-bg)] flex-shrink-0">
+                                <img src={getAssetPath(song.cover)} alt={song.title} loading="lazy" class="w-full h-full object-cover" />
+                            </div>
+                            <div class="flex-1 min-w-0">
+                                <div class="font-medium truncate" class:text-[var(--primary)]={index === currentIndex} class:text-90={index !== currentIndex}>
+                                    {song.title}
+                                </div>
+                                <div class="text-sm text-[var(--content-meta)] truncate" class:text-[var(--primary)]={index === currentIndex}>
+                                    {song.artist}
+                                </div>
+                            </div>
+                        </div>
+                    {/each}
+                </div>
+            </div>
+        {/if}
+
+        <div class="card-base bg-[var(--float-panel-bg)] shadow-2xl rounded-2xl p-4">
         <div class="flex items-center gap-4 mb-4">
-            <div class="cover-container relative w-16 h-16 rounded-full overflow-hidden flex-shrink-0">
+            <div class="cover-container relative w-16 h-16 rounded-lg overflow-hidden flex-shrink-0">
                 <img src={getAssetPath(currentSong.cover)} alt={i18n(Key.musicPlayerCover)}
                      class="w-full h-full object-cover transition-transform duration-300"
-                     class:spinning={isPlaying && !isLoading}
                      class:animate-pulse={isLoading} />
             </div>
             <div class="flex-1 min-w-0">
@@ -559,10 +764,9 @@ onDestroy(() => {
                     <Icon icon="material-symbols:visibility-off" class="text-lg" />
                 </button>
                 <button class="btn-plain w-8 h-8 rounded-lg flex items-center justify-center"
-                        class:text-[var(--primary)]={showPlaylist}
-                        on:click={togglePlaylist}
-                        title={i18n(Key.musicPlayerPlaylist)}>
-                    <Icon icon="material-symbols:queue-music" class="text-lg" />
+                        on:click={toggleExpanded}
+                        title={i18n(Key.musicPlayerCollapse)}>
+                    <Icon icon="material-symbols:expand-more" class="text-lg" />
                 </button>
             </div>
         </div>
@@ -663,61 +867,14 @@ onDestroy(() => {
                      style="width: {volume * 100}%"></div>
             </div>
             <button class="btn-plain w-8 h-8 rounded-lg flex items-center justify-center"
-                    on:click={toggleExpanded}
-                    title={i18n(Key.musicPlayerCollapse)}>
-                <Icon icon="material-symbols:expand-more" class="text-lg" />
+                    class:text-[var(--primary)]={showPlaylist}
+                    on:click={togglePlaylist}
+                    title={i18n(Key.musicPlayerPlaylist)}>
+                <Icon icon="material-symbols:queue-music" class="text-lg" />
             </button>
         </div>
-    </div>
-    {#if showPlaylist}
-        <div class="playlist-panel float-panel fixed bottom-20 right-4 w-80 max-h-96 overflow-hidden z-50"
-             transition:slide={{ duration: 300, axis: 'y' }}>
-            <div class="playlist-header flex items-center justify-between p-4 border-b border-[var(--line-divider)]">
-                <h3 class="text-lg font-semibold text-90">{i18n(Key.musicPlayerPlaylist)}</h3>
-                <button class="btn-plain w-8 h-8 rounded-lg" on:click={togglePlaylist}>
-                    <Icon icon="material-symbols:close" class="text-lg" />
-                </button>
-            </div>
-            <div class="playlist-content overflow-y-auto max-h-80 hide-scrollbar">
-                {#each playlist as song, index}
-                    <div class="playlist-item flex items-center gap-3 p-3 hover:bg-[var(--btn-plain-bg-hover)] cursor-pointer transition-colors"
-                         class:bg-[var(--btn-plain-bg)]={index === currentIndex}
-                         class:text-[var(--primary)]={index === currentIndex}
-                         on:click={() => playSong(index)}
-                         on:keydown={(e) => {
-                             if (e.key === 'Enter' || e.key === ' ') {
-                                 e.preventDefault();
-								 playSong(index);
-                             }
-                         }}
-                         role="button"
-                         tabindex="0"
-                         aria-label="播放 {song.title} - {song.artist}">
-                        <div class="w-6 h-6 flex items-center justify-center">
-                            {#if index === currentIndex && isPlaying}
-                                <Icon icon="material-symbols:graphic-eq" class="text-[var(--primary)] animate-pulse" />
-                            {:else if index === currentIndex}
-                                <Icon icon="material-symbols:pause" class="text-[var(--primary)]" />
-                            {:else}
-                                <span class="text-sm text-[var(--content-meta)]">{index + 1}</span>
-                            {/if}
-                        </div>
-                        <div class="w-10 h-10 rounded-lg overflow-hidden bg-[var(--btn-regular-bg)] flex-shrink-0">
-                            <img src={getAssetPath(song.cover)} alt={song.title} loading="lazy" class="w-full h-full object-cover" />
-                        </div>
-                        <div class="flex-1 min-w-0">
-                            <div class="font-medium truncate" class:text-[var(--primary)]={index === currentIndex} class:text-90={index !== currentIndex}>
-                                {song.title}
-                            </div>
-                            <div class="text-sm text-[var(--content-meta)] truncate" class:text-[var(--primary)]={index === currentIndex}>
-                                {song.artist}
-                            </div>
-                        </div>
-                    </div>
-                {/each}
-            </div>
         </div>
-    {/if}
+    </div>
 </div>
 
 <style>
@@ -767,10 +924,38 @@ onDestroy(() => {
     /*left: 0;*/
 }
 .expanded-player {
-    width: 20rem;
-    position: absolute;
-    bottom: 0;
-    right: 0;
+	width: 20rem;
+	position: absolute;
+	bottom: 0;
+	right: 0;
+}
+
+.playlist-panel {
+	background-color: var(--float-panel-bg);
+	border-radius: var(--radius-large);
+	transition: background-color 0.15s ease;
+    box-shadow: 0 -10px 15px -3px rgb(0 0 0 / 0.1), 0 -4px 6px -2px rgb(0 0 0 / 0.05);
+}
+
+/* 自定义滚动条样式 */
+.playlist-content::-webkit-scrollbar {
+    width: 6px;
+}
+.playlist-content::-webkit-scrollbar-track {
+    background: transparent;
+}
+.playlist-content::-webkit-scrollbar-thumb {
+    background-color: rgba(0, 0, 0, 0.1);
+    border-radius: 3px;
+}
+:global(.dark) .playlist-content::-webkit-scrollbar-thumb {
+    background-color: rgba(255, 255, 255, 0.1);
+}
+.playlist-content::-webkit-scrollbar-thumb:hover {
+    background-color: rgba(0, 0, 0, 0.2);
+}
+:global(.dark) .playlist-content::-webkit-scrollbar-thumb:hover {
+    background-color: rgba(255, 255, 255, 0.2);
 }
 
 .animate-pulse {
@@ -806,9 +991,8 @@ onDestroy(() => {
         right: 0.5rem !important;
 	}
     .playlist-panel {
-        width: calc(100vw - 16px) !important;
-        /*left: 0.5rem !important;*/
-        right: 0.5rem !important;
+        width: 100% !important;
+        right: 0 !important;
         max-width: none;
 	}
     .controls {
@@ -875,24 +1059,6 @@ onDestroy(() => {
     .bottom-controls > div:nth-child(2) {
         height: 12px;
 	}
-}
-/* 自定义旋转动画，停止时保持当前位置 */
-@keyframes spin-continuous {
-    from {
-        transform: rotate(0deg);
-	}
-    to {
-        transform: rotate(360deg);
-	}
-}
-
-.cover-container img {
-    animation: spin-continuous 3s linear infinite;
-    animation-play-state: paused;
-}
-
-.cover-container img.spinning {
-    animation-play-state: running;
 }
 
 /* 让主题色按钮更有视觉反馈 */

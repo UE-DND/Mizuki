@@ -3,6 +3,7 @@ import type { CollectionEntry } from "astro:content";
 import type { Page } from "astro";
 import { siteConfig } from "../config";
 import { widgetManager } from "../utils/widget-manager";
+import { formatDateToYYYYMMDD } from "../utils/date-utils";
 import PostCard from "./PostCard.astro";
 
 interface Props {
@@ -28,13 +29,25 @@ const initialLayoutClass = defaultLayout === "grid" ? "grid-mode" : "list-mode";
 	data-both-sidebars={hasRightSidebars}
 >
 	{
-		page.data.map((entry, index) => (
-			<PostCard
-				entry={entry}
-				class:list="onload-animation"
-				style={`--i: ${index}; --interval: 50ms;`}
-			/>
-		))
+		page.data.map((entry, index) => {
+			const date = formatDateToYYYYMMDD(entry.data.published);
+			const [year, month] = date.split("-");
+			const monthKey = `${year}-${month}`;
+			return (
+				<div
+					class="post-list-item"
+					data-year={year}
+					data-month={monthKey}
+					data-day={date}
+				>
+					<PostCard
+						entry={entry}
+						class:list="onload-animation"
+						style={`--i: ${index}; --interval: 50ms;`}
+					/>
+				</div>
+			);
+		})
 	}
 </div>
 
@@ -185,6 +198,69 @@ const initialLayoutClass = defaultLayout === "grid" ? "grid-mode" : "list-mode";
 		}
 	}
 	setTimeout(publishLayoutInit, 150);
+
+	type CalendarFilterDetail = {
+		type: "day" | "month" | "year";
+		key: string;
+		posts: Array<{
+			id: string;
+			title: string;
+			date: string;
+			url: string;
+		}>;
+	};
+
+	function getFilterDom() {
+		return {
+			postList: document.getElementById("post-list-container"),
+			pagination: document.getElementById("pagination-container"),
+		};
+	}
+
+	function applyCalendarFilter(detail: CalendarFilterDetail) {
+		const { postList, pagination } = getFilterDom();
+		if (!postList) {return;}
+		const items = Array.from(
+			postList.querySelectorAll<HTMLElement>(".post-list-item"),
+		);
+		items.forEach((item) => {
+			const match =
+				detail.type === "year"
+					? item.dataset.year === detail.key
+					: detail.type === "month"
+						? item.dataset.month === detail.key
+						: item.dataset.day === detail.key;
+			item.classList.toggle("hidden", !match);
+		});
+		pagination?.classList.add("hidden");
+	}
+
+	function clearCalendarFilter() {
+		const { postList, pagination } = getFilterDom();
+		if (!postList) {return;}
+		postList
+			.querySelectorAll<HTMLElement>(".post-list-item.hidden")
+			.forEach((item) => item.classList.remove("hidden"));
+		pagination?.classList.remove("hidden");
+	}
+
+	function setupCalendarFilterListeners() {
+		if ((window as any)._calendarFilterListenerAttached) {return;}
+
+		window.addEventListener("calendarFilterChange", (event) => {
+			const detail = (event as CustomEvent<CalendarFilterDetail>).detail;
+			if (!detail || !Array.isArray(detail.posts)) {return;}
+			applyCalendarFilter(detail);
+		});
+
+		window.addEventListener("calendarFilterClear", () => {
+			clearCalendarFilter();
+		});
+
+		(window as any)._calendarFilterListenerAttached = true;
+	}
+
+	setupCalendarFilterListeners();
 </script>
 
 <style>
