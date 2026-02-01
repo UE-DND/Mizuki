@@ -745,11 +745,36 @@ function disableAnimation() {
 			if (carousel) {
 				// 立即初始化轮播，移除延迟以改善流畅性
 				initCarousel();
+				updateBannerCarouselState();
 			}
 		});
 	}
 
+	function isArticlePage() {
+		const swupContainer = document.getElementById("swup-container");
+		return swupContainer?.getAttribute("data-is-article") === "true";
+	}
+
+	function updateBannerCarouselState() {
+		const controller = (window as any).__bannerCarouselController;
+		if (!controller || typeof controller.setPaused !== "function") {
+			return;
+		}
+		const bannerWrapper = document.getElementById("banner-wrapper");
+		const isBannerHidden =
+			bannerWrapper?.classList.contains("wallpaper-layer-hidden") === true;
+		controller.setPaused(isArticlePage() || isBannerHidden);
+	}
+
+	(window as any).__updateBannerCarouselState = updateBannerCarouselState;
+
 	function initCarousel() {
+		const existingController = (window as any).__bannerCarouselController;
+		if (existingController && typeof existingController.setPaused === "function") {
+			updateBannerCarouselState();
+			return;
+		}
+
 		const carouselItems = document.querySelectorAll(".carousel-item");
 		// 根据屏幕尺寸过滤有效的轮播项
 		const isMobile = window.innerWidth < 768; // md breakpoint
@@ -886,6 +911,19 @@ function disableAnimation() {
 				}, interval * 1000);
 			}
 
+			function setPaused(paused: boolean) {
+				isPaused = paused;
+				if (paused) {
+					clearInterval(carouselInterval);
+				} else {
+					startCarousel();
+				}
+			}
+
+			(window as any).__bannerCarouselController = {
+				setPaused,
+			};
+
 			// 鼠标悬停暂停（桌面端）
 			if (carousel) {
 				carousel.addEventListener("mouseenter", () => {
@@ -900,8 +938,16 @@ function disableAnimation() {
 
 			// 开始自动轮播
 			startCarousel();
+			updateBannerCarouselState();
 		}
 	}
+
+	window.addEventListener("wallpaper-mode-change", () => {
+		// 等待壁纸模式切换完成后再同步轮播状态
+		requestAnimationFrame(() => {
+			updateBannerCarouselState();
+		});
+	});
 
 	function setupSakura() {
 		const sakuraConfig = (widgetConfigs as any)?.sakura;
@@ -1112,47 +1158,7 @@ function disableAnimation() {
 				// 清理上一页的 Fancybox
 				cleanupFancybox();
 
-				// 处理 Banner class 和显示状态
-				const bodyElement = document.querySelector("body");
 				const isHomePage = pathsEqual(visit.to.url, url("/"));
-				if (bodyElement) {
-					if (isHomePage) {
-						bodyElement.classList.add("lg:is-home");
-					} else {
-						bodyElement.classList.remove("lg:is-home");
-					}
-				}
-
-				// Control banner text visibility based on page
-				const bannerTextOverlay = document.querySelector(
-					".banner-text-overlay",
-				);
-				if (bannerTextOverlay) {
-					if (isHomePage) {
-						bannerTextOverlay.classList.remove("hidden");
-					} else {
-						bannerTextOverlay.classList.add("hidden");
-					}
-				}
-
-				// Control navbar transparency based on page
-				const navbar = document.getElementById("navbar");
-				if (navbar) {
-					navbar.setAttribute("data-is-home", isHomePage.toString());
-					// 重新初始化semifull模式的滚动检测
-					const transparentMode = navbar.getAttribute(
-						"data-transparent-mode",
-					);
-					if (transparentMode === "semifull") {
-						// 重新调用初始化函数来重新绑定滚动事件
-						if (
-							typeof (window as any)
-								.initSemifullScrollDetection === "function"
-						) {
-							(window as any).initSemifullScrollDetection();
-						}
-					}
-				}
 
 				// Control mobile banner visibility based on page with improved staging animation
 				const bannerWrapper = document.getElementById("banner-wrapper");
@@ -1162,26 +1168,23 @@ function disableAnimation() {
 
 				if (bannerWrapper && mainContentWrapper) {
 					if (isHomePage) {
-						// 首页：延迟移除隐藏类，让banner和内容优雅地出现
-						setTimeout(() => {
+						// 首页：同步移除隐藏类，避免两段式位移
+						requestAnimationFrame(() => {
 							bannerWrapper.classList.remove(
 								"mobile-hide-banner",
 							);
-						}, 100);
-						setTimeout(() => {
 							mainContentWrapper.classList.remove(
 								"mobile-main-no-banner",
 							);
-						}, 150);
+						});
 					} else {
-						// 非首页：分阶段隐藏，先隐藏banner，再移动内容
-						bannerWrapper.classList.add("mobile-hide-banner");
-						// 延迟移动内容，让banner先完全消失
-						setTimeout(() => {
+						// 非首页：同步隐藏banner与移动内容，避免卡顿
+						requestAnimationFrame(() => {
+							bannerWrapper.classList.add("mobile-hide-banner");
 							mainContentWrapper.classList.add(
 								"mobile-main-no-banner",
 							);
-						}, 100);
+						});
 					}
 				}
 
@@ -1201,6 +1204,51 @@ function disableAnimation() {
 		);
 
 		swup.hooks.on("page:view", () => {
+			updateBannerCarouselState();
+			// 更新首页状态，避免桌面端出现两段位移
+			const isHomePage = pathsEqual(
+				window.location.pathname,
+				url("/"),
+			);
+			const bodyElement = document.querySelector("body");
+			if (bodyElement) {
+				if (isHomePage) {
+					bodyElement.classList.add("lg:is-home");
+				} else {
+					bodyElement.classList.remove("lg:is-home");
+				}
+			}
+
+			// Control banner text visibility based on page
+			const bannerTextOverlay = document.querySelector(
+				".banner-text-overlay",
+			);
+			if (bannerTextOverlay) {
+				if (isHomePage) {
+					bannerTextOverlay.classList.remove("hidden");
+				} else {
+					bannerTextOverlay.classList.add("hidden");
+				}
+			}
+
+			// Control navbar transparency based on page
+			const navbar = document.getElementById("navbar");
+			if (navbar) {
+				navbar.setAttribute("data-is-home", isHomePage.toString());
+				// 重新初始化semifull模式的滚动检测
+				const transparentMode =
+					navbar.getAttribute("data-transparent-mode");
+				if (transparentMode === "semifull") {
+					// 重新调用初始化函数来重新绑定滚动事件
+					if (
+						typeof (window as any)
+							.initSemifullScrollDetection === "function"
+					) {
+						(window as any).initSemifullScrollDetection();
+					}
+				}
+			}
+
 			// hide the temp high element when the transition is done
 			const heightExtend = document.getElementById("page-height-extend");
 			if (heightExtend) {
