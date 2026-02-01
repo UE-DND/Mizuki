@@ -9,6 +9,7 @@ import SiteStats from "@/components/widget/SiteStats.astro";
 import Tags from "@/components/widget/Tags.astro";
 import TOC from "@/components/widget/TOC.astro";
 import { widgetManager } from "@/utils/widget-manager";
+import { pathsEqual, url } from "@/utils/url-utils";
 
 interface Props {
 	class?: string;
@@ -16,12 +17,21 @@ interface Props {
 }
 
 const { class: className, headings } = Astro.props;
+const isHomePage = pathsEqual(Astro.url.pathname, url("/"));
+
+const filterCalendar = (components: { type?: string }[]) => {
+	if (isHomePage) {
+		return components;
+	}
+	return components.filter((component) => component.type !== "calendar");
+};
 
 // 获取右侧边栏的组件列表
-const topComponents = widgetManager.getComponentsByPosition("top", "right");
-const stickyComponents = widgetManager.getComponentsByPosition(
-	"sticky",
-	"right",
+const topComponents = filterCalendar(
+	widgetManager.getComponentsByPosition("top", "right"),
+);
+const stickyComponents = filterCalendar(
+	widgetManager.getComponentsByPosition("sticky", "right"),
 );
 
 // 组件映射表

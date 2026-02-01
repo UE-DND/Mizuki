@@ -2,10 +2,24 @@
 import { widgetManager } from "../../utils/widget-manager";
 import Calendar from "./Calendar.astro";
 import SiteStats from "./SiteStats.astro";
+import { pathsEqual, url } from "@/utils/url-utils";
+import type { WidgetComponentConfig } from "@/types/config";
 
 // 分离顶部固定和粘性定位的组件
-const topComponents = widgetManager.getComponentsByPosition("top", "right");
-const stickyComponents = widgetManager.getComponentsByPosition("sticky", "right");
+const isHomePage = pathsEqual(Astro.url.pathname, url("/"));
+const filterCalendar = (components: WidgetComponentConfig[]) => {
+	if (isHomePage) {
+		return components;
+	}
+	return components.filter((component) => component.type !== "calendar");
+};
+
+const topComponents = filterCalendar(
+	widgetManager.getComponentsByPosition("top", "right"),
+);
+const stickyComponents = filterCalendar(
+	widgetManager.getComponentsByPosition("sticky", "right"),
+);
 ---
 
 <div class="right-sidebar" id="right-sidebar">

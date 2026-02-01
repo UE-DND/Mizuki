@@ -9,6 +9,7 @@ import Profile from "./Profile.astro";
 import SiteStats from "./SiteStats.astro";
 import Tags from "./Tags.astro";
 import TOC from "./TOC.astro";
+import { pathsEqual, url } from "@/utils/url-utils";
 
 interface Props {
 	class?: string;
@@ -16,13 +17,29 @@ interface Props {
 }
 
 const { class: className, headings } = Astro.props;
+const isHomePage = pathsEqual(Astro.url.pathname, url("/"));
+
+const filterCalendar = (components: { type?: string }[]) => {
+	if (isHomePage) {
+		return components;
+	}
+	return components.filter((component) => component.type !== "calendar");
+};
 
 // 获取不同设备下的组件列表
-const mobileTopComponents = widgetManager.getComponentsByPosition("top", "drawer", "mobile");
-const mobileStickyComponents = widgetManager.getComponentsByPosition("sticky", "drawer", "mobile");
+const mobileTopComponents = filterCalendar(
+	widgetManager.getComponentsByPosition("top", "drawer", "mobile"),
+);
+const mobileStickyComponents = filterCalendar(
+	widgetManager.getComponentsByPosition("sticky", "drawer", "mobile"),
+);
 
-const tabletTopComponents = widgetManager.getComponentsByPosition("top", "left", "tablet");
-const tabletStickyComponents = widgetManager.getComponentsByPosition("sticky", "left", "tablet");
+const tabletTopComponents = filterCalendar(
+	widgetManager.getComponentsByPosition("top", "left", "tablet"),
+);
+const tabletStickyComponents = filterCalendar(
+	widgetManager.getComponentsByPosition("sticky", "left", "tablet"),
+);
 
 // 组件映射表
 const componentMap = {

@@ -133,6 +133,12 @@ const yearSuffix = isChinese ? "年" : " ";
 	</div>
 </WidgetLayout>
 
+<style is:global>
+	body:not(.lg\:is-home) widget-layout[data-id="calendar-widget"] {
+		display: none !important;
+	}
+</style>
+
 <script
 	is:inline
 	define:vars={{
