@@ -2,18 +2,18 @@
 
 本指南详细说明如何在 Mizuki 中使用内容分离功能,包括基础配置、私有仓库、CI/CD 部署等所有场景。
 
-##   目录
+## 目录
 
-- [快速开始](#-快速开始)
-- [配置方式](#-配置方式)
-- [私有仓库](#-私有仓库配置)
-- [CI/CD 部署](#-cicd-部署)
-- [常用命令](#-常用命令)
-- [故障排查](#-故障排查)
+- [快速开始](#快速开始)
+- [配置方式](#配置方式)
+- [私有仓库](#私有仓库配置)
+- [CI/CD 部署](#cicd-部署)
+- [常用命令](#常用命令)
+- [故障排查](#故障排查)
 
 ---
 
-##   快速开始
+## 快速开始
 
 Mizuki 使用内容分离模式管理文章，将内容与代码分开存储。按以下步骤配置:
 
@@ -42,7 +42,7 @@ pnpm dev
 
 ---
 
-##    配置方式
+## 配置方式
 
 ### 环境变量说明
 
@@ -82,7 +82,7 @@ CONTENT_REPO_URL=git@github.com:your-username/Mizuki-Content-Private.git
 
 ---
 
-##   自动构建触发 (内容更新时)
+## 自动构建触发 (内容更新时)
 
 ### 问题
 
@@ -93,13 +93,14 @@ CONTENT_REPO_URL=git@github.com:your-username/Mizuki-Content-Private.git
 **推荐使用 Repository Dispatch**，5 步快速配置，适用所有部署平台。
 
 详细步骤请查看:
+
 - **[自动构建触发快速参考](./AUTO_BUILD_TRIGGER.md)** - 最简洁的配置指南  
 - **[部署文档 - 完整说明](./DEPLOYMENT.md#内容仓库更新触发构建)** - 包含多种方案
 - **[内容仓库配置指南](../Mizuki-Content/.github/workflows/README.md)** - 工作流详细说明
 
 ---
 
-##   私有仓库配置
+## 私有仓库配置
 
 完全支持私有内容仓库! 推荐使用 SSH 方式,安全且方便。
 
@@ -127,14 +128,17 @@ cat ~/.ssh/id_ed25519.pub
 Get-Content ~/.ssh/id_ed25519.pub
 ```
 
-**GitHub**: 
+**GitHub**:
+
 - Settings → SSH and GPG keys → New SSH key
 - 粘贴公钥内容
 
-**GitLab**: 
+**GitLab**:
+
 - Preferences → SSH Keys → Add new key
 
-**Gitee**: 
+**Gitee**:
+
 - 设置 → SSH 公钥 → 添加公钥
 
 #### 3. 配置 Mizuki
@@ -163,14 +167,17 @@ pnpm run sync-content
 #### 1. 生成 Token
 
 **GitHub**:
+
 - Settings → Developer settings → Personal access tokens → Generate new token
 - 权限: 勾选 `repo` (完整访问)
 
 **GitLab**:
+
 - Preferences → Access Tokens
 - Scopes: `read_repository`
 
 **Gitee**:
+
 - 设置 → 私人令牌 → 生成新令牌
 - 权限: `projects` (读取)
 
@@ -181,19 +188,21 @@ CONTENT_REPO_URL=https://YOUR_TOKEN@github.com/your-username/Mizuki-Content-Priv
 ```
 
    **安全提示**:
+
 - **不要将 `.env` 提交到 Git!** (已在 `.gitignore` 中)
 - Token 具有完整权限,请妥善保管
 
 ---
 
-##   CI/CD 部署
+## CI/CD 部署
 
 ### 快速配置
 
 所有部署平台都使用相同的自动同步机制:
--   `pnpm build` 执行前自动运行 `prebuild` 钩子
--   自动同步内容到本地
--   同步失败不会中断构建,回退到本地内容
+
+- `pnpm build` 执行前自动运行 `prebuild` 钩子
+- 自动同步内容到本地
+- 同步失败不会中断构建,回退到本地内容
 
 **只需配置环境变量,无需修改构建命令!**
 
@@ -201,22 +210,23 @@ CONTENT_REPO_URL=https://YOUR_TOKEN@github.com/your-username/Mizuki-Content-Priv
 
 在部署平台添加以下环境变量:
 
-| 变量名 | 值 | 说明 |
-|-------|---|------|
+| 变量名             | 值       | 说明           |
+|--------------------|----------|----------------|
 | `CONTENT_REPO_URL` | 仓库地址 | 内容仓库的 URL |
 
 ### 支持的平台
 
--   **GitHub Pages** - 使用 GitHub Actions
--   **Vercel** - 环境变量配置
--   **Netlify** - 环境变量配置
--   **Cloudflare Pages** - 环境变量配置
+- **GitHub Pages** - 使用 GitHub Actions
+- **Vercel** - 环境变量配置
+- **Netlify** - 环境变量配置
+- **Cloudflare Pages** - 环境变量配置
 
 ### 详细配置指南
 
 不同平台的具体配置步骤、私有仓库认证、故障排查等详细信息，请查看：
 
   **[部署指南](./DEPLOYMENT.md)** - 完整的部署文档，包含：
+
 - GitHub Pages 自动部署配置
 - Vercel 部署详细步骤
 - Netlify 部署配置
@@ -226,15 +236,15 @@ CONTENT_REPO_URL=https://YOUR_TOKEN@github.com/your-username/Mizuki-Content-Priv
 
 ---
 
-##   常用命令
+## 常用命令
 
-| 命令 | 说明 |
-|------|------|
-| `pnpm run init-content` | 运行交互式初始化向导 |
-| `pnpm run sync-content` | 手动同步内容仓库 |
-| `pnpm run check-env` | 检查环境变量配置 |
-| `pnpm dev` | 启动开发服务器 (自动同步) |
-| `pnpm build` | 构建项目 (自动同步) |
+| 命令                       | 说明                       |
+|----------------------------|----------------------------|
+| `pnpm run init-content`    | 运行交互式初始化向导       |
+| `pnpm run sync-content`    | 手动同步内容仓库           |
+| `pnpm run check-env`       | 检查环境变量配置           |
+| `pnpm dev`                 | 启动开发服务器 (自动同步)  |
+| `pnpm build`               | 构建项目 (自动同步)        |
 
 ### 自动同步时机
 
@@ -247,13 +257,14 @@ CONTENT_REPO_URL=https://YOUR_TOKEN@github.com/your-username/Mizuki-Content-Priv
 
 ---
 
-##   故障排查
+## 故障排查
 
 ### 问题 1: 提示 "未设置 CONTENT_REPO_URL"
 
 **原因**: 启用了内容分离但未配置仓库地址。
 
 **解决**:
+
 ```bash
 # 在 .env 中添加
 CONTENT_REPO_URL=https://github.com/your-username/Mizuki-Content.git
@@ -262,6 +273,7 @@ CONTENT_REPO_URL=https://github.com/your-username/Mizuki-Content.git
 ### 问题 2: 私有仓库认证失败
 
 **SSH 方式**:
+
 ```bash
 # 测试 SSH 连接
 ssh -T git@github.com
@@ -270,11 +282,13 @@ ssh -T git@github.com
 ```
 
 如果失败,检查:
+
 - SSH 密钥是否生成: `ls ~/.ssh/`
 - 公钥是否添加到 GitHub
 - SSH agent 是否运行: `ssh-add -l`
 
 **HTTPS + Token 方式**:
+
 - 检查 Token 是否有效
 - 检查 Token 权限是否正确 (`repo` 权限)
 - 确认 URL 格式: `https://TOKEN@github.com/user/repo.git`
@@ -284,12 +298,14 @@ ssh -T git@github.com
 **检查清单**:
 
 1. 文件位置正确 (项目根目录)
+
    ```bash
    ls -la .env  # Linux/Mac
    dir .env     # Windows
    ```
 
 2. 文件格式正确
+
    ```bash
    #   正确
    CONTENT_REPO_URL=https://github.com/your-username/Mizuki-Content.git
@@ -302,11 +318,13 @@ ssh -T git@github.com
    ```
 
 3. 文件权限可读
+
    ```bash
    chmod 644 .env  # Linux/Mac
    ```
 
 4. 运行检查命令
+
    ```bash
    pnpm run check-env
    ```
@@ -327,18 +345,20 @@ git clone https://github.com/your-username/Mizuki-Content.git content
 ### 问题 5: 部署时内容未同步
 
 **Vercel/Netlify**:
+
 - 确认环境变量已添加
 - 检查构建日志,查看同步步骤是否执行
 - 确认 Token 在部署环境有效
 
 **GitHub Actions**:
+
 - 检查工作流配置
 - 查看 Actions 运行日志
 - 确认 Secrets 已正确添加
 
 ---
 
-##   最佳实践
+## 最佳实践
 
 ### 新手建议
 
@@ -360,7 +380,7 @@ git clone https://github.com/your-username/Mizuki-Content.git content
 
 ---
 
-##   相关文档
+## 相关文档
 
 - [内容迁移指南](./CONTENT_MIGRATION.md) - 如何从单仓库迁移到分离模式
 - [内容仓库结构](./CONTENT_REPOSITORY.md) - 内容仓库的推荐结构
@@ -368,10 +388,10 @@ git clone https://github.com/your-username/Mizuki-Content.git content
 
 ---
 
-##   需要帮助?
+## 需要帮助?
 
 - 查看 [GitHub Issues](https://github.com/matsuzaka-yuki/Mizuki/issues)
 - 阅读 [完整文档](../README.zh.md)
 - 运行 `pnpm run check-env` 检查配置
 
-祝你使用愉快!  
+祝你使用愉快!

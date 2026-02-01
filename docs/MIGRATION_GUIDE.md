@@ -2,9 +2,9 @@
 
 本指南将帮助你将现有的 Mizuki 博客从单仓库模式迁移到代码内容分离模式。
 
->   **提示**: 如果是新项目,建议先阅读 [内容分离完整指南](./CONTENT_SEPARATION.md)
+> **提示**: 如果是新项目,建议先阅读 [内容分离完整指南](./CONTENT_SEPARATION.md)
 
-##   迁移前准备
+## 迁移前准备
 
 ### 检查清单
 
@@ -13,7 +13,7 @@
 - [ ] 了解你要使用的模式 (推荐 Submodule)
 - [ ] 在 GitHub/GitLab 创建新的内容仓库
 
-##   迁移步骤
+## 迁移步骤
 
 ### 步骤 1: 创建内容仓库
 
@@ -120,7 +120,7 @@ git commit -m "Enable content separation"
 git push
 ```
 
->   更多配置选项请参考 [内容分离完整指南](./CONTENT_SEPARATION.md)
+> 更多配置选项请参考 [内容分离完整指南](./CONTENT_SEPARATION.md)
 
 ### 步骤 5: 清理原仓库中的内容 (可选)
 
@@ -154,7 +154,7 @@ git commit -m "Remove migrated content (now in separate repository)"
 git push
 ```
 
-##   测试迁移
+## 测试迁移
 
 ### 本地测试
 
@@ -186,7 +186,7 @@ pnpm preview
 # 检查所有功能是否正常
 ```
 
-##   日常工作流
+## 日常工作流
 
 ### 更新内容
 
@@ -220,7 +220,7 @@ git commit -m "Update content submodule"
 git push
 ```
 
-##   部署配置
+## 部署配置
 
 迁移完成后,需要在部署平台配置环境变量:
 
@@ -231,11 +231,12 @@ USE_SUBMODULE=true
 
 详细的部署配置(包括私有仓库、GitHub Actions、Vercel 等)请参考 [内容分离完整指南 - CI/CD 部署](./CONTENT_SEPARATION.md#-cicd-部署)
 
-##    常见问题
+## 常见问题
 
 ### Q: 同步脚本失败怎么办?
 
 A: 检查:
+
 1. 网络连接是否正常
 2. Git 凭据是否配置正确
 3. `CONTENT_REPO_URL` 是否正确
@@ -251,7 +252,7 @@ A: 需要以管理员身份运行,或者脚本会自动切换到复制模式。
 
 A: 参考 [内容分离完整指南 - 私有仓库配置](./CONTENT_SEPARATION.md#-私有仓库配置)
 
-##   参考文档
+## 参考文档
 
 - [内容分离完整指南](./CONTENT_SEPARATION.md) - 详细配置说明
 - [内容仓库结构说明](./CONTENT_REPOSITORY.md) - 推荐的仓库结构

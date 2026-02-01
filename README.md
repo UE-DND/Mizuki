@@ -2,22 +2,7 @@
 
 一个现代化、功能丰富的静态博客模板，基于 [Astro](https://astro.build) 构建，具有先进的功能和精美的设计。
 
-![Mizuki Preview](./README.webp)
-
-<table>
-  <tr>
-    <td><img alt="" src="docs/image/1.webp"></td>
-    <td><img alt="" src="docs/image/2.webp"></td>
-    <td><img alt="" src="docs/image/3.webp"></td>
-  <tr>
-  <tr>
-    <td><img alt="" src="docs/image/4.webp"></td>
-    <td><img alt="" src="docs/image/5.webp"></td>
-    <td><img alt="" src="docs/image/6.webp"></td>
-  <tr>
-</table>
-
----
+![Mizuki Preview](./Preview.png)
 
 ## 功能特性
 
@@ -34,13 +19,13 @@
 ### 内容与搜索
 
 - [x] 基于 [Pagefind](https://pagefind.app/) 的高级搜索功能
-- [x] [增强的 Markdown 功能](#-markdown-扩展语法)，支持语法高亮
+- [x] [增强的 Markdown 功能](#markdown-扩展语法)，支持语法高亮
 - [x] 交互式目录，支持自动滚动
 - [x] RSS 订阅生成
 - [x] 阅读时间估算
 - [x] 文章分类和标签系统
 
-### 📱 特色页面
+### 特色页面
 
 - [x] **追番页面** - 追踪动画观看进度和评分
 - [x] **友链页面** - 精美卡片展示朋友网站
@@ -197,15 +182,15 @@ export const siteConfig: SiteConfig = {
 - **日记页面：** 在 `src/pages/diary.astro` 中编辑动态
 - **关于页面：** 在 `src/content/spec/about.md` 中编辑内容
 
-### 代码内容分离 (可选)
+### 代码内容分离
 
-Mizuki 支持将代码和内容分成两个独立的仓库管理,适合团队协作和大型项目。
+Mizuki 默认将代码和内容分成两个独立的仓库管理，适合团队协作和大型项目。
 
 **快速选择**:
 
-| 使用场景              | 配置方式               | 适合人群           |
-| --------------------- | ---------------------- | ------------------ |
-| **分离模式**        | 配置 `CONTENT_REPO_URL` | 团队协作、私有内容 |
+| 使用场景     | 配置方式                | 适合人群           |
+| ------------ | ----------------------- | ------------------ |
+| **分离模式** | 配置 `CONTENT_REPO_URL` | 团队协作、私有内容 |
 
 **配置步骤**:
 
@@ -213,17 +198,14 @@ Mizuki 支持将代码和内容分成两个独立的仓库管理,适合团队协
 # 1. 复制配置文件
 cp .env.example .env
 
-# 2. 编辑 .env,配置内容仓库
+# 2. 编辑 .env，配置内容仓库
 CONTENT_REPO_URL=https://github.com/your-username/Mizuki-Content.git
-
-# 3. 同步内容
-pnpm run sync-content
 ```
 
 **功能特性**:
 
-- 支持公开和私有仓库 🔐
-- 自动同步，开发前自动拉取最新内容
+- 支持公开和私有仓库
+- 自动同步，部署时自动拉取最新内容
 
 **详细配置**: [内容分离完整指南](docs/CONTENT_SEPARATION.md)
 **迁移教程**: [从单仓库迁移到分离模式](docs/MIGRATION_GUIDE.md)
