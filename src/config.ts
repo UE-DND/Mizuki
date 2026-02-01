@@ -32,8 +32,38 @@ export const siteConfig: SiteConfig = {
 	lang: SITE_LANG,
 
 	themeColor: {
-		hue: 60, // 主题色的默认色相，范围从 0 到 360。例如：红色：0，青色：200，蓝绿色：250，粉色：345
-		fixed: false, // 对访问者隐藏主题色选择器
+		hue: 285, // 主题色默认色相（用于衍生色）
+		fixed: true, // 固定主题色，隐藏颜色选择器
+		palette: {
+			light: {
+				primary: {
+					main: "#7B1FA2",
+					container: "#E9D8FD",
+					onContainer: "#4A0072",
+					on: "#FFFFFF",
+				},
+				secondary: {
+					main: "#9C27B0",
+					container: "#F3E5F5",
+					onContainer: "#6A0080",
+					on: "#1C1B1F",
+				},
+			},
+			dark: {
+				primary: {
+					main: "#D0A9F5",
+					container: "#E9D8FD",
+					onContainer: "#C17EF3",
+					on: "#4A0072",
+				},
+				secondary: {
+					main: "#CE93D8",
+					container: "#F3E5F5",
+					onContainer: "#BA68C8",
+					on: "#29003B",
+				},
+			},
+		},
 	},
 
 	// 特色页面开关配置（关闭未使用的页面有助于提升 SEO，关闭后请记得在 navbarConfig 中移除对应链接）

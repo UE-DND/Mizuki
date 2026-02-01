@@ -18,11 +18,17 @@ export function getDefaultHue(): number {
 }
 
 export function getHue(): number {
+	if (siteConfig.themeColor.fixed) {
+		return getDefaultHue();
+	}
 	const stored = localStorage.getItem("hue");
 	return stored ? Number.parseInt(stored) : getDefaultHue();
 }
 
 export function setHue(hue: number): void {
+	if (siteConfig.themeColor.fixed) {
+		return;
+	}
 	localStorage.setItem("hue", String(hue));
 	const r = document.querySelector(":root") as HTMLElement;
 	if (!r) {
