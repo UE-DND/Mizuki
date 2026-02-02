@@ -158,12 +158,42 @@ const hasChildren = children.length > 0;
 <script>
 	// 键盘导航支持
 	document.addEventListener("DOMContentLoaded", () => {
-		const dropdowns = document.querySelectorAll("[data-dropdown]");
+		const dropdowns = Array.from(
+			document.querySelectorAll("[data-dropdown]"),
+		) as HTMLElement[];
+
+		const getTrigger = (dropdown: Element) =>
+			dropdown.querySelector("[data-dropdown-trigger]") as
+				| HTMLElement
+				| null;
+
+		// 关闭指定下拉菜单
+		const closeDropdown = (dropdown: Element) => {
+			const trigger = getTrigger(dropdown);
+			if (!trigger) {return;}
+			trigger.setAttribute("aria-expanded", "false");
+		};
+
+		// 处理 focus-within 导致的残留展开状态
+		const blurIfFocused = (dropdown: Element) => {
+			const activeElement = document.activeElement as HTMLElement | null;
+			if (activeElement && dropdown.contains(activeElement)) {
+				activeElement.blur();
+			}
+		};
+
+		// 互斥逻辑
+		const closeOtherDropdowns = (currentDropdown: Element) => {
+			dropdowns.forEach((dropdown) => {
+				if (dropdown !== currentDropdown) {
+					closeDropdown(dropdown);
+					blurIfFocused(dropdown);
+				}
+			});
+		};
 
 		dropdowns.forEach((dropdown) => {
-			const trigger = dropdown.querySelector(
-				"[data-dropdown-trigger]",
-			) as HTMLElement;
+			const trigger = getTrigger(dropdown);
 			const menu = dropdown.querySelector(
 				"[data-dropdown-menu]",
 			) as HTMLElement;
@@ -180,8 +210,23 @@ const hasChildren = children.length > 0;
 			const toggleMenu = () => {
 				const isExpanded =
 					trigger.getAttribute("aria-expanded") === "true";
+				if (!isExpanded) {
+					closeOtherDropdowns(dropdown);
+				}
 				trigger.setAttribute("aria-expanded", String(!isExpanded));
 			};
+
+			dropdown.addEventListener("mouseenter", () => {
+				closeOtherDropdowns(dropdown);
+			});
+
+			dropdown.addEventListener("focusin", () => {
+				closeOtherDropdowns(dropdown);
+			});
+
+			trigger.addEventListener("click", () => {
+				closeOtherDropdowns(dropdown);
+			});
 
 			trigger.addEventListener("keydown", (e) => {
 				if (e.key === "Enter" || e.key === " ") {
@@ -189,6 +234,7 @@ const hasChildren = children.length > 0;
 					toggleMenu();
 				} else if (e.key === "ArrowDown") {
 					e.preventDefault();
+					closeOtherDropdowns(dropdown);
 					trigger.setAttribute("aria-expanded", "true");
 					if (items.length > 0) {items[0].focus();}
 				} else if (e.key === "Escape") {
