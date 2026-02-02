@@ -570,7 +570,7 @@ export const sidebarLayoutConfig: SidebarLayoutConfig = {
 	components: {
 		left: ["profile", "announcement", "categories", "tags"],
 		right: ["site-stats", "calendar"],
-		drawer: ["profile", "announcement"],
+		drawer: ["announcement", "profile"],
 	},
 
 	// 默认动画配置

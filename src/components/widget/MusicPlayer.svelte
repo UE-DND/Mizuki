@@ -43,8 +43,7 @@ let isLoading = false;
 let isShuffled = false;
 // 循环模式，0: 不循环, 1: 单曲循环, 2: 列表循环，默认为 0
 let isRepeating = 0;
-// 播放器显示模式存储键
-const displayModeStorageKey = "music-player:display-mode";
+// 播放器显示模式不做本地存储
 type PlayerDisplayMode = "mini" | "expanded" | "orb";
 // 播放歌曲状态存储键
 const playbackStateStorageKey = "music-player:playback-state";
@@ -57,6 +56,9 @@ type PlaybackState = {
 let errorMessage = "";
 // 是否显示错误信息，默认为 false
 let showError = false;
+
+let isMobileView = false;
+let resizeHandler: (() => void) | null = null;
 
 // 当前歌曲信息
 let currentSong = {
@@ -177,6 +179,26 @@ function toggleHidden() {
 	persistDisplayMode();
 }
 
+function handleOrbClick() {
+	if (isMobileView) {
+		isHidden = false;
+		isExpanded = true;
+		showPlaylist = false;
+		return;
+	}
+	toggleHidden();
+}
+
+function handleCollapseToOrb() {
+	if (isMobileView) {
+		isExpanded = false;
+		isHidden = true;
+		showPlaylist = false;
+		return;
+	}
+	toggleExpanded();
+}
+
 function togglePlaylist() {
 	showPlaylist = !showPlaylist;
 }
@@ -205,25 +227,9 @@ function getDisplayMode(): PlayerDisplayMode {
 	return "mini";
 }
 
-function persistDisplayMode(): void {
-	try {
-		if (typeof localStorage === "undefined") return;
-		localStorage.setItem(displayModeStorageKey, getDisplayMode());
-	} catch (error) {
-		console.warn("音乐播放器显示模式持久化失败:", error);
-	}
-}
+function persistDisplayMode(): void {}
 
 function readDisplayMode(): PlayerDisplayMode | null {
-	try {
-		if (typeof localStorage === "undefined") return null;
-		const stored = localStorage.getItem(displayModeStorageKey);
-		if (stored === "mini" || stored === "expanded" || stored === "orb") {
-			return stored;
-		}
-	} catch (error) {
-		console.warn("音乐播放器显示模式读取失败:", error);
-	}
 	return null;
 }
 
@@ -516,7 +522,7 @@ function formatTime(seconds: number): string {
 }
 
 const interactionEvents = ['click', 'keydown', 'touchstart'];
-onMount(() => {
+	onMount(() => {
     interactionEvents.forEach(event => {
         document.addEventListener(event, handleUserInteraction, { capture: true });
     });
@@ -524,13 +530,18 @@ onMount(() => {
 	if (!musicPlayerConfig.enable) {
 		return;
 	}
-	const storedMode = readDisplayMode();
-	if (storedMode) {
-		applyDisplayMode(storedMode);
-	}
-	if (typeof sessionStorage !== "undefined") {
-		sessionStorage.removeItem(displayModeStorageKey);
-		sessionStorage.removeItem(playbackStateStorageKey);
+	const isTouchDevice = navigator.maxTouchPoints > 0;
+	const isMobile =
+		window.matchMedia("(max-width: 768px)").matches ||
+		window.matchMedia("(hover: none) and (pointer: coarse)").matches ||
+		(isTouchDevice && window.innerWidth <= 1024);
+	if (isMobile) {
+		applyDisplayMode("orb");
+	} else {
+		const storedMode = readDisplayMode();
+		if (storedMode) {
+			applyDisplayMode(storedMode);
+		}
 	}
 	if (mode === "meting") {
 		fetchMetingPlaylist();
@@ -546,6 +557,20 @@ onMount(() => {
 			showErrorMessage("本地播放列表为空");
 		}
 	}
+	const updateMobileState = () => {
+		isMobileView =
+			window.matchMedia("(max-width: 768px)").matches ||
+			window.matchMedia("(hover: none) and (pointer: coarse)").matches ||
+			(navigator.maxTouchPoints > 0 && window.innerWidth <= 1024);
+		if (isMobileView) {
+			applyDisplayMode("orb");
+		}
+	};
+	updateMobileState();
+	resizeHandler = () => {
+		updateMobileState();
+	};
+	window.addEventListener("resize", resizeHandler);
 });
 
 onDestroy(() => {
@@ -554,6 +579,9 @@ onDestroy(() => {
             document.removeEventListener(event, handleUserInteraction, { capture: true });
         });
     }
+	if (resizeHandler) {
+		window.removeEventListener("resize", resizeHandler);
+	}
 });
 </script>
 
@@ -603,14 +631,15 @@ onDestroy(() => {
 
     <!-- 隐藏状态的小圆球 -->
     <div class="orb-player w-12 h-12 bg-[var(--primary)] rounded-full shadow-2xl cursor-pointer transition-all duration-500 ease-in-out flex items-center justify-center hover:scale-110 active:scale-95"
+         hidden={!isHidden}
          class:opacity-0={!isHidden}
          class:scale-0={!isHidden}
          class:pointer-events-none={!isHidden}
-         on:click={toggleHidden}
+         on:click={handleOrbClick}
          on:keydown={(e) => {
             if (e.key === 'Enter' || e.key === ' ') {
                 e.preventDefault();
-				toggleHidden();
+				handleOrbClick();
             }
          }}
          role="button"
@@ -630,9 +659,10 @@ onDestroy(() => {
     </div>
     <!-- 收缩状态的迷你播放器（封面圆形） -->
     <div class="mini-player card-base bg-[var(--float-panel-bg)] shadow-2xl rounded-2xl p-3 transition-all duration-500 ease-in-out"
-         class:opacity-0={isExpanded || isHidden}
-         class:scale-95={isExpanded || isHidden}
-         class:pointer-events-none={isExpanded || isHidden}>
+         hidden={isExpanded || isHidden || isMobileView}
+         class:opacity-0={isExpanded || isHidden || isMobileView}
+         class:scale-95={isExpanded || isHidden || isMobileView}
+         class:pointer-events-none={isExpanded || isHidden || isMobileView}>
         <div class="flex items-center gap-3">
             <!-- 封面区域：点击控制播放/暂停 -->
             <div class="cover-container relative w-12 h-12 rounded-lg overflow-hidden cursor-pointer"
@@ -676,11 +706,6 @@ onDestroy(() => {
             </div>
             <div class="flex items-center gap-1">
                 <button class="btn-plain w-8 h-8 rounded-lg flex items-center justify-center"
-                        on:click|stopPropagation={toggleHidden}
-                        title={i18n(Key.musicPlayerHide)}>
-                    <Icon icon="material-symbols:visibility-off" class="text-lg" />
-                </button>
-                <button class="btn-plain w-8 h-8 rounded-lg flex items-center justify-center"
                         on:click|stopPropagation={toggleExpanded}>
                     <Icon icon="material-symbols:expand-less" class="text-lg" />
                 </button>
@@ -689,6 +714,7 @@ onDestroy(() => {
     </div>
     <!-- 展开状态的完整播放器（封面圆形） -->
     <div class="expanded-player transition-all duration-500 ease-in-out"
+         hidden={!isExpanded || isHidden}
          class:opacity-0={!isExpanded}
          class:scale-95={!isExpanded}
          class:pointer-events-none={!isExpanded}>
@@ -759,12 +785,7 @@ onDestroy(() => {
             </div>
             <div class="flex items-center gap-1">
                 <button class="btn-plain w-8 h-8 rounded-lg flex items-center justify-center"
-                        on:click={toggleHidden}
-                        title={i18n(Key.musicPlayerHide)}>
-                    <Icon icon="material-symbols:visibility-off" class="text-lg" />
-                </button>
-                <button class="btn-plain w-8 h-8 rounded-lg flex items-center justify-center"
-                        on:click={toggleExpanded}
+                        on:click={handleCollapseToOrb}
                         title={i18n(Key.musicPlayerCollapse)}>
                     <Icon icon="material-symbols:expand-more" class="text-lg" />
                 </button>

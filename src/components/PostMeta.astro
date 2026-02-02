@@ -48,22 +48,22 @@ const {
 <div class:list={["flex flex-wrap text-neutral-500 dark:text-neutral-400 items-center gap-4 gap-x-4 gap-y-2", className]}>
     <!-- publish date -->
     <div class="flex items-center">
-        <span class="text-50 text-sm font-medium">{formatDateToYYYYMMDD(published)}</span>
+		<span class="text-50 text-xs md:text-sm font-medium">{formatDateToYYYYMMDD(published)}</span>
     </div>
 
     <!-- update date -->
     {!hideUpdateDate && updated && updated.getTime() !== published.getTime() && (
         <div class="flex items-center">
-            <span class="text-50 text-sm font-medium">{formatDateToYYYYMMDD(updated)}</span>
+			<span class="text-50 text-xs md:text-sm font-medium">{formatDateToYYYYMMDD(updated)}</span>
         </div>
     )}
 
     <!-- categories -->
     <div class="flex items-center">
         <div class="flex flex-row flex-nowrap items-center">
-            <a href={getCategoryUrl(category || '')} aria-label={`View all posts in the ${category} category`}
-               class="link-lg transition text-50 text-sm font-medium
-                            hover:text-[var(--primary)] dark:hover:text-[var(--primary)] whitespace-nowrap">
+			<a href={getCategoryUrl(category || '')} aria-label={`View all posts in the ${category} category`}
+			   class="link-lg transition text-50 text-xs md:text-sm font-medium
+							 hover:text-[var(--primary)] dark:hover:text-[var(--primary)] whitespace-nowrap">
                 {category || i18n(I18nKey.uncategorized)}
             </a>
         </div>
@@ -72,7 +72,7 @@ const {
     <!-- word count -->
     {showWordCount && words && (
         <div class="flex items-center">
-            <span class="text-50 text-sm font-medium">
+			<span class="text-50 text-xs md:text-sm font-medium">
                 {words} {words > 1 ? i18n(I18nKey.wordsCount) : i18n(I18nKey.wordCount)}
             </span>
         </div>
@@ -84,15 +84,15 @@ const {
             <div class="flex flex-row flex-nowrap items-center">
                 {(tags && tags.length > 0) && tags.map((tag, i) => (
                     <>
-                        <div class:list={[{"hidden": i == 0}, "mx-1.5 text-[var(--meta-divider)] text-sm"]}>/</div>
-                        <a href={getTagUrl(tag)} aria-label={`View all posts with the ${tag.trim()} tag`}
-                           class="link-lg transition text-50 text-sm font-medium
-                                        hover:text-[var(--primary)] dark:hover:text-[var(--primary)] whitespace-nowrap">
+						<div class:list={[{"hidden": i == 0}, "mx-1.5 text-[var(--meta-divider)] text-xs md:text-sm"]}>/</div>
+						<a href={getTagUrl(tag)} aria-label={`View all posts with the ${tag.trim()} tag`}
+						   class="link-lg transition text-50 text-xs md:text-sm font-medium
+										 hover:text-[var(--primary)] dark:hover:text-[var(--primary)] whitespace-nowrap">
                             {tag.trim()}
                         </a>
                     </>
                 ))}
-                {!(tags && tags.length > 0) && <div class="transition text-50 text-sm font-medium">{i18n(I18nKey.noTags)}</div>}
+					{!(tags && tags.length > 0) && <div class="transition text-50 text-xs md:text-sm font-medium">{i18n(I18nKey.noTags)}</div>}
             </div>
         </div>
     )}

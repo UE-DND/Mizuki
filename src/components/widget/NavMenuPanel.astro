@@ -132,6 +132,7 @@ const processedLinks: ProcessedNavBarLink[] = Astro.props.links.map(
 <script>
     document.addEventListener('DOMContentLoaded', function() {
         const mobileDropdowns = document.querySelectorAll('[data-mobile-dropdown]');
+        const menuPanel = document.getElementById('nav-menu-panel');
         
         mobileDropdowns.forEach(dropdown => {
             const trigger = dropdown.querySelector('[data-mobile-dropdown-trigger]');
@@ -160,5 +161,21 @@ const processedLinks: ProcessedNavBarLink[] = Astro.props.links.map(
                 trigger.setAttribute('aria-expanded', newState.toString());
             });
         });
+
+        if (menuPanel) {
+            menuPanel.addEventListener('click', (event) => {
+                const target = event.target as HTMLElement | null;
+                if (!target) {return;}
+                if (!target.closest('a')) {return;}
+
+                const panelManager = (window as any).panelManager;
+                if (panelManager?.closePanel) {
+                    panelManager.closePanel('nav-menu-panel');
+                    return;
+                }
+
+                menuPanel.classList.add('float-panel-closed');
+            });
+        }
     });
 </script>

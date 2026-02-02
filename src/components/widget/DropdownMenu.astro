@@ -225,7 +225,16 @@ const hasChildren = children.length > 0;
 			});
 
 			trigger.addEventListener("click", () => {
+				const isExpanded =
+					trigger.getAttribute("aria-expanded") === "true";
+				if (isExpanded) {
+					closeMenu();
+					return;
+				}
 				closeOtherDropdowns(dropdown);
+				window.setTimeout(() => {
+					trigger.setAttribute("aria-expanded", "true");
+				});
 			});
 
 			trigger.addEventListener("keydown", (e) => {
@@ -244,6 +253,9 @@ const hasChildren = children.length > 0;
 
 			// 菜单项键盘导航
 			items.forEach((item, index) => {
+				item.addEventListener("click", () => {
+					closeMenu();
+				});
 				item.addEventListener("keydown", (e) => {
 					if (e.key === "ArrowDown") {
 						e.preventDefault();
