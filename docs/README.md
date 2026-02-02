@@ -2,7 +2,7 @@
 
 欢迎查阅 Mizuki 的详细文档！
 
-## 📚 文档列表
+## 文档列表
 
 ### 核心文档
 
@@ -20,11 +20,10 @@
 
 ### 内容分离相关
 
-- **[CONTENT_SEPARATION.md](./CONTENT_SEPARATION.md)** - 内容分离完整指南 ⭐
-  - ENABLE_CONTENT_SYNC 控制开关
+- **[CONTENT_SEPARATION.md](./CONTENT_SEPARATION.md)** - 内容分离完整指南
   - 环境变量配置详解
   - 私有仓库配置方法
-  - 模式切换指南
+  - CI/CD 部署配置
   - 故障排查
 
 - **[CONTENT_REPOSITORY.md](./CONTENT_REPOSITORY.md)** - 内容仓库结构指南
@@ -40,16 +39,16 @@
 
 ### 部署相关
 
-- **[DEPLOYMENT.md](./DEPLOYMENT.md)** - 部署完整指南 ⭐
+- **[DEPLOYMENT.md](./DEPLOYMENT.md)** - 部署完整指南
   - 各平台部署配置 (GitHub Pages / Vercel / Netlify / Cloudflare Pages)
   - 内容仓库更新自动触发构建
   - 私有仓库认证
   - 故障排查
 
-- **[AUTO_BUILD_TRIGGER.md](./AUTO_BUILD_TRIGGER.md)** - 自动构建触发快速参考 🆕
+- **[AUTO_BUILD_TRIGGER.md](./AUTO_BUILD_TRIGGER.md)** - 自动构建触发快速参考
   - 5 步快速配置，解决内容更新不触发部署的问题
 
-## 🚀 快速查找
+## 快速查找
 
 ### 我是新手，想快速开始
 → 阅读 [主 README](../README.zh.md)
@@ -72,10 +71,10 @@
 ### 我遇到了内容同步错误
 → 阅读 [内容分离指南 - 故障排查](./CONTENT_SEPARATION.md#-故障排查)
 
-### 内容仓库更新后站点没有自动重新部署 🆕
+### 内容仓库更新后站点没有自动重新部署
 → 阅读 [自动构建触发快速参考](./AUTO_BUILD_TRIGGER.md)
 
-## 📖 文档架构
+## 文档架构
 
 ```
 docs/
@@ -88,7 +87,7 @@ docs/
 └── image/                       # 文档图片资源
 ```
 
-## 🎯 文档使用建议
+## 文档使用建议
 
 ### 新用户推荐阅读顺序
 
@@ -101,10 +100,10 @@ docs/
 - 直接查阅具体主题的文档
 - 使用快速查找定位问题解决方案
 
-## 🤝 需要帮助？
+## 需要帮助？
 
 - 查看 [GitHub Issues](https://github.com/matsuzaka-yuki/Mizuki/issues)
 - 阅读相关文档的故障排查章节
 - 运行 `pnpm run check-env` 检查配置
 
-祝你使用愉快！🎉
+祝你使用愉快！

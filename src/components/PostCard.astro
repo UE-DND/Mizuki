@@ -54,7 +54,7 @@ const { remarkPluginFrontmatter } = await render(entry);
 	>
 		<a
 			href={url}
-			class="transition group w-full block font-bold mb-3 text-3xl text-90
+			class="transition group w-full block font-bold mb-3 text-2xl md:text-3xl text-90
         hover:text-[var(--primary)] dark:hover:text-[var(--primary)]
         active:text-[var(--title-active)] dark:active:text-[var(--title-active)]
         before:w-1 before:h-5 before:rounded-md before:bg-[var(--primary)]
@@ -74,56 +74,55 @@ const { remarkPluginFrontmatter } = await render(entry);
 				class="inline text-[2rem] text-[var(--primary)] md:hidden translate-y-0.5 absolute"
 				name="material-symbols:chevron-right-rounded"
 			/>
-			<Icon
-				class="text-[var(--primary)] text-[2rem] transition hidden md:inline absolute translate-y-0.5 opacity-0 group-hover:opacity-100 -translate-x-1 group-hover:translate-x-0"
-				name="material-symbols:chevron-right-rounded"
-			/>
 		</a>
 
-		<PostMetadata
-			published={published}
-			updated={updated}
-			tags={tags}
-			category={category || ""}
-			hideTagsForMobile={true}
-			hideUpdateDate={true}
-			className="mb-4"
-			showOnlyBasicMeta={true}
-			words={remarkPluginFrontmatter.words}
-			showWordCount={true}
-		/>
+		<div class="mb-4 h-5" aria-hidden="true"></div>
 
 		<div
 			class:list={[
-				"transition text-75 mb-3.5 pr-4",
+				"transition text-75 -mt-3 mb-3.5 pr-4",
 				{ "line-clamp-2 md:line-clamp-1": !description },
 			]}
 		>
 			{description || remarkPluginFrontmatter.excerpt}
 		</div>
 
-		<div class="flex flex-wrap gap-2 mt-2">
-			{
-				tags && tags.length > 0 ? (
-					tags.map((tag) => (
-						<a
-							href={getTagUrl(tag)}
-							class:list={[
-								siteConfig.tagStyle?.useNewStyle
-									? "link-lg transition text-50 text-xs font-medium px-2 py-1 rounded-lg hover:text-[var(--primary)] dark:hover:text-[var(--primary)] active:text-[var(--primary)] dark:active:text-[var(--primary)] group/tag whitespace-nowrap"
-									: "btn-regular h-6 text-xs px-2 rounded-lg",
-							]}
-							aria-label={`View all posts tagged with ${tag.trim()}`}
-						>
-							<span class="transition-transform group-hover/tag:translate-x-0.5">
-								# {tag.trim()}
-							</span>
-						</a>
-					))
-				) : (
-					<span class="text-xs text-50">{i18n(I18nKey.noTags)}</span>
-				)
-			}
+		<div class="flex items-center justify-between gap-3 mt-2">
+			<div class="flex flex-wrap gap-2 min-w-0">
+				{
+					tags && tags.length > 0 ? (
+						tags.map((tag: string) => (
+							<a
+								href={getTagUrl(tag)}
+								class:list={[
+									siteConfig.tagStyle?.useNewStyle
+										? "link-lg transition text-50 text-xs font-medium px-2 py-1 rounded-lg hover:text-[var(--primary)] dark:hover:text-[var(--primary)] active:text-[var(--primary)] dark:active:text-[var(--primary)] group/tag whitespace-nowrap"
+										: "btn-regular h-6 text-xs px-2 rounded-lg",
+								]}
+								aria-label={`View all posts tagged with ${tag.trim()}`}
+							>
+								<span class="transition-transform group-hover/tag:translate-x-0.5">
+									# {tag.trim()}
+								</span>
+							</a>
+						))
+					) : (
+						<span class="text-xs text-50">{i18n(I18nKey.noTags)}</span>
+					)
+				}
+			</div>
+			<PostMetadata
+				published={published}
+				updated={updated}
+				tags={tags}
+				category={category || ""}
+				hideTagsForMobile={true}
+				hideUpdateDate={true}
+				className="ml-3 mr-2 shrink-0 text-right flex-nowrap"
+				showOnlyBasicMeta={true}
+				words={remarkPluginFrontmatter.words}
+				showWordCount={true}
+			/>
 		</div>
 	</div>
 

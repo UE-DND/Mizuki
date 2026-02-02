@@ -85,7 +85,7 @@ class Sakura {
 	}
 
 	private resetPosition() {
-		this.r = getRandom("fnr", this.config);
+		this.fn.r = getRandom("fnr", this.config);
 		if (Math.random() > 0.4) {
 			this.x = getRandom("x", this.config);
 			this.y = 0;
@@ -135,10 +135,24 @@ class SakuraList {
 	}
 }
 
+type SakuraRandomFnXY = (x: number, y: number) => number;
+type SakuraRandomFnR = (r: number) => number;
+type SakuraRandomFnA = (alpha: number) => number;
+
 // 获取随机值的函数
-function getRandom(option: string, config: SakuraConfig): any {
-	let ret: any;
-	let random: number;
+function getRandom(
+	option: "x" | "y" | "s" | "r" | "a",
+	config: SakuraConfig,
+): number;
+function getRandom(
+	option: "fnx" | "fny",
+	config: SakuraConfig,
+): SakuraRandomFnXY;
+function getRandom(option: "fnr", config: SakuraConfig): SakuraRandomFnR;
+function getRandom(option: "fna", config: SakuraConfig): SakuraRandomFnA;
+function getRandom(option: string, config: SakuraConfig) {
+	let ret: number | SakuraRandomFnXY | SakuraRandomFnR | SakuraRandomFnA;
+	let random = 0;
 
 	switch (option) {
 		case "x":
@@ -180,6 +194,8 @@ function getRandom(option: string, config: SakuraConfig): any {
 		case "fna":
 			ret = (alpha: number) => alpha - config.speed.fadeSpeed * 0.01;
 			break;
+		default:
+			ret = 0;
 	}
 	return ret;
 }
@@ -242,7 +258,9 @@ export class SakuraManager {
 
 	// 创建樱花列表
 	private createSakuraList(): void {
-		if (!this.img || !this.ctx) return;
+		if (!this.img || !this.ctx) {
+			return;
+		}
 
 		this.sakuraList = new SakuraList();
 		const limitArray = new Array(this.config.sakuraNum).fill(
@@ -285,10 +303,14 @@ export class SakuraManager {
 
 	// 开始动画
 	private startAnimation(): void {
-		if (!this.ctx || !this.canvas || !this.sakuraList) return;
+		if (!this.ctx || !this.canvas || !this.sakuraList) {
+			return;
+		}
 
 		const animate = () => {
-			if (!this.ctx || !this.canvas || !this.sakuraList) return;
+			if (!this.ctx || !this.canvas || !this.sakuraList) {
+				return;
+			}
 
 			this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
 			this.sakuraList.update();

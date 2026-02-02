@@ -6,6 +6,18 @@ import type {
 	WALLPAPER_NONE,
 } from "../constants/constants";
 
+export type ThemeColorRole = {
+	main: string;
+	container: string;
+	onContainer: string;
+	on: string;
+};
+
+export type ThemeColorScheme = {
+	primary: ThemeColorRole;
+	secondary: ThemeColorRole;
+};
+
 export type SiteConfig = {
 	title: string;
 	subtitle: string;
@@ -55,6 +67,10 @@ export type SiteConfig = {
 	themeColor: {
 		hue: number;
 		fixed: boolean;
+		palette: {
+			light: ThemeColorScheme;
+			dark: ThemeColorScheme;
+		};
 	};
 
 	// 特色页面开关配置
@@ -67,12 +83,6 @@ export type SiteConfig = {
 		timeline: boolean; // 时间线页面开关
 		albums: boolean; // 相册页面开关
 		devices: boolean; // 设备页面开关
-	};
-
-	// 文章列表布局配置
-	postListLayout: {
-		defaultMode: "list" | "grid"; // 默认布局模式：list=列表模式，grid=网格模式
-		allowSwitch: boolean; // 是否允许用户切换布局
 	};
 
 	// 顶栏标题配置
@@ -132,8 +142,8 @@ export type SiteConfig = {
 
 	// 壁纸模式配置
 	wallpaperMode: {
-		defaultMode: "banner" | "fullscreen" | "none"; // 默认壁纸模式：banner=顶部横幅，fullscreen=全屏壁纸，none=无壁纸
-		showModeSwitchOnMobile?: "off" | "mobile" | "desktop" | "both"; // 整体布局方案切换按钮显示设置：off=隐藏，mobile=仅移动端，desktop=仅桌面端，both=全部显示
+		// 默认壁纸模式：banner=顶部横幅，fullscreen=全屏壁纸，none=无壁纸
+		defaultMode: "banner" | "fullscreen" | "none";
 	};
 
 	banner: {
@@ -361,7 +371,7 @@ export type WidgetComponentConfig = {
 		hidden?: ("mobile" | "tablet" | "desktop")[]; // 在指定设备上隐藏
 		collapseThreshold?: number; // 折叠阈值
 	};
-	customProps?: Record<string, any>; // 自定义属性，用于扩展组件功能
+	customProps?: Record<string, unknown>; // 自定义属性，用于扩展组件功能
 };
 
 export type SidebarLayoutConfig = {

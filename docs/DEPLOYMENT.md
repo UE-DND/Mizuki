@@ -2,24 +2,25 @@
 
 本文档提供 Mizuki 博客在各个平台的部署配置说明。
 
-## 📖 目录
+## 目录
 
-- [部署前准备](#-部署前准备)
-- [GitHub Pages 部署](#-github-pages-部署)
-- [Vercel 部署](#-vercel-部署)
-- [Netlify 部署](#-netlify-部署)
-- [Cloudflare Pages 部署](#-cloudflare-pages-部署)
-- [故障排查](#-故障排查)
+- [部署前准备](#部署前准备)
+- [GitHub Pages 部署](#github-pages-部署)
+- [Vercel 部署](#vercel-部署)
+- [Netlify 部署](#netlify-部署)
+- [Cloudflare Pages 部署](#cloudflare-pages-部署)
+- [故障排查](#故障排查)
 
 ---
 
-## 🚀 部署前准备
+## 部署前准备
 
 ### 基础配置
 
 1. **更新站点 URL**
 
 编辑 `astro.config.mjs`:
+
 ```javascript
 export default defineConfig({
   site: 'https://your-domain.com',  // 更新为你的域名
@@ -27,35 +28,22 @@ export default defineConfig({
 });
 ```
 
-2. **配置环境变量** (可选)
+1. **配置环境变量**
 
-如果使用内容分离功能，需要配置：
-- `ENABLE_CONTENT_SYNC=true`
+必须配置内容仓库地址：
+
 - `CONTENT_REPO_URL=你的内容仓库地址`
-- `USE_SUBMODULE=true`
+- `USE_SUBMODULE=true` (可选，推荐使用 `true`)
 
 详见 [内容分离完整指南](./CONTENT_SEPARATION.md)
 
 ---
 
-## 📦 GitHub Pages 部署
+## GitHub Pages 部署
 
 ### 自动部署 (推荐)
 
 项目已配置好 GitHub Actions 工作流，推送到 `main` 分支会自动部署。
-
-#### 本地模式 (默认)
-
-**无需任何配置**，开箱即用：
-
-1. 推送代码到 GitHub
-2. 在仓库设置中启用 GitHub Pages
-   - Settings → Pages
-   - Source: Deploy from a branch
-   - Branch: `pages` / `root`
-3. 等待 Actions 完成部署
-
-#### 内容分离模式
 
 **配置步骤**:
 
@@ -65,23 +53,25 @@ export default defineConfig({
 
 2. **修改 `.github/workflows/deploy.yml`**:
 
-取消注释环境变量部分:
+添加环境变量:
+
 ```yaml
 - name: Build site
   run: pnpm run build
   env:
-    ENABLE_CONTENT_SYNC: true
     CONTENT_REPO_URL: ${{ secrets.CONTENT_REPO_URL }}
     USE_SUBMODULE: true
 ```
 
-3. **私有内容仓库配置**:
+1. **私有内容仓库配置**:
 
 **同账号私有仓库** (推荐):
+
 - 无需额外配置
 - 自动使用 `GITHUB_TOKEN` 访问
 
 **跨账号私有仓库 (SSH)**:
+
 ```yaml
 # 添加 SSH 配置步骤
 - name: Setup SSH Key
@@ -96,10 +86,12 @@ export default defineConfig({
 ```
 
 在 Secrets 中添加:
+
 - `SSH_PRIVATE_KEY`: SSH 私钥内容
 - `CONTENT_REPO_URL`: `git@github.com:other-user/repo.git`
 
 **跨账号私有仓库 (Token)**:
+
 ```yaml
 - name: Checkout
   uses: actions/checkout@v4
@@ -110,27 +102,27 @@ export default defineConfig({
 - name: Build site
   run: pnpm run build
   env:
-    ENABLE_CONTENT_SYNC: true
     CONTENT_REPO_URL: https://${{ secrets.PAT_TOKEN }}@github.com/other-user/repo.git
     USE_SUBMODULE: true
 ```
 
 在 Secrets 中添加:
+
 - `PAT_TOKEN`: GitHub Personal Access Token (需要 `repo` 权限)
 
 ### 工作流说明
 
 项目包含三个工作流:
 
-| 工作流 | 触发条件 | 功能 |
-|--------|---------|------|
-| `build.yml` | Push/PR 到 main | CI 测试，检查构建 |
-| `deploy.yml` | Push 到 main | 构建并部署到 pages 分支 |
-| `format.yml` | Push/PR | 代码格式和质量检查 |
+| 工作流       | 触发条件       | 功能                       |
+|----------|-----------|-------------------------|
+| `build.yml` | Push/PR 到 main | CI 测试，检查构建          |
+| `deploy.yml` | Push 到 main | 构建并部署到 pages 分支     |
+| `format.yml` | Push/PR | 代码格式和质量检查           |
 
 ---
 
-## 🔷 Vercel 部署
+## Vercel 部署
 
 ### 快速部署
 
@@ -147,34 +139,28 @@ export default defineConfig({
 3. **部署**:
    - 点击 Deploy 开始部署
 
-### 部署模式
-
-#### 本地模式
-
-**无需配置环境变量**，使用默认的 `vercel.json`。
-
-#### 内容分离模式 - 公开仓库
+### 环境变量配置
 
 在 Vercel 项目设置中添加环境变量:
 
-| 变量名 | 值 |
-|-------|---|
-| `ENABLE_CONTENT_SYNC` | `true` |
+| 变量名             | 值                                                         |
+|-------------------|------------------------------------------------|
 | `CONTENT_REPO_URL` | `https://github.com/your-username/Mizuki-Content.git` |
-| `USE_SUBMODULE` | `false` 或 `true` (推荐 `false`) |
+| `USE_SUBMODULE`    | `false` 或 `true` (推荐 `false`)                |
 
-> ⚠️ **重要提示**: 如果使用 `USE_SUBMODULE=true`,请确保 `.gitignore` 中的 `content/` 行已被注释掉,否则会导致部署失败。推荐在 Vercel 上使用 `USE_SUBMODULE=false` (独立仓库模式)。
+> **重要提示**: 如果使用 `USE_SUBMODULE=true`,请确保 `.gitignore` 中的 `content/` 行已被注释掉,否则会导致部署失败。推荐在 Vercel 上使用 `USE_SUBMODULE=false` (独立仓库模式)。
 
-#### 内容分离模式 - 私有仓库
+#### 私有仓库配置
 
-**方式 A: 授权 Vercel 访问**
+##### 方式 A: 授权 Vercel 访问
+
 - 在连接 GitHub 仓库时，确保授权包括内容仓库的访问权限
 
-**方式 B: 使用 Token**
+##### 方式 B: 使用 Token
 
 添加环境变量:
-```
-ENABLE_CONTENT_SYNC=true
+
+```env
 GITHUB_TOKEN=ghp_your_personal_access_token
 CONTENT_REPO_URL=https://${GITHUB_TOKEN}@github.com/your-username/Mizuki-Content-Private.git
 USE_SUBMODULE=true
@@ -182,16 +168,11 @@ USE_SUBMODULE=true
 
 ### 配置文件
 
-项目包含两个 Vercel 配置文件:
-
-- `vercel.json` - 默认配置，适用于本地模式
-- `vercel-with-content.json.example` - 内容分离示例 (可选)
-
-**注意**: 使用默认 `vercel.json` 即可，通过环境变量控制是否启用内容分离。
+项目使用 `vercel.json` 作为默认配置。
 
 ---
 
-## 🌐 Netlify 部署
+## Netlify 部署
 
 ### 部署步骤
 
@@ -204,16 +185,16 @@ USE_SUBMODULE=true
    - Build command: `pnpm build`
    - Publish directory: `dist`
 
-3. **环境变量** (如果使用内容分离):
+3. **环境变量**:
 
 在 Site settings → Environment variables 中添加:
-```
-ENABLE_CONTENT_SYNC=true
+
+```env
 CONTENT_REPO_URL=https://github.com/your-username/Mizuki-Content.git
 USE_SUBMODULE=true
 ```
 
-4. **私有仓库配置**:
+1. **私有仓库配置**:
 
 在 Site settings → Build & deploy → Deploy key 中添加有权限访问私有仓库的 SSH 密钥。
 
@@ -229,15 +210,13 @@ USE_SUBMODULE=true
 [build.environment]
   NODE_VERSION = "20"
   PNPM_VERSION = "9"
-  # 如果使用内容分离
-  ENABLE_CONTENT_SYNC = "true"
   CONTENT_REPO_URL = "https://github.com/your-username/Mizuki-Content.git"
   USE_SUBMODULE = "true"
 ```
 
 ---
 
-## ☁️ Cloudflare Pages 部署
+## Cloudflare Pages 部署
 
 ### 部署步骤
 
@@ -251,24 +230,25 @@ USE_SUBMODULE=true
    - Build command: `pnpm build`
    - Build output directory: `dist`
 
-3. **环境变量** (如果使用内容分离):
+3. **环境变量**:
 
 添加以下变量:
-```
-ENABLE_CONTENT_SYNC=true
+
+```env
 CONTENT_REPO_URL=https://github.com/your-username/Mizuki-Content.git
-USE_SUBMODULE=false  # ⚠️ Cloudflare Pages 默认不支持 submodule
+USE_SUBMODULE=false  # Cloudflare Pages 默认不支持 submodule
 ```
 
 ### 注意事项
 
-⚠️ Cloudflare Pages 默认不支持 Git Submodule，建议:
+Cloudflare Pages 默认不支持 Git Submodule，建议:
+
 - 使用独立仓库模式: `USE_SUBMODULE=false`
 - 或在构建命令中手动初始化: `git submodule update --init && pnpm build`
 
 ---
 
-## 🔄 自动同步机制
+## 自动同步机制
 
 所有部署平台都使用相同的自动同步机制：
 
@@ -282,43 +262,43 @@ USE_SUBMODULE=false  # ⚠️ Cloudflare Pages 默认不支持 submodule
 ```
 
 **工作原理**:
+
 1. `pnpm build` 执行前自动运行 `prebuild` 钩子
-2. 检查 `ENABLE_CONTENT_SYNC` 环境变量
-3. 如果为 `true`，从远程仓库同步内容到 `src/content/` 和 `public/images/`
-4. 如果为 `false` 或未设置，跳过同步，使用本地内容
-5. `|| true` 确保同步失败不会中断构建
+2. 从远程仓库同步内容到 `src/content/` 和 `public/images/`
+3. `|| true` 确保同步失败不会中断构建
 
 **优势**:
-- ✅ 统一的构建命令，无需修改配置
-- ✅ 自动兼容所有部署模式
-- ✅ 同步失败不影响构建（回退到本地内容）
+
+- 统一的构建命令，无需修改配置
+- 同步失败不影响构建
 
 ---
 
-## 🔍 故障排查
+## 故障排查
 
 ### 问题 1: 部署失败 - "未设置 CONTENT_REPO_URL"
 
-**原因**: 启用了内容分离但未配置仓库地址
+**原因**: 未配置内容仓库地址
 
 **解决**:
-1. 检查环境变量中是否设置了 `ENABLE_CONTENT_SYNC=true`
-2. 检查是否设置了 `CONTENT_REPO_URL`
-3. 或将 `ENABLE_CONTENT_SYNC` 设置为 `false` 使用本地内容
+检查环境变量中是否设置了 `CONTENT_REPO_URL`
 
 ### 问题 2: 私有仓库认证失败
 
 **GitHub Actions**:
+
 - **同账号**: 确保使用 `${{ secrets.GITHUB_TOKEN }}`
 - **跨账号**: 配置 SSH 密钥或 PAT Token
 
 **Vercel/Netlify**:
+
 - 确保授权了私有仓库访问
 - 或使用 Token 方式: `https://TOKEN@github.com/user/repo.git`
 
 ### 问题 3: Submodule 与 .gitignore 冲突
 
 **错误信息**:
+
 ```
 The following paths are ignored by one of your .gitignore files:
 content
@@ -344,8 +324,7 @@ fatal: Failed to add submodule 'content'
 
 如果不想修改 `.gitignore`,可以使用独立仓库模式:
 
-```
-ENABLE_CONTENT_SYNC=true
+```env
 CONTENT_REPO_URL=https://github.com/your-username/Mizuki-Content.git
 USE_SUBMODULE=false  # 改为 false
 ```
@@ -357,6 +336,7 @@ USE_SUBMODULE=false  # 改为 false
 ### 问题 4: Submodule 克隆失败
 
 **检查**:
+
 1. 确认部署平台支持 Git Submodule
 2. 检查 SSH 密钥或 Token 配置
 3. 尝试使用独立仓库模式: `USE_SUBMODULE=false`
@@ -364,14 +344,15 @@ USE_SUBMODULE=false  # 改为 false
 ### 问题 5: 构建成功但内容未更新
 
 **检查**:
+
 1. 查看构建日志，确认同步步骤执行
-2. 检查 `ENABLE_CONTENT_SYNC` 是否设置为 `true`
-3. 验证 `CONTENT_REPO_URL` 是否正确
-4. 清除部署平台的缓存并重新部署
+2. 验证 `CONTENT_REPO_URL` 是否正确
+3. 清除部署平台的缓存并重新部署
 
 ### 问题 6: 部署时间过长
 
 **优化建议**:
+
 - 使用 Git Submodule 模式 (更快)
 - 启用部署平台的缓存机制
 - 优化图片大小和数量
@@ -379,6 +360,7 @@ USE_SUBMODULE=false  # 改为 false
 ### 问题 7: Vercel 部署时 submodule 权限问题
 
 **错误信息**:
+
 ```
 fatal: could not read Username for 'https://github.com'
 ```
@@ -386,53 +368,53 @@ fatal: could not read Username for 'https://github.com'
 **原因**: 私有仓库需要认证
 
 **解决**:
+
 1. 在 Vercel 项目设置中添加 GitHub 集成权限
 2. 或使用 Token: `https://${GITHUB_TOKEN}@github.com/user/repo.git`
 3. 或切换到独立仓库模式: `USE_SUBMODULE=false`
 
 **检查**:
+
 1. 查看构建日志,确认同步步骤执行
-2. 检查 `ENABLE_CONTENT_SYNC` 是否设置为 `true`
-3. 验证 `CONTENT_REPO_URL` 是否正确
-4. 清除部署平台的缓存并重新部署
+2. 验证 `CONTENT_REPO_URL` 是否正确
+3. 清除部署平台的缓存并重新部署
 
 ---
 
-## 📋 环境变量参考
+## 环境变量参考
 
-| 变量名 | 必需 | 默认值 | 说明 |
-|-------|------|--------|------|
-| `ENABLE_CONTENT_SYNC` | ❌ | `false` | 是否启用内容分离功能 |
-| `CONTENT_REPO_URL` | ⚠️ | - | 内容仓库地址 (启用内容分离时必需) |
-| `USE_SUBMODULE` | ❌ | `false` | 是否使用 Git Submodule 模式 |
-| `CONTENT_DIR` | ❌ | `./content` | 内容目录路径 |
-| `UMAMI_API_KEY` | ❌ | - | Umami 统计 API 密钥 |
-| `BCRYPT_SALT_ROUNDS` | ❌ | `12` | bcrypt 加密轮数 |
+| 变量名               | 必需 | 默认值      | 说明                       |
+|-------------------|------|-----------|--------------------------|
+| `CONTENT_REPO_URL` |      | -         | 内容仓库地址               |
+| `USE_SUBMODULE`    |      | `false`   | 是否使用 Git Submodule 模式 |
+| `CONTENT_DIR`      |      | `./content` | 内容目录路径               |
+| `UMAMI_API_KEY`    |      | -         | Umami 统计 API 密钥        |
+| `BCRYPT_SALT_ROUNDS`|     | `12`      | bcrypt 加密轮数            |
 
-⚠️ = 在特定模式下必需
+  = 必需配置
 
 ---
 
-## 💡 推荐配置
+## 推荐配置
 
 ### 个人博客
+
 - **平台**: Vercel 或 GitHub Pages
-- **模式**: 本地模式（最简单）
-- **配置**: 无需环境变量
+- **配置**: `CONTENT_REPO_URL` + `USE_SUBMODULE=true`
 
 ### 团队协作
+
 - **平台**: 任意
-- **模式**: 内容分离 - 私有仓库
-- **配置**: 启用内容分离 + SSH 认证
+- **配置**: `CONTENT_REPO_URL` + SSH 认证
 
 ### 多站点部署
+
 - **平台**: 多个平台同时部署
-- **模式**: 内容分离 - 公开仓库
 - **配置**: 统一的环境变量配置
 
 ---
 
-## 📚 相关文档
+## 相关文档
 
 - [内容分离完整指南](./CONTENT_SEPARATION.md) - 详细的内容分离配置
 - [内容迁移指南](./MIGRATION_GUIDE.md) - 从单仓库迁移到分离模式
@@ -440,15 +422,18 @@ fatal: could not read Username for 'https://github.com'
 
 ---
 
-💡 **建议**: 如果是第一次部署，推荐先使用本地模式熟悉流程，之后再根据需要启用内容分离功能。
+### 部署建议
+
+部署前请确保已创建内容仓库并配置 `CONTENT_REPO_URL` 环境变量。详见 [内容分离完整指南](./CONTENT_SEPARATION.md)。
 
 ## 🔔 内容仓库更新触发构建
 
 ### 问题说明
 
 当使用**内容代码分离**架构时，默认情况下：
-- ✅ 代码仓库 (Mizuki) 更新会触发自动构建
-- ❌ 内容仓库 (Mizuki-Content) 更新**不会**触发构建
+
+- 代码仓库 (Mizuki) 更新会触发自动构建
+- 内容仓库 (Mizuki-Content) 更新**不会**触发构建
 
 这意味着您在内容仓库中发布新文章后，需要手动触发代码仓库的重新部署才能看到更新。
 
@@ -456,11 +441,11 @@ fatal: could not read Username for 'https://github.com'
 
 有以下几种方式实现内容仓库更新时自动触发构建：
 
-| 方案 | 难度 | 推荐度 | 适用平台 |
-|------|------|--------|----------|
-| **Repository Dispatch** | ⭐ 简单 | ⭐⭐⭐⭐⭐ | GitHub Pages, Vercel, Netlify, CF Pages |
-| **Webhook + Deploy Hook** | ⭐⭐ 中等 | ⭐⭐⭐⭐ | Vercel, Netlify, CF Pages |
-| **定时构建** | ⭐ 简单 | ⭐⭐⭐ | 所有平台 |
+| 方案                      | 难度 | 推荐度 | 适用平台                       |
+|-------------------------|------|--------|-------------------------------|
+| **Repository Dispatch** | 简单 | ⭐⭐⭐⭐⭐ | GitHub Pages, Vercel, Netlify, CF Pages |
+| **Webhook + Deploy Hook** | 中等 | ⭐⭐⭐⭐ | Vercel, Netlify, CF Pages     |
+| **定时构建**              | 简单 | ⭐⭐⭐  | 所有平台                      |
 
 ---
 
@@ -469,10 +454,11 @@ fatal: could not read Username for 'https://github.com'
 **原理**: 内容仓库推送时，通过 GitHub Actions 触发代码仓库的构建工作流。
 
 **优点**:
-- ✅ 实时触发，无延迟
-- ✅ 无需云平台特定配置
-- ✅ 适用于所有部署平台
-- ✅ 完全免费
+
+- 实时触发，无延迟
+- 无需云平台特定配置
+- 适用于所有部署平台
+- 完全免费
 
 #### 配置步骤
 
@@ -531,6 +517,7 @@ jobs:
 ```
 
 **注意事项**:
+
 - 将 `your-username/Mizuki` 替换为你的代码仓库完整名称
 - 可以根据需要调整 `paths`，只在特定文件变化时触发
 
@@ -566,12 +553,14 @@ on:
 **原理**: 使用云平台提供的 Deploy Hook URL，在内容仓库更新时通过 webhook 触发构建。
 
 **优点**:
-- ✅ 实时触发
-- ✅ 与部署平台深度集成
+
+- 实时触发
+- 与部署平台深度集成
 
 **缺点**:
-- ⚠️ 需要为每个部署平台单独配置
-- ⚠️ 不适用于 GitHub Pages
+
+- 需要为每个部署平台单独配置
+- 不适用于 GitHub Pages
 
 #### Vercel 配置
 
@@ -613,6 +602,7 @@ jobs:
 **Step 3: 添加 Secret**
 
 在内容仓库添加 Secret:
+
 - Name: `VERCEL_DEPLOY_HOOK`
 - Value: 粘贴 Vercel Deploy Hook URL
 
@@ -680,12 +670,14 @@ jobs:
 **原理**: 设置定时任务，每天自动构建一次。
 
 **优点**:
-- ✅ 配置简单
-- ✅ 无需额外 Token 或 Webhook
+
+- 配置简单
+- 无需额外 Token 或 Webhook
 
 **缺点**:
-- ⚠️ 有延迟，不是实时更新
-- ⚠️ 可能造成不必要的构建
+
+- 有延迟，不是实时更新
+- 可能造成不必要的构建
 
 #### GitHub Actions 配置
 
@@ -706,6 +698,7 @@ on:
 ```
 
 **Cron 表达式示例**:
+
 - `0 2 * * *` - 每天凌晨 2 点
 - `0 */6 * * *` - 每 6 小时一次
 - `0 0 * * 1` - 每周一凌晨
@@ -755,9 +748,10 @@ on:
 ```
 
 **优势**:
-- ✅ 内容更新实时触发 (repository_dispatch)
-- ✅ 每天自动同步，防止遗漏 (schedule)
-- ✅ 支持手动触发调试 (workflow_dispatch)
+
+- 内容更新实时触发 (repository_dispatch)
+- 每天自动同步，防止遗漏 (schedule)
+- 支持手动触发调试 (workflow_dispatch)
 
 ---
 
@@ -774,6 +768,7 @@ on:
 #### 测试步骤
 
 1. **在内容仓库修改文章**:
+
    ```bash
    cd /path/to/Mizuki-Content
    # 编辑文章
@@ -802,6 +797,7 @@ on:
 #### 问题 1: 内容仓库推送后没有触发构建
 
 **检查**:
+
 1. 内容仓库的 Actions 是否运行?
    - 查看 Actions 页面，确认工作流被触发
 2. PAT Token 权限是否正确?
@@ -810,6 +806,7 @@ on:
    - 格式: `owner/repo`
 
 **调试**:
+
 ```yaml
 # 在内容仓库工作流中添加调试步骤
 - name: Debug
@@ -821,6 +818,7 @@ on:
 #### 问题 2: Repository dispatch 触发成功但构建失败
 
 **检查**:
+
 1. 代码仓库的 Actions 是否启用?
    - Settings → Actions → General → 确保启用
 2. 工作流文件是否包含 `repository_dispatch` 触发器?
@@ -831,6 +829,7 @@ on:
 **现象**: 工作流运行失败，提示认证错误
 
 **解决**:
+
 1. 重新生成 PAT Token
 2. 更新内容仓库的 Secret
 3. 测试触发
@@ -838,9 +837,11 @@ on:
 #### 问题 4: Deploy Hook 无效
 
 **检查**:
+
 1. Hook URL 是否正确复制?
 2. Secret 是否正确添加?
 3. 使用 curl 测试 Hook:
+
    ```bash
    curl -X POST "https://api.vercel.com/v1/integrations/deploy/..."
    ```

@@ -48,18 +48,17 @@ const yearSuffix = isChinese ? "年" : " ";
 >
 	<div class="flex justify-between items-center mb-2 mt-2">
 		<div
-			class="font-bold transition text-lg text-neutral-900 dark:text-neutral-100 relative ml-4 flex items-center
+			class="font-bold transition text-lg text-neutral-900 dark:text-neutral-100 relative ml-4 flex items-center w-full
 					before:w-1 before:h-4 before:rounded-md before:bg-[var(--primary)]
 					before:absolute before:left-[-16px] before:top-[13.5px]"
 		>
 			<div
-				id="calendar-title-container"
-				class="flex justify-center items-center cursor-pointer hover:bg-[var(--btn-plain-bg-hover)] px-2 py-2 -ml-2 rounded-lg transition-colors"
+				class="flex items-center gap-1 -ml-2 w-full"
 			>
-				<span
-					id="calendar-title"
-					class="text-lg font-bold text-neutral-900 dark:text-neutral-100 select-none"
-				></span>
+                <div
+                    id="calendar-year-btn"
+                    class="cursor-pointer hover:bg-[var(--btn-plain-bg-hover)] px-2 py-2 rounded-lg transition-colors text-lg font-bold text-neutral-900 dark:text-neutral-100 select-none"
+                ></div>
 			</div>
 		</div>
 
@@ -74,20 +73,26 @@ const yearSuffix = isChinese ? "年" : " ";
 					class="text-xl"
 				/>
 			</button>
-			<button
-				id="prev-month-btn"
-				class="p-1.5 rounded-md hover:bg-[var(--btn-plain-bg-hover)] text-neutral-600 dark:text-neutral-400 hover:text-[var(--primary)] transition-colors text-xl font-extrabold"
-				aria-label="Previous month"
-			>
-				＜
-			</button>
-			<button
-				id="next-month-btn"
-				class="p-1.5 rounded-md hover:bg-[var(--btn-plain-bg-hover)] text-neutral-600 dark:text-neutral-400 hover:text-[var(--primary)] transition-colors text-xl font-extrabold"
-				aria-label="Next month"
-			>
-				＞
-			</button>
+			<div class="flex items-center bg-[var(--card-bg)] rounded-lg border border-neutral-200 dark:border-neutral-700">
+				<button
+					id="prev-month-btn"
+					class="p-1 px-2 hover:bg-[var(--btn-plain-bg-hover)] text-neutral-600 dark:text-neutral-400 hover:text-[var(--primary)] transition-colors text-sm font-bold rounded-l-lg"
+					aria-label="Previous month"
+				>
+					＜
+				</button>
+				<div
+					id="calendar-month-btn"
+					class="cursor-pointer hover:bg-[var(--btn-plain-bg-hover)] px-2 py-1 transition-colors text-sm font-bold text-neutral-900 dark:text-neutral-100 select-none min-w-[3rem] text-center"
+				></div>
+				<button
+					id="next-month-btn"
+					class="p-1 px-2 hover:bg-[var(--btn-plain-bg-hover)] text-neutral-600 dark:text-neutral-400 hover:text-[var(--primary)] transition-colors text-sm font-bold rounded-r-lg"
+					aria-label="Next month"
+				>
+					＞
+				</button>
+			</div>
 		</div>
 	</div>
 	<div class="relative w-full overflow-hidden" style="min-height: 15.625rem;">
@@ -102,7 +107,7 @@ const yearSuffix = isChinese ? "年" : " ";
 				}
 			</div>
 			<div id="calendar-grid" class="grid grid-cols-7 gap-1"></div>
-			<div id="calendar-posts" class="mt-4">
+			<div id="calendar-posts" class="mt-4 hidden">
 				<div
 					class="h-[1px] w-full bg-neutral-200 dark:bg-neutral-700 mb-2 hidden"
 					id="calendar-posts-divider"
@@ -117,7 +122,7 @@ const yearSuffix = isChinese ? "年" : " ";
 		</div>
 		<div
 			id="selection-panel"
-			class="absolute inset-0 bg-[var(--card-bg)] z-10 flex flex-col hidden opacity-0 transition-opacity duration-200"
+			class="absolute inset-0 bg-[var(--card-bg)] z-10 hidden opacity-0 transition-opacity duration-200"
 		>
 			<div
 				id="selection-content"
@@ -127,6 +132,12 @@ const yearSuffix = isChinese ? "年" : " ";
 		</div>
 	</div>
 </WidgetLayout>
+
+<style is:global>
+	body:not(.lg\:is-home) widget-layout[data-id="calendar-widget"] {
+		display: none !important;
+	}
+</style>
 
 <script
 	is:inline
@@ -138,6 +149,7 @@ const yearSuffix = isChinese ? "年" : " ";
 	let allPostsData = [];
 	const postDateMap = {};
 	const postsByMonth = {};
+	const postsByYear = {};
 	const stats = {
 		hasPostInYear: {},
 		hasPostInMonth: {},
@@ -171,7 +183,7 @@ const yearSuffix = isChinese ? "年" : " ";
 	}
 
 	function processPostsData(posts) {
-		if (!posts || posts.length === 0) return;
+		if (!posts || posts.length === 0) {return;}
 		posts.forEach((post) => {
 			const [yStr, mStr] = post.date.split("-");
 			const year = parseInt(yStr);
@@ -179,16 +191,21 @@ const yearSuffix = isChinese ? "年" : " ";
 			stats.hasPostInYear[year] = true;
 			stats.hasPostInMonth[`${year}-${month}`] = true;
 
-			if (year < stats.minYear) stats.minYear = year;
+			if (year < stats.minYear) {stats.minYear = year;}
+			if (year > stats.maxYear) {stats.maxYear = year;}
 
 			const dateKey = post.date;
 			const monthKey = `${year}-${month - 1}`; // JS Month is 0-11
 
-			if (!postDateMap[dateKey]) postDateMap[dateKey] = [];
+			if (!postDateMap[dateKey]) {postDateMap[dateKey] = [];}
 			postDateMap[dateKey].push(post);
 
-			if (!postsByMonth[monthKey]) postsByMonth[monthKey] = [];
+			if (!postsByMonth[monthKey]) {postsByMonth[monthKey] = [];}
 			postsByMonth[monthKey].push(post);
+
+			const yearKey = String(year);
+			if (!postsByYear[yearKey]) {postsByYear[yearKey] = [];}
+			postsByYear[yearKey].push(post);
 		});
 	}
 
@@ -200,11 +217,12 @@ const yearSuffix = isChinese ? "年" : " ";
 	let currentYear = todayYear;
 	let currentMonth = todayMonth;
 	let selectedDateKey = null;
+	let activeFilter = null;
 	let currentView = "day";
 
 	const dom = {
-		titleContainer: document.getElementById("calendar-title-container"),
-		title: document.getElementById("calendar-title"),
+		yearBtn: document.getElementById("calendar-year-btn"),
+		monthBtn: document.getElementById("calendar-month-btn"),
 		prevBtn: document.getElementById("prev-month-btn"),
 		nextBtn: document.getElementById("next-month-btn"),
 		backTodayBtn: document.getElementById("back-to-today-btn"),
@@ -212,13 +230,14 @@ const yearSuffix = isChinese ? "年" : " ";
 		selectionPanel: document.getElementById("selection-panel"),
 		selectionContent: document.getElementById("selection-content"),
 		grid: document.getElementById("calendar-grid"),
+		postsContainer: document.getElementById("calendar-posts"),
 		postsList: document.getElementById("calendar-posts-list"),
 		divider: document.getElementById("calendar-posts-divider"),
 	};
 
 	function getCurrentPostId() {
 		const path = window.location.pathname;
-		if (!allPostsData || allPostsData.length === 0) return null;
+		if (!allPostsData || allPostsData.length === 0) {return null;}
 		const decodedPath = decodeURIComponent(path);
 		const normalizedPath = decodedPath.endsWith("/")
 			? decodedPath.slice(0, -1)
@@ -230,6 +249,46 @@ const yearSuffix = isChinese ? "年" : " ";
 		return matchedPost ? matchedPost.id : null;
 	}
 
+	function getYearLabel(year) {
+		const label = `${year}${yearSuffix}`.trim();
+		return label || String(year);
+	}
+
+	function getMonthLabel(year, monthIndex) {
+		const yearLabel = getYearLabel(year);
+		if (yearSuffix.trim().length > 0) {
+			return `${yearLabel}${monthNames[monthIndex]}`.trim();
+		}
+		return `${yearLabel} ${monthNames[monthIndex]}`.trim();
+	}
+
+	function emitFilterChange(detail) {
+		window.dispatchEvent(
+			new CustomEvent("calendarFilterChange", { detail }),
+		);
+	}
+
+	function emitFilterClear() {
+		window.dispatchEvent(new CustomEvent("calendarFilterClear"));
+	}
+
+	function applyFilter(type, key, posts, label) {
+		activeFilter = {
+			type,
+			key,
+			posts,
+			label,
+		};
+		if (type !== "day") {selectedDateKey = null;}
+		emitFilterChange({ type, key, posts, label });
+	}
+
+	function clearFilter() {
+		activeFilter = null;
+		selectedDateKey = null;
+		emitFilterClear();
+	}
+
 	function init() {
 		renderCalendar();
 		setupEventListeners();
@@ -237,14 +296,27 @@ const yearSuffix = isChinese ? "年" : " ";
 	}
 
 	function setupEventListeners() {
-		dom.titleContainer.addEventListener("click", (e) => {
+		dom.yearBtn.addEventListener("click", (e) => {
 			e.stopPropagation();
-			if (currentView === "day") showMonthPicker();
-			else if (currentView === "month") showYearPicker();
-			else closeSelectionPanel();
+			if (currentView === "year") {
+                closeSelectionPanel();
+            } else {
+                showYearPicker();
+            }
+		});
+
+        dom.monthBtn.addEventListener("click", (e) => {
+			e.stopPropagation();
+			if (currentView === "month") {
+                closeSelectionPanel();
+            } else {
+                showMonthPicker();
+            }
 		});
 
 		dom.prevBtn.addEventListener("click", () => {
+			if (currentView !== "day") {closeSelectionPanel();}
+			if (activeFilter || selectedDateKey) {clearFilter();}
 			currentMonth--;
 			if (currentMonth < 0) {
 				currentMonth = 11;
@@ -254,6 +326,8 @@ const yearSuffix = isChinese ? "年" : " ";
 		});
 
 		dom.nextBtn.addEventListener("click", () => {
+			if (currentView !== "day") {closeSelectionPanel();}
+			if (activeFilter || selectedDateKey) {clearFilter();}
 			currentMonth++;
 			if (currentMonth > 11) {
 				currentMonth = 0;
@@ -265,25 +339,32 @@ const yearSuffix = isChinese ? "年" : " ";
 		dom.backTodayBtn.addEventListener("click", () => {
 			currentYear = todayYear;
 			currentMonth = todayMonth;
-			selectedDateKey = null;
-			if (currentView !== "day") closeSelectionPanel();
-			else renderCalendar();
+			clearFilter();
+			if (currentView !== "day") {closeSelectionPanel();}
+			else {renderCalendar();}
 		});
 
 		dom.grid.addEventListener("click", (e) => {
 			const cell = e.target.closest(".calendar-day");
-			if (!cell) return;
+			if (!cell) {return;}
 			const dateKey = cell.getAttribute("data-date");
+			if (!dateKey) {return;}
+			const posts = postDateMap[dateKey] || [];
 
-			if (selectedDateKey === dateKey) selectedDateKey = null;
-			else selectedDateKey = dateKey;
+			if (posts.length === 0) {
+				clearFilter();
+				renderCalendar();
+				return;
+			}
+
+			if (activeFilter?.type === "day" && selectedDateKey === dateKey) {
+				clearFilter();
+			} else {
+				selectedDateKey = dateKey;
+				applyFilter("day", dateKey, posts, dateKey);
+			}
 
 			renderCalendar();
-			if (selectedDateKey && postDateMap[selectedDateKey]) {
-				renderPostList(postDateMap[selectedDateKey]);
-			} else {
-				showMonthlyPosts();
-			}
 		});
 
 		dom.selectionContent.addEventListener("click", (e) => {
@@ -293,35 +374,65 @@ const yearSuffix = isChinese ? "年" : " ";
 			if (monthItem) {
 				e.stopPropagation();
 				currentMonth = parseInt(monthItem.getAttribute("data-month"));
+				const monthPosts =
+					postsByMonth[`${currentYear}-${currentMonth}`] || [];
+				if (monthPosts.length > 0) {
+					const filterKey = `${currentYear}-${String(currentMonth + 1).padStart(2, "0")}`;
+					applyFilter(
+						"month",
+						filterKey,
+						monthPosts,
+						getMonthLabel(currentYear, currentMonth),
+					);
+				} else {
+					clearFilter();
+				}
 				closeSelectionPanel();
 			} else if (yearItem) {
 				e.stopPropagation();
 				currentYear = parseInt(yearItem.getAttribute("data-year"));
-				showMonthPicker();
+				const yearPosts = postsByYear[String(currentYear)] || [];
+				if (yearPosts.length > 0) {
+					applyFilter(
+						"year",
+						String(currentYear),
+						yearPosts,
+						getYearLabel(currentYear),
+					);
+				} else {
+					clearFilter();
+				}
+				closeSelectionPanel(); // 选择年份后直接关闭面板，显示该年的当前月
 			}
 		});
 
 		document.addEventListener("click", (e) => {
-			if (currentView === "day") return;
+			if (currentView === "day") {return;}
 			const widget = document.getElementById("calendar-widget");
 			if (widget && !widget.contains(e.target)) {
 				closeSelectionPanel();
 			}
 		});
+
+		window.addEventListener("calendarFilterClear", () => {
+			if (activeFilter === null && selectedDateKey === null) {return;}
+			activeFilter = null;
+			selectedDateKey = null;
+			renderCalendar();
+		});
 	}
 
 	function updateHeader() {
-		dom.title.textContent = `${currentYear}${yearSuffix} ${monthNames[currentMonth]}`;
+		dom.yearBtn.textContent = `${currentYear}${yearSuffix}`;
+        dom.monthBtn.textContent = monthNames[currentMonth];
+		
 		const isCurrentRealMonth =
 			currentYear === todayYear && currentMonth === todayMonth;
-		const shouldShowReset = !isCurrentRealMonth || selectedDateKey !== null;
+		const shouldShowReset =
+			!isCurrentRealMonth || selectedDateKey !== null || activeFilter !== null;
 
-		if (shouldShowReset) dom.backTodayBtn.classList.remove("invisible");
-		else dom.backTodayBtn.classList.add("invisible");
-
-		const isDayView = currentView === "day";
-		dom.prevBtn.style.visibility = isDayView ? "visible" : "hidden";
-		dom.nextBtn.style.visibility = isDayView ? "visible" : "hidden";
+		if (shouldShowReset) {dom.backTodayBtn.classList.remove("invisible");}
+		else {dom.backTodayBtn.classList.add("invisible");}
 	}
 
 	function renderCalendar() {
@@ -349,6 +460,7 @@ const yearSuffix = isChinese ? "年" : " ";
 				currentMonth === todayMonth &&
 				day === todayDate;
 			const isSelected = selectedDateKey === dateKey;
+			const dotClass = isSelected ? "bg-white" : "bg-[var(--primary)]";
 
 			let bgClass =
 				"hover:bg-[var(--btn-plain-bg-hover)] text-neutral-700 dark:text-neutral-300 border border-transparent";
@@ -368,28 +480,24 @@ const yearSuffix = isChinese ? "年" : " ";
                 <div class="calendar-day aspect-square flex items-center justify-center rounded-md cursor-pointer relative transition-all duration-200 ${bgClass}"
                     data-date="${dateKey}">
                     ${day}
-                    ${hasPost && !isSelected ? `<span class="absolute bottom-1 w-1 h-1 rounded-full bg-[var(--primary)]"></span>` : ""}
+					${hasPost ? `<span class="absolute bottom-0 translate-y-0.5 w-1 h-1 rounded-full ${dotClass}"></span>` : ""}
                     ${hasPost && count > 1 ? `<span class="absolute top-0.5 right-0.5 text-[9px] opacity-70 scale-75">${count}</span>` : ""}
                 </div>
             `;
 		}
 
 		dom.grid.innerHTML = html;
-		if (selectedDateKey && postDateMap[selectedDateKey]) {
-			renderPostList(postDateMap[selectedDateKey]);
+		if (activeFilter?.type === "day" && selectedDateKey) {
+			renderPostList(activeFilter.posts || []);
+			dom.postsContainer?.classList.remove("hidden");
 		} else {
-			showMonthlyPosts();
+			dom.postsContainer?.classList.add("hidden");
+			renderPostList([]);
 		}
 	}
 
-	function showMonthlyPosts() {
-		const key = `${currentYear}-${currentMonth}`; // Month is 0-11
-		const posts = postsByMonth[key] || [];
-		renderPostList(posts);
-	}
-
 	function renderPostList(posts) {
-		if (!dom.postsList) return;
+		if (!dom.postsList) {return;}
 		if (posts.length === 0) {
 			dom.divider.classList.add("hidden");
 			dom.postsList.innerHTML = "";
@@ -407,7 +515,7 @@ const yearSuffix = isChinese ? "年" : " ";
 				const isCurrentPost = post.id === currentPostId;
 				let containerClass =
 					"flex items-center justify-between text-sm transition-colors px-2 py-2 rounded-lg group border border-transparent";
-				let titleClass = "truncate flex-1 font-bold transition-colors";
+				const titleClass = "truncate flex-1 font-bold transition-colors";
 				let dateClass =
 					"text-xs ml-2 whitespace-nowrap transition-colors";
 
@@ -422,8 +530,9 @@ const yearSuffix = isChinese ? "年" : " ";
 						" text-neutral-400 group-hover:text-[var(--primary)]/70";
 				}
 
+				const postUrl = post.url || `/posts/${post.id}/`;
 				return `
-            <a href="/posts/${post.id}/" class="${containerClass}">
+            <a href="${postUrl}" class="${containerClass}">
                 <span class="${titleClass}">${post.title}</span>
                 <span class="${dateClass}">${dateStr}</span>
             </a>
@@ -437,13 +546,14 @@ const yearSuffix = isChinese ? "年" : " ";
 	function showMonthPicker() {
 		currentView = "month";
 		updateHeader();
+		dom.selectionPanel.classList.add("flex", "flex-col");
 		dom.selectionPanel.classList.remove("hidden");
 		requestAnimationFrame(() => {
 			dom.selectionPanel.classList.remove("opacity-0");
 		});
 
 		dom.selectionContent.className =
-			"w-full h-full p-4 grid grid-cols-3 gap-3 content-center";
+			"w-full h-full p-4 grid grid-cols-3 gap-3 content-center justify-items-end";
 
 		let html = "";
 		monthNames.forEach((name, index) => {
@@ -452,9 +562,9 @@ const yearSuffix = isChinese ? "年" : " ";
 			let cls =
 				"month-item cursor-pointer rounded-lg flex flex-col items-center justify-center p-2 transition-all hover:bg-[var(--btn-plain-bg-hover)] relative border border-transparent";
 			if (isCurrentMonth)
-				cls +=
-					" border-[var(--primary)] text-[var(--primary)] bg-[var(--primary)]/5";
-			else cls += " text-neutral-700 dark:text-neutral-300";
+				{cls +=
+				" border-[var(--primary)] text-[var(--primary)] bg-[var(--primary)]/5";}
+			else {cls += " text-neutral-700 dark:text-neutral-300";}
 
 			html += `
                 <div class="${cls}" data-month="${index}">
@@ -469,6 +579,11 @@ const yearSuffix = isChinese ? "年" : " ";
 	function showYearPicker() {
 		currentView = "year";
 		updateHeader();
+		dom.selectionPanel.classList.add("flex", "flex-col");
+		dom.selectionPanel.classList.remove("hidden");
+		requestAnimationFrame(() => {
+			dom.selectionPanel.classList.remove("opacity-0");
+		});
 		dom.selectionContent.className =
 			"w-full h-full p-2 grid grid-cols-4 gap-2 content-start overflow-y-auto";
 
@@ -479,9 +594,9 @@ const yearSuffix = isChinese ? "年" : " ";
 			let cls =
 				"year-item cursor-pointer rounded-lg flex flex-col items-center justify-center py-3 transition-all hover:bg-[var(--btn-plain-bg-hover)] relative border border-transparent";
 			if (isCurrent)
-				cls +=
-					" border-[var(--primary)] text-[var(--primary)] bg-[var(--primary)]/5";
-			else cls += " text-neutral-700 dark:text-neutral-300";
+				{cls +=
+				" border-[var(--primary)] text-[var(--primary)] bg-[var(--primary)]/5";}
+			else {cls += " text-neutral-700 dark:text-neutral-300";}
 
 			html += `
                 <div class="${cls}" data-year="${y}" id="year-${y}">
@@ -494,13 +609,14 @@ const yearSuffix = isChinese ? "年" : " ";
 
 		setTimeout(() => {
 			const el = document.getElementById(`year-${currentYear}`);
-			if (el) el.scrollIntoView({ block: "center", behavior: "smooth" });
+			if (el) {el.scrollIntoView({ block: "center", behavior: "smooth" });}
 		}, 50);
 	}
 
 	function closeSelectionPanel() {
 		dom.selectionPanel.classList.add("opacity-0");
 		setTimeout(() => {
+			dom.selectionPanel.classList.remove("flex", "flex-col");
 			dom.selectionPanel.classList.add("hidden");
 			currentView = "day";
 			renderCalendar();

@@ -17,10 +17,10 @@ const style = Astro.props.style;
 
 <!-- 组件显示现在由sidebarLayoutConfig统一控制，无需检查config.enable -->
 <WidgetLayout 
-    name={config.title || i18n(I18nKey.announcement)} 
-    id="announcement"
-    class={className} 
-    style={style}
+	name={config.title || i18n(I18nKey.announcement)} 
+	id="announcement"
+	class={className}
+	style={style}
 >
     <div>
         <!-- 公告栏内容 -->
@@ -44,39 +44,42 @@ const style = Astro.props.style;
                 )}
             </div>
             
-            {config.closable && (
-                <button 
-                    class="btn-regular rounded-lg h-8 w-8 text-sm hover:bg-red-100 dark:hover:bg-red-900/30 transition-colors"
-                    onclick="closeAnnouncement()"
-                    aria-label={i18n(I18nKey.announcementClose)}
-                >
-                    <Icon name="fa6-solid:xmark" class="text-sm" />
-                </button>
-            )}
+			{config.closable && (
+				<button 
+					class="btn-regular rounded-lg h-8 w-8 text-sm hover:bg-red-100 dark:hover:bg-red-900/30 transition-colors"
+					data-announce-close
+					aria-label={i18n(I18nKey.announcementClose)}
+				>
+					<Icon name="fa6-solid:xmark" class="text-sm" />
+				</button>
+			)}
         </div>
     </div>
 </WidgetLayout>
 
 <script>
-    function closeAnnouncement() {
-        // 通过data-id属性找到整个widget-layout元素
-        const widgetLayout = document.querySelector('widget-layout[data-id="announcement"]') as HTMLElement;
-        if (widgetLayout) {
-            // 隐藏整个widget-layout元素
-            widgetLayout.style.display = 'none';
-            // 保存关闭状态到localStorage
-            localStorage.setItem('announcementClosed', 'true');
-        }
-    }
+	const announcementSelector = 'widget-layout[data-id="announcement"]';
+	const closeButtonSelector = '[data-announce-close]';
 
-    // 页面加载时检查是否已关闭
-    document.addEventListener('DOMContentLoaded', function() {
-        const widgetLayout = document.querySelector('widget-layout[data-id="announcement"]') as HTMLElement;
-        if (widgetLayout && localStorage.getItem('announcementClosed') === 'true') {
-            widgetLayout.style.display = 'none';
-        }
-    });
+	function hideAnnouncements() {
+		document.querySelectorAll(announcementSelector).forEach((widget) => {
+			(widget as HTMLElement).style.display = 'none';
+		});
+	}
 
-    // 使公告栏函数全局可用
-    window.closeAnnouncement = closeAnnouncement;
+	function handleClose() {
+		hideAnnouncements();
+	}
+
+	function initAnnouncement() {
+		document.querySelectorAll(closeButtonSelector).forEach((button) => {
+			button.addEventListener('click', handleClose);
+		});
+	}
+
+	if (document.readyState === 'loading') {
+		document.addEventListener('DOMContentLoaded', initAnnouncement);
+	} else {
+		initAnnouncement();
+	}
 </script>

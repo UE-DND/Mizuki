@@ -12,23 +12,10 @@ loadEnv();
 console.log("Loaded .env configuration file\n");
 
 // 从环境变量读取配置
-const ENABLE_CONTENT_SYNC = process.env.ENABLE_CONTENT_SYNC !== "false"; // 默认启用
 const CONTENT_REPO_URL = process.env.CONTENT_REPO_URL || "";
 const CONTENT_DIR = process.env.CONTENT_DIR || path.join(rootDir, "content");
 
 console.log("Starting content synchronization...\n");
-
-// 检查是否启用内容分离
-if (!ENABLE_CONTENT_SYNC) {
-	console.log("Content separation is disabled (ENABLE_CONTENT_SYNC=false)");
-	console.log(
-		"Tip: Local content will be used, will not sync from remote repository",
-	);
-	console.log("     To enable content separation feature, set in .env:");
-	console.log("     ENABLE_CONTENT_SYNC=true");
-	console.log("     CONTENT_REPO_URL=<your-repo-url>\n");
-	process.exit(0);
-}
 
 // 检查内容目录是否存在
 if (!fs.existsSync(CONTENT_DIR)) {
@@ -36,7 +23,9 @@ if (!fs.existsSync(CONTENT_DIR)) {
 	console.log("Using independent repository mode");
 
 	if (!CONTENT_REPO_URL) {
-		console.warn("Warning: CONTENT_REPO_URL not set, will use local content");
+		console.warn(
+			"Warning: CONTENT_REPO_URL not set, will use local content",
+		);
 		console.log(
 			"Tip: Please set CONTENT_REPO_URL environment variable or manually create content directory",
 		);

@@ -266,14 +266,9 @@ export const zh_TW: Translation = {
 	[Key.decryptionError]: "解密過程中發生錯誤:",
 
 	//最後編輯時間卡片
-	[Key.lastModifiedPrefix]: "距離上次編輯: ",
+	[Key.lastModifiedPrefix]: "距離上次編輯",
 	[Key.lastModifiedOutdated]: "部分資訊可能已經過時",
-	[Key.year]: "年",
-	[Key.month]: "月",
-	[Key.day]: "天",
-	[Key.hour]: "小時",
-	[Key.minute]: "分",
-	[Key.second]: "秒",
+	[Key.daysOnly]: "共 %{days} 天",
 
 	// 壁紙模式
 	[Key.wallpaperBanner]: "橫幅模式",

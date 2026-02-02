@@ -120,7 +120,7 @@ const generatePostList = () => {
 			const href = titleLink.getAttribute("href");
 			const title = titleLink.textContent?.replace(/\s+/g, " ").trim() || "";
 			const category = categoryLink?.textContent?.trim() || "";
-			const pinned = !!pinnedIcon;
+			const pinned = Boolean(pinnedIcon);
 
 			if (href && title) {
 				items.push({ title, url: href, category, pinned });
@@ -243,7 +243,7 @@ const setupSwupListeners = () => {
 const checkSwupAvailability = () => {
 	if (typeof window !== "undefined") {
 		// 检查Swup是否已加载
-		swupReady = !!(window as any).swup;
+		swupReady = Boolean((window as any).swup);
 
 		// 如果Swup还未加载，监听其加载事件
 		if (!swupReady) {

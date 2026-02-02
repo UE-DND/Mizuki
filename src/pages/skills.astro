@@ -204,7 +204,7 @@ const allIcons = skillsData.map((skill) => skill.icon).filter(Boolean);
       <div class="space-y-8 skills-container" style="container-type: inline-size;">
         {categories.map((category) => {
           const categorySkills = skillsByCategory[category];
-          if (categorySkills.length === 0) return null;
+          if (categorySkills.length === 0) {return null;}
           
           return (
             <div>

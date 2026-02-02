@@ -1,23 +1,10 @@
-# 🌸 Mizuki <img align='right' src='logo.png' width='200px' alt="Mizuki logo">
+# 🌸 Mizuki
+
+<img align='right' src='logo.png' width='200px' alt="Mizuki logo">
 
 一个现代化、功能丰富的静态博客模板，基于 [Astro](https://astro.build) 构建，具有先进的功能和精美的设计。
 
-![Mizuki Preview](./README.webp)
-
-<table>
-  <tr>
-    <td><img alt="" src="docs/image/1.webp"></td>
-    <td><img alt="" src="docs/image/2.webp"></td>
-    <td><img alt="" src="docs/image/3.webp"></td>
-  <tr>
-  <tr>
-    <td><img alt="" src="docs/image/4.webp"></td>
-    <td><img alt="" src="docs/image/5.webp"></td>
-    <td><img alt="" src="docs/image/6.webp"></td>
-  <tr>
-</table>
-
----
+![Mizuki Preview](./Preview.png)
 
 ## 功能特性
 
@@ -34,13 +21,13 @@
 ### 内容与搜索
 
 - [x] 基于 [Pagefind](https://pagefind.app/) 的高级搜索功能
-- [x] [增强的 Markdown 功能](#-markdown-扩展语法)，支持语法高亮
+- [x] [增强的 Markdown 功能](#markdown-扩展语法)，支持语法高亮
 - [x] 交互式目录，支持自动滚动
 - [x] RSS 订阅生成
 - [x] 阅读时间估算
 - [x] 文章分类和标签系统
 
-### 📱 特色页面
+### 特色页面
 
 - [x] **追番页面** - 追踪动画观看进度和评分
 - [x] **友链页面** - 精美卡片展示朋友网站
@@ -164,7 +151,6 @@ Mizuki 支持超越标准 GitHub Flavored Markdown 的增强功能：
 - **阅读时间：** 自动计算和显示
 - **文章元数据：** 丰富的前言支持，包含分类和标签
 
-
 ## 配置指南
 
 ### 基础配置
@@ -198,71 +184,55 @@ export const siteConfig: SiteConfig = {
 - **日记页面：** 在 `src/pages/diary.astro` 中编辑动态
 - **关于页面：** 在 `src/content/spec/about.md` 中编辑内容
 
-### 代码内容分离 (可选)
+### 代码内容分离
 
-Mizuki 支持将代码和内容分成两个独立的仓库管理,适合团队协作和大型项目。
+Mizuki 默认将代码和内容分成两个独立的仓库管理，适合团队协作和大型项目。
 
 **快速选择**:
 
-| 使用场景              | 配置方式                        | 适合人群           |
-| --------------------- | ------------------------------- | ------------------ |
-| **本地模式** (默认) | 不配置,直接使用                 | 新手、个人博客     |
-| **分离模式**        | 设置 `ENABLE_CONTENT_SYNC=true` | 团队协作、私有内容 |
+| 使用场景     | 配置方式                | 适合人群           |
+| ------------ | ----------------------- | ------------------ |
+| **分离模式** | 配置 `CONTENT_REPO_URL` | 团队协作、私有内容 |
 
-**一键启用/禁用**:
+**配置步骤**:
 
 ```bash
-# 方式 1: 本地模式 (推荐新手)
-# 不创建 .env 文件,直接运行
-pnpm dev
-
-# 方式 2: 内容分离模式
 # 1. 复制配置文件
 cp .env.example .env
 
-# 2. 编辑 .env,启用内容分离
-ENABLE_CONTENT_SYNC=true
+# 2. 编辑 .env，配置内容仓库
 CONTENT_REPO_URL=https://github.com/your-username/Mizuki-Content.git
-
-# 3. 同步内容
-pnpm run sync-content
 ```
 
 **功能特性**:
 
-- 支持公开和私有仓库 🔐
-- 一键启用/禁用，无需修改代码
-- 自动同步，开发前自动拉取最新内容
+- 支持公开和私有仓库
+- 自动同步，部署时自动拉取最新内容
 
 **详细配置**: [内容分离完整指南](docs/CONTENT_SEPARATION.md)
 **迁移教程**: [从单仓库迁移到分离模式](docs/MIGRATION_GUIDE.md)
 **更多文档**: [文档索引](docs/README.md)
 
-## 致谢
-
-- 基于原始 [Fuwari](https://github.com/saicaca/fuwari) 模板
-- 灵感来源于 [Yukina](https://github.com/WhitePaper233/yukina) - 一个美丽优雅的博客模板
-- 部分设计灵感来源于 [Firefly](https://github.com/CuteLeaf/Firefly) 和 [Twilight](https://github.com/spr-aachen/Twilight) 模板
-- 使用 [Pio](https://github.com/Dreamer-Paul/Pio) 实现可爱的 Live2D 看板娘插件
-- 使用 [Astro](https://astro.build) 和 [Tailwind CSS](https://tailwindcss.com) 构建
-- 图标来自 [Iconify](https://iconify.design/)
-
-### 特别感谢
-
-- **[Fuwari](https://github.com/saicaca/fuwari)** by saicaca - 本项目所基于的原始模板。感谢您创建了如此漂亮且功能强大的模板。
-- **[Yukina](https://github.com/WhitePaper233/yukina)** - 感谢提供设计灵感和创意，帮助塑造了这个项目。Yukina 是一个优雅的博客模板，展现了出色的设计原则和用户体验。
-- **[Firefly](https://github.com/CuteLeaf/Firefly)** - 感谢提供优秀的布局设计思路，双侧边栏布局、文章双列网格等布局，及部分小组件的设计与实现，让 Mizuki 的界面更加丰富。
-- **[Twilight](https://github.com/spr-aachen/Twilight)** - 感谢提供灵感和技术支持。Twilight 的动态壁纸模式切换系统、响应式设计和过渡效果显著提升了 Mizuki 的使用体验。
-
-### 贡献者
+## 贡献者
 
 感谢以下源项目作者对本项目做出的贡献
 
-<a href="https://github.com/matsuzaka-yuki/Mizuki/graphs/contributors">
-  <img src="https://contrib.rocks/image?repo=matsuzaka-yuki/Mizuki" />
-</a>
+[![源项目贡献者](https://contrib.rocks/image?repo=matsuzaka-yuki/Mizuki)](https://github.com/matsuzaka-yuki/Mizuki/graphs/contributors)
 
-## 📄 许可证
+感谢以下本项目作者对本项目做出的贡献
+
+[![本项目贡献者](https://contrib.rocks/image?repo=CiaLliChannel/Mizuki)](https://github.com/CiaLliChannel/Mizuki/graphs/contributors)
+
+## 致谢
+
+- **[Fuwari](https://github.com/saicaca/fuwari)** by saicaca - 本项目所基于的原始模板。感谢您创建了如此漂亮且功能强大的模板
+- **[Yukina](https://github.com/WhitePaper233/yukina)** - 感谢提供设计灵感和创意，帮助塑造了这个项目。Yukina 是一个优雅的博客模板，展现了出色的设计原则和用户体验
+- **[Firefly](https://github.com/CuteLeaf/Firefly)** - 感谢提供优秀的布局设计思路，双侧边栏布局、文章双列网格等布局，及部分小组件的设计与实现，让 Mizuki 的界面更加丰富
+- **[Twilight](https://github.com/spr-aachen/Twilight)** - 感谢提供灵感和技术支持。Twilight 的动态壁纸模式切换系统、响应式设计和过渡效果显著提升了 Mizuki 的使用体验
+- **[Pio](https://github.com/Dreamer-Paul/Pio)** 可爱的 Live2D 看板娘插件
+- **[Iconify](https://iconify.design/)** 精美的图标
+
+## 许可证
 
 本项目基于 Apache 许可证 2.0 - 查看 [LICENSE](LICENSE) 文件了解详情。
 

@@ -2,9 +2,9 @@
 
 本指南将帮助你将现有的 Mizuki 博客从单仓库模式迁移到代码内容分离模式。
 
-> 💡 **提示**: 如果是新项目,建议先阅读 [内容分离完整指南](./CONTENT_SEPARATION.md)
+> **提示**: 如果是新项目,建议先阅读 [内容分离完整指南](./CONTENT_SEPARATION.md)
 
-## 📋 迁移前准备
+## 迁移前准备
 
 ### 检查清单
 
@@ -13,7 +13,7 @@
 - [ ] 了解你要使用的模式 (推荐 Submodule)
 - [ ] 在 GitHub/GitLab 创建新的内容仓库
 
-## 🚀 迁移步骤
+## 迁移步骤
 
 ### 步骤 1: 创建内容仓库
 
@@ -72,7 +72,7 @@ cp "$MIZUKI_PATH/src/data/timeline.ts" "$CONTENT_PATH/data/" 2>/dev/null || echo
 cp -r "$MIZUKI_PATH/public/images/albums/"* "$CONTENT_PATH/images/albums/" 2>/dev/null || echo "albums not found"
 cp -r "$MIZUKI_PATH/public/images/diary/"* "$CONTENT_PATH/images/diary/" 2>/dev/null || echo "diary not found"
 
-echo "✅ 内容复制完成!"
+echo "  内容复制完成!"
 ```
 
 ### 步骤 3: 提交内容仓库
@@ -93,7 +93,7 @@ git remote add origin https://github.com/your-username/Mizuki-Content.git
 git branch -M master
 git push -u origin master
 
-echo "✅ 内容仓库已推送!"
+echo "  内容仓库已推送!"
 ```
 
 ### 步骤 4: 配置 Mizuki 代码仓库
@@ -104,11 +104,8 @@ cd "$MIZUKI_PATH"
 # 创建 .env 文件
 cp .env.example .env
 
-# 编辑 .env 文件,启用内容分离
+# 编辑 .env 文件,配置内容仓库
 cat > .env << 'EOF'
-# 启用内容分离
-ENABLE_CONTENT_SYNC=true
-
 # 内容仓库配置
 CONTENT_REPO_URL=https://github.com/your-username/Mizuki-Content.git
 USE_SUBMODULE=true
@@ -123,11 +120,11 @@ git commit -m "Enable content separation"
 git push
 ```
 
-> 📖 更多配置选项请参考 [内容分离完整指南](./CONTENT_SEPARATION.md)
+> 更多配置选项请参考 [内容分离完整指南](./CONTENT_SEPARATION.md)
 
 ### 步骤 5: 清理原仓库中的内容 (可选)
 
-⚠️ **警告**: 只有在确认内容已成功迁移后才执行此步骤!
+   **警告**: 只有在确认内容已成功迁移后才执行此步骤!
 
 ```bash
 cd "$MIZUKI_PATH"
@@ -157,7 +154,7 @@ git commit -m "Remove migrated content (now in separate repository)"
 git push
 ```
 
-## 🧪 测试迁移
+## 测试迁移
 
 ### 本地测试
 
@@ -189,7 +186,7 @@ pnpm preview
 # 检查所有功能是否正常
 ```
 
-## 🔄 日常工作流
+## 日常工作流
 
 ### 更新内容
 
@@ -223,28 +220,27 @@ git commit -m "Update content submodule"
 git push
 ```
 
-## 🚀 部署配置
+## 部署配置
 
 迁移完成后,需要在部署平台配置环境变量:
 
 ```bash
-ENABLE_CONTENT_SYNC=true
 CONTENT_REPO_URL=https://github.com/your-username/Mizuki-Content.git
 USE_SUBMODULE=true
 ```
 
 详细的部署配置(包括私有仓库、GitHub Actions、Vercel 等)请参考 [内容分离完整指南 - CI/CD 部署](./CONTENT_SEPARATION.md#-cicd-部署)
 
-## ⚠️ 常见问题
+## 常见问题
 
 ### Q: 同步脚本失败怎么办?
 
 A: 检查:
+
 1. 网络连接是否正常
 2. Git 凭据是否配置正确
-3. `ENABLE_CONTENT_SYNC=true` 是否已设置
-4. `CONTENT_REPO_URL` 是否正确
-5. 是否有足够的磁盘空间
+3. `CONTENT_REPO_URL` 是否正确
+4. 是否有足够的磁盘空间
 
 运行 `pnpm run check-env` 检查配置。
 
@@ -252,15 +248,11 @@ A: 检查:
 
 A: 需要以管理员身份运行,或者脚本会自动切换到复制模式。
 
-### Q: 如何回滚到单仓库模式?
-
-A: 在 `.env` 中设置 `ENABLE_CONTENT_SYNC=false`,然后从备份或内容仓库复制内容回本地。
-
 ### Q: 遇到私有仓库认证问题?
 
 A: 参考 [内容分离完整指南 - 私有仓库配置](./CONTENT_SEPARATION.md#-私有仓库配置)
 
-## 📚 参考文档
+## 参考文档
 
 - [内容分离完整指南](./CONTENT_SEPARATION.md) - 详细配置说明
 - [内容仓库结构说明](./CONTENT_REPOSITORY.md) - 推荐的仓库结构
@@ -268,4 +260,4 @@ A: 参考 [内容分离完整指南 - 私有仓库配置](./CONTENT_SEPARATION.m
 
 ---
 
-💡 **提示**: 迁移前建议先在测试环境中验证整个流程!
+  **提示**: 迁移前建议先在测试环境中验证整个流程!

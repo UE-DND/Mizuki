@@ -21,6 +21,12 @@ pnpm-debug.log*
 /content/
 *.backup
 
+# Symbolic links to external content repository
+/src/content/posts
+/src/content/spec
+/src/data
+/public/images
+
 # Large zip files
 *.zip
 
@@ -50,3 +56,7 @@ src/data/bilibili-data.json
 
 # Upstream code branch reference
 ref-upstream/
+
+# AGETNS
+.claude/
+.spec-workflow/

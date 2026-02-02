@@ -1,5 +1,4 @@
-import type { CollectionEntry } from "astro:content";
-import { getCollection } from "astro:content";
+import { getCollection, type CollectionEntry } from "astro:content";
 import * as fs from "node:fs";
 import type { APIContext, GetStaticPaths } from "astro";
 import satori from "satori";
@@ -25,9 +24,11 @@ export const getStaticPaths: GetStaticPaths = async () => {
 	}
 
 	const allPosts = await getCollection("posts");
-	const publishedPosts = allPosts.filter((post) => !post.data.draft);
+	const publishedPosts = allPosts.filter(
+		(post: CollectionEntry<"posts">) => !post.data.draft,
+	);
 
-	return publishedPosts.map((post) => {
+	return publishedPosts.map((post: CollectionEntry<"posts">) => {
 		// 将 id 转换为 slug（移除扩展名）以匹配路由参数
 		const slug = removeFileExtension(post.id);
 		return {
@@ -48,7 +49,9 @@ async function fetchNotoSansSCFonts() {
 		const cssResp = await fetch(
 			"https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;700&display=swap",
 		);
-		if (!cssResp.ok) throw new Error("Failed to fetch Google Fonts CSS");
+		if (!cssResp.ok) {
+			throw new Error("Failed to fetch Google Fonts CSS");
+		}
 		const cssText = await cssResp.text();
 
 		const getUrlForWeight = (weight: number) => {
@@ -57,7 +60,9 @@ async function fetchNotoSansSCFonts() {
 				"g",
 			);
 			const match = cssText.match(blockRe);
-			if (!match || match.length === 0) return null;
+			if (!match || match.length === 0) {
+				return null;
+			}
 			const urlMatch = match[0].match(/url\((https:[^)]+)\)/);
 			return urlMatch ? urlMatch[1] : null;
 		};

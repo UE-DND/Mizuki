@@ -49,7 +49,7 @@ for (const post of posts) {
 		// 按空白字符分割，计算单词数量
 		const nonCjkWords = nonCjkText
 			.split(/\s+/)
-			.filter((word) => word.trim().length > 0);
+			.filter((word: string) => word.trim().length > 0);
 
 		totalWords += cjkCount + nonCjkWords.length;
 	}
@@ -61,10 +61,13 @@ function formatNumber(num: number): string {
 }
 
 // 获取最新文章日期（忽略置顶状态，只按发布日期排序）
-const latestPost = posts.reduce((latest, post) => {
-	if (!latest) return post;
-	return post.data.published > latest.data.published ? post : latest;
-}, posts[0]);
+const latestPost = posts.reduce(
+	(latest: (typeof posts)[number] | undefined, post: (typeof posts)[number]) => {
+		if (!latest) {return post;}
+		return post.data.published > latest.data.published ? post : latest;
+	},
+	posts[0],
+);
 
 const lastPostDate = latestPost
 	? latestPost.data.published.toISOString()
@@ -159,11 +162,13 @@ const stats = [
 		const diffTime = Math.abs(today.getTime() - startDate.getTime());
 		const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
 
-		const runningDaysElement = document.querySelector(
+		const runningDaysElements = document.querySelectorAll(
 			'[data-stat-id="running-days"]',
 		);
-		if (runningDaysElement) {
-			runningDaysElement.textContent = diffDays.toString();
+		if (runningDaysElements.length > 0) {
+			runningDaysElements.forEach((element) => {
+				element.textContent = diffDays.toString();
+			});
 		}
 
 		// 更新最后活动时间
@@ -176,11 +181,13 @@ const stats = [
 				timeSinceLastPost / (1000 * 60 * 60 * 24),
 			);
 
-			const lastUpdateElement = document.querySelector(
+			const lastUpdateElements = document.querySelectorAll(
 				'[data-stat-id="last-update"]',
 			);
-			if (lastUpdateElement) {
-				lastUpdateElement.textContent = daysSinceLastUpdate.toString();
+			if (lastUpdateElements.length > 0) {
+				lastUpdateElements.forEach((element) => {
+					element.textContent = daysSinceLastUpdate.toString();
+				});
 			}
 		}
 	}

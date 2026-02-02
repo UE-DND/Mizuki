@@ -1,9 +1,10 @@
-# AGENTS
+# FOR AGENTS
 
 ## 范围
 
 - 本项目是使用 Astro、Svelte、Tailwind 和 TypeScript 构建的静态博客，采用 Material Design 3 风格。
-- 本仓库复刻自上游并作大量个性化更改，需要偶尔拉取上游的功能更新并合并冲突，合并上游版本后需更新 [CONTRIBUTING.md](CONTRIBUTING.md#合并上游更改) 的对应哈希值与日期。
+- 本仓库复刻自上游并作大量个性化更改，需要拉取上游的功能更新并合并冲突（仅当用户要求进行此操作时）。
+- 进行合并上游版本操作后，需更新 [CONTRIBUTING.md](CONTRIBUTING.md#合并上游更改) 的对应哈希值与更新日期。
 - 内容位于 src/content 下的 Astro 内容集合中，可从独立内容仓库同步。
 - 仅使用 pnpm 作为包管理器；npm/yarn 在 preinstall 阶段被阻止。
 
@@ -88,7 +89,7 @@ pnpm format
 ## 环境
 
 - 启用内容分离或设置分析密钥时，将 .env.example 复制为 .env。
-- ENABLE_CONTENT_SYNC 控制同步行为；CONTENT_REPO_URL 与 CONTENT_DIR 配置内容仓库。
+- CONTENT_REPO_URL 与 CONTENT_DIR 配置内容仓库。
 - UMAMI_API_KEY 与 INDEXNOW_* 为可选项，来自 env。
 
 ## 备注

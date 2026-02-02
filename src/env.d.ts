@@ -1,5 +1,5 @@
 /// <reference types="astro/client" />
-/// <reference path="../.astro/types.d.ts" />
+import "../.astro/types.d.ts";
 
 interface ImportMetaEnv {
 	readonly UMAMI_API_KEY?: string;

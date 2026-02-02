@@ -4,23 +4,31 @@ import { i18n } from "@i18n/translation";
 import { getCategoryUrl, getPostUrl } from "@utils/url-utils";
 import { initPostIdMap } from "@utils/permalink-utils";
 
+type PostEntry = CollectionEntry<"posts">;
+
 // // Retrieve posts and sort them by publication date
-async function getRawSortedPosts() {
+async function getRawSortedPosts(): Promise<PostEntry[]> {
 	const allBlogPosts = await getCollection("posts", ({ data }) => {
 		return import.meta.env.PROD ? data.draft !== true : true;
 	});
 
-	const sorted = allBlogPosts.sort((a, b) => {
+	const sorted = allBlogPosts.sort((a: PostEntry, b: PostEntry) => {
 		// 首先按置顶状态排序，置顶文章在前
-		if (a.data.pinned && !b.data.pinned) return -1;
-		if (!a.data.pinned && b.data.pinned) return 1;
+		if (a.data.pinned && !b.data.pinned) {
+			return -1;
+		}
+		if (!a.data.pinned && b.data.pinned) {
+			return 1;
+		}
 
 		// 如果置顶状态相同，优先按 Priority 排序（数值越小越靠前）
 		if (a.data.pinned && b.data.pinned) {
 			const priorityA = a.data.priority;
 			const priorityB = b.data.priority;
 			if (priorityA !== undefined && priorityB !== undefined) {
-				if (priorityA !== priorityB) return priorityA - priorityB;
+				if (priorityA !== priorityB) {
+					return priorityA - priorityB;
+				}
 			} else if (priorityA !== undefined) {
 				return -1;
 			} else if (priorityB !== undefined) {
@@ -36,7 +44,7 @@ async function getRawSortedPosts() {
 	return sorted;
 }
 
-export async function getSortedPosts() {
+export async function getSortedPosts(): Promise<PostEntry[]> {
 	const sorted = await getRawSortedPosts();
 
 	for (let i = 1; i < sorted.length; i++) {
@@ -62,7 +70,7 @@ export async function getSortedPostsList(): Promise<PostForList[]> {
 	initPostIdMap(sortedFullPosts);
 
 	// delete post.body，并预计算 URL
-	const sortedPostsList = sortedFullPosts.map((post) => ({
+	const sortedPostsList = sortedFullPosts.map((post: PostEntry) => ({
 		id: post.id,
 		data: post.data,
 		url: getPostUrl(post),
@@ -76,14 +84,16 @@ export type Tag = {
 };
 
 export async function getTagList(): Promise<Tag[]> {
-	const allBlogPosts = await getCollection<"posts">("posts", ({ data }) => {
+	const allBlogPosts = await getCollection("posts", ({ data }) => {
 		return import.meta.env.PROD ? data.draft !== true : true;
 	});
 
 	const countMap: { [key: string]: number } = {};
-	allBlogPosts.forEach((post: { data: { tags: string[] } }) => {
-		post.data.tags.forEach((tag: string) => {
-			if (!countMap[tag]) countMap[tag] = 0;
+	allBlogPosts.forEach((post: PostEntry) => {
+		(post.data.tags ?? []).forEach((tag: string) => {
+			if (!countMap[tag]) {
+				countMap[tag] = 0;
+			}
 			countMap[tag]++;
 		});
 	});
@@ -103,11 +113,11 @@ export type Category = {
 };
 
 export async function getCategoryList(): Promise<Category[]> {
-	const allBlogPosts = await getCollection<"posts">("posts", ({ data }) => {
+	const allBlogPosts = await getCollection("posts", ({ data }) => {
 		return import.meta.env.PROD ? data.draft !== true : true;
 	});
 	const count: { [key: string]: number } = {};
-	allBlogPosts.forEach((post: { data: { category: string | null } }) => {
+	allBlogPosts.forEach((post: PostEntry) => {
 		if (!post.data.category) {
 			const ucKey = i18n(I18nKey.uncategorized);
 			count[ucKey] = count[ucKey] ? count[ucKey] + 1 : 1;

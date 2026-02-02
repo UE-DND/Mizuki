@@ -1,4 +1,16 @@
+import type { SiteConfig } from "./types/config";
+
 export {};
+
+interface SwupHooks {
+	on: (event: string, callback: (...args: unknown[]) => void) => void;
+}
+
+interface SwupInstance {
+	hooks: SwupHooks;
+	navigate: (url: string, options?: { history?: boolean }) => void;
+	preload?: (url: string) => void;
+}
 
 declare global {
 	interface HTMLElementTagNameMap {
@@ -9,7 +21,7 @@ declare global {
 
 	interface Window {
 		// Define swup type directly since @swup/astro doesn't export AstroIntegration
-		swup: any;
+		swup?: SwupInstance;
 		closeAnnouncement: () => void;
 		pagefind: {
 			search: (query: string) => Promise<{
@@ -28,7 +40,7 @@ declare global {
 			onLoad: (callback: () => void) => void;
 			isLoaded: boolean;
 		};
-		siteConfig: any;
+		siteConfig?: SiteConfig;
 	}
 }
 
