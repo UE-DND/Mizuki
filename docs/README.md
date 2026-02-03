@@ -6,17 +6,11 @@
 
 ### 核心文档
 
-- **[../README.zh.md](../README.zh.md)** - 项目主文档 (简体中文)
+- **[../README.md](../README.md)** - 项目主文档
   - 快速开始
   - 功能特性
   - 基础配置
   - 常见问题
-
-### 多语言文档
-
-- **[../README.md](../README.md)** - English
-- **[../README.ja.md](../README.ja.md)** - 日本語  
-- **[../README.tw.md](../README.tw.md)** - 繁體中文
 
 ### 内容分离相关
 

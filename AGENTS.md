@@ -8,12 +8,6 @@
 - 内容位于 src/content 下的 Astro 内容集合中，可从独立内容仓库同步。
 - 仅使用 pnpm 作为包管理器；npm/yarn 在 preinstall 阶段被阻止。
 
-## 工具链
-
-- 需要 Node.js >= 20（见 CONTRIBUTING）。
-- pnpm >= 9，packageManager 固定为 pnpm@10.22.0。
-- TypeScript 使用 ESNext + bundler 模块解析。
-
 ## 格式化
 
 - 项目使用 Prettier 进行一致格式化，配置在 .prettierrc.js。
@@ -42,8 +36,7 @@ pnpm format
 ## 导入
 
 - 类型请使用 `import type`（见 src/config.ts、src/types/config.ts）。
-- 跨包导入使用 tsconfig 路径别名：
-- @components/*、@assets/*、@constants/*、@utils/*、@i18n/*、@layouts/*、@/*
+- 跨包导入使用 tsconfig 路径别名：@components/*、@assets/*、@constants/*、@utils/*、@i18n/*、@layouts/*、@/*
 - 同文件夹或紧密本地模块使用相对导入。
 - 外部导入在前、内部导入在后，中间以空行分组。
 
@@ -88,17 +81,14 @@ pnpm format
 
 ## 环境
 
-- 启用内容分离或设置分析密钥时，将 .env.example 复制为 .env。
 - CONTENT_REPO_URL 与 CONTENT_DIR 配置内容仓库。
 - UMAMI_API_KEY 与 INDEXNOW_* 为可选项，来自 env。
 
 ## 备注
 
-- predev 与 prebuild 运行 scripts/sync-content.js 并使用 "|| true" 避免阻塞本地开发。
 - 构建输出在 dist/，pagefind 索引依赖它。
 - 新脚本请放在 scripts/ 并接入 package.json。
 
 ## 注意事项
 
 - pagefind 为构建期依赖，确保 PATH 可用。
-- scripts/update-anime.mjs 可能访问外部服务，离线 CI 中避免运行。
