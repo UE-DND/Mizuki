@@ -121,8 +121,13 @@ const {
   // 获取组件元素
   const scrollbarEl = document.currentScript?.parentElement?.querySelector('.custom-scrollbar') as HTMLElement | null;
   
-  if (scrollbarEl) {
-    const el = scrollbarEl;
+ if (scrollbarEl) {
+   const el = scrollbarEl;
+    const alreadyInitialized =
+      el.dataset.customScrollbarInitialized === "true";
+    if (alreadyInitialized) {
+      // 已初始化的实例直接跳过，避免重复绑定
+    } else {
     // 创建滚动条轨道和拇指元素
     const track = document.createElement('div');
     const thumb = document.createElement('div');
@@ -229,11 +234,11 @@ const {
     updateTheme();
     
     // 事件监听
-    el.addEventListener('scroll', updateScrollbar);
+    el.addEventListener('scroll', updateScrollbar, { passive: true });
     el.addEventListener('mouseenter', showScrollbar);
     el.addEventListener('mouseleave', hideScrollbar);
     el.addEventListener('mousedown', showScrollbar);
-    window.addEventListener('mouseup', hideScrollbar);
+    window.addEventListener('mouseup', hideScrollbar, { passive: true });
     
     // 监听主题变化
     const observer = new MutationObserver(updateTheme);
@@ -243,6 +248,8 @@ const {
     });
     
     // 监听窗口大小变化
-    window.addEventListener('resize', updateScrollbar);
+    window.addEventListener('resize', updateScrollbar, { passive: true });
+    el.dataset.customScrollbarInitialized = "true";
+    }
   }
 </script>
