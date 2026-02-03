@@ -620,39 +620,51 @@ function disableAnimation() {
 			// @ts-ignore
 			const { panelManager } = await import("../utils/panel-manager.js");
 
-			function setClickOutsideToClose(panel: string, ignores: string[]) {
+			const panelOutsideConfigs = [
+				{
+					panelId: "nav-menu-panel",
+					ignores: ["nav-menu-panel", "nav-menu-switch"],
+				},
+				{
+					panelId: "search-panel",
+					ignores: ["search-panel", "search-bar", "search-switch"],
+				},
+				{
+					panelId: "mobile-toc-panel",
+					ignores: ["mobile-toc-panel", "mobile-toc-switch"],
+				},
+				{
+					panelId: "wallpaper-mode-panel",
+					ignores: ["wallpaper-mode-panel", "wallpaper-mode-switch"],
+				},
+			];
+
+			const outsideHandlerInitialized =
+				document.documentElement.dataset.panelOutsideHandlerInitialized ===
+				"true";
+
+			if (!outsideHandlerInitialized) {
+				document.documentElement.dataset.panelOutsideHandlerInitialized =
+					"true";
 				document.addEventListener("click", async (event) => {
-					// @ts-ignore
-					// let _panelDom = document.getElementById(panel);
-					let tDom = event.target;
-					if (!(tDom instanceof Node)) return; // Ensure the event target is an HTML Node
-					for (let ig of ignores) {
-						let ie = document.getElementById(ig);
-						if (ie == tDom || ie?.contains(tDom)) {
-							return;
-						}
-					}
-					await panelManager.closePanel(panel as any);
+					const tDom = event.target;
+					if (!(tDom instanceof Node)) return;
+					await Promise.all(
+						panelOutsideConfigs.map(async ({ panelId, ignores }) => {
+							const isIgnored = ignores.some((ignoreId) => {
+								const ignoreEl = document.getElementById(ignoreId);
+								return (
+									ignoreEl !== null &&
+									(ignoreEl === tDom || ignoreEl.contains(tDom))
+								);
+							});
+							if (!isIgnored) {
+								await panelManager.closePanel(panelId as any);
+							}
+						}),
+					);
 				});
 			}
-
-			setClickOutsideToClose("nav-menu-panel", [
-				"nav-menu-panel",
-				"nav-menu-switch",
-			]);
-			setClickOutsideToClose("search-panel", [
-				"search-panel",
-				"search-bar",
-				"search-switch",
-			]);
-			setClickOutsideToClose("mobile-toc-panel", [
-				"mobile-toc-panel",
-				"mobile-toc-switch",
-			]);
-			setClickOutsideToClose("wallpaper-mode-panel", [
-				"wallpaper-mode-panel",
-				"wallpaper-mode-switch",
-			]);
 
 			return panelManager;
 		} catch (error) {
