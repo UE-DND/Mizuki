@@ -16,6 +16,23 @@
 	let retryCount = 0;
 	const MAX_RETRIES = 3;
 	const RETRY_DELAY = 1000; // 1秒
+	let renderTimer = null;
+	let renderQueued = false;
+
+	// 统一调度渲染，合并多事件触发
+	function scheduleRender(delay = 0) {
+		if (isRendering) {
+			renderQueued = true;
+			return;
+		}
+		if (renderTimer !== null) {
+			clearTimeout(renderTimer);
+		}
+		renderTimer = setTimeout(() => {
+			renderTimer = null;
+			renderMermaidDiagrams();
+		}, delay);
+	}
 
 	// 检查主题是否真的发生了变化
 	function hasThemeChanged() {
@@ -73,7 +90,7 @@
 					if (wasDark !== isDark) {
 						if (hasThemeChanged()) {
 							// 延迟渲染，避免主题切换时的闪烁
-							setTimeout(() => renderMermaidDiagrams(), 150);
+							scheduleRender(150);
 						}
 					}
 				}
@@ -249,14 +266,14 @@
 			currentTheme = null;
 			retryCount = 0; // 重置重试计数
 			if (hasThemeChanged()) {
-				setTimeout(() => renderMermaidDiagrams(), 100);
+				scheduleRender(100);
 			}
 		});
 
 		// 监听页面可见性变化，页面重新可见时重新渲染
 		document.addEventListener("visibilitychange", () => {
 			if (!document.hidden) {
-				setTimeout(() => renderMermaidDiagrams(), 200);
+				scheduleRender(200);
 			}
 		});
 	}
@@ -280,7 +297,7 @@
 			});
 
 			// 渲染所有 Mermaid 图表
-			await renderMermaidDiagrams();
+			scheduleRender();
 		} catch (error) {
 			console.error("Failed to initialize Mermaid:", error);
 			// 如果初始化失败，尝试重新加载
@@ -294,6 +311,7 @@
 	async function renderMermaidDiagrams() {
 		// 防止并发渲染
 		if (isRendering) {
+			renderQueued = true;
 			return;
 		}
 
@@ -315,8 +333,10 @@
 				return;
 			}
 
-			// 延迟检测主题，确保 DOM 已经更新
-			await new Promise((resolve) => setTimeout(resolve, 100));
+			// 等待下一帧，确保 DOM 已经更新
+			await new Promise((resolve) =>
+				requestAnimationFrame(() => resolve()),
+			);
 
 			const htmlElement = document.documentElement;
 			const isDark = htmlElement.classList.contains("dark");
@@ -440,13 +460,14 @@
 			// 如果渲染失败，尝试重新渲染
 			if (retryCount < MAX_RETRIES) {
 				retryCount++;
-				setTimeout(
-					() => renderMermaidDiagrams(),
-					RETRY_DELAY * retryCount,
-				);
+				scheduleRender(RETRY_DELAY * retryCount);
 			}
 		} finally {
 			isRendering = false;
+			if (renderQueued) {
+				renderQueued = false;
+				scheduleRender();
+			}
 		}
 	}
 
