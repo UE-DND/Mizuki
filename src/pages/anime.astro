@@ -723,28 +723,51 @@ const hiddenAnimeList = animeList.slice(INITIAL_DISPLAY_COUNT);
 		})();
 	</script>
 
-	<script is:inline>
-		if (typeof window.animeFilterEventListeners === "undefined") {
-			window.animeFilterEventListeners = [];
-		}
+	<script>
+		import { setupPageInit } from "../utils/page-init";
+
+		type AnimeFilterListener = [
+			HTMLElement,
+			string,
+			EventListenerOrEventListenerObject,
+		];
+
+		type AnimeFilterWindow = Window & {
+			animeFilterEventListeners?: AnimeFilterListener[];
+		};
+
+		const pageWindow = window as AnimeFilterWindow;
+		const eventListeners = (pageWindow.animeFilterEventListeners ??= []);
 
 		function initFilterButtons() {
-			const filterTags = document.querySelectorAll(".anime-filter-tag");
+			const filterTags = Array.from(
+				document.querySelectorAll<HTMLElement>(".anime-filter-tag"),
+			);
 			const sentinel = document.getElementById(
 				"infinite-scroll-sentinel",
-			);
+			) as HTMLElement | null;
 			const listContainer = document.getElementById(
 				"anime-list-container",
-			);
-			const lazyStore = document.getElementById("anime-lazy-store");
-			window.animeFilterEventListeners.forEach((listener) => {
+			) as HTMLElement | null;
+			const lazyStore = document.getElementById(
+				"anime-lazy-store",
+			) as HTMLTemplateElement | null;
+
+			if (!listContainer) {
+				if (sentinel) {
+					sentinel.style.display = "none";
+				}
+				return;
+			}
+
+			eventListeners.forEach((listener) => {
 				const [element, type, handler] = listener;
 				element.removeEventListener(type, handler);
 			});
-			window.animeFilterEventListeners = [];
+			eventListeners.length = 0;
 
 			filterTags.forEach((tag) => {
-				const clickHandler = function () {
+				const clickHandler = function (this: HTMLElement) {
 					if (this.classList.contains("anime-active")) {return;}
 
 					filterTags.forEach((t) =>
@@ -767,18 +790,23 @@ const hiddenAnimeList = animeList.slice(INITIAL_DISPLAY_COUNT);
 
 					if (sentinel) {sentinel.style.display = "none";}
 					const initialHidden =
-						listContainer.querySelectorAll(".initial-hidden");
+						listContainer.querySelectorAll<HTMLElement>(
+							".initial-hidden",
+						);
 					initialHidden.forEach((el) => {
 						el.classList.remove("hidden", "initial-hidden");
 					});
 
-					const status = this.getAttribute("data-status");
+					const status = this.getAttribute("data-status") ?? "all";
 					const animeItems = Array.from(
 						listContainer.children,
-					).filter((item) => item.hasAttribute("data-anime-status"));
-					const itemsToHide = [];
-					const itemsToShow = [];
-					const itemsToKeep = [];
+					).filter((item): item is HTMLElement =>
+						item instanceof HTMLElement &&
+						item.hasAttribute("data-anime-status"),
+					);
+					const itemsToHide: HTMLElement[] = [];
+					const itemsToShow: HTMLElement[] = [];
+					const itemsToKeep: HTMLElement[] = [];
 					animeItems.forEach((item) => {
 						const itemStatus =
 							item.getAttribute("data-anime-status");
@@ -883,7 +911,7 @@ const hiddenAnimeList = animeList.slice(INITIAL_DISPLAY_COUNT);
 				};
 
 				tag.addEventListener("click", clickHandler);
-				window.animeFilterEventListeners.push([
+				eventListeners.push([
 					tag,
 					"click",
 					clickHandler,
@@ -907,7 +935,7 @@ const hiddenAnimeList = animeList.slice(INITIAL_DISPLAY_COUNT);
 								movedCount < BATCH_SIZE
 							) {
 								const node = lazyStore.content.firstChild;
-								if (node.nodeType === 1) {
+								if (node instanceof HTMLElement) {
 									node.classList.add("anime-fade-in-active");
 								}
 								fragment.appendChild(node);
@@ -931,24 +959,10 @@ const hiddenAnimeList = animeList.slice(INITIAL_DISPLAY_COUNT);
 			}
 		}
 
-		document.addEventListener("DOMContentLoaded", initFilterButtons);
-		function setupSwupListeners() {
-			if (window.swup) {
-				window.swup.hooks.on("content:replace", () =>
-					setTimeout(initFilterButtons, 150),
-				);
-				window.swup.hooks.on("page:view", () =>
-					setTimeout(initFilterButtons, 150),
-				);
-			}
-		}
-
-		if (typeof window !== "undefined") {
-			if (window.swup) {
-				setupSwupListeners();
-			} else {
-				document.addEventListener("swup:enable", setupSwupListeners);
-			}
-		}
+		setupPageInit({
+			key: "anime-filter-buttons",
+			init: initFilterButtons,
+			delay: 150,
+		});
 	</script>
 </MainGridLayout>

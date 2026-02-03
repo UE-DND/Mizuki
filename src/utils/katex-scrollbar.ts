@@ -6,6 +6,7 @@ export const initKatexScrollbars = (): void => {
 	) as NodeListOf<HTMLElement>;
 
 	katexElements.forEach((element) => {
+		// 元素缺失父节点时直接跳过
 		if (!element.parentNode) {
 			return;
 		}
@@ -40,6 +41,7 @@ export const initKatexScrollbars = (): void => {
             }
         `;
 
+		// 样式只注入一次，避免重复节点
 		if (!document.head.querySelector("style[data-katex-scrollbar]")) {
 			style.setAttribute("data-katex-scrollbar", "true");
 			document.head.appendChild(style);
