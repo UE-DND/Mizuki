@@ -60,3 +60,6 @@ ref-upstream/
 # AGETNS
 .claude/
 .spec-workflow/
+
+# Directus
+directus/
