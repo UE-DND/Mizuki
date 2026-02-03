@@ -562,6 +562,8 @@ if (siteConfig.font) {
 	// const MAIN_PANEL_OVERLAPS_BANNER_HEIGHT = 3.5;
 	import { siteConfig } from "../config";
 	import { widgetConfigs } from "../config";
+	import { initKatexScrollbars } from "../utils/katex-scrollbar";
+	import { setupPanelOutsideHandler } from "../utils/panel-outside-handler";
 	import { initSakura } from "../utils/sakura-manager";
 
 	// const setTimeout = window.setTimeout;
@@ -620,51 +622,7 @@ function disableAnimation() {
 			// @ts-ignore
 			const { panelManager } = await import("../utils/panel-manager.js");
 
-			const panelOutsideConfigs = [
-				{
-					panelId: "nav-menu-panel",
-					ignores: ["nav-menu-panel", "nav-menu-switch"],
-				},
-				{
-					panelId: "search-panel",
-					ignores: ["search-panel", "search-bar", "search-switch"],
-				},
-				{
-					panelId: "mobile-toc-panel",
-					ignores: ["mobile-toc-panel", "mobile-toc-switch"],
-				},
-				{
-					panelId: "wallpaper-mode-panel",
-					ignores: ["wallpaper-mode-panel", "wallpaper-mode-switch"],
-				},
-			];
-
-			const outsideHandlerInitialized =
-				document.documentElement.dataset.panelOutsideHandlerInitialized ===
-				"true";
-
-			if (!outsideHandlerInitialized) {
-				document.documentElement.dataset.panelOutsideHandlerInitialized =
-					"true";
-				document.addEventListener("click", async (event) => {
-					const tDom = event.target;
-					if (!(tDom instanceof Node)) return;
-					await Promise.all(
-						panelOutsideConfigs.map(async ({ panelId, ignores }) => {
-							const isIgnored = ignores.some((ignoreId) => {
-								const ignoreEl = document.getElementById(ignoreId);
-								return (
-									ignoreEl !== null &&
-									(ignoreEl === tDom || ignoreEl.contains(tDom))
-								);
-							});
-							if (!isIgnored) {
-								await panelManager.closePanel(panelId as any);
-							}
-						}),
-					);
-				});
-			}
+			setupPanelOutsideHandler(panelManager);
 
 			return panelManager;
 		} catch (error) {
@@ -683,55 +641,6 @@ function disableAnimation() {
 	// function _loadHue() {
 	//  setHue(getHue())
 	// }
-
-	function initCustomScrollbar() {
-		// 完全禁用OverlayScrollbars的body初始化，避免导致页面重新加载
-		// 只处理katex元素的滚动条
-		const katexElements = document.querySelectorAll(
-			".katex-display:not([data-scrollbar-initialized])",
-		) as NodeListOf<HTMLElement>;
-
-		katexElements.forEach((element) => {
-			if (!element.parentNode) return;
-
-			const container = document.createElement("div");
-			container.className = "katex-display-container";
-			element.parentNode.insertBefore(container, element);
-			container.appendChild(element);
-
-			// 使用简单的CSS滚动条而不是OverlayScrollbars
-			container.style.cssText = `
-            overflow-x: auto;
-            scrollbar-width: thin;
-            scrollbar-color: rgba(0,0,0,0.3) transparent;
-        `;
-
-			// 为webkit浏览器添加自定义滚动条样式
-			const style = document.createElement("style");
-			style.textContent = `
-            .katex-display-container::-webkit-scrollbar {
-                height: 6px;
-            }
-            .katex-display-container::-webkit-scrollbar-track {
-                background: transparent;
-            }
-            .katex-display-container::-webkit-scrollbar-thumb {
-                background: rgba(0,0,0,0.3);
-                border-radius: 3px;
-            }
-            .katex-display-container::-webkit-scrollbar-thumb:hover {
-                background: rgba(0,0,0,0.5);
-            }
-        `;
-
-			if (!document.head.querySelector("style[data-katex-scrollbar]")) {
-				style.setAttribute("data-katex-scrollbar", "true");
-				document.head.appendChild(style);
-			}
-
-			element.setAttribute("data-scrollbar-initialized", "true");
-		});
-	}
 
 	function showBanner() {
 		// 使用requestAnimationFrame优化DOM操作
@@ -1120,7 +1029,7 @@ function disableAnimation() {
 			// 初始化新页面的图片、公式、滚动条和TOC
 			initFancybox();
 			checkKatex();
-			initCustomScrollbar();
+			initKatexScrollbars();
 
 			// 检查当前页面是否为文章页面（有TOC元素）
 			const tocWrapper = document.getElementById("toc-wrapper");
