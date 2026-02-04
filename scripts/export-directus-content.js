@@ -297,15 +297,6 @@ export async function exportDirectusContent(options = {}) {
 	console.log(`Include drafts: ${includeDrafts}`);
 	console.log(`Clean output: ${clean}`);
 
-	const markerPath = await ensureMarkerFile(contentDir, {
-		exportedAt: new Date().toISOString(),
-		directusUrl: baseUrl,
-		postsCollection,
-		specCollection,
-		includeDrafts,
-	});
-	console.log(`Marker file: ${markerPath}`);
-
 	const postsDir = path.join(contentDir, "posts");
 	const specDir = path.join(contentDir, "spec");
 
@@ -368,6 +359,15 @@ export async function exportDirectusContent(options = {}) {
 		writtenSpecs++;
 	}
 	console.log(`Wrote spec pages: ${writtenSpecs}`);
+
+	const markerPath = await ensureMarkerFile(contentDir, {
+		exportedAt: new Date().toISOString(),
+		directusUrl: baseUrl,
+		postsCollection,
+		specCollection,
+		includeDrafts,
+	});
+	console.log(`Marker file: ${markerPath}`);
 }
 
 if (import.meta.url === `file://${process.argv[1]}`) {
