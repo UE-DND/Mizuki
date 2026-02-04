@@ -29,7 +29,7 @@ import { Icon } from "astro-icon/components";
 						type="email"
 						autocomplete="email"
 						required
-						class="mt-2 w-full px-4 py-3 rounded-xl border border-[var(--line-divider)] bg-transparent text-90 placeholder:text-black/50 dark:placeholder:text-white/50 focus:outline-none focus:border-[var(--primary)]"
+						class="login-email-input mt-2 w-full px-4 py-3 rounded-xl border border-[var(--line-divider)] bg-transparent text-90 placeholder:text-black/50 dark:placeholder:text-white/50 focus:outline-none focus:border-[var(--primary)]"
 						placeholder="name@example.com"
 					/>
 				</label>
@@ -41,7 +41,7 @@ import { Icon } from "astro-icon/components";
 						type="password"
 						autocomplete="current-password"
 						required
-						class="mt-2 w-full px-4 py-3 rounded-xl border border-[var(--line-divider)] bg-transparent text-90 placeholder:text-black/50 dark:placeholder:text-white/50 focus:outline-none focus:border-[var(--primary)]"
+						class="login-password-input mt-2 w-full px-4 py-3 rounded-xl border border-[var(--line-divider)] bg-transparent text-90 placeholder:text-black/50 dark:placeholder:text-white/50 focus:outline-none focus:border-[var(--primary)]"
 						placeholder="在此输入密码喵～"
 					/>
 				</label>
@@ -148,4 +148,23 @@ import { Icon } from "astro-icon/components";
 		initLoginForm();
 		document.addEventListener("astro:after-swap", initLoginForm);
 	</script>
+
+	<style>
+		.login-email-input {
+			font-size: 1.125rem;
+		}
+		.login-email-input::placeholder {
+			font-size: 1rem;
+		}
+		.login-password-input {
+			font-size: 1.125rem;
+			letter-spacing: 0.12em;
+			-webkit-text-security: disc;
+			text-security: disc;
+		}
+		.login-password-input::placeholder {
+			font-size: 1rem;
+			letter-spacing: normal;
+		}
+	</style>
 </MainGridLayout>

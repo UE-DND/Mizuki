@@ -33,6 +33,8 @@ let showPlaylist = false;
 let currentTime = 0;
 // 歌曲总时长，默认为 0
 let duration = 0;
+// localStorage 存储音量
+const STORAGE_KEY_VOLUME = "music-player-volume";
 // 音量，默认为 0.7
 let volume = 0.7;
 // 是否静音，默认为 false
@@ -110,6 +112,27 @@ const localPlaylist = [
 		duration: 200,
 	},
 ];
+
+function loadVolumeSettings() {
+	try {
+		if (typeof localStorage === "undefined") return;
+		const savedVolume = localStorage.getItem(STORAGE_KEY_VOLUME);
+		if (savedVolume !== null && !Number.isNaN(Number(savedVolume))) {
+			volume = Number(savedVolume);
+		}
+	} catch (error) {
+		console.warn("音乐播放器音量设置读取失败:", error);
+	}
+}
+
+function saveVolumeSettings() {
+	try {
+		if (typeof localStorage === "undefined") return;
+		localStorage.setItem(STORAGE_KEY_VOLUME, volume.toString());
+	} catch (error) {
+		console.warn("音乐播放器音量设置保存失败:", error);
+	}
+}
 
 async function fetchMetingPlaylist() {
 	if (!meting_api || !meting_id) return;
@@ -497,6 +520,7 @@ function stopVolumeDrag(event: PointerEvent) {
         cancelAnimationFrame(rafId);
         rafId = null;
 	}
+	saveVolumeSettings();
 }
 
 function updateVolumeLogic(clientX: number) {
@@ -522,10 +546,11 @@ function formatTime(seconds: number): string {
 }
 
 const interactionEvents = ['click', 'keydown', 'touchstart'];
-	onMount(() => {
-    interactionEvents.forEach(event => {
-        document.addEventListener(event, handleUserInteraction, { capture: true });
-    });
+onMount(() => {
+	loadVolumeSettings();
+	interactionEvents.forEach(event => {
+		document.addEventListener(event, handleUserInteraction, { capture: true });
+	});
 
 	if (!musicPlayerConfig.enable) {
 		return;

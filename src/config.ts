@@ -281,13 +281,13 @@ export const navBarConfig: NavBarConfig = {
 					name: "GitHub",
 					url: "https://github.com/matsuzaka-yuki/Mizuki",
 					external: true,
-					icon: "fa6-brands:github",
+					icon: "fa7-brands:github",
 				},
 				{
 					name: "Bilibili",
 					url: "https://space.bilibili.com/701864046",
 					external: true,
-					icon: "fa6-brands:bilibili",
+					icon: "fa7-brands:bilibili",
 				},
 				{
 					name: "Gitee",
@@ -378,7 +378,7 @@ export const profileConfig: ProfileConfig = {
 	links: [
 		{
 			name: "Bilibili",
-			icon: "fa6-brands:bilibili",
+			icon: "fa7-brands:bilibili",
 			url: "https://space.bilibili.com/701864046",
 		},
 		{
@@ -388,7 +388,7 @@ export const profileConfig: ProfileConfig = {
 		},
 		{
 			name: "GitHub",
-			icon: "fa6-brands:github",
+			icon: "fa7-brands:github",
 			url: "https://github.com/matsuzaka-yuki",
 		},
 		{
@@ -398,7 +398,7 @@ export const profileConfig: ProfileConfig = {
 		},
 		{
 			name: "Discord",
-			icon: "fa6-brands:discord",
+			icon: "fa7-brands:discord",
 			url: "https://discord.gg/MqW6TcQtVM",
 		},
 	],
