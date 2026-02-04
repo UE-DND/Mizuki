@@ -280,7 +280,7 @@ export const zh_CN: Translation = {
 	[Key.siteStatsTagCount]: "标签",
 	[Key.siteStatsTotalWords]: "总字数",
 	[Key.siteStatsRunningDays]: "运行天数",
-	[Key.siteStatsLastUpdate]: "最后活动",
+	[Key.siteStatsLastUpdate]: "最近更新",
 	[Key.siteStatsDaysAgo]: "{days} 天前",
 	[Key.siteStatsDays]: "{days} 天",
 

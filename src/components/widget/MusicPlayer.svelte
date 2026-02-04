@@ -1,6 +1,6 @@
 <script lang="ts">
 import Icon from "@iconify/svelte";
-import { onDestroy, onMount } from "svelte";
+import { onDestroy, onMount, tick } from "svelte";
 import { slide } from "svelte/transition";
 // 从配置文件中导入音乐播放器配置
 import { musicPlayerConfig } from "../../config";
@@ -85,6 +85,18 @@ let currentIndex = 0;
 let audio: HTMLAudioElement;
 let progressBar: HTMLElement;
 let volumeBar: HTMLElement;
+let miniTitleWrap: HTMLDivElement | null = null;
+let expandedTitleWrap: HTMLDivElement | null = null;
+let miniTitleMarquee = false;
+let expandedTitleMarquee = false;
+let marqueeRaf: number | null = null;
+let miniMarqueeDelay = false;
+let expandedMarqueeDelay = false;
+let miniDelayTimer: number | null = null;
+let expandedDelayTimer: number | null = null;
+const marqueeGap = 24;
+const marqueePauseMs = 4000;
+const marqueeSpeed = Math.max(10, musicPlayerConfig.marqueeSpeed ?? 40);
 
 const localPlaylist = [
 	{
@@ -545,6 +557,100 @@ function formatTime(seconds: number): string {
 	return `${mins}:${secs.toString().padStart(2, "0")}`;
 }
 
+function updateTitleMarquee(
+	element: HTMLDivElement | null,
+	setActive: (value: boolean) => void,
+): void {
+	if (!element) return;
+	const textElement = element.querySelector(
+		".title-marquee__text--main",
+	) as HTMLElement | null;
+	const textWidth = textElement?.scrollWidth ?? 0;
+	const clientWidth = element.clientWidth;
+	const shouldMarquee = textWidth > clientWidth + 1;
+	setActive(shouldMarquee);
+	if (shouldMarquee) {
+		const distance = Math.max(0, textWidth + marqueeGap);
+		const duration = Math.min(Math.max(distance / marqueeSpeed, 8), 20);
+		element.style.setProperty("--marquee-distance", `${distance}px`);
+		element.style.setProperty("--marquee-duration", `${duration}s`);
+		element.style.setProperty("--marquee-gap", `${marqueeGap}px`);
+	} else {
+		element.style.removeProperty("--marquee-distance");
+		element.style.removeProperty("--marquee-duration");
+		element.style.removeProperty("--marquee-gap");
+	}
+}
+
+async function scheduleTitleMarqueeUpdate(): Promise<void> {
+	if (typeof window === "undefined") return;
+	await tick();
+	if (marqueeRaf !== null) {
+		cancelAnimationFrame(marqueeRaf);
+	}
+	marqueeRaf = window.requestAnimationFrame(() => {
+		updateTitleMarquee(miniTitleWrap, (value) => {
+			miniTitleMarquee = value;
+		});
+		updateTitleMarquee(expandedTitleWrap, (value) => {
+			expandedTitleMarquee = value;
+		});
+		marqueeRaf = null;
+	});
+}
+
+function clearMarqueeDelay(kind: "mini" | "expanded"): void {
+	const timer = kind === "mini" ? miniDelayTimer : expandedDelayTimer;
+	if (timer !== null) {
+		clearTimeout(timer);
+	}
+	if (kind === "mini") {
+		miniDelayTimer = null;
+		miniMarqueeDelay = false;
+	} else {
+		expandedDelayTimer = null;
+		expandedMarqueeDelay = false;
+	}
+}
+
+function handleMarqueeIteration(kind: "mini" | "expanded"): void {
+	if (!isPlaying || typeof window === "undefined") return;
+	clearMarqueeDelay(kind);
+	const shouldDelay = kind === "mini" ? miniTitleMarquee : expandedTitleMarquee;
+	if (!shouldDelay) return;
+	if (kind === "mini") {
+		miniMarqueeDelay = true;
+		miniDelayTimer = window.setTimeout(() => {
+			miniMarqueeDelay = false;
+			miniDelayTimer = null;
+		}, marqueePauseMs);
+	} else {
+		expandedMarqueeDelay = true;
+		expandedDelayTimer = window.setTimeout(() => {
+			expandedMarqueeDelay = false;
+			expandedDelayTimer = null;
+		}, marqueePauseMs);
+	}
+}
+
+$: if (musicPlayerConfig.enable) {
+	currentSong.title;
+	isExpanded;
+	isHidden;
+	isMobileView;
+	scheduleTitleMarqueeUpdate();
+}
+$: if (!isPlaying) {
+	clearMarqueeDelay("mini");
+	clearMarqueeDelay("expanded");
+}
+$: if (!miniTitleMarquee) {
+	clearMarqueeDelay("mini");
+}
+$: if (!expandedTitleMarquee) {
+	clearMarqueeDelay("expanded");
+}
+
 const interactionEvents = ['click', 'keydown', 'touchstart'];
 onMount(() => {
 	loadVolumeSettings();
@@ -604,6 +710,12 @@ onDestroy(() => {
             document.removeEventListener(event, handleUserInteraction, { capture: true });
         });
     }
+	if (marqueeRaf !== null) {
+		cancelAnimationFrame(marqueeRaf);
+		marqueeRaf = null;
+	}
+	clearMarqueeDelay("mini");
+	clearMarqueeDelay("expanded");
 	if (resizeHandler) {
 		window.removeEventListener("resize", resizeHandler);
 	}
@@ -726,7 +838,16 @@ onDestroy(() => {
                  role="button"
                  tabindex="0"
                  aria-label={i18n(Key.musicPlayerExpand)}>
-                <div class="text-sm font-medium text-90 truncate">{currentSong.title}</div>
+                <div class="title-marquee text-sm font-medium text-90"
+                     bind:this={miniTitleWrap}
+                     class:marquee-active={miniTitleMarquee && isPlaying}>
+                    <div class="title-marquee__inner"
+                         class:marquee-delay={miniMarqueeDelay}
+                         on:animationiteration={() => handleMarqueeIteration("mini")}>
+                        <span class="title-marquee__text title-marquee__text--main">{currentSong.title}</span>
+                        <span class="title-marquee__text title-marquee__clone" aria-hidden="true">{currentSong.title}</span>
+                    </div>
+                </div>
                 <div class="text-xs text-50 truncate">{currentSong.artist}</div>
             </div>
             <div class="flex items-center gap-1">
@@ -802,7 +923,16 @@ onDestroy(() => {
                      class:animate-pulse={isLoading} />
             </div>
             <div class="flex-1 min-w-0">
-                <div class="song-title text-lg font-bold text-90 truncate mb-1">{currentSong.title}</div>
+                <div class="song-title title-marquee text-lg font-bold text-90 mb-1"
+                     bind:this={expandedTitleWrap}
+                     class:marquee-active={expandedTitleMarquee && isPlaying}>
+                    <div class="title-marquee__inner"
+                         class:marquee-delay={expandedMarqueeDelay}
+                         on:animationiteration={() => handleMarqueeIteration("expanded")}>
+                        <span class="title-marquee__text title-marquee__text--main">{currentSong.title}</span>
+                        <span class="title-marquee__text title-marquee__clone" aria-hidden="true">{currentSong.title}</span>
+                    </div>
+                </div>
                 <div class="song-artist text-sm text-50 truncate">{currentSong.artist}</div>
                 <div class="text-xs text-30 mt-1">
                     {formatTime(currentTime)} / {formatTime(duration)}
@@ -961,6 +1091,53 @@ onDestroy(() => {
 .music-player {
     max-width: 20rem;
     user-select: none;
+}
+.title-marquee {
+	position: relative;
+	overflow: hidden;
+}
+.title-marquee__inner {
+	display: inline-flex;
+	gap: var(--marquee-gap, 24px);
+	min-width: 100%;
+	overflow: hidden;
+	white-space: nowrap;
+	text-overflow: ellipsis;
+	transform: translateX(0);
+}
+.title-marquee__text {
+	display: inline-block;
+	white-space: nowrap;
+}
+.title-marquee__clone {
+	display: none;
+}
+.title-marquee.marquee-active {
+	text-overflow: clip;
+}
+.title-marquee.marquee-active .title-marquee__clone {
+	display: inline-block;
+}
+.title-marquee.marquee-active .title-marquee__inner {
+	overflow: visible;
+	text-overflow: clip;
+	animation: title-marquee var(--marquee-duration, 10s) linear infinite;
+	will-change: transform;
+}
+.title-marquee__inner.marquee-delay {
+	animation: none !important;
+	transform: translateX(0);
+}
+.title-marquee.marquee-active:hover .title-marquee__inner {
+	animation-play-state: paused;
+}
+@keyframes title-marquee {
+	from {
+		transform: translateX(0);
+	}
+	to {
+		transform: translateX(calc(-1 * var(--marquee-distance, 0px)));
+	}
 }
 .mini-player {
     width: 17.5rem;

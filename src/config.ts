@@ -476,6 +476,7 @@ export const musicPlayerConfig: MusicPlayerConfig = {
 	id: "14164869977", // 歌单ID
 	server: "netease", // 音乐源服务器。有的meting的api源支持更多平台,一般来说,netease=网易云音乐, tencent=QQ音乐, kugou=酷狗音乐, xiami=虾米音乐, baidu=百度音乐
 	type: "playlist", // 播单类型
+	marqueeSpeed: 10, // 标题滚动速度(px/s)
 };
 
 export const footerConfig: FooterConfig = {
@@ -668,3 +669,4 @@ export const umamiConfig = {
 <script defer src="XXXX.XXX" data-website-id="ABCD1234"></script>
   `.trim(), // 上面填你要插入的Script,不用再去Layout中插入
 } as const;
+

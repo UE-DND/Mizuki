@@ -341,6 +341,7 @@ export type MusicPlayerConfig = {
 	id: string; // 歌单ID
 	server: string; // 音乐源服务器
 	type: string; // 音乐类型
+	marqueeSpeed?: number; // 标题滚动速度(px/s)
 };
 
 export type FooterConfig = {
