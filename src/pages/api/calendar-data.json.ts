@@ -6,7 +6,7 @@ import { getPostUrl } from "../../utils/url-utils";
 
 export const prerender = true;
 
-export async function GET() {
+export async function GET(): Promise<Response> {
 	const posts = await getSortedPosts();
 	initPostIdMap(posts);
 

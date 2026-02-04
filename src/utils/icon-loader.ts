@@ -1,11 +1,11 @@
 // 图标加载工具类
 // 提供可靠的Iconify图标加载解决方案
 
-interface IconifyLoadOptions {
+export type IconifyLoadOptions = {
 	timeout?: number;
 	retryCount?: number;
 	retryDelay?: number;
-}
+};
 
 class IconLoader {
 	private static instance: IconLoader;
@@ -254,11 +254,17 @@ class IconLoader {
 }
 
 // 导出单例实例
-export const iconLoader = IconLoader.getInstance();
+export const iconLoader: IconLoader = IconLoader.getInstance();
 
 // 导出便捷函数
-export const loadIconify = (options?: IconifyLoadOptions) =>
-	iconLoader.loadIconify(options);
-export const preloadIcons = (icons: string[]) => iconLoader.preloadIcons(icons);
-export const onIconsReady = (callback: () => void) =>
-	iconLoader.onLoad(callback);
+export function loadIconify(options?: IconifyLoadOptions): Promise<void> {
+	return iconLoader.loadIconify(options);
+}
+
+export function preloadIcons(icons: string[]): Promise<void> {
+	return iconLoader.preloadIcons(icons);
+}
+
+export function onIconsReady(callback: () => void): void {
+	return iconLoader.onLoad(callback);
+}

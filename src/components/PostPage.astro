@@ -95,7 +95,7 @@ const initialLayoutClass = "list-mode";
 	}
 
 	function setupCalendarFilterListeners() {
-		if ((window as any)._calendarFilterListenerAttached) {return;}
+		if (window._calendarFilterListenerAttached) {return;}
 
 		window.addEventListener("calendarFilterChange", (event) => {
 			const detail = (event as CustomEvent<CalendarFilterDetail>).detail;
@@ -107,7 +107,7 @@ const initialLayoutClass = "list-mode";
 			clearCalendarFilter();
 		});
 
-		(window as any)._calendarFilterListenerAttached = true;
+		window._calendarFilterListenerAttached = true;
 	}
 
 	setupCalendarFilterListeners();

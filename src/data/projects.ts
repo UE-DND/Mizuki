@@ -18,6 +18,15 @@ export interface Project {
 	visitUrl?: string; // 添加前往项目链接字段
 }
 
+export interface ProjectStats {
+	total: number;
+	byStatus: {
+		completed: number;
+		inProgress: number;
+		planned: number;
+	};
+}
+
 export const projectsData: Project[] = [
 	{
 		id: "mizuki-blog",
@@ -95,7 +104,7 @@ export const projectsData: Project[] = [
 ];
 
 // Get project statistics
-export const getProjectStats = () => {
+export const getProjectStats = (): ProjectStats => {
 	const total = projectsData.length;
 	const completed = projectsData.filter(
 		(p) => p.status === "completed",
@@ -116,7 +125,9 @@ export const getProjectStats = () => {
 };
 
 // Get projects by category
-export const getProjectsByCategory = (category?: string) => {
+export const getProjectsByCategory = (
+	category?: Project["category"] | "all",
+): Project[] => {
 	if (!category || category === "all") {
 		return projectsData;
 	}
@@ -124,12 +135,12 @@ export const getProjectsByCategory = (category?: string) => {
 };
 
 // Get featured projects
-export const getFeaturedProjects = () => {
+export const getFeaturedProjects = (): Project[] => {
 	return projectsData.filter((p) => p.featured);
 };
 
 // Get all tech stacks
-export const getAllTechStack = () => {
+export const getAllTechStack = (): string[] => {
 	const techSet = new Set<string>();
 	projectsData.forEach((project) => {
 		project.techStack.forEach((tech) => {

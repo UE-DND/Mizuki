@@ -8,8 +8,8 @@ type PostEntry = CollectionEntry<"posts">;
 
 // // Retrieve posts and sort them by publication date
 async function getRawSortedPosts(): Promise<PostEntry[]> {
-	const allBlogPosts = await getCollection("posts", ({ data }) => {
-		return import.meta.env.PROD ? data.draft !== true : true;
+	const allBlogPosts = await getCollection("posts", (post: PostEntry) => {
+		return import.meta.env.PROD ? post.data.draft !== true : true;
 	});
 
 	const sorted = allBlogPosts.sort((a: PostEntry, b: PostEntry) => {
@@ -84,8 +84,8 @@ export type Tag = {
 };
 
 export async function getTagList(): Promise<Tag[]> {
-	const allBlogPosts = await getCollection("posts", ({ data }) => {
-		return import.meta.env.PROD ? data.draft !== true : true;
+	const allBlogPosts = await getCollection("posts", (post: PostEntry) => {
+		return import.meta.env.PROD ? post.data.draft !== true : true;
 	});
 
 	const countMap: { [key: string]: number } = {};
@@ -113,8 +113,8 @@ export type Category = {
 };
 
 export async function getCategoryList(): Promise<Category[]> {
-	const allBlogPosts = await getCollection("posts", ({ data }) => {
-		return import.meta.env.PROD ? data.draft !== true : true;
+	const allBlogPosts = await getCollection("posts", (post: PostEntry) => {
+		return import.meta.env.PROD ? post.data.draft !== true : true;
 	});
 	const count: { [key: string]: number } = {};
 	allBlogPosts.forEach((post: PostEntry) => {

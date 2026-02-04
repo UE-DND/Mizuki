@@ -7,11 +7,14 @@ import {
 	getClientIp,
 	getCookieOptions,
 	pickPublicUserInfo,
+	type PublicUserInfo,
 } from "../../../server/directus-auth";
+import type { JsonObject, JsonValue } from "../../../types/json";
+import { getJsonString, isJsonObject } from "../../../utils/json-utils";
 
 export const prerender = false;
 
-function json(data: unknown, init?: ResponseInit) {
+function json<T>(data: T, init?: ResponseInit): Response {
 	return new Response(JSON.stringify(data), {
 		...init,
 		headers: {
@@ -21,7 +24,7 @@ function json(data: unknown, init?: ResponseInit) {
 	});
 }
 
-export async function POST(context: APIContext) {
+export async function POST(context: APIContext): Promise<Response> {
 	const { request, cookies, url } = context;
 
 	const origin = request.headers.get("origin");
@@ -38,9 +41,9 @@ export async function POST(context: APIContext) {
 		);
 	}
 
-	let body: unknown;
+	let body: JsonValue;
 	try {
-		body = await request.json();
+		body = (await request.json()) as JsonValue;
 	} catch {
 		return json(
 			{ ok: false, message: "请求体不是合法 JSON" },
@@ -48,17 +51,9 @@ export async function POST(context: APIContext) {
 		);
 	}
 
-	const rawEmail =
-		body && typeof body === "object" && "email" in body
-			? (body as Record<string, unknown>).email
-			: "";
-	const rawPassword =
-		body && typeof body === "object" && "password" in body
-			? (body as Record<string, unknown>).password
-			: "";
-
-	const email = typeof rawEmail === "string" ? rawEmail.trim() : "";
-	const password = typeof rawPassword === "string" ? rawPassword : "";
+	const bodyObject: JsonObject = isJsonObject(body) ? body : {};
+	const email = (getJsonString(bodyObject, "email") ?? "").trim();
+	const password = getJsonString(bodyObject, "password") ?? "";
 
 	if (!email || !password) {
 		return json(
@@ -75,12 +70,7 @@ export async function POST(context: APIContext) {
 			getCookieOptions(),
 		);
 
-		let user: {
-			id: string;
-			email: string;
-			name: string;
-			avatarUrl?: string;
-		} = {
+		let user: PublicUserInfo = {
 			id: "",
 			email,
 			name: email,

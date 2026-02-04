@@ -7,6 +7,8 @@ import { musicPlayerConfig } from "../../config";
 // 导入国际化相关的 Key 和 i18n 实例
 import Key from "../../i18n/i18nKey";
 import { i18n } from "../../i18n/translation";
+import type { JsonObject, JsonValue } from "../../types/json";
+import { getJsonNumber, getJsonString, isJsonObject } from "../../utils/json-utils";
 
 // 音乐播放器模式，可选 "local" 或 "meting"，从本地配置中获取或使用默认值 "meting"
 let mode = musicPlayerConfig.mode ?? "meting";
@@ -72,7 +74,7 @@ let currentSong = {
 };
 
 type Song = {
-	id: number;
+	id: number | string;
 	title: string;
 	artist: string;
 	cover: string;
@@ -125,6 +127,36 @@ const localPlaylist = [
 	},
 ];
 
+function parseMetingSong(value: JsonValue): Song {
+	const object: JsonObject = isJsonObject(value) ? value : {};
+
+	const title =
+		getJsonString(object, "name") ??
+		getJsonString(object, "title") ??
+		i18n(Key.unknownSong);
+	const artist =
+		getJsonString(object, "artist") ??
+		getJsonString(object, "author") ??
+		i18n(Key.unknownArtist);
+
+	const rawId = object.id;
+	const id =
+		typeof rawId === "number" || typeof rawId === "string" ? rawId : "";
+
+	let dur = getJsonNumber(object, "duration") ?? 0;
+	if (dur > 10000) dur = Math.floor(dur / 1000);
+	if (!Number.isFinite(dur) || dur <= 0) dur = 0;
+
+	return {
+		id,
+		title,
+		artist,
+		cover: getJsonString(object, "pic") ?? "",
+		url: getJsonString(object, "url") ?? "",
+		duration: dur,
+	};
+}
+
 function loadVolumeSettings() {
 	try {
 		if (typeof localStorage === "undefined") return;
@@ -158,22 +190,8 @@ async function fetchMetingPlaylist() {
 	try {
 		const res = await fetch(apiUrl);
 		if (!res.ok) throw new Error("meting api error");
-		const list = await res.json();
-		playlist = list.map((song: any) => {
-			let title = song.name ?? song.title ?? i18n(Key.unknownSong);
-		let artist = song.artist ?? song.author ?? i18n(Key.unknownArtist);
-			let dur = song.duration ?? 0;
-			if (dur > 10000) dur = Math.floor(dur / 1000);
-			if (!Number.isFinite(dur) || dur <= 0) dur = 0;
-			return {
-				id: song.id,
-				title,
-				artist,
-				cover: song.pic ?? "",
-				url: song.url ?? "",
-				duration: dur,
-			};
-		});
+		const list = (await res.json()) as JsonValue;
+		playlist = Array.isArray(list) ? list.map(parseMetingSong) : [];
 		if (playlist.length > 0) {
 			const restored = applyPlaybackState();
 			if (!restored) {

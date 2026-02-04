@@ -1,13 +1,21 @@
 ---
+import fs from "node:fs";
+import path from "node:path";
+
 import ImageWrapper from "../components/misc/ImageWrapper.astro";
 import { siteConfig } from "../config";
 import localAnimeList from "../data/anime";
 import I18nKey from "../i18n/i18nKey";
 import { i18n } from "../i18n/translation";
 import MainGridLayout from "../layouts/MainGridLayout.astro";
-import fs from "node:fs";
-import path from "node:path";
+import type { JsonObject, JsonValue } from "../types/json";
 import { widgetManager } from "../utils/widget-manager";
+import {
+	getJsonNumber,
+	getJsonString,
+	getJsonStringArray,
+	isJsonObject,
+} from "../utils/json-utils";
 import "../styles/anime.css";
 
 interface AnimeItem {
@@ -22,6 +30,24 @@ interface AnimeItem {
 	year: string;
 	studio: string;
 	genre: string[];
+}
+
+function parseAnimeItem(value: JsonValue): AnimeItem {
+	const object: JsonObject = isJsonObject(value) ? value : {};
+
+	return {
+		title: getJsonString(object, "title") || "Unknown",
+		cover: getJsonString(object, "cover") || "",
+		link: getJsonString(object, "link") || "",
+		status: getJsonString(object, "status") || "planned",
+		rating: getJsonNumber(object, "rating") || 0,
+		progress: getJsonNumber(object, "progress") || 0,
+		totalEpisodes: getJsonNumber(object, "totalEpisodes") || 12,
+		description: getJsonString(object, "description") || "",
+		year: getJsonString(object, "year") || "",
+		studio: getJsonString(object, "studio") || "",
+		genre: getJsonStringArray(object, "genre"),
+	};
 }
 
 if (!siteConfig.featurePages.anime) {
@@ -55,20 +81,10 @@ if (ANIME_MODE === "local") {
 			);
 			if (fs.existsSync(dataPath)) {
 				const fileContent = fs.readFileSync(dataPath, "utf-8");
-				const rawData = JSON.parse(fileContent);
-				animeList = rawData.map((item: any) => ({
-					title: item.title || "Unknown",
-					cover: item.cover || "",
-					link: item.link || "",
-					status: item.status || "planned",
-					rating: Number(item.rating) || 0,
-					progress: Number(item.progress) || 0,
-					totalEpisodes: Number(item.totalEpisodes) || 12,
-					description: item.description || "",
-					year: item.year || "",
-					studio: item.studio || "",
-					genre: Array.isArray(item.genre) ? item.genre : [],
-				}));
+				const rawData = JSON.parse(fileContent) as JsonValue;
+				animeList = Array.isArray(rawData)
+					? rawData.map(parseAnimeItem)
+					: [];
 			} else {
 				console.warn(`Bilibili data file not found at ${dataPath}.`);
 				animeList = [];
@@ -94,20 +110,10 @@ if (ANIME_MODE === "local") {
 			);
 			if (fs.existsSync(dataPath)) {
 				const fileContent = fs.readFileSync(dataPath, "utf-8");
-				const rawData = JSON.parse(fileContent);
-				animeList = rawData.map((item: any) => ({
-					title: item.title || "Unknown",
-					cover: item.cover || "",
-					link: item.link || "",
-					status: item.status || "planned",
-					rating: Number(item.rating) || 0,
-					progress: Number(item.progress) || 0,
-					totalEpisodes: Number(item.totalEpisodes) || 12,
-					description: item.description || "",
-					year: item.year || "",
-					studio: item.studio || "",
-					genre: Array.isArray(item.genre) ? item.genre : [],
-				}));
+				const rawData = JSON.parse(fileContent) as JsonValue;
+				animeList = Array.isArray(rawData)
+					? rawData.map(parseAnimeItem)
+					: [];
 			} else {
 				console.warn(`Bangumi data file not found at ${dataPath}.`);
 				animeList = [];

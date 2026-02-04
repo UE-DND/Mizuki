@@ -168,7 +168,7 @@ const processedLinks: ProcessedNavBarLink[] = Astro.props.links.map(
                 if (!target) {return;}
                 if (!target.closest('a')) {return;}
 
-                const panelManager = (window as any).panelManager;
+                const panelManager = window.panelManager;
                 if (panelManager?.closePanel) {
                     panelManager.closePanel('nav-menu-panel');
                     return;

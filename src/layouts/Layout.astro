@@ -557,12 +557,12 @@ if (siteConfig.font) {
 	import { siteConfig } from "../config";
 	import { widgetConfigs } from "../config";
 	import { initKatexScrollbars } from "../utils/katex-scrollbar";
+	import { panelManager } from "../utils/panel-manager.js";
 	import { setupPanelOutsideHandler } from "../utils/panel-outside-handler";
 	import { initSakura } from "../utils/sakura-manager";
 
 	// const setTimeout = window.setTimeout;
-	// @ts-ignore
-	const setTimeout = (callback: any, delay: any) =>
+	const setTimeout = (callback: () => void, delay?: number) =>
 		window.setTimeout(callback, delay);
 
 	/* Preload fonts */
@@ -610,22 +610,8 @@ function disableAnimation() {
 
 	const bannerEnabled = !!document.getElementById("banner-wrapper");
 
-	// 导入面板管理器
-	async function initializePanelManager() {
-		try {
-			// @ts-ignore
-			const { panelManager } = await import("../utils/panel-manager.js");
-
-			setupPanelOutsideHandler(panelManager);
-
-			return panelManager;
-		} catch (error) {
-			console.error("Failed to initialize panel manager:", error);
-			return null;
-		}
-	}
-
-	initializePanelManager();
+	// 初始化面板管理器（panel-manager.ts 内部也会挂到 window 上）
+	setupPanelOutsideHandler(panelManager);
 
 	// function _loadTheme() {
 	//  const theme = getStoredTheme()
@@ -671,7 +657,7 @@ function disableAnimation() {
 	}
 
 	function updateBannerCarouselState() {
-		const controller = (window as any).__bannerCarouselController;
+		const controller = window.__bannerCarouselController;
 		if (!controller || typeof controller.setPaused !== "function") {
 			return;
 		}
@@ -681,10 +667,10 @@ function disableAnimation() {
 		controller.setPaused(isArticlePage() || isBannerHidden);
 	}
 
-	(window as any).__updateBannerCarouselState = updateBannerCarouselState;
+	window.__updateBannerCarouselState = updateBannerCarouselState;
 
 	function initCarousel() {
-		const existingController = (window as any).__bannerCarouselController;
+		const existingController = window.__bannerCarouselController;
 		if (existingController && typeof existingController.setPaused === "function") {
 			updateBannerCarouselState();
 			return;
@@ -706,7 +692,9 @@ function disableAnimation() {
 		if (validItems.length > 1 && siteConfig.banner.carousel?.enable) {
 			let currentIndex = 0;
 			const interval = siteConfig.banner.carousel?.interval || 6;
-			let carouselInterval: any;
+			let carouselInterval:
+				| ReturnType<typeof window.setInterval>
+				| undefined;
 			let isPaused = false;
 
 			// 移动端触摸手势支持
@@ -835,7 +823,7 @@ function disableAnimation() {
 				}
 			}
 
-			(window as any).__bannerCarouselController = {
+			window.__bannerCarouselController = {
 				setPaused,
 			};
 
@@ -865,11 +853,11 @@ function disableAnimation() {
 	});
 
 	function setupSakura() {
-		const sakuraConfig = (widgetConfigs as any)?.sakura;
+		const sakuraConfig = widgetConfigs.sakura;
 		if (!sakuraConfig || !sakuraConfig.enable) return;
-		if ((window as any).sakuraInitialized) return;
+		if (window.sakuraInitialized) return;
 		initSakura(sakuraConfig);
-		(window as any).sakuraInitialized = true;
+		window.sakuraInitialized = true;
 	}
 
 	if (document.readyState === "loading") {
@@ -879,7 +867,12 @@ function disableAnimation() {
 	}
 
 	let fancyboxSelectors: string[] = [];
-	let Fancybox: any;
+	type FancyboxStatic = {
+		bind: (selector: string, options?: object) => void;
+		unbind: (selector: string) => void;
+	};
+
+	let Fancybox: FancyboxStatic | undefined;
 
 	// 数学公式按需加载
 	function checkKatex() {
@@ -904,13 +897,16 @@ function disableAnimation() {
 
 		if (!Fancybox) {
 			const mod = await import("@fancyapps/ui");
-			Fancybox = mod.Fancybox;
+			Fancybox = mod.Fancybox as FancyboxStatic;
 			await import("@fancyapps/ui/dist/fancybox/fancybox.css");
 		}
 
 		if (fancyboxSelectors.length > 0) {
 			return; // 已经初始化，直接返回
 		}
+
+		const fancybox = Fancybox;
+		if (!fancybox) return;
 
 		const commonConfig = {
 			Thumbs: { autoStart: true, showOnStart: "yes" },
@@ -950,7 +946,7 @@ function disableAnimation() {
 		};
 
 		// 绑定相册/文章图片
-		Fancybox.bind(albumImagesSelector, {
+		fancybox.bind(albumImagesSelector, {
 			...commonConfig,
 			groupAll: true,
 			Carousel: {
@@ -960,24 +956,25 @@ function disableAnimation() {
 		});
 		fancyboxSelectors.push(albumImagesSelector);
 
-		Fancybox.bind(albumLinksSelector, {
+		fancybox.bind(albumLinksSelector, {
 			...commonConfig,
-			source: (el: any) => {
+			source: (el: Element) => {
 				return el.getAttribute("data-src") || el.getAttribute("href");
 			},
 		});
 		fancyboxSelectors.push(albumLinksSelector);
 
 		// 绑定单独的 fancybox 图片
-		Fancybox.bind(singleFancyboxSelector, commonConfig);
+		fancybox.bind(singleFancyboxSelector, commonConfig);
 		fancyboxSelectors.push(singleFancyboxSelector);
 	}
 
 	// 清理 Fancybox 实例
 	function cleanupFancybox() {
-		if (!Fancybox) return; // 如果从未加载过，无需清理
+		const fancybox = Fancybox;
+		if (!fancybox) return; // 如果从未加载过，无需清理
 		fancyboxSelectors.forEach((selector) => {
-			Fancybox.unbind(selector);
+			fancybox.unbind(selector);
 		});
 		fancyboxSelectors = [];
 	}
@@ -1029,22 +1026,22 @@ function disableAnimation() {
 			const tocWrapper = document.getElementById("toc-wrapper");
 			const isArticlePage = tocWrapper !== null;
 
-			// 只在文章页面重新初始化 TOC 组件
+				// 只在文章页面重新初始化 TOC 组件
 			if (isArticlePage) {
-				const tocElement = document.querySelector("table-of-contents");
-				if (
-					tocElement &&
-					typeof (tocElement as any).init === "function"
-				) {
+				const tocElement =
+					document.querySelector("table-of-contents") as
+						| HTMLElementTagNameMap["table-of-contents"]
+						| null;
+				if (typeof tocElement?.init === "function") {
 					setTimeout(() => {
-						(tocElement as any).init();
+						tocElement.init?.();
 					}, 100);
 				}
 
 				// 重新初始化移动端 TOC 组件
-				if (typeof (window as any).mobileTOCInit === "function") {
+				if (typeof window.mobileTOCInit === "function") {
 					setTimeout(() => {
-						(window as any).mobileTOCInit();
+						window.mobileTOCInit?.();
 					}, 100);
 				}
 			}
@@ -1058,10 +1055,10 @@ function disableAnimation() {
 				if (transparentMode === "semifull") {
 					// 重新调用初始化函数来重新绑定滚动事件
 					if (
-						typeof (window as any).initSemifullScrollDetection ===
+						typeof window.initSemifullScrollDetection ===
 						"function"
 					) {
-						(window as any).initSemifullScrollDetection();
+						window.initSemifullScrollDetection?.();
 					}
 				}
 			}
@@ -1156,10 +1153,9 @@ function disableAnimation() {
 				if (transparentMode === "semifull") {
 					// 重新调用初始化函数来重新绑定滚动事件
 					if (
-						typeof (window as any)
-							.initSemifullScrollDetection === "function"
+						typeof window.initSemifullScrollDetection === "function"
 					) {
-						(window as any).initSemifullScrollDetection();
+						window.initSemifullScrollDetection?.();
 					}
 				}
 			}
@@ -1270,16 +1266,16 @@ function disableAnimation() {
 	let navbar = document.getElementById("navbar-wrapper");
 
 	// 节流函数
-	function throttle(func: Function, limit: number) {
-		let inThrottle: boolean;
-		return function (this: any) {
-			const args = arguments;
-			const context = this;
-			if (!inThrottle) {
-				func.apply(context, args);
-				inThrottle = true;
-				setTimeout(() => (inThrottle = false), limit);
-			}
+	function throttle(func: () => void, limit: number): () => void {
+		let inThrottle = false;
+		return () => {
+			if (inThrottle) return;
+
+			func();
+			inThrottle = true;
+			setTimeout(() => {
+				inThrottle = false;
+			}, limit);
 		};
 	}
 

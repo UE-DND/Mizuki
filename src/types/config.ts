@@ -5,6 +5,7 @@ import type {
 	WALLPAPER_FULLSCREEN,
 	WALLPAPER_NONE,
 } from "../constants/constants";
+import type { JsonValue } from "./json";
 
 export type ThemeColorRole = {
 	main: string;
@@ -372,7 +373,7 @@ export type WidgetComponentConfig = {
 		hidden?: ("mobile" | "tablet" | "desktop")[]; // 在指定设备上隐藏
 		collapseThreshold?: number; // 折叠阈值
 	};
-	customProps?: Record<string, unknown>; // 自定义属性，用于扩展组件功能
+	customProps?: Record<string, JsonValue>; // 自定义属性，用于扩展组件功能（需可序列化）
 };
 
 export type SidebarLayoutConfig = {

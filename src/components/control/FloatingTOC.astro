@@ -507,8 +507,8 @@ const useJapaneseBadge = siteConfig.toc.useJapaneseBadge;
 			document.addEventListener("keydown", (e) => {
 				if (e.key === "Escape" && this.isOpen) {this.close();}
 			});
-			if ((window as any).swup) {
-				(window as any).swup.hooks.on("page:view", () => {
+			if (window.swup?.hooks) {
+				window.swup.hooks.on("page:view", () => {
 					setTimeout(() => this.reinit(), 200);
 				});
 			}

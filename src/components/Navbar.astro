@@ -160,12 +160,9 @@ function initSemifullScrollDetection() {
     // 如果不是首页，移除滚动事件监听器并设置为半透明状态
     if (!isHomePage) {
         // 移除之前的滚动事件监听器（如果存在）
-        // @ts-ignore
         if (window.semifullScrollHandler) {
-            // @ts-ignore
             window.removeEventListener('scroll', window.semifullScrollHandler);
-            // @ts-ignore
-            window.semifullScrollHandler = null;
+            window.semifullScrollHandler = undefined;
         }
         // 设置为半透明状态
         navbar.classList.add('scrolled');
@@ -198,14 +195,11 @@ function initSemifullScrollDetection() {
     }
     
     // 移除之前的滚动事件监听器（如果存在）
-    // @ts-ignore
     if (window.semifullScrollHandler) {
-        // @ts-ignore
         window.removeEventListener('scroll', window.semifullScrollHandler);
     }
     
     // 保存新的事件处理器引用
-    // @ts-ignore
     window.semifullScrollHandler = requestTick;
     
     // 监听滚动事件
@@ -216,7 +210,6 @@ function initSemifullScrollDetection() {
 }
 
 // 将函数暴露到全局对象，供页面切换时调用
-// @ts-ignore
 window.initSemifullScrollDetection = initSemifullScrollDetection;
 
 // 页面加载完成后初始化滚动检测

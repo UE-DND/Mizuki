@@ -7,7 +7,7 @@ import {
 
 export const prerender = false;
 
-function json(data: unknown, init?: ResponseInit) {
+function json<T>(data: T, init?: ResponseInit): Response {
 	return new Response(JSON.stringify(data), {
 		...init,
 		headers: {
@@ -28,7 +28,7 @@ function clearAuthCookie(cookies: APIContext["cookies"]) {
 	}
 }
 
-export async function POST(context: APIContext) {
+export async function POST(context: APIContext): Promise<Response> {
 	const { request, cookies, url } = context;
 
 	const origin = request.headers.get("origin");

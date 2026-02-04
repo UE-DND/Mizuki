@@ -8,6 +8,7 @@ import type {
 	MusicPlayerConfig,
 	NavBarConfig,
 	PermalinkConfig,
+	PioConfig,
 	ProfileConfig,
 	SakuraConfig,
 	ShareConfig,
@@ -626,7 +627,7 @@ export const sakuraConfig: SakuraConfig = {
 };
 
 // Pio 看板娘配置
-export const pioConfig: import("./types/config").PioConfig = {
+export const pioConfig: PioConfig = {
 	enable: true, // 启用看板娘
 	models: ["/pio/models/pio/model.json"], // 默认模型路径
 	position: "left", // 模型位置
@@ -650,7 +651,18 @@ export const pioConfig: import("./types/config").PioConfig = {
 };
 
 // 导出所有配置的统一接口
-export const widgetConfigs = {
+export type WidgetConfigs = {
+	profile: ProfileConfig;
+	announcement: AnnouncementConfig;
+	music: MusicPlayerConfig;
+	layout: SidebarLayoutConfig;
+	sakura: SakuraConfig;
+	fullscreenWallpaper: FullscreenWallpaperConfig;
+	pio: PioConfig;
+	share: ShareConfig;
+};
+
+export const widgetConfigs: WidgetConfigs = {
 	profile: profileConfig,
 	announcement: announcementConfig,
 	music: musicPlayerConfig,
@@ -659,14 +671,20 @@ export const widgetConfigs = {
 	fullscreenWallpaper: fullscreenWallpaperConfig,
 	pio: pioConfig, // 添加 pio 配置
 	share: shareConfig, // 添加分享配置
-} as const;
+};
 
-export const umamiConfig = {
+export type UmamiConfig = {
+	enabled: boolean;
+	apiKey: string;
+	baseUrl: string;
+	scripts: string;
+};
+
+export const umamiConfig: UmamiConfig = {
 	enabled: false, // 是否显示Umami统计
 	apiKey: import.meta.env.UMAMI_API_KEY || "api_xxxxxxxx", // API密钥优先从环境变量读取，否则使用配置文件中的值
 	baseUrl: "https://api.umami.is", // Umami Cloud API地址
 	scripts: `
-<script defer src="XXXX.XXX" data-website-id="ABCD1234"></script>
-  `.trim(), // 上面填你要插入的Script,不用再去Layout中插入
-} as const;
-
+	<script defer src="XXXX.XXX" data-website-id="ABCD1234"></script>
+	  `.trim(), // 上面填你要插入的Script,不用再去Layout中插入
+};

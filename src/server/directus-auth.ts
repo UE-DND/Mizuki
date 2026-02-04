@@ -1,15 +1,12 @@
+import type { AstroCookieSetOptions } from "astro";
+
+import type { JsonObject, JsonValue } from "@/types/json";
+import { getJsonString, isJsonObject } from "@/utils/json-utils";
+
 type DirectusAuthTokens = {
 	accessToken: string;
 	refreshToken: string;
 	expiresMs?: number;
-};
-
-type DirectusTokenPayload = {
-	access_token?: unknown;
-	refresh_token?: unknown;
-	expires?: unknown;
-	expires_in?: unknown;
-	expires_at?: unknown;
 };
 
 type DirectusMe = {
@@ -21,9 +18,16 @@ type DirectusMe = {
 	avatarId?: string;
 };
 
+export type PublicUserInfo = {
+	id: string;
+	email: string;
+	name: string;
+	avatarUrl?: string;
+};
+
 export const DIRECTUS_REFRESH_COOKIE_NAME = "mizuki_directus_refresh";
 
-export function getCookieOptions() {
+export function getCookieOptions(): AstroCookieSetOptions {
 	const isProd = import.meta.env.PROD;
 	return {
 		httpOnly: true,
@@ -42,13 +46,15 @@ export function getDirectusUrl(): string {
 	return url.trim().replace(/\/+$/, "");
 }
 
-function extractDirectusFileId(value: unknown): string | undefined {
+function extractDirectusFileId(
+	value: JsonValue | undefined,
+): string | undefined {
 	if (typeof value === "string" && value.trim()) {
 		return value.trim();
 	}
-	if (value && typeof value === "object" && "id" in value) {
-		const id = (value as { id?: unknown }).id;
-		if (typeof id === "string" && id.trim()) {
+	if (value && isJsonObject(value)) {
+		const id = getJsonString(value, "id");
+		if (id && id.trim()) {
 			return id.trim();
 		}
 	}
@@ -83,17 +89,17 @@ export function buildDirectusAssetUrl(
 	return url.href;
 }
 
-function getJsonData(value: unknown) {
-	if (value && typeof value === "object" && "data" in value) {
-		return (value as { data: unknown }).data;
+function unwrapDirectusData(value: JsonValue): JsonValue {
+	if (isJsonObject(value) && "data" in value) {
+		return value.data;
 	}
 	return value;
 }
 
-async function directusFetchJson<T>(
+async function directusFetchText(
 	pathname: string,
 	init: RequestInit,
-): Promise<T> {
+): Promise<string> {
 	const baseUrl = getDirectusUrl();
 	const normalizedPathname = pathname.replace(/^\/+/, "");
 	const url = new URL(normalizedPathname, `${baseUrl}/`);
@@ -106,36 +112,50 @@ async function directusFetchJson<T>(
 		);
 	}
 
-	if (!text) {
-		// @ts-expect-error allow empty body for logout etc.
-		return null;
-	}
-
-	return JSON.parse(text) as T;
+	return text;
 }
 
-function parseTokens(payload: unknown): DirectusAuthTokens {
-	const data = getJsonData(payload) as DirectusTokenPayload;
-	const accessToken =
-		typeof data?.access_token === "string" ? data.access_token : "";
-	const refreshToken =
-		typeof data?.refresh_token === "string" ? data.refresh_token : "";
+async function directusFetchJson(
+	pathname: string,
+	init: RequestInit,
+): Promise<JsonValue> {
+	const text = await directusFetchText(pathname, init);
+	if (!text) {
+		throw new Error("Directus 响应体为空");
+	}
+	return JSON.parse(text) as JsonValue;
+}
+
+function parseExpiresMs(value: JsonValue | undefined): number | undefined {
+	if (typeof value === "number" && Number.isFinite(value)) {
+		return value;
+	}
+	if (typeof value === "string") {
+		const parsed = Number(value);
+		if (Number.isFinite(parsed)) {
+			return parsed;
+		}
+	}
+	return undefined;
+}
+
+function parseTokens(payload: JsonValue): DirectusAuthTokens {
+	const dataValue = unwrapDirectusData(payload);
+	if (!isJsonObject(dataValue)) {
+		throw new Error("Directus 登录/刷新响应不是对象");
+	}
+
+	const accessToken = getJsonString(dataValue, "access_token") ?? "";
+	const refreshToken = getJsonString(dataValue, "refresh_token") ?? "";
+
 	const expiresRaw =
-		data?.expires ?? data?.expires_in ?? data?.expires_at ?? null;
+		dataValue.expires ?? dataValue.expires_in ?? dataValue.expires_at;
 
 	if (!accessToken || !refreshToken) {
 		throw new Error("Directus 登录/刷新响应缺少 token");
 	}
 
-	let expiresMs: number | undefined;
-	if (typeof expiresRaw === "number") {
-		expiresMs = expiresRaw;
-	} else if (typeof expiresRaw === "string") {
-		const parsed = Number(expiresRaw);
-		if (!Number.isNaN(parsed)) {
-			expiresMs = parsed;
-		}
-	}
+	const expiresMs = parseExpiresMs(expiresRaw);
 
 	return { accessToken, refreshToken, expiresMs };
 }
@@ -179,7 +199,7 @@ export async function directusRefresh(params: {
 export async function directusLogout(params: {
 	refreshToken: string;
 }): Promise<void> {
-	await directusFetchJson("/auth/logout", {
+	await directusFetchText("/auth/logout", {
 		method: "POST",
 		headers: {
 			"Content-Type": "application/json",
@@ -204,32 +224,42 @@ export async function directusGetMe(params: {
 			},
 		},
 	);
-	const raw = getJsonData(payload);
-	const data =
-		raw && typeof raw === "object" ? (raw as Record<string, unknown>) : {};
+	const raw = unwrapDirectusData(payload);
+	const data: JsonObject = isJsonObject(raw) ? raw : {};
+
+	const idValue = data.id;
+	const id =
+		typeof idValue === "string" && idValue.trim()
+			? idValue
+			: typeof idValue === "number"
+				? String(idValue)
+				: undefined;
+
+	const email = getJsonString(data, "email");
+	const first_name = getJsonString(data, "first_name");
+	const last_name = getJsonString(data, "last_name");
+
+	const roleValue = data.role;
+	const role: DirectusMe["role"] | undefined =
+		typeof roleValue === "string"
+			? roleValue
+			: isJsonObject(roleValue)
+				? {
+						id: getJsonString(roleValue, "id"),
+						name: getJsonString(roleValue, "name"),
+					}
+				: undefined;
 	return {
-		id:
-			data.id !== undefined && data.id !== null
-				? String(data.id)
-				: undefined,
-		email:
-			typeof data.email === "string" && data.email.trim()
-				? data.email
-				: undefined,
-		first_name:
-			typeof data.first_name === "string" && data.first_name.trim()
-				? data.first_name
-				: undefined,
-		last_name:
-			typeof data.last_name === "string" && data.last_name.trim()
-				? data.last_name
-				: undefined,
-		role: data.role as DirectusMe["role"],
+		id,
+		email: email && email.trim() ? email : undefined,
+		first_name: first_name && first_name.trim() ? first_name : undefined,
+		last_name: last_name && last_name.trim() ? last_name : undefined,
+		role,
 		avatarId: extractDirectusFileId(data.avatar),
 	};
 }
 
-export function pickPublicUserInfo(me: DirectusMe) {
+export function pickPublicUserInfo(me: DirectusMe): PublicUserInfo {
 	const name = [me.first_name, me.last_name].filter(Boolean).join(" ").trim();
 	return {
 		id: me.id ?? "",
@@ -258,10 +288,14 @@ export function getClientIp(headers: Headers): string {
 type RateLimitRecord = { count: number; resetAt: number };
 const loginRateLimit = new Map<string, RateLimitRecord>();
 
+export type LoginRateLimitResult =
+	| { ok: true; remaining: number; resetAt: number }
+	| { ok: false; remaining: 0; resetAt: number };
+
 export function checkLoginRateLimit(
 	ip: string,
 	options?: { limit?: number; windowMs?: number },
-) {
+): LoginRateLimitResult {
 	const limit = options?.limit ?? 10;
 	const windowMs = options?.windowMs ?? 5 * 60 * 1000;
 

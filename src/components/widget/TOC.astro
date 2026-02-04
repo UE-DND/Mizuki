@@ -7,10 +7,11 @@ import type { MarkdownHeading } from "astro";
 
 interface Props {
 	class?: string;
+	style?: string;
 	headings: MarkdownHeading[];
 }
 
-const { headings = [] } = Astro.props;
+const { headings = [], style } = Astro.props;
 
 let minDepth = 10;
 for (const heading of headings) {
@@ -34,7 +35,7 @@ const className = Astro.props.class;
 
 // const maxLevel = siteConfig.toc.depth;
 ---
-<table-of-contents class:list={[className, "group"]} id="toc">
+<table-of-contents class:list={[className, "group"]} id="toc" style={style}>
     <!-- TOC内容将由JavaScript动态生成 -->
 </table-of-contents>
 
@@ -297,12 +298,12 @@ class TableOfContents extends HTMLElement {
         // 重新生成TOC HTML
         const minDepth = Math.min(...headings.map(h => h.depth));
         // 获取配置信息
-        const siteConfig = (window as any).siteConfig || {};
-        const maxLevel = siteConfig.toc?.depth || 3;
-        const useJapaneseBadge = siteConfig.toc?.useJapaneseBadge || false;
+        const siteConfig = window.siteConfig;
+        const maxLevel = siteConfig?.toc?.depth ?? 3;
+        const useJapaneseBadge = siteConfig?.toc?.useJapaneseBadge ?? false;
         
         // 添加调试信息
-        console.log('TOC Config in regenerateTOC:', { siteConfig: siteConfig.toc, maxLevel, useJapaneseBadge });
+        console.log('TOC Config in regenerateTOC:', { siteConfig: siteConfig?.toc, maxLevel, useJapaneseBadge });
         
         // 日语片假名字符集
         const japaneseKatakana = [

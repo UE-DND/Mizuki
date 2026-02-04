@@ -208,7 +208,7 @@ export class WidgetManager {
 	/**
 	 * 获取设备断点配置
 	 */
-	getBreakpoints() {
+	getBreakpoints(): SidebarLayoutConfig["responsive"]["breakpoints"] {
 		return this.config.responsive.breakpoints;
 	}
 
@@ -263,7 +263,7 @@ export class WidgetManager {
 /**
  * 默认组件管理器实例
  */
-export const widgetManager = new WidgetManager();
+export const widgetManager: WidgetManager = new WidgetManager();
 
 /**
  * 工具函数：根据组件类型获取组件配置

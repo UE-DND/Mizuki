@@ -73,29 +73,34 @@ const umamiBaseUrl = umamiConfig.baseUrl || "";
         umamiBaseUrl, 
         umamiApiKey, 
         umamiWebsiteId, 
-        umamiConfig,
+        umamiEnabled,
         profileStatsPageViews: i18n(I18nKey.profileStatsPageViews),
         profileStatsVisits: i18n(I18nKey.profileStatsVisits),
         profileStatsUnavailable: i18n(I18nKey.profileStatsUnavailable)
     }}>
         // 客户端统计文案生成函数
+        /**
+         * @param {number} pageViews
+         * @param {number} visits
+         * @returns {string}
+         */
         function generateStatsText(pageViews, visits) {
             return `${profileStatsPageViews} ${pageViews} · ${profileStatsVisits} ${visits}`;
         }
         
         // 获取访问量统计
+        /** @returns {Promise<void>} */
         async function fetchSiteStats() {
-            if (!umamiConfig.enabled) {
-                return;
-            }
+            if (!umamiEnabled) {return;}
+            if (typeof window.getUmamiWebsiteStats !== 'function') {return;}
             
             try {
                 // 调用全局工具获取 Umami 统计数据
-                const stats = await getUmamiWebsiteStats(umamiBaseUrl, umamiApiKey, umamiWebsiteId);
+                const stats = await window.getUmamiWebsiteStats(umamiBaseUrl, umamiApiKey, umamiWebsiteId);
                 
                 // 从返回的数据中提取页面浏览量和访客数
-                const pageViews = stats.pageviews || 0;
-                const visits = stats.visits || 0;
+                const pageViews = stats.pageviews ?? 0;
+                const visits = stats.visits ?? 0;
                 
                 const displayElements = document.querySelectorAll('.site-stats-display');
                 displayElements.forEach(element => {
@@ -112,9 +117,9 @@ const umamiBaseUrl = umamiConfig.baseUrl || "";
 
         if (document.readyState === 'loading') {
             // 页面加载完成后获取统计数据
-            document.addEventListener('DOMContentLoaded', () => fetchSiteStats());
+            document.addEventListener('DOMContentLoaded', () => { void fetchSiteStats(); });
         } else {
-            fetchSiteStats();
+            void fetchSiteStats();
         }
     </script>
 )}

@@ -11,6 +11,16 @@ export interface DiaryItem {
 	tags?: string[];
 }
 
+export interface DiaryStats {
+	total: number;
+	hasImages: number;
+	hasLocation: number;
+	hasMood: number;
+	imagePercentage: number;
+	locationPercentage: number;
+	moodPercentage: number;
+}
+
 // 示例日记数据
 const diaryData: DiaryItem[] = [
 	{
@@ -23,7 +33,7 @@ const diaryData: DiaryItem[] = [
 ];
 
 // 获取日记统计数据
-export const getDiaryStats = () => {
+export const getDiaryStats = (): DiaryStats => {
 	const total = diaryData.length;
 	const hasImages = diaryData.filter(
 		(item) => item.images && item.images.length > 0,
@@ -43,7 +53,7 @@ export const getDiaryStats = () => {
 };
 
 // 获取日记列表（按时间倒序）
-export const getDiaryList = (limit?: number) => {
+export const getDiaryList = (limit?: number): DiaryItem[] => {
 	const sortedData = diaryData.sort(
 		(a, b) => new Date(b.date).getTime() - new Date(a.date).getTime(),
 	);
@@ -56,22 +66,22 @@ export const getDiaryList = (limit?: number) => {
 };
 
 // 获取最新的日记
-export const getLatestDiary = () => {
+export const getLatestDiary = (): DiaryItem | undefined => {
 	return getDiaryList(1)[0];
 };
 
 // 根据ID获取日记
-export const getDiaryById = (id: number) => {
+export const getDiaryById = (id: number): DiaryItem | undefined => {
 	return diaryData.find((item) => item.id === id);
 };
 
 // 获取包含图片的日记
-export const getDiaryWithImages = () => {
+export const getDiaryWithImages = (): DiaryItem[] => {
 	return diaryData.filter((item) => item.images && item.images.length > 0);
 };
 
 // 根据标签筛选日记
-export const getDiaryByTag = (tag: string) => {
+export const getDiaryByTag = (tag: string): DiaryItem[] => {
 	return diaryData
 		.filter((item) => item.tags?.includes(tag))
 		.sort(
@@ -80,7 +90,7 @@ export const getDiaryByTag = (tag: string) => {
 };
 
 // 获取所有标签
-export const getAllTags = () => {
+export const getAllTags = (): string[] => {
 	const tags = new Set<string>();
 	diaryData.forEach((item) => {
 		if (item.tags) {

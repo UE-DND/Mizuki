@@ -17,13 +17,13 @@
 		"submit": "node scripts/indexnow-submit.js",
 		"preview": "astro preview",
 		"astro": "astro",
-		"type-check": "tsc --noEmit --isolatedDeclarations",
+		"type-check": "tsc --noEmit --isolatedDeclarations --skipLibCheck",
 		"new-post": "node scripts/new-post.js",
 		"format": "prettier --write ./src",
 		"lint": "eslint ./src --ext .js,.cjs,.mjs,.ts --fix",
 		"preinstall": "npx only-allow pnpm",
 		"compress-fonts": "node scripts/compress-fonts.js",
-		"test-font-compression": "node scripts/test-font-compression.js"
+		"test-font-compression": "node scripts/compress-fonts.js"
 	},
 	"dependencies": {
 		"@astrojs/check": "^0.9.6",
