@@ -6,8 +6,11 @@ import { Icon } from "astro-icon/components";
 <MainGridLayout title="登录" description="前端用户登录">
 	<div class="card-base rounded-[var(--radius-large)] p-6 md:p-8">
 		<div class="flex items-center gap-3 mb-2">
-			<div class="w-12 h-12 rounded-2xl bg-[var(--primary)] flex items-center justify-center">
-				<Icon name="material-symbols:login-rounded" class="text-white text-3xl" />
+			<div class="w-12 h-12 rounded-2xl bg-[var(--btn-regular-bg)] flex items-center justify-center">
+				<Icon
+					name="material-symbols:login-rounded"
+					class="text-[var(--btn-content)] text-3xl"
+				/>
 			</div>
 			<div>
 				<h1 class="text-2xl font-bold text-90">登录</h1>
@@ -52,7 +55,7 @@ import { Icon } from "astro-icon/components";
 				<button
 					id="login-submit"
 					type="submit"
-					class="w-full px-4 py-3 rounded-xl bg-[var(--primary)] text-white font-medium hover:opacity-90 transition"
+					class="w-full px-4 py-3 rounded-xl bg-[var(--btn-regular-bg)] text-[var(--btn-content)] font-medium hover:opacity-90 transition"
 				>
 					登录
 				</button>
