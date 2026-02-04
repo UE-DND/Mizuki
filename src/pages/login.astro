@@ -1,0 +1,148 @@
+---
+import MainGridLayout from "@layouts/MainGridLayout.astro";
+import { Icon } from "astro-icon/components";
+---
+
+<MainGridLayout title="登录" description="前端用户登录">
+	<div class="card-base rounded-[var(--radius-large)] p-6 md:p-8">
+		<div class="flex items-center gap-3 mb-2">
+			<div class="w-12 h-12 rounded-2xl bg-[var(--primary)] flex items-center justify-center">
+				<Icon name="material-symbols:login-rounded" class="text-white text-3xl" />
+			</div>
+			<div>
+				<h1 class="text-2xl font-bold text-90">登录</h1>
+				<p class="text-sm text-75">
+					账号需由管理员在后台创建或邀请。
+				</p>
+			</div>
+		</div>
+
+		<div class="mt-6">
+			<form id="login-form" class="space-y-4">
+				<label class="block">
+					<span class="text-sm text-75">邮箱</span>
+					<input
+						id="login-email"
+						type="email"
+						autocomplete="email"
+						required
+						class="mt-2 w-full px-4 py-3 rounded-xl border border-[var(--line-divider)] bg-transparent text-90 placeholder:text-black/50 dark:placeholder:text-white/50 focus:outline-none focus:border-[var(--primary)]"
+						placeholder="name@example.com"
+					/>
+				</label>
+
+				<label class="block">
+					<span class="text-sm text-75">密码</span>
+					<input
+						id="login-password"
+						type="password"
+						autocomplete="current-password"
+						required
+						class="mt-2 w-full px-4 py-3 rounded-xl border border-[var(--line-divider)] bg-transparent text-90 placeholder:text-black/50 dark:placeholder:text-white/50 focus:outline-none focus:border-[var(--primary)]"
+						placeholder="在此输入密码喵～"
+					/>
+				</label>
+
+				<div
+					id="login-error"
+					class="hidden text-sm text-red-500"
+					role="alert"
+				></div>
+
+				<button
+					id="login-submit"
+					type="submit"
+					class="w-full px-4 py-3 rounded-xl bg-[var(--primary)] text-white font-medium hover:opacity-90 transition"
+				>
+					登录
+				</button>
+			</form>
+		</div>
+	</div>
+
+	<script is:inline>
+		const API_LOGIN = "/api/auth/login/";
+
+		function getRedirectTarget() {
+			try {
+				const u = new URL(window.location.href);
+				const redirect = u.searchParams.get("redirect") || "/";
+				if (!redirect.startsWith("/")) {
+					return "/";
+				}
+				return redirect;
+			} catch {
+				return "/";
+			}
+		}
+
+		function setError(message) {
+			const errorEl = document.getElementById("login-error");
+			if (!errorEl) return;
+			if (message) {
+				errorEl.textContent = message;
+				errorEl.classList.remove("hidden");
+			} else {
+				errorEl.textContent = "";
+				errorEl.classList.add("hidden");
+			}
+		}
+
+		async function initLoginForm() {
+			const form = document.getElementById("login-form");
+			const emailEl = document.getElementById("login-email");
+			const pwdEl = document.getElementById("login-password");
+			const submitBtn = document.getElementById("login-submit");
+
+			if (!form || !emailEl || !pwdEl || !submitBtn) {
+				return;
+			}
+
+			if (form.dataset.bound) {
+				return;
+			}
+			form.dataset.bound = "1";
+
+			form.addEventListener("submit", async (e) => {
+				e.preventDefault();
+				setError("");
+
+				const email = String(emailEl.value || "").trim();
+				const password = String(pwdEl.value || "");
+				if (!email || !password) {
+					setError("请填写邮箱与密码！(＃｀д´)ﾉ");
+					return;
+				}
+
+				submitBtn.disabled = true;
+				submitBtn.textContent = "登录喵…";
+
+				try {
+					const resp = await fetch(API_LOGIN, {
+						method: "POST",
+						credentials: "include",
+						headers: { "Content-Type": "application/json", Accept: "application/json" },
+						body: JSON.stringify({ email, password }),
+					});
+
+					const data = await resp.json().catch(() => null);
+					if (!resp.ok || !data?.ok) {
+						setError(data?.message || "登录失败");
+						return;
+					}
+
+					window.location.href = getRedirectTarget();
+				} catch (err) {
+					console.error("Login failed:", err);
+					setError("登录失败，请稍后再试");
+				} finally {
+					submitBtn.disabled = false;
+					submitBtn.textContent = "登录";
+				}
+			});
+		}
+
+		initLoginForm();
+		document.addEventListener("astro:after-swap", initLoginForm);
+	</script>
+</MainGridLayout>

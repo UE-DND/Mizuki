@@ -1,0 +1,151 @@
+---
+import { Icon } from "astro-icon/components";
+import { url } from "../../utils/url-utils";
+---
+
+<div id="auth-status" class="flex items-center gap-1">
+	<a
+		id="auth-login"
+		href={url("/login/")}
+		class="btn-plain scale-animation rounded-lg w-11 h-11 active:scale-90 flex items-center justify-center"
+		aria-label="Login"
+		title="登录"
+	>
+		<Icon name="material-symbols:login-rounded" class="text-[1.25rem]" />
+	</a>
+
+		<div
+			id="auth-user"
+			class="hidden items-center gap-2 pl-2 pr-1 h-11 rounded-lg border border-[var(--line-divider)] bg-[var(--card-bg)]/50"
+		>
+			<div class="flex items-center justify-center w-8 h-8 rounded-md overflow-hidden bg-black/5 dark:bg-white/10">
+				<img
+					id="auth-user-avatar"
+					class="hidden w-full h-full object-cover"
+					alt=""
+					loading="lazy"
+					decoding="async"
+				/>
+				<Icon
+					id="auth-user-icon"
+					name="material-symbols:person-rounded"
+					class="text-[1.25rem] text-black/70 dark:text-white/70"
+				/>
+			</div>
+			<span
+			id="auth-user-name"
+			class="max-w-[7rem] text-sm text-black/70 dark:text-white/70 truncate"
+		></span>
+		<button
+			id="auth-logout"
+			type="button"
+			class="btn-plain scale-animation rounded-lg w-9 h-9 active:scale-90 flex items-center justify-center"
+			aria-label="Logout"
+			title="退出"
+		>
+			<Icon name="material-symbols:logout-rounded" class="text-[1.1rem]" />
+		</button>
+	</div>
+</div>
+
+<script is:inline>
+	const API_ME = "/api/auth/me/";
+	const API_LOGOUT = "/api/auth/logout/";
+
+	function setAuthState(state) {
+		const loginEl = document.getElementById("auth-login");
+		const userEl = document.getElementById("auth-user");
+		const userNameEl = document.getElementById("auth-user-name");
+		const avatarEl = document.getElementById("auth-user-avatar");
+		const iconEl = document.getElementById("auth-user-icon");
+		if (!loginEl || !userEl || !userNameEl) {
+			return;
+		}
+
+		if (state && state.user && state.user.name) {
+			loginEl.classList.add("hidden");
+			userEl.classList.remove("hidden");
+			userEl.classList.add("flex");
+			userNameEl.textContent = state.user.name;
+
+			if (avatarEl && iconEl && state.user.avatarUrl) {
+				avatarEl.src = state.user.avatarUrl;
+				avatarEl.classList.remove("hidden");
+				iconEl.classList.add("hidden");
+			} else if (avatarEl && iconEl) {
+				avatarEl.removeAttribute("src");
+				avatarEl.classList.add("hidden");
+				iconEl.classList.remove("hidden");
+			}
+			return;
+		}
+
+		userEl.classList.add("hidden");
+		userEl.classList.remove("flex");
+		loginEl.classList.remove("hidden");
+		userNameEl.textContent = "";
+
+		if (avatarEl && iconEl) {
+			avatarEl.removeAttribute("src");
+			avatarEl.classList.add("hidden");
+			iconEl.classList.remove("hidden");
+		}
+	}
+
+	async function refreshAuthState() {
+		try {
+			const resp = await fetch(API_ME, {
+				method: "GET",
+				credentials: "include",
+				headers: { Accept: "application/json" },
+			});
+			if (!resp.ok) {
+				setAuthState(null);
+				return;
+			}
+			const data = await resp.json();
+			setAuthState(data);
+		} catch (err) {
+			console.error("Failed to load auth state:", err);
+			setAuthState(null);
+		}
+	}
+
+	async function initAuthStatus() {
+		const logoutBtn = document.getElementById("auth-logout");
+		const avatarEl = document.getElementById("auth-user-avatar");
+		const iconEl = document.getElementById("auth-user-icon");
+
+		if (avatarEl && iconEl && !avatarEl.dataset.bound) {
+			avatarEl.dataset.bound = "1";
+			avatarEl.addEventListener("error", () => {
+				avatarEl.removeAttribute("src");
+				avatarEl.classList.add("hidden");
+				iconEl.classList.remove("hidden");
+			});
+		}
+
+		if (logoutBtn && !logoutBtn.dataset.bound) {
+			logoutBtn.dataset.bound = "1";
+			logoutBtn.addEventListener("click", async () => {
+				try {
+					await fetch(API_LOGOUT, {
+						method: "POST",
+						credentials: "include",
+						headers: { "Content-Type": "application/json" },
+						body: JSON.stringify({}),
+					});
+				} catch (err) {
+					console.error("Logout failed:", err);
+				} finally {
+					setAuthState(null);
+				}
+			});
+		}
+
+		await refreshAuthState();
+	}
+
+	initAuthStatus();
+	document.addEventListener("astro:after-swap", initAuthStatus);
+</script>

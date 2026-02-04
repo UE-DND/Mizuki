@@ -4,6 +4,8 @@ import { getSortedPosts } from "../../utils/content-utils";
 import { initPostIdMap } from "../../utils/permalink-utils";
 import { getPostUrl } from "../../utils/url-utils";
 
+export const prerender = true;
+
 export async function GET() {
 	const posts = await getSortedPosts();
 	initPostIdMap(posts);

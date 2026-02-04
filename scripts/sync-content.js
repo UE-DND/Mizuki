@@ -2,6 +2,7 @@ import { execSync } from "child_process";
 import fs from "fs";
 import path from "path";
 import { fileURLToPath } from "url";
+import { exportDirectusContent } from "./export-directus-content.js";
 import { loadEnv } from "./load-env.js";
 
 const __filename = fileURLToPath(import.meta.url);
@@ -15,47 +16,65 @@ console.log("Loaded .env configuration file\n");
 const CONTENT_REPO_URL = process.env.CONTENT_REPO_URL || "";
 const CONTENT_DIR = process.env.CONTENT_DIR || path.join(rootDir, "content");
 
+const DIRECTUS_URL = process.env.DIRECTUS_URL || "";
+const DIRECTUS_STATIC_TOKEN = process.env.DIRECTUS_STATIC_TOKEN || "";
+const useDirectusExport = Boolean(DIRECTUS_URL && DIRECTUS_STATIC_TOKEN);
+
 console.log("Starting content synchronization...\n");
 
-// 检查内容目录是否存在
-if (!fs.existsSync(CONTENT_DIR)) {
-	console.log(`Content directory does not exist: ${CONTENT_DIR}`);
-	console.log("Using independent repository mode");
-
-	if (!CONTENT_REPO_URL) {
-		console.warn(
-			"Warning: CONTENT_REPO_URL not set, will use local content",
-		);
-		console.log(
-			"Tip: Please set CONTENT_REPO_URL environment variable or manually create content directory",
-		);
-		process.exit(0);
-	}
-
+if (useDirectusExport) {
 	try {
-		console.log(`Cloning content repository: ${CONTENT_REPO_URL}`);
-		execSync(`git clone --depth 1 ${CONTENT_REPO_URL} ${CONTENT_DIR}`, {
-			stdio: "inherit",
-			cwd: rootDir,
+		await exportDirectusContent({
+			directusUrl: DIRECTUS_URL,
+			staticToken: DIRECTUS_STATIC_TOKEN,
+			contentDir: CONTENT_DIR,
 		});
-		console.log("Content repository cloned successfully");
 	} catch (error) {
-		console.error("Clone failed:", error.message);
-		process.exit(1);
+		console.error("Directus export failed:", error?.message || error);
+		// 不直接退出：继续执行链接逻辑，尽量保证构建可继续
+		process.exitCode = 1;
 	}
 } else {
-	console.log(`Content directory already exists: ${CONTENT_DIR}`);
+	// 检查内容目录是否存在
+	if (!fs.existsSync(CONTENT_DIR)) {
+		console.log(`Content directory does not exist: ${CONTENT_DIR}`);
+		console.log("Using independent repository mode");
 
-	if (fs.existsSync(path.join(CONTENT_DIR, ".git"))) {
+		if (!CONTENT_REPO_URL) {
+			console.warn(
+				"Warning: CONTENT_REPO_URL not set, will use local content",
+			);
+			console.log(
+				"Tip: Please set CONTENT_REPO_URL environment variable or manually create content directory",
+			);
+			process.exit(0);
+		}
+
 		try {
-			console.log("Pulling latest content...");
-			execSync("git pull --allow-unrelated-histories", {
+			console.log(`Cloning content repository: ${CONTENT_REPO_URL}`);
+			execSync(`git clone --depth 1 ${CONTENT_REPO_URL} ${CONTENT_DIR}`, {
 				stdio: "inherit",
-				cwd: CONTENT_DIR,
+				cwd: rootDir,
 			});
-			console.log("Content updated successfully");
+			console.log("Content repository cloned successfully");
 		} catch (error) {
-			console.warn("Content update failed:", error.message);
+			console.error("Clone failed:", error.message);
+			process.exit(1);
+		}
+	} else {
+		console.log(`Content directory already exists: ${CONTENT_DIR}`);
+
+		if (fs.existsSync(path.join(CONTENT_DIR, ".git"))) {
+			try {
+				console.log("Pulling latest content...");
+				execSync("git pull --allow-unrelated-histories", {
+					stdio: "inherit",
+					cwd: CONTENT_DIR,
+				});
+				console.log("Content updated successfully");
+			} catch (error) {
+				console.warn("Content update failed:", error.message);
+			}
 		}
 	}
 }
