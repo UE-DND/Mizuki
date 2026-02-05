@@ -7,18 +7,6 @@ import type {
 } from "../constants/constants";
 import type { JsonValue } from "./json";
 
-export type ThemeColorRole = {
-	main: string;
-	container: string;
-	onContainer: string;
-	on: string;
-};
-
-export type ThemeColorScheme = {
-	primary: ThemeColorRole;
-	secondary: ThemeColorRole;
-};
-
 export type SiteConfig = {
 	title: string;
 	subtitle: string;
@@ -68,10 +56,6 @@ export type SiteConfig = {
 	themeColor: {
 		hue: number;
 		fixed: boolean;
-		palette: {
-			light: ThemeColorScheme;
-			dark: ThemeColorScheme;
-		};
 	};
 
 	// 特色页面开关配置

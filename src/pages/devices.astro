@@ -238,12 +238,12 @@ const brands = Object.keys(devices);
       color: white;
       border-color: var(--primary);
       transform: translateY(-1px);
-      box-shadow: 0 4px 12px rgba(var(--color-primary-rgb), 0.3);
+      box-shadow: 0 4px 12px oklch(from var(--primary) l c h / 0.3);
     }
 
     .filter-tag.active:hover {
       transform: translateY(-2px);
-      box-shadow: 0 6px 16px rgba(var(--color-primary-rgb), 0.4);
+      box-shadow: 0 6px 16px oklch(from var(--primary) l c h / 0.4);
     }
 
     /* 设备卡片动画效果 */
@@ -277,7 +277,7 @@ const brands = Object.keys(devices);
       position: absolute;
       inset: 0;
       border-radius: 0.75rem;
-      background: linear-gradient(135deg, rgba(var(--color-primary-rgb), 0.05), transparent);
+      background: linear-gradient(135deg, oklch(from var(--primary) l c h / 0.05), transparent);
       opacity: 0;
       transition: opacity 0.4s ease;
       pointer-events: none;

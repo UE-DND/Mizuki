@@ -49,21 +49,6 @@ const isHomePage = pathsEqual(Astro.url.pathname, url("/"));
 // defines global css variables
 // why doing this in Layout instead of GlobalStyles: https://github.com/withastro/astro/issues/6728#issuecomment-1502203757
 const configHue = siteConfig.themeColor.hue;
-const themePalette = siteConfig.themeColor.palette;
-
-const hexToRgb = (hex: string): string => {
-	const normalized = hex.replace("#", "");
-	if (normalized.length !== 6) {
-		return "0, 0, 0";
-	}
-	const r = Number.parseInt(normalized.slice(0, 2), 16);
-	const g = Number.parseInt(normalized.slice(2, 4), 16);
-	const b = Number.parseInt(normalized.slice(4, 6), 16);
-	return `${r}, ${g}, ${b}`;
-};
-
-const primaryLightRgb = hexToRgb(themePalette.light.primary.main);
-const primaryDarkRgb = hexToRgb(themePalette.dark.primary.main);
 
 // 获取导航栏透明模式配置
 const navbarTransparentMode =
@@ -379,54 +364,6 @@ if (siteConfig.font) {
 				"page-width": `${PAGE_WIDTH}rem`,
 			}}
 		></style>
-		<style
-			is:global
-			define:vars={{
-				"primary-light": themePalette.light.primary.main,
-				"primary-light-container": themePalette.light.primary.container,
-				"primary-light-on": themePalette.light.primary.on,
-				"primary-light-on-container":
-					themePalette.light.primary.onContainer,
-				"secondary-light": themePalette.light.secondary.main,
-				"secondary-light-container":
-					themePalette.light.secondary.container,
-				"secondary-light-on": themePalette.light.secondary.on,
-				"secondary-light-on-container":
-					themePalette.light.secondary.onContainer,
-				"primary-dark": themePalette.dark.primary.main,
-				"primary-dark-container": themePalette.dark.primary.container,
-				"primary-dark-on": themePalette.dark.primary.on,
-				"primary-dark-on-container": themePalette.dark.primary.onContainer,
-				"secondary-dark": themePalette.dark.secondary.main,
-				"secondary-dark-container": themePalette.dark.secondary.container,
-				"secondary-dark-on": themePalette.dark.secondary.on,
-				"secondary-dark-on-container":
-					themePalette.dark.secondary.onContainer,
-				"primary-light-rgb": primaryLightRgb,
-				"primary-dark-rgb": primaryDarkRgb,
-			}}
-		>
-			:root {
-				--primary: var(--primary-light);
-				--secondary: var(--secondary-light);
-				--secondary-container: var(--secondary-light-container);
-				--on-secondary: var(--secondary-light-on);
-				--on-secondary-container: var(--secondary-light-on-container);
-				--primary-rgb: var(--primary-light-rgb);
-				--color-primary-rgb: var(--primary-light-rgb);
-			}
-
-			:root.dark {
-				--primary: var(--primary-dark);
-				--secondary: var(--secondary-dark);
-				--secondary-container: var(--secondary-dark-container);
-				--on-secondary: var(--secondary-dark-on);
-				--on-secondary-container: var(--secondary-dark-on-container);
-				--primary-rgb: var(--primary-dark-rgb);
-				--color-primary-rgb: var(--primary-dark-rgb);
-			}
-		</style>
-
 		<!-- defines global css variables. This will be applied to <html> <body> and some other elements idk why -->
 		<slot name="head" />
 
