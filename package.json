@@ -15,7 +15,7 @@
 		"update-bilibili": "node scripts/update-bilibili.mjs",
 		"build": "node scripts/update-anime.mjs && astro build && pagefind --site dist && node scripts/compress-fonts.js",
 		"submit": "node scripts/indexnow-submit.js",
-		"preview": "astro preview",
+		"preview": "astro dev",
 		"astro": "astro",
 		"type-check": "tsc --noEmit --isolatedDeclarations --skipLibCheck",
 		"new-post": "node scripts/new-post.js",
