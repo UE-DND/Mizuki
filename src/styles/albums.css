@@ -61,7 +61,6 @@
 
 /* 灯箱样式 */
 .lightbox {
-  backdrop-filter: blur(8px);
   z-index: 9999;
 }
 
@@ -83,7 +82,6 @@
 
 /* 灯箱按钮 */
 .lightbox button {
-  backdrop-filter: blur(4px);
   transition: all 0.2s ease;
 }
 
@@ -94,7 +92,6 @@
 
 /* 灯箱信息面板 */
 #lightbox-info {
-  backdrop-filter: blur(8px);
   border-radius: 0.5rem;
   max-height: 30vh;
   overflow-y: auto;

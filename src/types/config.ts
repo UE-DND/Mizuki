@@ -2,7 +2,6 @@ import type {
 	DARK_MODE,
 	LIGHT_MODE,
 	WALLPAPER_BANNER,
-	WALLPAPER_FULLSCREEN,
 	WALLPAPER_NONE,
 } from "../constants/constants";
 import type { JsonValue } from "./json";
@@ -127,8 +126,8 @@ export type SiteConfig = {
 
 	// 壁纸模式配置
 	wallpaperMode: {
-		// 默认壁纸模式：banner=顶部横幅，fullscreen=全屏壁纸，none=无壁纸
-		defaultMode: "banner" | "fullscreen" | "none";
+		// 默认壁纸模式：banner=顶部横幅，none=无壁纸
+		defaultMode: "banner" | "none";
 	};
 
 	banner: {
@@ -278,10 +277,7 @@ type TwikooConfig = {
 
 export type LIGHT_DARK_MODE = typeof LIGHT_MODE | typeof DARK_MODE;
 
-export type WALLPAPER_MODE =
-	| typeof WALLPAPER_BANNER
-	| typeof WALLPAPER_FULLSCREEN
-	| typeof WALLPAPER_NONE;
+export type WALLPAPER_MODE = typeof WALLPAPER_BANNER | typeof WALLPAPER_NONE;
 
 export type BlogPostData = {
 	body: string;
@@ -406,24 +402,6 @@ export type SakuraConfig = {
 		fadeSpeed: number; // 消失速度
 	};
 	zIndex: number; // 层级，确保樱花在合适的层级显示
-};
-
-export type FullscreenWallpaperConfig = {
-	src:
-		| string
-		| string[]
-		| {
-				desktop?: string | string[];
-				mobile?: string | string[];
-		  }; // 支持单个图片、图片数组或分别设置桌面端和移动端图片
-	position?: "top" | "center" | "bottom"; // 壁纸位置，等同于 object-position
-	carousel?: {
-		enable: boolean; // 是否启用轮播
-		interval: number; // 轮播间隔时间（秒）
-	};
-	zIndex?: number; // 层级，确保壁纸在合适的层级显示
-	opacity?: number; // 壁纸透明度，0-1之间
-	blur?: number; // 背景模糊程度，单位px
 };
 
 /**

@@ -782,13 +782,6 @@ function disableAnimation() {
 		}
 	}
 
-	window.addEventListener("wallpaper-mode-change", () => {
-		// 等待壁纸模式切换完成后再同步轮播状态
-		requestAnimationFrame(() => {
-			updateBannerCarouselState();
-		});
-	});
-
 	function setupSakura() {
 		const sakuraConfig = widgetConfigs.sakura;
 		if (!sakuraConfig || !sakuraConfig.enable) return;
@@ -1256,7 +1249,7 @@ function disableAnimation() {
 						toc.classList.add("toc-hide");
 					}
 				} else {
-					// In Fullscreen or None mode, always show TOC
+					// 非 banner 模式下始终显示 TOC
 					toc.classList.remove("toc-hide");
 				}
 			}

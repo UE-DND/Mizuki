@@ -268,11 +268,6 @@ export const zh_CN: Translation = {
 	[Key.atomCopied]: "Atom 链接已复制到剪贴板！",
 	[Key.atomCopyFailed]: "复制失败，请手动复制链接",
 
-	// 壁纸模式
-	[Key.wallpaperBanner]: "横幅模式",
-	[Key.wallpaperFullscreen]: "全屏模式",
-	[Key.wallpaperNone]: "隐藏壁纸",
-
 	// 站点统计
 	[Key.siteStats]: "站点统计",
 	[Key.siteStatsPostCount]: "文章",

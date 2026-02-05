@@ -14,7 +14,7 @@
 - [x] 使用 [Swup](https://swup.js.org/) 实现流畅的动画和页面过渡
 - [x] 明暗主题切换，支持系统偏好检测
 - [x] 可自定义主题色彩和动态横幅轮播
-- [x] 全屏背景图片，支持轮播、透明度和模糊效果
+- [x] 顶部横幅图片，支持轮播与自定义配置
 - [x] 全设备响应式设计
 - [x] 使用 JetBrains Mono 字体的优美排版
 
@@ -228,7 +228,7 @@ CONTENT_REPO_URL=https://github.com/your-username/Mizuki-Content.git
 - **[Fuwari](https://github.com/saicaca/fuwari)** by saicaca - 本项目所基于的原始模板。感谢您创建了如此漂亮且功能强大的模板
 - **[Yukina](https://github.com/WhitePaper233/yukina)** - 感谢提供设计灵感和创意，帮助塑造了这个项目。Yukina 是一个优雅的博客模板，展现了出色的设计原则和用户体验
 - **[Firefly](https://github.com/CuteLeaf/Firefly)** - 感谢提供优秀的布局设计思路，双侧边栏布局、文章双列网格等布局，及部分小组件的设计与实现，让 Mizuki 的界面更加丰富
-- **[Twilight](https://github.com/spr-aachen/Twilight)** - 感谢提供灵感和技术支持。Twilight 的动态壁纸模式切换系统、响应式设计和过渡效果显著提升了 Mizuki 的使用体验
+- **[Twilight](https://github.com/spr-aachen/Twilight)** - 感谢提供灵感和技术支持。Twilight 的响应式设计与过渡效果显著提升了 Mizuki 的使用体验
 - **[Pio](https://github.com/Dreamer-Paul/Pio)** 可爱的 Live2D 看板娘插件
 - **[Iconify](https://iconify.design/)** 精美的图标
 

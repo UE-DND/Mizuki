@@ -404,7 +404,6 @@ if (typeof window !== "undefined") {
 		overflow-y: auto;
 		background: var(--card-bg);
 		border: 1px solid var(--line-color);
-		backdrop-filter: blur(10px);
 	}
 
 	/* 确保主题切换按钮的背景色即时更新 */

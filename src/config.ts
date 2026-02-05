@@ -3,7 +3,6 @@ import type {
 	CommentConfig,
 	ExpressiveCodeConfig,
 	FooterConfig,
-	FullscreenWallpaperConfig,
 	LicenseConfig,
 	MusicPlayerConfig,
 	NavBarConfig,
@@ -92,7 +91,7 @@ export const siteConfig: SiteConfig = {
 
 	// 壁纸模式配置
 	wallpaperMode: {
-		// 默认壁纸模式：banner=顶部横幅，fullscreen=全屏壁纸，none=无壁纸
+		// 默认壁纸模式：banner=顶部横幅，none=无壁纸
 		defaultMode: "banner",
 	},
 
@@ -208,34 +207,6 @@ export const siteConfig: SiteConfig = {
 		},
 	},
 	showLastModified: true, // 控制“上次编辑”卡片显示的开关
-};
-export const fullscreenWallpaperConfig: FullscreenWallpaperConfig = {
-	src: {
-		desktop: [
-			"/assets/desktop-banner/1.webp",
-			"/assets/desktop-banner/2.webp",
-			"/assets/desktop-banner/3.webp",
-			"/assets/desktop-banner/4.webp",
-			"/assets/desktop-banner/5.webp",
-			"/assets/desktop-banner/6.webp",
-		], // 桌面横幅图片
-		mobile: [
-			"/assets/mobile-banner/1.webp",
-			"/assets/mobile-banner/2.webp",
-			"/assets/mobile-banner/3.webp",
-			"/assets/mobile-banner/4.webp",
-			"/assets/mobile-banner/5.webp",
-			"/assets/mobile-banner/6.webp",
-		], // 移动横幅图片
-	}, // 使用本地横幅图片
-	position: "center", // 壁纸位置，等同于 object-position
-	carousel: {
-		enable: true, // 启用轮播
-		interval: 5, // 轮播间隔时间（秒）
-	},
-	zIndex: -1, // 层级，确保壁纸在背景层
-	opacity: 0.8, // 壁纸透明度
-	blur: 1, // 背景模糊程度
 };
 
 export const navBarConfig: NavBarConfig = {
@@ -627,7 +598,6 @@ export type WidgetConfigs = {
 	music: MusicPlayerConfig;
 	layout: SidebarLayoutConfig;
 	sakura: SakuraConfig;
-	fullscreenWallpaper: FullscreenWallpaperConfig;
 	pio: PioConfig;
 	share: ShareConfig;
 };
@@ -638,7 +608,6 @@ export const widgetConfigs: WidgetConfigs = {
 	music: musicPlayerConfig,
 	layout: sidebarLayoutConfig,
 	sakura: sakuraConfig,
-	fullscreenWallpaper: fullscreenWallpaperConfig,
 	pio: pioConfig, // 添加 pio 配置
 	share: shareConfig, // 添加分享配置
 };

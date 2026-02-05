@@ -206,11 +206,6 @@ export const ja: Translation = {
 	[Key.atomCopyFailed]:
 		"コピーに失敗しました。リンクを手動で追加してください。",
 
-	// 壁紙モード
-	[Key.wallpaperBanner]: "バナーモード",
-	[Key.wallpaperFullscreen]: "フルスクリーンモード",
-	[Key.wallpaperNone]: "壁紙を非表示",
-
 	// スキルページ
 	[Key.skills]: "スキル",
 	[Key.skillsSubtitle]: "技術スキルと専門知識",

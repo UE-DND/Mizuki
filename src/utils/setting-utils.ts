@@ -1,11 +1,6 @@
-import {
-	DARK_MODE,
-	DEFAULT_THEME,
-	LIGHT_MODE,
-	// WALLPAPER_BANNER,
-} from "@constants/constants";
+import { DARK_MODE, DEFAULT_THEME, LIGHT_MODE } from "@constants/constants";
 import { siteConfig } from "@/config";
-import type { LIGHT_DARK_MODE, WALLPAPER_MODE } from "@/types/config";
+import type { LIGHT_DARK_MODE } from "@/types/config";
 
 export function getDefaultHue(): number {
 	const fallback = "250";
@@ -157,14 +152,7 @@ export function getStoredTheme(): LIGHT_DARK_MODE {
 	return (localStorage.getItem("theme") as LIGHT_DARK_MODE) || DEFAULT_THEME;
 }
 
-export function getStoredWallpaperMode(): WALLPAPER_MODE {
+export function getStoredWallpaperMode(): "banner" | "none" {
 	// 壁纸模式由配置控制，不再从 localStorage 读取
 	return siteConfig.wallpaperMode.defaultMode;
-}
-
-export function setWallpaperMode(mode: WALLPAPER_MODE): void {
-	// 触发自定义事件通知其他组件壁纸模式已改变
-	window.dispatchEvent(
-		new CustomEvent("wallpaper-mode-change", { detail: { mode } }),
-	);
 }

@@ -22,10 +22,6 @@ export const setupPanelOutsideHandler = (panelManager: PanelManager): void => {
 			panelId: "mobile-toc-panel",
 			ignores: ["mobile-toc-panel", "mobile-toc-switch"],
 		},
-		{
-			panelId: "wallpaper-mode-panel",
-			ignores: ["wallpaper-mode-panel", "wallpaper-mode-switch"],
-		},
 	];
 
 	// 防止重复绑定全局点击监听

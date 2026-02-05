@@ -7,15 +7,11 @@ import Navbar from "@components/Navbar.astro";
 import SideBar from "@components/widget/SideBar.astro";
 import type { MarkdownHeading } from "astro";
 import { Icon } from "astro-icon/components";
-import FullscreenWallpaper from "../components/misc/FullscreenWallpaper.astro";
 import IconifyLoader from "../components/misc/IconifyLoader.astro";
 import ImageWrapper from "../components/misc/ImageWrapper.astro";
 import TypewriterText from "../components/TypewriterText.astro";
 import TOC from "../components/widget/TOC.astro";
-import {
-	fullscreenWallpaperConfig,
-	siteConfig,
-} from "../config";
+import { siteConfig } from "../config";
 import {
 	BANNER_HEIGHT,
 	BANNER_HEIGHT_EXTEND,
@@ -231,14 +227,6 @@ const mainContentClass = `
 	.trim()
 	.replace(/\s+/g, " ");
 
-// 检查是否应该启用半透明效果（当默认模式为 fullscreen 时）
-const shouldEnableTransparency =
-	initialWallpaperMode === "fullscreen";
-
-// 为组件添加半透明效果的CSS类
-const transparentClass = shouldEnableTransparency
-	? "wallpaper-transparent"
-	: "";
 ---
 
 <Layout title={title} banner={banner} description={description} lang={lang} setOGTypeArticle={setOGTypeArticle} postSlug={postSlug}>
@@ -261,16 +249,11 @@ const transparentClass = shouldEnableTransparency
 		switch(wallpaperMode) {
 			case 'banner':
 				body.classList.add('enable-banner');
-				body.classList.remove('wallpaper-transparent', 'no-banner-mode');
+				body.classList.remove('no-banner-mode');
 				body.classList.remove('waves-paused');
 				break;
-			case 'fullscreen':
-				body.classList.remove('enable-banner');
-				body.classList.add('wallpaper-transparent', 'no-banner-mode');
-				body.classList.add('waves-paused');
-				break;
 			case 'none':
-				body.classList.remove('enable-banner', 'wallpaper-transparent');
+				body.classList.remove('enable-banner');
 				body.classList.add('no-banner-mode');
 				body.classList.add('waves-paused');
 				break;
@@ -284,7 +267,7 @@ const transparentClass = shouldEnableTransparency
 		return isArticle ? "none" : defaultWallpaperMode;
 	}
 	
-	// 根据壁纸模式动态设置 banner 和全屏壁纸的显示
+	// 根据壁纸模式动态设置 banner 的显示
 	
 	// 在 DOM 加载后执行
 	if (document.readyState === 'loading') {
@@ -297,34 +280,15 @@ const transparentClass = shouldEnableTransparency
 		// 壁纸模式由配置控制，不再从 localStorage 读取
 		var wallpaperMode = getActiveWallpaperMode();
 		var bannerWrapper = document.getElementById('banner-wrapper');
-		var fullscreenWallpaper = document.querySelector('[data-fullscreen-wallpaper]');
 		var navbar = document.getElementById('navbar');
 		var body = document.body;
 		var mainContent = document.querySelector('.absolute.w-full.z-30.pointer-events-none');
 		var tocWrapper = document.getElementById('toc-wrapper');
-		var leftSidebar = document.getElementById('sidebar');
-		var rightSidebar = document.getElementById('right-sidebar');
 
 		if (mainContent) {
 			mainContent.classList.toggle(
-				'wallpaper-transparent',
-				wallpaperMode === 'fullscreen',
-			);
-			mainContent.classList.toggle(
 				'no-banner-layout',
 				wallpaperMode === 'none',
-			);
-		}
-		if (leftSidebar) {
-			leftSidebar.classList.toggle(
-				'wallpaper-transparent',
-				wallpaperMode === 'fullscreen',
-			);
-		}
-		if (rightSidebar) {
-			rightSidebar.classList.toggle(
-				'wallpaper-transparent',
-				wallpaperMode === 'fullscreen',
 			);
 		}
 		
@@ -362,18 +326,7 @@ const transparentClass = shouldEnableTransparency
 			}
 		}
 
-		if (fullscreenWallpaper) {
-			fullscreenWallpaper.classList.toggle(
-				'wallpaper-layer-hidden',
-				wallpaperMode !== 'fullscreen',
-			);
-		}
-
 		body.classList.toggle('enable-banner', wallpaperMode === 'banner');
-		body.classList.toggle(
-			'wallpaper-transparent',
-			wallpaperMode === 'fullscreen',
-		);
 		body.classList.toggle('no-banner-mode', wallpaperMode !== 'banner');
 		body.classList.toggle('waves-paused', wallpaperMode !== 'banner');
 
@@ -398,20 +351,7 @@ const transparentClass = shouldEnableTransparency
 					}
 				}
 				break;
-				
-			case 'fullscreen':
-				// 在全屏模式下始终显示 TOC
-				if (tocWrapper) {
-					tocWrapper.classList.remove('toc-hide');
-				}
-				// navbar 强制设置为 semi 透明模式（忽略 config 配置）
-				if (navbar) {
-					navbar.setAttribute('data-dynamic-transparent', 'semi');
-					// 强制移除 config 中的 data-transparent-mode 影响
-					navbar.removeAttribute('data-transparent-mode');
-				}
-				break;
-				
+
 			case 'none':
 				// 在无壁纸模式下也始终显示 TOC
 				if (tocWrapper) {
@@ -433,22 +373,11 @@ const transparentClass = shouldEnableTransparency
 		}
 	}
 	
-	// 监听壁纸模式变化，立即应用（不重载页面）
-	window.addEventListener('wallpaper-mode-change', function(_event) {
-		applyWallpaperMode();
-	});
-	
 	// 支持 Swup 页面过渡
 	document.addEventListener('swup:page:view', function() {
 		applyWallpaperMode();
 	});
 </script>
-
-<!-- 全屏壁纸 - 始终渲染，通过 JS 控制显示隐藏 -->
-<FullscreenWallpaper
-	config={fullscreenWallpaperConfig}
-	defaultMode={initialWallpaperMode}
-/>
 
 <!-- 全局图标加载器 -->
 <IconifyLoader />
@@ -661,7 +590,7 @@ const transparentClass = shouldEnableTransparency
 
 <!-- Main content -->
 <div
-	class={`absolute w-full z-30 pointer-events-none main-panel-wrapper ${mobileNonHomeBannerClass ? 'mobile-main-no-banner' : ''} ${initialWallpaperMode === 'none' ? 'no-banner-layout' : ''} ${transparentClass}`}
+	class={`absolute w-full z-30 pointer-events-none main-panel-wrapper ${mobileNonHomeBannerClass ? 'mobile-main-no-banner' : ''} ${initialWallpaperMode === 'none' ? 'no-banner-layout' : ''}`}
 	style={`top: ${finalMainPanelTop}`}
 >
     <!-- The pointer-events-none here prevent blocking the click event of the TOC -->
@@ -684,11 +613,11 @@ const transparentClass = shouldEnableTransparency
             {/* 侧边栏和主内容区域容器 */}
             <div class="contents">
                 {(mobileShowSidebar || tabletShowSidebar || desktopShowSidebar) && (
-                    <SideBar class={`${sidebarClass} ${transparentClass}`} headings={headings}></SideBar>
+                    <SideBar class={sidebarClass} headings={headings}></SideBar>
                 )}
                 
                 {hasRightSidebarComponents && (
-                    <div class={`right-sidebar-container ${rightSidebarClass} ${transparentClass}`}>
+                    <div class={`right-sidebar-container ${rightSidebarClass}`}>
                         <RightSideBar headings={headings}></RightSideBar>
                     </div>
                 )}
@@ -785,8 +714,7 @@ const transparentClass = shouldEnableTransparency
     transition: top 0.3s ease, max-height 0.3s ease;
 }
 
-body.no-banner-mode #main-grid,
-body.wallpaper-transparent #main-grid {
+body.no-banner-mode #main-grid {
     transition-duration: 0.3s !important;
 }
 
@@ -799,16 +727,6 @@ body.no-banner-mode .absolute.w-full.z-30 {
 body.no-banner-mode #toc-inner-wrapper {
     top: 5.5rem !important;
     max-height: calc(100vh - 8rem) !important;
-}
-
-/* 全屏壁纸模式下的 TOC 毛玻璃背景 - 仅在 TOC 加载完成后显示 */
-body.wallpaper-transparent #toc-inner-wrapper:has(table-of-contents[data-loaded="true"]) {
-    background: var(--card-bg-transparent) !important;
-    backdrop-filter: blur(20px) !important;
-    -webkit-backdrop-filter: blur(20px) !important;
-    border-radius: var(--radius-large);
-    padding: 0.5rem;
-    box-shadow: var(--shadow-lg);
 }
 
 /* 桌面端 banner 模式下的主内容区域位置 */

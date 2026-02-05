@@ -1074,8 +1074,6 @@ onDestroy(() => {
 <style>
 .orb-player {
 	position: relative;
-	backdrop-filter: blur(10px);
-	-webkit-backdrop-filter: blur(10px);
 }
 .orb-player::before {
 	content: '';
