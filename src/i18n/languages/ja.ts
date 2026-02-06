@@ -126,10 +126,6 @@ export const ja: Translation = {
 		"まだアルバムが作成されていません。美しい思い出を追加しましょう!",
 	[Key.albumsBackToList]: "アルバムに戻る",
 
-	// デバイスページ
-	[Key.devices]: "デバイス",
-	[Key.devicesSubtitle]: "日常的に使用しているデバイスを紹介",
-	[Key.devicesViewDetails]: "詳細を表示",
 	[Key.albumsPhotoCount]: "件の写真",
 	[Key.albumsPhotosCount]: "件の写真",
 
