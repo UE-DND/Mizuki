@@ -25,14 +25,16 @@
 /* --- 滚动透明度控制 (Dynamic Transparent) --- */
 
 /* Semi (毛玻璃) */
-#navbar[data-dynamic-transparent="semi"] {
+#navbar[data-dynamic-transparent="semi"],
+#navbar[data-transparent-mode="semi"] {
   --nav-bg: var(--page-bg);
   --nav-blur: none;
   --nav-shadow: none;
 }
 
 /* None (实心) */
-#navbar[data-dynamic-transparent="none"] {
+#navbar[data-dynamic-transparent="none"],
+#navbar[data-transparent-mode="none"] {
   --nav-bg: var(--page-bg);
   --nav-blur: none;
   --nav-shadow: none;
@@ -79,10 +81,12 @@
   }
 
   /* 搜索框内部颜色处理 */
-  body:has(#navbar[data-dynamic-transparent="none"]) #search-panel #search-bar-inside {
+  body:has(#navbar[data-dynamic-transparent="none"]) #search-panel #search-bar-inside,
+  body:has(#navbar[data-transparent-mode="none"]) #search-panel #search-bar-inside {
     background: rgba(0, 0, 0, 0.08);
   }
-  :root.dark body:has(#navbar[data-dynamic-transparent="none"]) #search-panel #search-bar-inside {
+  :root.dark body:has(#navbar[data-dynamic-transparent="none"]) #search-panel #search-bar-inside,
+  :root.dark body:has(#navbar[data-transparent-mode="none"]) #search-panel #search-bar-inside {
     background: rgba(255, 255, 255, 0.15);
   }
 

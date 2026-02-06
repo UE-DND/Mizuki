@@ -15,10 +15,7 @@
 
 ```bash
 # 改动任何代码后，必须通过以下检查
-pnpm check
-pnpm lint
-pnpm format
-pnpm build
+pnpm check && pnpm lint && pnpm build && pnpm format
 ```
 
 其余常见命令见 [CONTRIBUTING.md](CONTRIBUTING.md#基本命令)

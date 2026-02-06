@@ -498,6 +498,9 @@ const mainContentClass = `
             </script>
         </div>
     )}
+
+    <!-- 导航区顶部遮罩层，提高图片背景下导航文字可读性 -->
+    <div class="navbar-scrim" aria-hidden="true"></div>
     
     <!-- Home page text overlay -->
     {siteConfig.banner.homeText?.enable && (
@@ -667,6 +670,32 @@ const mainContentClass = `
 </Layout>
 
 <style>
+/* 导航区顶部遮罩层 */
+.navbar-scrim {
+    position: absolute;
+    top: 0;
+    right: 0;
+    left: 0;
+    height: calc(clamp(5.5rem, 12vh, 8.5rem) + env(safe-area-inset-top, 0px));
+    pointer-events: none;
+    z-index: 15;
+    background: linear-gradient(
+        to bottom,
+        rgba(255, 255, 255, 0.78) 0%,
+        rgba(255, 255, 255, 0.42) 48%,
+        rgba(255, 255, 255, 0) 100%
+    );
+}
+
+:root.dark .navbar-scrim {
+    background: linear-gradient(
+        to bottom,
+        rgba(0, 0, 0, 0.7) 0%,
+        rgba(0, 0, 0, 0.38) 48%,
+        rgba(0, 0, 0, 0) 100%
+    );
+}
+
 /* Banner text styles */
 .banner-title {
     text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.7);
