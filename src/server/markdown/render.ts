@@ -3,10 +3,10 @@ import rehypeRaw from "rehype-raw";
 import rehypeStringify from "rehype-stringify";
 import remarkParse from "remark-parse";
 import remarkRehype from "remark-rehype";
-import sanitizeHtml from "sanitize-html";
 import { unified } from "unified";
 
 import { rehypePlugins, remarkPlugins } from "./pipeline";
+import { sanitizeMarkdownHtml } from "./sanitize";
 
 const markdownProcessor = unified()
 	.use(remarkParse)
@@ -38,7 +38,7 @@ export async function renderMarkdownHtml(markdown: string): Promise<string> {
 	}
 
 	const rendered = await markdownProcessor.process(source);
-	return String(rendered.value || "");
+	return sanitizeMarkdownHtml(String(rendered.value || ""));
 }
 
 export async function renderMarkdownForFeed(
@@ -59,7 +59,5 @@ export async function renderMarkdownForFeed(
 		image.setAttribute("src", toAbsoluteSrc(src, site));
 	}
 
-	return sanitizeHtml(root.toString(), {
-		allowedTags: sanitizeHtml.defaults.allowedTags.concat(["img"]),
-	});
+	return sanitizeMarkdownHtml(root.toString());
 }

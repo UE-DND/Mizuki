@@ -13,15 +13,25 @@
 
 ## 必须遵守
 
-- 与后端通讯优先使用 SDK 能力。文档见 docs/Directus/Directus_SDK.md。
+- 与后端通讯优先使用 SDK 能力。文档见 `docs/Directus/Directus_SDK.md`。
 
 ## 架构与数据流
 
 - 页面层：`src/pages/**`
-- BFF/API 层：`src/pages/api/v1/[...segments].ts` -> `src/server/api/v1.ts`
+- BFF/API 入口：`src/pages/api/v1/[...segments].ts` -> `src/server/api/v1.ts`
+- API 路由与分域处理：
+  - `src/server/api/v1/router.ts`
+  - `src/server/api/v1/public.ts`
+  - `src/server/api/v1/me.ts`
+  - `src/server/api/v1/comments.ts`
+  - `src/server/api/v1/admin.ts`
+  - `src/server/api/v1/uploads.ts`
+  - `src/server/api/v1/shared.ts`
+  - `src/server/api/v1/shared/author-cache.ts`
 - Directus 访问层：`src/server/directus/client.ts`
 - 认证与会话：`src/server/directus-auth.ts`、`src/server/auth/session.ts`
 - ACL：`src/server/auth/acl.ts`
+- 环境校验入口：`src/middleware.ts`、`src/server/env/required.ts`
 - 类型：`src/types/app.ts`、`src/server/directus/schema.ts`
 
 统一链路：
@@ -76,7 +86,7 @@ ACL 判定顺序固定：
 
 - `tags/genres` 在 Directus 中可能是 JSON 字符串、CSV 字符串或数组。
 - 读取时必须走统一解析逻辑：
-  - API 层：`safeCsv`（`src/server/api/v1.ts`）
+  - API 层：`safeCsv`（`src/server/api/v1/shared.ts`）
   - 页面聚合层：`normalizeTags`（`src/utils/content-utils.ts`）
 - 不得直接假设字段一定是 `string[]`。
 
@@ -101,6 +111,12 @@ ACL 判定顺序固定：
 - 需要客户端交互时使用 `client:only="svelte"`。
 - `.astro` 内联脚本要保证 DOM 安全访问和兜底行为。
 
+## 安全与内容渲染规范
+
+- Markdown 输出必须经过服务端 sanitize（`src/server/markdown/sanitize.ts`）。
+- 禁止在 markdown 渲染链路引入内联 `<script>` 注入逻辑。
+- 密码保护内容使用 `MZK2:` 版本化密文，浏览器端通过 Web Crypto 解密。
+
 ## 错误处理
 
 - 外部请求与异步流程必须 `try/catch`。
@@ -114,6 +130,11 @@ ACL 判定顺序固定：
 - `DIRECTUS_URL`
 - `DIRECTUS_STATIC_TOKEN`
 
+登录限流（生产强依赖，开发可回退内存限流）：
+
+- `KV_REST_API_URL`
+- `KV_REST_API_TOKEN`
+
 可选：
 
 - `UMAMI_API_KEY`
@@ -121,6 +142,11 @@ ACL 判定顺序固定：
 - `INDEXNOW_HOST`
 - `DIRECTUS_EXPORT_INCLUDE_DRAFTS`
 - `DIRECTUS_EXPORT_CLEAN`
+
+## 构建与输出语义
+
+- 当前 Astro 配置为 `output: "static"`（Astro 5.17+ 不再接受 `hybrid`）。
+- 需要静态化的页面通过 `export const prerender = true` 显式声明。
 
 ## 命令与校验
 

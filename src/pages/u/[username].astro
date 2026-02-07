@@ -16,7 +16,7 @@ let payload: {
 		show_albums_on_profile?: boolean;
 		show_comments_on_profile?: boolean;
 	};
-	articles?: Array<{ id: string; title: string; slug: string }>;
+	articles?: Array<{ id: string; title: string; slug?: string }>;
 	diaries?: Array<{ id: string; content: string; happened_at: string | null }>;
 	anime?: Array<{ id: string; title: string; watch_status: string }>;
 	albums?: Array<{ id: string; title: string; slug: string }>;
@@ -79,7 +79,7 @@ function shortDiary(text: string): string {
 					<ul class="space-y-2">
 						{payload.articles.map((item) => (
 							<li>
-								<a href={`/posts/${item.slug}/`} class="hover:text-[var(--primary)] transition-colors">{item.title}</a>
+								<a href={`/posts/${item.id}/`} class="hover:text-[var(--primary)] transition-colors">{item.title}</a>
 							</li>
 						))}
 					</ul>

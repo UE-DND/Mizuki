@@ -48,7 +48,13 @@ export const getStaticPaths: GetStaticPaths = async () => {
 	});
 
 	return rows
-		.filter((post) => post.slug)
+		.filter(
+			(
+				post,
+			): post is typeof post & {
+				slug: string;
+			} => Boolean(post.slug),
+		)
 		.map((post) => ({
 			params: { slug: post.slug },
 			props: {

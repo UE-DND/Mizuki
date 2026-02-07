@@ -23,7 +23,6 @@ const hasDirectusTarget = Boolean(moduleName && contentId);
 	>
 		<div class="flex items-center justify-between mb-4">
 			<h3 class="text-xl font-semibold text-90">评论</h3>
-			<span class="text-xs text-60">支持二级回复</span>
 		</div>
 
 		{!hasDirectusTarget && (
@@ -73,7 +72,10 @@ const hasDirectusTarget = Boolean(moduleName && contentId);
 	</div>
 )}
 
-<script is:inline>
+<script>
+	import { getAuthState, subscribeAuthState } from "@/scripts/auth-state";
+	import type { AuthState } from "@/scripts/auth-state";
+
 	const root = document.getElementById("directus-comment-root");
 	if (!root) {
 		// no-op
@@ -82,22 +84,42 @@ const hasDirectusTarget = Boolean(moduleName && contentId);
 		const contentId = String(root.dataset.contentId || "").trim();
 		const directusEnabled = root.dataset.directusEnabled === "1";
 
-		const commentListEl = document.getElementById("comment-list");
-		const commentEmptyEl = document.getElementById("comment-empty");
-		const formEl = document.getElementById("comment-create-form");
-		const bodyEl = document.getElementById("comment-body");
-		const parentIdEl = document.getElementById("comment-parent-id");
-		const submitEl = document.getElementById("comment-submit");
+			const commentListEl = document.getElementById("comment-list");
+			const commentEmptyEl = document.getElementById("comment-empty");
+			const formEl = document.getElementById(
+				"comment-create-form",
+			) as HTMLFormElement | null;
+			const bodyEl = document.getElementById(
+				"comment-body",
+			) as HTMLTextAreaElement | null;
+			const parentIdEl = document.getElementById(
+				"comment-parent-id",
+			) as HTMLInputElement | null;
+			const submitEl = document.getElementById(
+				"comment-submit",
+			) as HTMLButtonElement | null;
 		const formErrorEl = document.getElementById("comment-form-error");
 		const replyHintEl = document.getElementById("comment-reply-hint");
 		const replyCancelEl = document.getElementById("comment-reply-cancel");
 
+		type CommentAuthor = {
+			name?: string | null;
+			avatar_url?: string | null;
+		};
+		type CommentItem = {
+			id: string;
+			author_id?: string | null;
+			author?: CommentAuthor | null;
+			date_created?: string | null;
+			body?: string | null;
+			replies?: CommentItem[] | null;
+		};
+
 		let currentUserId = "";
 		let isAdmin = false;
-		let comments = [];
-		const AUTH_STATE_CACHE_KEY = "__mizukiAuthState";
+		let comments: CommentItem[] = [];
 
-		const escapeHtml = (raw) =>
+		const escapeHtml = (raw: unknown): string =>
 			String(raw || "")
 				.replaceAll("&", "&amp;")
 				.replaceAll("<", "&lt;")
@@ -105,7 +127,7 @@ const hasDirectusTarget = Boolean(moduleName && contentId);
 				.replaceAll('"', "&quot;")
 				.replaceAll("'", "&#039;");
 
-		const formatDate = (iso) => {
+		const formatDate = (iso: string | null | undefined): string => {
 			if (!iso) return "";
 			const time = new Date(iso);
 			if (Number.isNaN(time.getTime())) return "";
@@ -119,14 +141,14 @@ const hasDirectusTarget = Boolean(moduleName && contentId);
 			return `/api/v1/articles/${encodeURIComponent(contentId)}/comments/`;
 		};
 
-		const commentItemApi = (commentId) => {
+		const commentItemApi = (commentId: string): string => {
 			if (moduleName === "diaries") {
 				return `/api/v1/diaries/comments/${encodeURIComponent(commentId)}/`;
 			}
 			return `/api/v1/articles/comments/${encodeURIComponent(commentId)}/`;
 		};
 
-		const setFormError = (message) => {
+		const setFormError = (message: string): void => {
 			if (!formErrorEl) return;
 			if (!message) {
 				formErrorEl.classList.add("hidden");
@@ -137,7 +159,7 @@ const hasDirectusTarget = Boolean(moduleName && contentId);
 			formErrorEl.classList.remove("hidden");
 		};
 
-		const setReplyState = (parentId, authorName) => {
+		const setReplyState = (parentId: string, authorName: string): void => {
 			if (!parentIdEl || !replyHintEl || !replyCancelEl) return;
 			parentIdEl.value = parentId || "";
 			if (parentId) {
@@ -149,7 +171,7 @@ const hasDirectusTarget = Boolean(moduleName && contentId);
 			}
 		};
 
-		const canDeleteComment = (item) => {
+		const canDeleteComment = (item: CommentItem): boolean => {
 			return (
 				Boolean(currentUserId) &&
 				Boolean(item) &&
@@ -157,12 +179,12 @@ const hasDirectusTarget = Boolean(moduleName && contentId);
 			);
 		};
 
-		const renderCommentActions = (item, level) => {
+		const renderCommentActions = (item: CommentItem, level: number): string => {
 			const canReply = level === 0;
 			const canDelete = canDeleteComment(item);
 			if (!canReply && !canDelete) return "";
 
-			const menuActions = [];
+				const menuActions: string[] = [];
 			if (canReply) {
 				menuActions.push(
 					`<button type="button" class="comment-action w-full text-left px-3 py-2 rounded-lg text-sm hover:bg-black/5 dark:hover:bg-white/10" data-action="reply" data-id="${escapeHtml(item.id)}" data-author="${escapeHtml(item.author?.name || "用户")}">回复</button>`,
@@ -184,7 +206,7 @@ const hasDirectusTarget = Boolean(moduleName && contentId);
 			`;
 		};
 
-		const renderCommentNode = (item, level) => {
+		const renderCommentNode = (item: CommentItem, level: number): string => {
 			const avatar = item.author?.avatar_url
 				? `<img src="${escapeHtml(item.author.avatar_url)}" alt="用户头像" class="w-8 h-8 rounded-full object-cover" loading="lazy" />`
 				: `<div class="w-8 h-8 rounded-full bg-black/10 dark:bg-white/10"></div>`;
@@ -206,7 +228,7 @@ const hasDirectusTarget = Boolean(moduleName && contentId);
 						<div class="text-sm leading-7 whitespace-pre-wrap break-words">${escapeHtml(item.body || "")}</div>
 					</div>
 					<div class="space-y-2">${replies
-						.map((reply) => renderCommentNode(reply, 1))
+						.map((reply: CommentItem) => renderCommentNode(reply, 1))
 						.join("")}</div>
 				</div>
 			`;
@@ -223,16 +245,7 @@ const hasDirectusTarget = Boolean(moduleName && contentId);
 			commentListEl.innerHTML = comments.map((item) => renderCommentNode(item, 0)).join("");
 		};
 
-		const readCachedAuthState = () => {
-			const raw = window[AUTH_STATE_CACHE_KEY];
-			return {
-				isLoggedIn: Boolean(raw?.isLoggedIn),
-				isAdmin: Boolean(raw?.isAdmin),
-				userId: raw?.userId ? String(raw.userId) : "",
-			};
-		};
-
-		const applyAuthState = (state) => {
+		const applyAuthState = (state: AuthState): void => {
 			currentUserId = state.isLoggedIn ? state.userId : "";
 			isAdmin = state.isLoggedIn && state.isAdmin;
 			renderComments();
@@ -251,7 +264,7 @@ const hasDirectusTarget = Boolean(moduleName && contentId);
 					renderComments();
 					return;
 				}
-				comments = Array.isArray(data.items) ? data.items : [];
+				comments = Array.isArray(data.items) ? (data.items as CommentItem[]) : [];
 				renderComments();
 			} catch {
 				comments = [];
@@ -299,7 +312,7 @@ const hasDirectusTarget = Boolean(moduleName && contentId);
 			}
 		};
 
-		const deleteComment = async (commentId) => {
+		const deleteComment = async (commentId: string): Promise<void> => {
 			const confirmed = window.confirm("确认删除该评论？");
 			if (!confirmed) return;
 			const response = await fetch(commentItemApi(commentId), {
@@ -354,22 +367,17 @@ const hasDirectusTarget = Boolean(moduleName && contentId);
 
 		const init = async () => {
 			if (!directusEnabled) return;
-			applyAuthState(readCachedAuthState());
+			applyAuthState(getAuthState());
 			await loadComments();
 		};
 
-		if (!root.dataset.authBound) {
-			root.dataset.authBound = "1";
-			document.addEventListener("mizuki:auth-state", (event) => {
-				if (!(event instanceof CustomEvent)) {
-					return;
-				}
-				const detail = event.detail || {};
-				applyAuthState({
-					isLoggedIn: Boolean(detail?.isLoggedIn),
-					isAdmin: Boolean(detail?.isAdmin),
-					userId: detail?.userId ? String(detail.userId) : "",
-				});
+		const runtimeWindow = window as Window & typeof globalThis & {
+			_directusCommentAuthSubscribed?: boolean;
+		};
+		if (!runtimeWindow._directusCommentAuthSubscribed) {
+			runtimeWindow._directusCommentAuthSubscribed = true;
+			subscribeAuthState((state) => {
+				applyAuthState(state);
 			});
 		}
 

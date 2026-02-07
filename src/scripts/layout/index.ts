@@ -1,0 +1,140 @@
+import "overlayscrollbars/overlayscrollbars.css";
+
+import { widgetConfigs } from "@/config";
+import { DARK_MODE, DEFAULT_THEME } from "@/constants/constants";
+import { initKatexScrollbars } from "@/utils/katex-scrollbar";
+import { setupPanelOutsideHandler } from "@/utils/panel-outside-handler";
+import { panelManager } from "@/utils/panel-manager.js";
+import { initSakura } from "@/utils/sakura-manager";
+import { pathsEqual, url } from "@/utils/url-utils";
+import {
+	setupBannerRuntime,
+	showBanner,
+	updateBannerCarouselState,
+} from "./banner-carousel";
+import { createFancyboxController } from "./fancybox-init";
+import { checkKatex } from "./katex-loader";
+import { setupScrollUi } from "./scroll-ui";
+import { setupSwupHooks } from "./swup-hooks";
+
+const BANNER_HEIGHT = 35;
+const BANNER_HEIGHT_EXTEND = 30;
+const BANNER_HEIGHT_HOME = BANNER_HEIGHT + BANNER_HEIGHT_EXTEND;
+
+type LayoutRuntimeWindow = Window &
+	typeof globalThis & {
+		sakuraInitialized?: boolean;
+		__layoutRuntimeInitialized?: boolean;
+		__layoutSwupHooksAttached?: boolean;
+		swup?: {
+			hooks?: {
+				on: (
+					event: string,
+					callback: (...args: never[]) => void,
+				) => void;
+			};
+		};
+	};
+
+export function initLayoutRuntime(): void {
+	const runtimeWindow = window as LayoutRuntimeWindow;
+	if (runtimeWindow.__layoutRuntimeInitialized) {
+		return;
+	}
+
+	runtimeWindow.__layoutRuntimeInitialized = true;
+	const bannerEnabled = Boolean(document.getElementById("banner-wrapper"));
+	const fancyboxController = createFancyboxController();
+
+	setupPanelOutsideHandler(panelManager);
+	setupBannerRuntime();
+
+	const setupSakura = () => {
+		const sakuraConfig = widgetConfigs.sakura;
+		if (!sakuraConfig || !sakuraConfig.enable) {
+			return;
+		}
+		if (runtimeWindow.sakuraInitialized) {
+			return;
+		}
+		initSakura(sakuraConfig);
+		runtimeWindow.sakuraInitialized = true;
+	};
+
+	if (document.readyState === "loading") {
+		document.addEventListener("DOMContentLoaded", setupSakura, {
+			once: true,
+		});
+	} else {
+		setupSakura();
+	}
+
+	const attachSwupHooks = () => {
+		if (runtimeWindow.__layoutSwupHooksAttached) {
+			return;
+		}
+		if (!runtimeWindow.swup?.hooks) {
+			return;
+		}
+		setupSwupHooks({
+			bannerEnabled,
+			bannerHeight: BANNER_HEIGHT,
+			bannerHeightHome: BANNER_HEIGHT_HOME,
+			initFancybox: fancyboxController.initFancybox,
+			cleanupFancybox: fancyboxController.cleanupFancybox,
+			checkKatex,
+			initKatexScrollbars,
+			updateBannerCarouselState,
+			defaultTheme: DEFAULT_THEME,
+			darkMode: DARK_MODE,
+			pathsEqual,
+			url,
+		});
+		runtimeWindow.__layoutSwupHooksAttached = true;
+	};
+
+	if (runtimeWindow.swup?.hooks) {
+		void fancyboxController.initFancybox();
+		checkKatex();
+		attachSwupHooks();
+	} else {
+		document.addEventListener("swup:enable", attachSwupHooks, {
+			once: true,
+		});
+		if (document.readyState === "loading") {
+			document.addEventListener("DOMContentLoaded", () => {
+				void fancyboxController.initFancybox();
+				checkKatex();
+			});
+		} else {
+			void fancyboxController.initFancybox();
+			checkKatex();
+		}
+	}
+
+	setupScrollUi({
+		bannerEnabled,
+		bannerHeight: BANNER_HEIGHT,
+		bannerHeightHome: BANNER_HEIGHT_HOME,
+		bannerHeightExtend: BANNER_HEIGHT_EXTEND,
+	});
+
+	const initBannerAndPanels = async () => {
+		showBanner();
+		try {
+			await import("@/utils/panel-manager.js");
+		} catch (error) {
+			console.error("Failed to initialize panel manager:", error);
+		}
+	};
+
+	if (document.readyState === "loading") {
+		document.addEventListener("DOMContentLoaded", () => {
+			void initBannerAndPanels();
+		});
+	} else {
+		void initBannerAndPanels();
+	}
+}
+
+initLayoutRuntime();

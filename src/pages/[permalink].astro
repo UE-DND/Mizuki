@@ -19,8 +19,8 @@ if (!permalink) {
 		});
 		const data = await response.json().catch(() => null);
 
-		if (response.ok && data?.ok && data.item?.slug) {
-			return Astro.redirect(`/posts/${data.item.slug}/`, 302);
+		if (response.ok && data?.ok && data.item?.id) {
+			return Astro.redirect(`/posts/${data.item.id}/`, 302);
 		}
 
 		notFound = true;

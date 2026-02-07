@@ -47,12 +47,26 @@ import { url } from "../../utils/url-utils";
 	</div>
 </div>
 
-<script is:inline>
+<script>
+import { emitAuthState } from "@/scripts/auth-state";
+
 const API_ME = "/api/auth/me/";
 const API_LOGOUT = "/api/auth/logout/";
 const AUTH_ME_RETRY_DELAY_MS = 220;
-let initTask = null;
-const AUTH_STATE_CACHE_KEY = "__mizukiAuthState";
+type AuthPayload = {
+	ok?: boolean;
+	isAdmin?: boolean;
+	is_admin?: boolean;
+	user?: {
+		id?: string;
+		username?: string;
+		name?: string;
+		email?: string;
+		avatarUrl?: string;
+	};
+};
+
+let initTask: Promise<void> | null = null;
 
 	function buildLoginHref() {
 		try {
@@ -73,46 +87,48 @@ const AUTH_STATE_CACHE_KEY = "__mizukiAuthState";
 		}
 	}
 
-	function emitAuthState(isLoggedIn, isAdmin, userId) {
-		window[AUTH_STATE_CACHE_KEY] = {
-			isLoggedIn,
-			isAdmin,
-			userId: userId || "",
-		};
-		document.dispatchEvent(
-			new CustomEvent("mizuki:auth-state", {
-				detail: { isLoggedIn, isAdmin, userId: userId || "" },
-			}),
-		);
-	}
+		function publishAuthState(
+			isLoggedIn: boolean,
+			isAdmin: boolean,
+			userId: string,
+		) {
+			emitAuthState({
+				isLoggedIn,
+				isAdmin,
+				userId: userId || "",
+			});
+		}
 
-	function setAuthState(state) {
-		const userId = state?.user?.id ? String(state.user.id) : "";
-		const isLoggedIn = Boolean(userId);
-		const isAdmin = Boolean(
-			isLoggedIn && (state?.isAdmin || state?.is_admin),
-		);
+		function setAuthState(state: AuthPayload | null) {
+			const userId = state?.user?.id ? String(state.user.id) : "";
+			const user = state?.user;
+			const isLoggedIn = Boolean(userId);
+			const isAdmin = Boolean(
+				isLoggedIn && (state?.isAdmin || state?.is_admin),
+			);
 		const loginEl = document.getElementById("auth-login");
 		const userEl = document.getElementById("auth-user");
 		const userNameEl = document.getElementById("auth-user-name");
-		const avatarEl = document.getElementById("auth-user-avatar");
+			const avatarEl = document.getElementById(
+				"auth-user-avatar",
+			) as HTMLImageElement | null;
 		const iconEl = document.getElementById("auth-user-icon");
 		const adminEl = document.getElementById("auth-admin");
 		if (!loginEl || !userEl || !userNameEl || !adminEl) {
-			emitAuthState(isLoggedIn, isAdmin, userId);
+			publishAuthState(isLoggedIn, isAdmin, userId);
 			return;
 		}
 		loginEl.setAttribute("href", buildLoginHref());
 
-		if (isLoggedIn) {
-			loginEl.classList.add("hidden");
-			userEl.classList.remove("hidden");
-			userEl.classList.add("flex");
-			userNameEl.textContent =
-				state.user.username || state.user.name || state.user.email || "Member";
+			if (isLoggedIn && user) {
+				loginEl.classList.add("hidden");
+				userEl.classList.remove("hidden");
+				userEl.classList.add("flex");
+				userNameEl.textContent =
+					user.username || user.name || user.email || "Member";
 
-			if (avatarEl && iconEl && state.user.avatarUrl) {
-				avatarEl.src = state.user.avatarUrl;
+				if (avatarEl && iconEl && user.avatarUrl) {
+					avatarEl.src = user.avatarUrl;
 				avatarEl.classList.remove("hidden");
 				iconEl.classList.add("hidden");
 			} else if (avatarEl && iconEl) {
@@ -128,7 +144,7 @@ const AUTH_STATE_CACHE_KEY = "__mizukiAuthState";
 				adminEl.classList.add("hidden");
 				adminEl.classList.remove("flex");
 			}
-			emitAuthState(isLoggedIn, isAdmin, userId);
+			publishAuthState(isLoggedIn, isAdmin, userId);
 			return;
 		}
 
@@ -144,7 +160,7 @@ const AUTH_STATE_CACHE_KEY = "__mizukiAuthState";
 		}
 		adminEl.classList.add("hidden");
 		adminEl.classList.remove("flex");
-		emitAuthState(false, false, "");
+		publishAuthState(false, false, "");
 	}
 
 	async function refreshAuthState() {
@@ -184,9 +200,11 @@ const AUTH_STATE_CACHE_KEY = "__mizukiAuthState";
 			return;
 		}
 		initTask = (async () => {
-		const logoutBtn = document.getElementById("auth-logout");
-		const avatarEl = document.getElementById("auth-user-avatar");
-		const iconEl = document.getElementById("auth-user-icon");
+			const logoutBtn = document.getElementById("auth-logout");
+			const avatarEl = document.getElementById(
+				"auth-user-avatar",
+			) as HTMLImageElement | null;
+			const iconEl = document.getElementById("auth-user-icon");
 
 		if (avatarEl && iconEl && !avatarEl.dataset.bound) {
 			avatarEl.dataset.bound = "1";

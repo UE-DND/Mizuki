@@ -20,7 +20,7 @@ type PostAuthor = {
 
 export type DirectusPostEntry = {
 	id: string;
-	slug: string;
+	slug: string | null;
 	body: string;
 	url: string;
 	data: {
@@ -96,8 +96,8 @@ function resolveUpdatedAt(post: AppArticle): Date {
 	return Number.isNaN(parsed.getTime()) ? new Date() : parsed;
 }
 
-function buildPostUrl(slug: string): string {
-	return `/posts/${slug}/`;
+function buildPostUrl(articleId: string): string {
+	return `/posts/${articleId}/`;
 }
 
 function resolveCoverImage(post: AppArticle): string | undefined {
@@ -319,21 +319,23 @@ async function loadDirectusPosts(): Promise<DirectusPostEntry[]> {
 			]);
 
 		const mapped = rows.map((post) => {
-			const slug = String(post.slug || "").trim();
+			const normalizedSlug = String(post.slug || "").trim();
+			const slug = normalizedSlug || null;
 			const title = String(post.title || "").trim();
 			const category = post.category ? String(post.category).trim() : "";
 			const articleId = String(post.id || "").trim();
 			const authorId = String(post.author_id || "").trim();
+			const routeId = articleId || normalizedSlug;
 			return {
-				id: slug,
+				id: routeId,
 				slug,
 				body: String(post.body_markdown || ""),
-				url: buildPostUrl(slug),
+				url: buildPostUrl(routeId),
 				data: {
 					article_id: articleId,
 					author_id: authorId,
 					author: buildAuthor(authorId, profileMap, userMap),
-					title: title || slug || "Untitled",
+					title: title || normalizedSlug || articleId || "Untitled",
 					description: post.summary || undefined,
 					image: resolveCoverImage(post),
 					tags: normalizeTags(post.tags),
@@ -367,11 +369,11 @@ export async function getSortedPosts(): Promise<DirectusPostEntry[]> {
 	const sorted = await getRawSortedPosts();
 
 	for (let i = 1; i < sorted.length; i += 1) {
-		sorted[i].data.nextSlug = sorted[i - 1].slug;
+		sorted[i].data.nextSlug = sorted[i - 1].id;
 		sorted[i].data.nextTitle = sorted[i - 1].data.title;
 	}
 	for (let i = 0; i < sorted.length - 1; i += 1) {
-		sorted[i].data.prevSlug = sorted[i + 1].slug;
+		sorted[i].data.prevSlug = sorted[i + 1].id;
 		sorted[i].data.prevTitle = sorted[i + 1].data.title;
 	}
 

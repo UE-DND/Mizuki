@@ -41,7 +41,7 @@ export type AppArticle = {
 	author_id: string;
 	status: AppStatus;
 	title: string;
-	slug: string;
+	slug: string | null;
 	summary: string | null;
 	body_markdown: string;
 	cover_file: string | null;

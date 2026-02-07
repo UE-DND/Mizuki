@@ -35,10 +35,10 @@ export function getPostUrlByAlias(alias: string): string {
 }
 
 type PostUrlInput =
-	| (PermalinkPost & { slug?: string; url?: string })
+	| (PermalinkPost & { slug?: string | null; url?: string })
 	| {
 			id?: string;
-			slug?: string;
+			slug?: string | null;
 			url?: string;
 			data?: { alias?: string; permalink?: string };
 	  };

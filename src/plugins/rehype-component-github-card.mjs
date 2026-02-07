@@ -27,10 +27,13 @@ export function GithubCardComponent(properties, children) {
 	const repo = properties.repo;
 	const cardUuid = `GC${Math.random().toString(36).slice(-6)}`; // Collisions are not important
 
-	const nAvatar = h(`div#${cardUuid}-avatar`, { class: "gc-avatar" });
+	const nAvatar = h(`div#${cardUuid}-avatar`, {
+		class: "gc-avatar",
+		"data-github-field": "avatar",
+	});
 	const nLanguage = h(
 		`span#${cardUuid}-language`,
-		{ class: "gc-language" },
+		{ class: "gc-language", "data-github-field": "language" },
 		"Waiting...",
 	);
 
@@ -48,39 +51,24 @@ export function GithubCardComponent(properties, children) {
 
 	const nDescription = h(
 		`div#${cardUuid}-description`,
-		{ class: "gc-description" },
+		{ class: "gc-description", "data-github-field": "description" },
 		"Waiting for api.github.com...",
 	);
 
-	const nStars = h(`div#${cardUuid}-stars`, { class: "gc-stars" }, "00K");
-	const nForks = h(`div#${cardUuid}-forks`, { class: "gc-forks" }, "0K");
-	const nLicense = h(
-		`div#${cardUuid}-license`,
-		{ class: "gc-license" },
+	const nStars = h(
+		`div#${cardUuid}-stars`,
+		{ class: "gc-stars", "data-github-field": "stars" },
+		"00K",
+	);
+	const nForks = h(
+		`div#${cardUuid}-forks`,
+		{ class: "gc-forks", "data-github-field": "forks" },
 		"0K",
 	);
-
-	const nScript = h(
-		`script#${cardUuid}-script`,
-		{ type: "text/javascript", defer: true },
-		`
-      fetch('https://api.github.com/repos/${repo}', { referrerPolicy: "no-referrer" }).then(response => response.json()).then(data => {
-        document.getElementById('${cardUuid}-description').innerText = data.description?.replace(/:[a-zA-Z0-9_]+:/g, '') || "Description not set";
-        document.getElementById('${cardUuid}-language').innerText = data.language;
-        document.getElementById('${cardUuid}-forks').innerText = Intl.NumberFormat('en-us', { notation: "compact", maximumFractionDigits: 1 }).format(data.forks).replaceAll("\u202f", '');
-        document.getElementById('${cardUuid}-stars').innerText = Intl.NumberFormat('en-us', { notation: "compact", maximumFractionDigits: 1 }).format(data.stargazers_count).replaceAll("\u202f", '');
-        const avatarEl = document.getElementById('${cardUuid}-avatar');
-        avatarEl.style.backgroundImage = 'url(' + data.owner.avatar_url + ')';
-        avatarEl.style.backgroundColor = 'transparent';
-        document.getElementById('${cardUuid}-license').innerText = data.license?.spdx_id || "no-license";
-        document.getElementById('${cardUuid}-card').classList.remove("fetch-waiting");
-        console.log("[GITHUB-CARD] Loaded card for ${repo} | ${cardUuid}.")
-      }).catch(err => {
-        const c = document.getElementById('${cardUuid}-card');
-        c?.classList.add("fetch-error");
-        console.warn("[GITHUB-CARD] (Error) Loading card for ${repo} | ${cardUuid}.")
-      })
-    `,
+	const nLicense = h(
+		`div#${cardUuid}-license`,
+		{ class: "gc-license", "data-github-field": "license" },
+		"0K",
 	);
 
 	return h(
@@ -89,7 +77,10 @@ export function GithubCardComponent(properties, children) {
 			class: "card-github fetch-waiting no-styling",
 			href: `https://github.com/${repo}`,
 			target: "_blank",
+			rel: "noopener noreferrer",
 			repo,
+			"data-github-repo": repo,
+			"data-github-card-id": cardUuid,
 		},
 		[
 			nTitle,
@@ -100,7 +91,6 @@ export function GithubCardComponent(properties, children) {
 				nLicense,
 				nLanguage,
 			]),
-			nScript,
 		],
 	);
 }

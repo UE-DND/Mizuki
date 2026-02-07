@@ -126,7 +126,10 @@ if (id) {
 	)}
 </MainGridLayout>
 
-<script is:inline>
+<script>
+	import { getAuthState, subscribeAuthState } from "@/scripts/auth-state";
+	import type { AuthState } from "@/scripts/auth-state";
+
 	const diaryManageRoot = document.getElementById("diary-manage-root");
 
 	if (diaryManageRoot instanceof HTMLElement && !diaryManageRoot.dataset.bound) {
@@ -134,18 +137,7 @@ if (id) {
 		const diaryId = String(diaryManageRoot.dataset.diaryId || "");
 		const authorId = String(diaryManageRoot.dataset.authorId || "");
 		const deleteBtn = document.getElementById("diary-delete-trigger");
-		const AUTH_STATE_CACHE_KEY = "__mizukiAuthState";
-
-		const readCachedAuthState = () => {
-			const raw = window[AUTH_STATE_CACHE_KEY];
-			return {
-				isLoggedIn: Boolean(raw?.isLoggedIn),
-				isAdmin: Boolean(raw?.isAdmin),
-				userId: raw?.userId ? String(raw.userId) : "",
-			};
-		};
-
-		const applyManageMenuVisibility = (state) => {
+		const applyManageMenuVisibility = (state: AuthState): void => {
 			const canDelete =
 				state.isLoggedIn &&
 				Boolean(state.userId) &&
@@ -184,17 +176,9 @@ if (id) {
 			});
 		}
 
-		applyManageMenuVisibility(readCachedAuthState());
-		document.addEventListener("mizuki:auth-state", (event) => {
-			if (!(event instanceof CustomEvent)) {
-				return;
-			}
-			const detail = event.detail || {};
-			applyManageMenuVisibility({
-				isLoggedIn: Boolean(detail?.isLoggedIn),
-				isAdmin: Boolean(detail?.isAdmin),
-				userId: detail?.userId ? String(detail.userId) : "",
-			});
+		applyManageMenuVisibility(getAuthState());
+		subscribeAuthState((state) => {
+			applyManageMenuVisibility(state);
 		});
 	}
 </script>
