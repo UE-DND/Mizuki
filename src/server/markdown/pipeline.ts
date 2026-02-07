@@ -4,6 +4,7 @@ import rehypeComponents from "rehype-components";
 import rehypeKatex from "rehype-katex";
 import rehypeSlug from "rehype-slug";
 import remarkDirective from "remark-directive";
+import remarkGfm from "remark-gfm";
 import remarkGithubAdmonitionsToDirectives from "remark-github-admonitions-to-directives";
 import remarkMath from "remark-math";
 import remarkSectionize from "remark-sectionize";
@@ -25,6 +26,7 @@ type AdmonitionProps = {
 
 const remarkPluginsBase: PluggableList = [
 	remarkMath,
+	remarkGfm,
 	remarkContent,
 	remarkGithubAdmonitionsToDirectives,
 	remarkDirective,

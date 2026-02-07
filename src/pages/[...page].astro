@@ -76,16 +76,16 @@ const nextHref = `/page/${page + 1}/`;
 				<PostPage page={{ data: currentPagePosts }} />
 			)}
 
-			<div class="card-base p-4 rounded-[var(--radius-large)] mt-4 flex items-center justify-between text-sm">
+			<div class="card-base p-4 rounded-[var(--radius-large)] mt-4 flex items-center justify-between text-sm text-75">
 				<a
-					class={`px-3 py-2 rounded-lg border border-[var(--line-divider)] ${hasPrev ? "" : "opacity-40 pointer-events-none"}`}
+					class={`px-3 py-2 rounded-lg border border-[var(--line-divider)] transition-colors ${hasPrev ? "hover:text-[var(--primary)] hover:bg-[var(--btn-plain-bg-hover)]" : "opacity-40 pointer-events-none"}`}
 					href={hasPrev ? prevHref : "#"}
 				>
 					上一页
 				</a>
-				<span class="text-xs text-60">第 {page} / {lastPage} 页</span>
+			<span class="text-xs text-60">第 {page} / {lastPage} 页</span>
 				<a
-					class={`px-3 py-2 rounded-lg border border-[var(--line-divider)] ${hasNext ? "" : "opacity-40 pointer-events-none"}`}
+					class={`px-3 py-2 rounded-lg border border-[var(--line-divider)] transition-colors ${hasNext ? "hover:text-[var(--primary)] hover:bg-[var(--btn-plain-bg-hover)]" : "opacity-40 pointer-events-none"}`}
 					href={hasNext ? nextHref : "#"}
 				>
 					下一页

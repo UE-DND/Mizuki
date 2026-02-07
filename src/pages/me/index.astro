@@ -5,16 +5,16 @@ export const prerender = false;
 ---
 
 <MainGridLayout title="账户设置" description="管理个人资料与隐私">
-	<div class="space-y-4">
+	<div class="space-y-4 text-75">
 		<section class="card-base p-6 rounded-[var(--radius-large)]">
-			<h1 class="text-2xl font-bold mb-2">账户设置</h1>
+			<h1 class="text-2xl font-bold mb-2 text-90">账户设置</h1>
 			<p class="text-sm text-70">管理个人资料与隐私设置。</p>
 			<div id="me-auth-message" class="mt-4 text-sm text-70"></div>
 		</section>
 
 		<div id="me-authenticated-sections" class="hidden space-y-4">
 			<section class="card-base p-6 rounded-[var(--radius-large)] space-y-3">
-				<h2 class="text-xl font-semibold">个人资料</h2>
+				<h2 class="text-xl font-semibold text-90">个人资料</h2>
 				<form id="me-profile-form" class="grid grid-cols-1 md:grid-cols-2 gap-3">
 					<label class="space-y-1">
 						<span class="text-xs text-60">邮箱</span>
@@ -51,13 +51,13 @@ export const prerender = false;
 								<input
 									id="me-avatar-url"
 									placeholder="头像 URL 或上传图片"
-									class="w-full rounded-lg border border-[var(--line-divider)] px-3 py-2 bg-transparent"
+									class="w-full rounded-lg border border-[var(--line-divider)] px-3 py-2 bg-transparent text-75 placeholder:text-50"
 								/>
 								<div class="flex flex-wrap items-center gap-2">
-									<button type="button" id="me-avatar-upload-btn" class="px-3 py-2 rounded-lg border border-[var(--line-divider)] text-xs">
+									<button type="button" id="me-avatar-upload-btn" class="px-3 py-2 rounded-lg border border-[var(--line-divider)] text-xs text-75">
 										上传图片
 									</button>
-									<button type="button" id="me-avatar-clear-btn" class="px-3 py-2 rounded-lg border border-[var(--line-divider)] text-xs">
+									<button type="button" id="me-avatar-clear-btn" class="px-3 py-2 rounded-lg border border-[var(--line-divider)] text-xs text-75">
 										清空头像
 									</button>
 								</div>
@@ -75,7 +75,7 @@ export const prerender = false;
 						</button>
 						<div id="me-bio-editor" class="hidden">
 							<div class="relative">
-								<textarea id="me-bio" rows="3" class="w-full h-24 resize-none rounded-lg border border-[var(--line-divider)] px-3 py-2 pr-14 text-sm leading-6 bg-transparent"></textarea>
+								<textarea id="me-bio" rows="3" class="w-full h-24 resize-none rounded-lg border border-[var(--line-divider)] px-3 py-2 pr-14 text-sm leading-6 bg-transparent text-75 placeholder:text-50"></textarea>
 								<div id="me-bio-counter" class="pointer-events-none absolute right-3 bottom-2 text-xs text-60 tabular-nums">0/30</div>
 							</div>
 						</div>
@@ -88,14 +88,14 @@ export const prerender = false;
 			</section>
 
 			<section class="card-base p-6 rounded-[var(--radius-large)] space-y-3">
-				<h2 class="text-xl font-semibold">隐私设置</h2>
+				<h2 class="text-xl font-semibold text-90">隐私设置</h2>
 				<form id="me-privacy-form" class="grid grid-cols-1 md:grid-cols-2 gap-2 text-sm">
-					<label class="flex items-center gap-2"><input type="checkbox" id="pv-profile-public" /> 公开主页</label>
-					<label class="flex items-center gap-2"><input type="checkbox" id="pv-show-articles" /> 主页展示文章</label>
-					<label class="flex items-center gap-2"><input type="checkbox" id="pv-show-diaries" /> 主页展示日记</label>
-					<label class="flex items-center gap-2"><input type="checkbox" id="pv-show-anime" /> 主页展示番剧</label>
-					<label class="flex items-center gap-2"><input type="checkbox" id="pv-show-albums" /> 主页展示相册</label>
-					<label class="flex items-center gap-2"><input type="checkbox" id="pv-show-comments" /> 主页展示评论</label>
+					<label class="flex items-center gap-2 text-75"><input type="checkbox" id="pv-profile-public" /> 公开主页</label>
+					<label class="flex items-center gap-2 text-75"><input type="checkbox" id="pv-show-articles" /> 主页展示文章</label>
+					<label class="flex items-center gap-2 text-75"><input type="checkbox" id="pv-show-diaries" /> 主页展示日记</label>
+					<label class="flex items-center gap-2 text-75"><input type="checkbox" id="pv-show-anime" /> 主页展示番剧</label>
+					<label class="flex items-center gap-2 text-75"><input type="checkbox" id="pv-show-albums" /> 主页展示相册</label>
+					<label class="flex items-center gap-2 text-75"><input type="checkbox" id="pv-show-comments" /> 主页展示评论</label>
 					<div class="md:col-span-2 flex items-center gap-2 pt-2">
 						<button type="submit" class="px-4 py-2 rounded-lg bg-[var(--btn-regular-bg)] text-[var(--btn-content)] text-sm">保存隐私设置</button>
 						<span id="me-privacy-msg" class="text-xs text-60"></span>
@@ -112,9 +112,9 @@ export const prerender = false;
 	class="fixed inset-0 z-[9999] hidden items-center justify-center bg-black/70 px-4 py-5"
 	tabindex="-1"
 >
-	<div class="card-base w-full max-w-xl rounded-[var(--radius-large)] border border-[var(--line-divider)] p-4 sm:p-5 space-y-4">
+	<div class="card-base w-full max-w-xl rounded-[var(--radius-large)] border border-[var(--line-divider)] p-4 sm:p-5 space-y-4 text-75">
 		<div class="flex items-center gap-2">
-			<h3 class="text-base sm:text-lg font-semibold">裁剪头像</h3>
+			<h3 class="text-base sm:text-lg font-semibold text-90">裁剪头像</h3>
 		</div>
 		<p class="text-xs text-60">点击“选择文件”后，可拖拽调整位置并通过滑块缩放。</p>
 		<div
@@ -136,13 +136,13 @@ export const prerender = false;
 		</div>
 		<div class="flex flex-wrap items-center gap-2">
 			<input id="me-avatar-crop-file" type="file" accept="image/*" class="hidden" />
-			<button type="button" id="me-avatar-crop-select-btn" class="px-3 py-2 rounded-lg border border-[var(--line-divider)] text-xs">
+			<button type="button" id="me-avatar-crop-select-btn" class="px-3 py-2 rounded-lg border border-[var(--line-divider)] text-xs text-75">
 				选择文件
 			</button>
 			<button type="button" id="me-avatar-crop-apply-btn" class="px-3 py-2 rounded-lg bg-[var(--btn-regular-bg)] text-[var(--btn-content)] text-xs">
 				裁剪并上传
 			</button>
-			<button type="button" id="me-avatar-crop-cancel-btn" class="ml-auto px-3 py-2 rounded-lg border border-[var(--line-divider)] text-xs">
+			<button type="button" id="me-avatar-crop-cancel-btn" class="ml-auto px-3 py-2 rounded-lg border border-[var(--line-divider)] text-xs text-75">
 				取消
 			</button>
 		</div>
