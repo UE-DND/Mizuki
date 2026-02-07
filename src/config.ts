@@ -265,14 +265,19 @@ export const navBarConfig: NavBarConfig = {
 			icon: "material-symbols:info",
 			children: [
 				{
-					name: "关于本站",
+					name: "关于我们",
 					url: "/about/",
 					icon: "material-symbols:person",
 				},
 				{
-					name: "友链",
+					name: "友情链接",
 					url: "/friends/",
 					icon: "material-symbols:group",
+				},
+				{
+					name: "站点统计",
+					url: "/stats/",
+					icon: "material-symbols:bar-chart",
 				},
 			],
 		},
@@ -500,7 +505,7 @@ export const sidebarLayoutConfig: SidebarLayoutConfig = {
 	// 侧栏组件布局配置
 	components: {
 		left: ["profile", "announcement", "categories", "tags"],
-		right: ["site-stats", "calendar"],
+		right: ["calendar"],
 		drawer: ["profile", "announcement", "categories", "tags"],
 	},
 
