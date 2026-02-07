@@ -565,9 +565,9 @@ function disableAnimation() {
 		});
 	}
 
-	function isArticlePage() {
-		const swupContainer = document.getElementById("swup-container");
-		return swupContainer?.getAttribute("data-is-article") === "true";
+	function isBannerHiddenByPage() {
+		const path = window.location.pathname;
+		return path !== '/' && path !== '';
 	}
 
 	function updateBannerCarouselState() {
@@ -578,7 +578,7 @@ function disableAnimation() {
 		const bannerWrapper = document.getElementById("banner-wrapper");
 		const isBannerHidden =
 			bannerWrapper?.classList.contains("wallpaper-layer-hidden") === true;
-		controller.setPaused(isArticlePage() || isBannerHidden);
+		controller.setPaused(isBannerHiddenByPage() || isBannerHidden);
 	}
 
 	window.__updateBannerCarouselState = updateBannerCarouselState;

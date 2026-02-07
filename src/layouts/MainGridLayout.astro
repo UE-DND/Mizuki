@@ -105,15 +105,16 @@ const {
 } = Astro.props;
 const hasBannerCredit = siteConfig.banner.credit.enable;
 const hasBannerLink = !!siteConfig.banner.credit.url;
-const isArticlePage = Boolean(setOGTypeArticle || postSlug);
-const configuredWallpaperMode = siteConfig.wallpaperMode.defaultMode;
-const initialWallpaperMode = isArticlePage ? "none" : configuredWallpaperMode;
 
 // 检查是否为首页
 const isHomePage = Astro.url.pathname === "/" || Astro.url.pathname === "";
 const showHomeText = siteConfig.banner.homeText?.enable && isHomePage;
 // 手机端非首页不显示banner的CSS类
 const mobileNonHomeBannerClass = !isHomePage ? "mobile-hide-banner" : "";
+
+// banner 仅首页显示，非首页一律隐藏
+const configuredWallpaperMode = siteConfig.wallpaperMode.defaultMode;
+const initialWallpaperMode = isHomePage ? configuredWallpaperMode : "none";
 
 // 计算主内容区域位置，考虑手机端非首页时banner被隐藏
 // 当默认模式为 banner 时，使用banner高度；否则使用顶栏高度
@@ -261,10 +262,9 @@ const mainContentClass = `
 	})();
 
 	function getActiveWallpaperMode() {
-		const swupContainer = document.getElementById("swup-container");
-		const isArticle =
-			swupContainer?.getAttribute("data-is-article") === "true";
-		return isArticle ? "none" : defaultWallpaperMode;
+		const path = window.location.pathname;
+		const isHome = path === '/' || path === '';
+		return isHome ? defaultWallpaperMode : "none";
 	}
 	
 	// 根据壁纸模式动态设置 banner 的显示
@@ -626,7 +626,7 @@ const mainContentClass = `
                 )}
             </div>
 
-            <main id="swup-container" class={`${mainContentClass} transition-main`} data-is-article={isArticlePage ? "true" : "false"}>
+            <main id="swup-container" class={`${mainContentClass} transition-main`}>
                 <div id="content-wrapper" class="onload-animation transition-leaving">
                     <!-- the overflow-hidden here prevent long text break the layout-->
                     <!-- make id different from windows.swup global property -->
