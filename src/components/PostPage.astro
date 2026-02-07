@@ -11,9 +11,10 @@ interface PostListPage {
 
 interface Props {
 	page: PostListPage;
+	maxAnimationIndex?: number;
 }
 
-const { page } = Astro.props;
+const { page, maxAnimationIndex } = Astro.props;
 
 // 检查是否启用右侧边栏（通过检查右侧是否有组件）
 const hasRightSidebars =
@@ -39,11 +40,13 @@ const initialLayoutClass = "list-mode";
 					data-year={year}
 					data-month={monthKey}
 					data-day={date}
+					data-tags={JSON.stringify(entry.data.tags || [])}
+					data-category={entry.data.category || ""}
 				>
 					<PostCard
 						entry={entry}
 						class:list="onload-animation"
-						style={`--i: ${index}; --interval: 50ms;`}
+						style={`--i: ${maxAnimationIndex !== undefined ? Math.min(index, maxAnimationIndex) : index}; --interval: 50ms;`}
 					/>
 				</div>
 			);

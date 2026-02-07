@@ -2,62 +2,35 @@
 import type { DirectusPostEntry } from "@/utils/content-utils";
 import MainGridLayout from "@layouts/MainGridLayout.astro";
 import PostPage from "@components/PostPage.astro";
-import { PAGE_SIZE } from "@constants/constants";
 import { getSortedPosts } from "@utils/content-utils";
 import { initPostIdMap } from "@utils/permalink-utils";
 
 export const prerender = false;
 
 const rawPagePath = Astro.params.page || "";
-const pageSegments = rawPagePath
-	.split("/")
-	.map((segment) => segment.trim())
-	.filter(Boolean);
 
-let page = 1;
-let invalidPath = false;
-
-if (pageSegments.length === 0) {
-	page = 1;
-} else if (pageSegments.length === 1 && /^\d+$/.test(pageSegments[0])) {
-	page = Math.max(1, Number(pageSegments[0]));
-} else if (
-	pageSegments.length === 2 &&
-	pageSegments[0] === "page" &&
-	/^\d+$/.test(pageSegments[1])
-) {
-	page = Math.max(1, Number(pageSegments[1]));
-} else {
-	invalidPath = true;
+// 重定向旧分页 URL
+if (rawPagePath) {
+	const isOldPagination =
+		/^\d+$/.test(rawPagePath) || /^page\/\d+$/i.test(rawPagePath);
+	if (isOldPagination) {
+		return Astro.redirect("/", 301);
+	}
+	// 非分页路径 → 404
 	Astro.response.status = 404;
 }
 
-let currentPagePosts: DirectusPostEntry[] = [];
-let lastPage = 1;
+let allBlogPosts: DirectusPostEntry[] = [];
+let invalidPath = Boolean(rawPagePath);
 
 if (!invalidPath) {
 	try {
-		const allBlogPosts = await getSortedPosts();
+		allBlogPosts = await getSortedPosts();
 		initPostIdMap(allBlogPosts);
-
-		lastPage = Math.max(1, Math.ceil(allBlogPosts.length / PAGE_SIZE));
-		if (page > lastPage && allBlogPosts.length > 0) {
-			invalidPath = true;
-			Astro.response.status = 404;
-		} else {
-			const start = (page - 1) * PAGE_SIZE;
-			const end = start + PAGE_SIZE;
-			currentPagePosts = allBlogPosts.slice(start, end);
-		}
 	} catch (error) {
 		console.error("[home] failed to load posts:", error);
 	}
 }
-
-const hasPrev = page > 1;
-const hasNext = page < lastPage;
-const prevHref = page - 1 === 1 ? "/" : `/page/${page - 1}/`;
-const nextHref = `/page/${page + 1}/`;
 ---
 
 <MainGridLayout>
@@ -67,30 +40,86 @@ const nextHref = `/page/${page + 1}/`;
 			<p class="text-70">请检查访问路径。</p>
 		</div>
 	) : (
-		<>
-			{currentPagePosts.length === 0 ? (
-				<div class="card-base p-8 rounded-[var(--radius-large)] text-70">
-					暂无公开文章。
-				</div>
-			) : (
-				<PostPage page={{ data: currentPagePosts }} />
-			)}
+		<div class="home-layout">
+			<div class="min-w-0">
+				{allBlogPosts.length === 0 ? (
+					<div class="card-base p-8 rounded-[var(--radius-large)] text-70">
+						暂无公开文章。
+					</div>
+				) : (
+					<PostPage page={{ data: allBlogPosts }} maxAnimationIndex={15} />
+				)}
 
-			<div class="card-base p-4 rounded-[var(--radius-large)] mt-4 flex items-center justify-between text-sm text-75">
-				<a
-					class={`px-3 py-2 rounded-lg border border-[var(--line-divider)] transition-colors ${hasPrev ? "hover:text-[var(--primary)] hover:bg-[var(--btn-plain-bg-hover)]" : "opacity-40 pointer-events-none"}`}
-					href={hasPrev ? prevHref : "#"}
-				>
-					上一页
-				</a>
-			<span class="text-xs text-60">第 {page} / {lastPage} 页</span>
-				<a
-					class={`px-3 py-2 rounded-lg border border-[var(--line-divider)] transition-colors ${hasNext ? "hover:text-[var(--primary)] hover:bg-[var(--btn-plain-bg-hover)]" : "opacity-40 pointer-events-none"}`}
-					href={hasNext ? nextHref : "#"}
-				>
-					下一页
-				</a>
+				<!-- 无限滚动哨兵 -->
+				<div id="infinite-scroll-sentinel" class="h-1"></div>
+				<div id="scroll-loading" class="hidden text-center py-4 text-sm text-60">
+					加载中...
+				</div>
 			</div>
-		</>
+			<!-- 右侧占位，与归档页筛选面板等宽 -->
+			<div class="home-sidebar-placeholder"></div>
+		</div>
 	)}
 </MainGridLayout>
+
+<style>
+	.home-layout {
+		display: grid;
+		grid-template-columns: 1fr 17.5rem;
+		gap: 1rem;
+		align-items: start;
+	}
+	.home-sidebar-placeholder {
+		/* 纯占位，不渲染任何内容 */
+	}
+	@media (max-width: 1024px) {
+		.home-layout {
+			grid-template-columns: 1fr;
+		}
+		.home-sidebar-placeholder {
+			display: none;
+		}
+	}
+</style>
+
+<script>
+	const INITIAL_COUNT = 5;
+	const BATCH_SIZE = 5;
+
+	const items = document.querySelectorAll<HTMLElement>('.post-list-item');
+	items.forEach((item, i) => {
+		if (i >= INITIAL_COUNT) item.classList.add('hidden');
+	});
+	let revealedCount = Math.min(INITIAL_COUNT, items.length);
+
+	const sentinel = document.getElementById('infinite-scroll-sentinel');
+	const loadingEl = document.getElementById('scroll-loading');
+
+	const observer = new IntersectionObserver((entries) => {
+		if (!entries[0].isIntersecting || revealedCount >= items.length) return;
+
+		loadingEl?.classList.remove('hidden');
+
+		const end = Math.min(revealedCount + BATCH_SIZE, items.length);
+		for (let i = revealedCount; i < end; i++) {
+			const item = items[i] as HTMLElement;
+			item.style.setProperty('--i', String(i - revealedCount));
+			item.classList.remove('hidden');
+		}
+		revealedCount = end;
+
+		if (revealedCount >= items.length) {
+			observer.disconnect();
+			sentinel?.classList.add('hidden');
+			loadingEl?.classList.add('hidden');
+		} else {
+			setTimeout(() => loadingEl?.classList.add('hidden'), 300);
+		}
+	}, { rootMargin: '200px' });
+
+	if (sentinel && revealedCount < items.length) {
+		observer.observe(sentinel);
+	} else {
+		sentinel?.classList.add('hidden');
+	}
+</script>

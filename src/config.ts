@@ -504,9 +504,9 @@ export const sidebarLayoutConfig: SidebarLayoutConfig = {
 
 	// 侧栏组件布局配置
 	components: {
-		left: ["profile", "announcement", "categories", "tags"],
-		right: ["calendar"],
-		drawer: ["profile", "announcement", "categories", "tags"],
+		left: ["profile", "announcement"],
+		right: [],
+		drawer: ["profile", "announcement"],
 	},
 
 	// 默认动画配置

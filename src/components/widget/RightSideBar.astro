@@ -1,7 +1,6 @@
 ---
 import { widgetManager } from "../../utils/widget-manager";
-import Calendar from "./Calendar.astro";
-import SiteStats from "./SiteStats.astro";
+import SideBarComponentList from "./SideBarComponentList.astro";
 import { pathsEqual, url } from "@/utils/url-utils";
 import type { WidgetComponentConfig } from "@/types/config";
 
@@ -24,26 +23,18 @@ const stickyComponents = filterCalendar(
 
 <div class="right-sidebar" id="right-sidebar">
   <!-- 顶部固定区域 -->
-  <div class="sidebar-top">
-    {topComponents.map((component) => (
-      <div class={`sidebar-component ${component.class || ''}`} 
-           style={`animation-delay: ${component.animationDelay || 0}ms; ${component.style || ''}`}>
-        {component.type === "site-stats" && <SiteStats />}
-        {component.type === "calendar" && <Calendar />}
-      </div>
-    ))}
-  </div>
-  
+  {topComponents.length > 0 && (
+    <div class="sidebar-top">
+      <SideBarComponentList components={topComponents} />
+    </div>
+  )}
+
   <!-- 粘性定位区域 -->
-  <div class="sidebar-sticky">
-    {stickyComponents.map((component) => (
-      <div class={`sidebar-component ${component.class || ''}`} 
-           style={`animation-delay: ${component.animationDelay || 0}ms; ${component.style || ''}`}>
-        {component.type === "site-stats" && <SiteStats />}
-        {component.type === "calendar" && <Calendar />}
-      </div>
-    ))}
-  </div>
+  {stickyComponents.length > 0 && (
+    <div class="sidebar-sticky">
+      <SideBarComponentList components={stickyComponents} />
+    </div>
+  )}
 </div>
 
 <style>
@@ -57,13 +48,13 @@ const stickyComponents = filterCalendar(
     position: sticky;
     top: 1rem;
   }
-  
+
   .sidebar-top {
     display: flex;
     flex-direction: column;
     gap: 16px;
   }
-  
+
   .sidebar-sticky {
     display: flex;
     flex-direction: column;
@@ -71,27 +62,14 @@ const stickyComponents = filterCalendar(
     position: sticky;
     top: 0;
   }
-  
-  .sidebar-component {
-    opacity: 0;
-    transform: translateY(20px);
-    animation: fadeInUp 0.5s forwards;
-  }
-  
-  @keyframes fadeInUp {
-    to {
-      opacity: 1;
-      transform: translateY(0);
-    }
-  }
-  
+
   /* 响应式设计 */
   @media (max-width: 1280px) {
     .right-sidebar {
       max-width: 260px;
     }
   }
-  
+
   @media (max-width: 1024px) {
     .right-sidebar {
       display: none;

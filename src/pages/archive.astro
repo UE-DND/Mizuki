@@ -1,39 +1,531 @@
 ---
-import ArchivePanel from "@components/ArchivePanel.svelte";
 import I18nKey from "@i18n/i18nKey";
 import { i18n } from "@i18n/translation";
 import MainGridLayout from "@layouts/MainGridLayout.astro";
-import { getSortedPostsList } from "@utils/content-utils";
+import PostPage from "@components/PostPage.astro";
+import Calendar from "@components/widget/Calendar.astro";
+import { getSortedPosts, getTagList, getCategoryList } from "@utils/content-utils";
 
-const sortedPostsList = await getSortedPostsList();
+export const prerender = false;
 
-// 1. 修复类型兼容性：将 category 的 null 转换为 undefined
-const posts = sortedPostsList.map((post) => ({
-    ...post,
-    data: {
-        ...post.data,
-        category: post.data.category === null ? undefined : post.data.category,
-    },
-}));
-
-// 2. 提取所有标签 (去重)
-const tags = [...new Set(posts.flatMap(post => post.data.tags))];
-
-// 3. 提取所有分类 (去重且过滤掉 undefined)
-const categories = [...new Set(posts.map(post => post.data.category).filter((c): c is string => typeof c === "string"))];
+const allPosts = await getSortedPosts();
+const tags = await getTagList();
+const categories = await getCategoryList();
+const uncategorizedLabel = i18n(I18nKey.uncategorized);
 ---
 
 <MainGridLayout title={i18n(I18nKey.archive)}>
-    <!-- 引入右侧边栏布局管理器 -->
-    <script>
-        import('../scripts/right-sidebar-layout.js');
-    </script>
+	<div class="archive-layout" data-uncategorized-label={uncategorizedLabel}>
+		<!-- 文章卡片列表 -->
+		<div class="archive-posts min-w-0">
+			{allPosts.length === 0 ? (
+				<div class="card-base p-8 rounded-[var(--radius-large)] text-70">
+					暂无公开文章。
+				</div>
+			) : (
+				<PostPage page={{ data: allPosts }} maxAnimationIndex={15} />
+			)}
 
-    <!-- 修复：补全缺失的 tags 和 categories 属性 -->
-    <ArchivePanel
-            sortedPosts={posts}
-            tags={tags}
-            categories={categories}
-            client:only="svelte"
-    ></ArchivePanel>
+			<!-- 无筛选结果提示 -->
+			<div id="archive-no-results" class="hidden card-base p-8 rounded-[var(--radius-large)] text-70 mt-4">
+				没有匹配的文章。
+			</div>
+
+			<!-- 分页控件 -->
+			<div id="archive-pagination" class="hidden mt-4">
+				<div class="card-base p-3 rounded-[var(--radius-large)] flex items-center justify-center gap-2">
+					<button id="page-prev" class="pagination-btn" aria-label="上一页">＜</button>
+					<div id="page-numbers" class="flex items-center gap-1"></div>
+					<button id="page-next" class="pagination-btn" aria-label="下一页">＞</button>
+				</div>
+			</div>
+		</div>
+
+		<!-- 筛选面板 -->
+		<div class="archive-filter-panel">
+			<!-- 筛选状态栏 -->
+			<div id="filter-status" class="hidden card-base rounded-[var(--radius-large)] px-4 py-3 flex items-center justify-between gap-2">
+				<span id="filter-status-label" class="text-sm text-75 truncate"></span>
+				<button id="filter-clear-btn" class="shrink-0 text-sm text-[var(--primary)] hover:underline cursor-pointer">
+					清除
+				</button>
+			</div>
+
+			<!-- 日历 -->
+			<Calendar />
+
+			<!-- 分类 -->
+			<div class="card-base rounded-[var(--radius-large)] pb-4">
+				<div class="font-bold transition text-lg text-neutral-900 dark:text-neutral-100 relative ml-8 mt-4 mb-2 flex items-center
+					before:w-1 before:h-4 before:rounded-md before:bg-[var(--primary)]
+					before:absolute before:left-[-16px] before:top-[5.5px]">
+					{i18n(I18nKey.categories)}
+				</div>
+				<div class="px-4 flex flex-col gap-0.5" id="archive-categories">
+					{categories.map((c) => (
+						<button
+							data-filter="category"
+							data-value={c.name}
+							class="archive-filter-btn w-full h-10 rounded-lg bg-none
+								hover:bg-[var(--btn-plain-bg-hover)] active:bg-[var(--btn-plain-bg-active)]
+								transition-all pl-2 hover:pl-3 text-left
+								text-neutral-700 hover:text-[var(--primary)]
+								dark:text-neutral-300 dark:hover:text-[var(--primary)]
+								cursor-pointer"
+						>
+							<div class="flex items-center justify-between mr-2">
+								<span class="overflow-hidden whitespace-nowrap text-ellipsis">{c.name.trim()}</span>
+								<span class="transition px-2 h-7 ml-4 min-w-[2rem] rounded-lg text-sm font-bold
+									text-[var(--btn-content)] dark:text-[var(--deep-text)]
+									bg-[oklch(0.95_0.025_var(--hue))] dark:bg-[var(--primary)]
+									flex items-center justify-center shrink-0">
+									{c.count}
+								</span>
+							</div>
+						</button>
+					))}
+				</div>
+			</div>
+
+			<!-- 标签 -->
+			<div class="card-base rounded-[var(--radius-large)] pb-4">
+				<div class="font-bold transition text-lg text-neutral-900 dark:text-neutral-100 relative ml-8 mt-4 mb-2 flex items-center
+					before:w-1 before:h-4 before:rounded-md before:bg-[var(--primary)]
+					before:absolute before:left-[-16px] before:top-[5.5px]">
+					{i18n(I18nKey.tags)}
+				</div>
+				<div class="px-4 flex gap-2 flex-wrap" id="archive-tags">
+					{tags.map((t) => (
+						<button
+							data-filter="tag"
+							data-value={t.name}
+							class="archive-filter-btn btn-regular h-8 text-sm px-3 rounded-lg cursor-pointer"
+						>
+							{t.name.trim()}
+						</button>
+					))}
+				</div>
+			</div>
+		</div>
+	</div>
 </MainGridLayout>
+
+<style>
+	.archive-layout {
+		display: grid;
+		grid-template-columns: 1fr 17.5rem;
+		gap: 1rem;
+		align-items: start;
+	}
+
+	.archive-filter-panel {
+		position: sticky;
+		top: 1rem;
+		display: flex;
+		flex-direction: column;
+		gap: 1rem;
+		max-height: calc(100vh - 2rem);
+		overflow-y: auto;
+	}
+
+	/* 自定义滚动条 */
+	.archive-filter-panel::-webkit-scrollbar {
+		width: 4px;
+	}
+	.archive-filter-panel::-webkit-scrollbar-track {
+		background: transparent;
+	}
+	.archive-filter-panel::-webkit-scrollbar-thumb {
+		background-color: rgba(156, 163, 175, 0.3);
+		border-radius: 2px;
+	}
+
+	/* 移动端/平板端：单列，筛选在上 */
+	@media (max-width: 1024px) {
+		.archive-layout {
+			grid-template-columns: 1fr;
+		}
+		.archive-filter-panel {
+			order: -1;
+			position: static;
+			max-height: none;
+			overflow-y: visible;
+		}
+	}
+
+	/* 激活状态的筛选按钮 */
+	:global(.archive-filter-btn.active) {
+		background-color: var(--primary) !important;
+		color: white !important;
+	}
+	:global(.archive-filter-btn.active .flex span:last-child) {
+		background-color: rgba(255, 255, 255, 0.2) !important;
+		color: white !important;
+	}
+
+	/* 分页样式 */
+	:global(.pagination-btn) {
+		@apply px-3 py-2 rounded-lg text-sm font-bold
+			text-neutral-600 dark:text-neutral-400
+			hover:bg-[var(--btn-plain-bg-hover)]
+			hover:text-[var(--primary)]
+			transition-colors cursor-pointer;
+	}
+	:global(.pagination-btn.disabled) {
+		@apply opacity-40 pointer-events-none;
+	}
+	:global(.page-num) {
+		@apply w-9 h-9 rounded-lg text-sm font-bold
+			flex items-center justify-center cursor-pointer
+			transition-colors
+			text-neutral-700 dark:text-neutral-300
+			hover:bg-[var(--btn-plain-bg-hover)];
+	}
+	:global(.page-num.active) {
+		@apply bg-[var(--primary)] text-white dark:text-black/70 cursor-default;
+	}
+</style>
+
+<script>
+	type FilterState = {
+		type: "none" | "tag" | "category" | "calendar";
+		value: string;
+		calendarType?: "day" | "month" | "year";
+		calendarKey?: string;
+	};
+
+	const POSTS_PER_PAGE = 5;
+	let currentPage = 1;
+	let currentFilter: FilterState = { type: "none", value: "" };
+
+	const UNCATEGORIZED_LABEL =
+		document.querySelector<HTMLElement>(".archive-layout")?.dataset
+			.uncategorizedLabel || "";
+
+	function isUncategorizedValue(value: string): boolean {
+		return (
+			value === "uncategorized" ||
+			(UNCATEGORIZED_LABEL !== "" &&
+				value.toLowerCase() === UNCATEGORIZED_LABEL.toLowerCase())
+		);
+	}
+
+	const postList = document.getElementById("post-list-container");
+	const noResults = document.getElementById("archive-no-results");
+
+	function getFilterElements() {
+		return {
+			filterStatus: document.getElementById("filter-status"),
+			filterLabel: document.getElementById("filter-status-label"),
+			filterClearBtn: document.getElementById("filter-clear-btn"),
+		};
+	}
+
+	function getMatchingItems(filter: FilterState): HTMLElement[] {
+		if (!postList) return [];
+		const allItems = Array.from(
+			postList.querySelectorAll<HTMLElement>(".post-list-item"),
+		);
+		if (filter.type === "none") return allItems;
+
+		return allItems.filter((item) => {
+			if (filter.type === "tag") {
+				const tags: string[] = JSON.parse(item.dataset.tags || "[]");
+				return tags.includes(filter.value);
+			}
+			if (filter.type === "category") {
+				return isUncategorizedValue(filter.value)
+					? !item.dataset.category
+					: item.dataset.category === filter.value;
+			}
+			if (filter.type === "calendar") {
+				if (filter.calendarType === "year")
+					return item.dataset.year === filter.calendarKey;
+				if (filter.calendarType === "month")
+					return item.dataset.month === filter.calendarKey;
+				return item.dataset.day === filter.calendarKey;
+			}
+			return true;
+		});
+	}
+
+	function renderPosts() {
+		if (!postList) return;
+
+		const allItems = Array.from(
+			postList.querySelectorAll<HTMLElement>(".post-list-item"),
+		);
+		const matching = getMatchingItems(currentFilter);
+		const totalPages = Math.max(
+			1,
+			Math.ceil(matching.length / POSTS_PER_PAGE),
+		);
+
+		if (currentPage > totalPages) currentPage = totalPages;
+
+		const start = (currentPage - 1) * POSTS_PER_PAGE;
+		const pageItems = new Set(
+			matching.slice(start, start + POSTS_PER_PAGE),
+		);
+
+		allItems.forEach((item) => {
+			item.classList.toggle("hidden", !pageItems.has(item));
+		});
+
+		updatePaginationUI(currentPage, totalPages);
+
+		noResults?.classList.toggle(
+			"hidden",
+			currentFilter.type === "none" || matching.length > 0,
+		);
+	}
+
+	function buildPageNumbers(
+		page: number,
+		totalPages: number,
+	): number[] {
+		const pages: number[] = [];
+		const delta = 2;
+
+		pages.push(1);
+
+		const rangeStart = Math.max(2, page - delta);
+		const rangeEnd = Math.min(totalPages - 1, page + delta);
+
+		if (rangeStart > 2) pages.push(-1);
+
+		for (let i = rangeStart; i <= rangeEnd; i++) {
+			pages.push(i);
+		}
+
+		if (rangeEnd < totalPages - 1) pages.push(-1);
+
+		if (totalPages > 1) pages.push(totalPages);
+
+		return pages;
+	}
+
+	function toggleBtnDisabled(id: string, disabled: boolean) {
+		const btn = document.getElementById(id);
+		if (!btn) return;
+		btn.classList.toggle("disabled", disabled);
+		if (disabled) {
+			btn.setAttribute("aria-disabled", "true");
+		} else {
+			btn.removeAttribute("aria-disabled");
+		}
+	}
+
+	function updatePaginationUI(page: number, totalPages: number) {
+		const container = document.getElementById("archive-pagination");
+		if (!container) return;
+
+		container.classList.toggle("hidden", totalPages <= 1);
+		if (totalPages <= 1) return;
+
+		const pages = buildPageNumbers(page, totalPages);
+		const numbersEl = document.getElementById("page-numbers");
+		if (numbersEl) {
+			numbersEl.innerHTML = pages
+				.map((p) =>
+					p === -1
+						? '<span class="px-1 text-50">...</span>'
+						: p === page
+							? `<span class="page-num active">${p}</span>`
+							: `<button class="page-num" data-page="${p}">${p}</button>`,
+				)
+				.join("");
+		}
+
+		toggleBtnDisabled("page-prev", page <= 1);
+		toggleBtnDisabled("page-next", page >= totalPages);
+	}
+
+	function scrollToPostList() {
+		postList?.scrollIntoView({ behavior: "smooth", block: "start" });
+	}
+
+	function updateFilterStatus(filter: FilterState) {
+		const { filterStatus, filterLabel } = getFilterElements();
+		if (!filterStatus || !filterLabel) return;
+
+		if (filter.type === "none") {
+			filterStatus.classList.add("hidden");
+			return;
+		}
+
+		filterStatus.classList.remove("hidden");
+		if (filter.type === "tag") {
+			filterLabel.textContent = `标签：${filter.value}`;
+		} else if (filter.type === "category") {
+			filterLabel.textContent = isUncategorizedValue(filter.value)
+				? UNCATEGORIZED_LABEL || "未分类"
+				: `分类：${filter.value}`;
+		} else if (filter.type === "calendar") {
+			filterLabel.textContent = `日期：${filter.value}`;
+		}
+	}
+
+	function updateButtonStates(filter: FilterState) {
+		document.querySelectorAll<HTMLElement>(".archive-filter-btn").forEach(
+			(btn) => btn.classList.remove("active"),
+		);
+
+		if (filter.type === "none") return;
+
+		if (filter.type === "tag" || filter.type === "category") {
+			const selector = `.archive-filter-btn[data-filter="${filter.type}"][data-value="${CSS.escape(filter.value)}"]`;
+			document.querySelector<HTMLElement>(selector)?.classList.add("active");
+		}
+	}
+
+	function applyFilter(filter: FilterState) {
+		currentFilter = filter;
+		currentPage = 1;
+		renderPosts();
+		updateFilterStatus(filter);
+		updateButtonStates(filter);
+	}
+
+	function clearAllFilters() {
+		window.dispatchEvent(new CustomEvent("calendarFilterClear"));
+
+		currentFilter = { type: "none", value: "" };
+		currentPage = 1;
+		renderPosts();
+		updateFilterStatus({ type: "none", value: "" });
+		updateButtonStates({ type: "none", value: "" });
+	}
+
+	function setupFilterListeners() {
+		// 分类/标签按钮点击
+		document.addEventListener("click", (e) => {
+			const btn = (e.target as HTMLElement)?.closest<HTMLElement>(
+				".archive-filter-btn",
+			);
+			if (!btn) return;
+
+			const filterType = btn.dataset.filter as "tag" | "category";
+			const filterValue = btn.dataset.value || "";
+			if (!filterType || !filterValue) return;
+
+			if (
+				currentFilter.type === filterType &&
+				currentFilter.value === filterValue
+			) {
+				clearAllFilters();
+				return;
+			}
+
+			window.dispatchEvent(new CustomEvent("calendarFilterClear"));
+			applyFilter({ type: filterType, value: filterValue });
+		});
+
+		// 清除按钮
+		getFilterElements().filterClearBtn?.addEventListener("click", () => {
+			clearAllFilters();
+		});
+
+		// 监听日历筛选事件
+		window.addEventListener("calendarFilterChange", (event) => {
+			const detail = (
+				event as CustomEvent<{
+					type: "day" | "month" | "year";
+					key: string;
+					label?: string;
+				}>
+			).detail;
+			if (!detail) return;
+
+			currentFilter = {
+				type: "calendar",
+				value: detail.label || detail.key,
+				calendarType: detail.type,
+				calendarKey: detail.key,
+			};
+
+			// 延迟一帧，覆盖 PostPage 的日历筛选结果
+			requestAnimationFrame(() => {
+				currentPage = 1;
+				renderPosts();
+				updateFilterStatus(currentFilter);
+				updateButtonStates(currentFilter);
+			});
+		});
+
+		// 监听日历清除事件
+		window.addEventListener("calendarFilterClear", () => {
+			if (currentFilter.type === "calendar") {
+				currentFilter = { type: "none", value: "" };
+				currentPage = 1;
+				requestAnimationFrame(() => {
+					renderPosts();
+					updateFilterStatus({ type: "none", value: "" });
+					updateButtonStates({ type: "none", value: "" });
+				});
+			}
+		});
+
+		// 分页按钮事件
+		document.addEventListener("click", (e) => {
+			const target = e.target as HTMLElement;
+
+			// 上一页
+			if (target.id === "page-prev" || target.closest("#page-prev")) {
+				if (currentPage > 1) {
+					currentPage--;
+					renderPosts();
+					scrollToPostList();
+				}
+				return;
+			}
+
+			// 下一页
+			if (target.id === "page-next" || target.closest("#page-next")) {
+				const matching = getMatchingItems(currentFilter);
+				const totalPages = Math.max(
+					1,
+					Math.ceil(matching.length / POSTS_PER_PAGE),
+				);
+				if (currentPage < totalPages) {
+					currentPage++;
+					renderPosts();
+					scrollToPostList();
+				}
+				return;
+			}
+
+			// 页码按钮
+			const pageBtn = target.closest<HTMLElement>("[data-page]");
+			if (pageBtn) {
+				const page = Number(pageBtn.dataset.page);
+				if (page && page !== currentPage) {
+					currentPage = page;
+					renderPosts();
+					scrollToPostList();
+				}
+			}
+		});
+	}
+
+	function initFromUrlParams() {
+		const params = new URLSearchParams(window.location.search);
+		const tag = params.get("tag");
+		const category = params.get("category");
+		const uncategorized = params.get("uncategorized");
+
+		if (tag) {
+			applyFilter({ type: "tag", value: tag });
+		} else if (category) {
+			applyFilter({ type: "category", value: category });
+		} else if (uncategorized) {
+			applyFilter({ type: "category", value: "uncategorized" });
+		} else {
+			// 初始渲染：应用分页
+			renderPosts();
+		}
+	}
+
+	setupFilterListeners();
+	initFromUrlParams();
+</script>
