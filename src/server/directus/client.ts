@@ -1,4 +1,5 @@
 import {
+	aggregate,
 	createDirectus,
 	createItem,
 	createUser,
@@ -177,6 +178,31 @@ export async function readOneById<K extends keyof DirectusSchema>(
 		}
 		throw toDirectusError(`读取集合 ${String(collection)} 明细`, error);
 	}
+}
+
+export async function countItems<K extends keyof DirectusSchema>(
+	collection: K,
+	filter?: JsonObject,
+): Promise<number> {
+	const result = await runDirectusRequest(
+		`统计集合 ${String(collection)} 总数`,
+		async () => {
+			return await getDirectusClient().request(
+				aggregate(
+					collection as Exclude<K, "directus_users">,
+					{
+						aggregate: { count: "*" },
+						query: filter ? { filter } : {},
+					} as never,
+				),
+			);
+		},
+	);
+	const row = Array.isArray(result) ? result[0] : result;
+	const count = (row as Record<string, unknown>)?.count;
+	return typeof count === "number"
+		? count
+		: parseInt(String(count ?? "0"), 10) || 0;
 }
 
 export async function createOne<K extends keyof DirectusSchema>(

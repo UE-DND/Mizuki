@@ -774,6 +774,7 @@ function disableAnimation() {
 	}
 
 	let fancyboxSelectors: string[] = [];
+	let fancyboxInitializing = false;
 	type FancyboxStatic = {
 		bind: (selector: string, options?: object) => void;
 		unbind: (selector: string) => void;
@@ -790,6 +791,8 @@ function disableAnimation() {
 
 	// 图片灯箱按需加载
 	async function initFancybox() {
+		if (fancyboxInitializing || fancyboxSelectors.length > 0) return;
+
 		const albumImagesSelector =
 			".custom-md img, #post-cover img, .moment-images img";
 		const albumLinksSelector = ".moment-images a[data-fancybox]";
@@ -802,15 +805,17 @@ function disableAnimation() {
 
 		if (!hasImages) return;
 
-		if (!Fancybox) {
-			const mod = await import("@fancyapps/ui");
-			Fancybox = mod.Fancybox as FancyboxStatic;
-			await import("@fancyapps/ui/dist/fancybox/fancybox.css");
-		}
+		fancyboxInitializing = true;
+		try {
+			if (!Fancybox) {
+				const mod = await import("@fancyapps/ui");
+				Fancybox = mod.Fancybox as FancyboxStatic;
+				await import("@fancyapps/ui/dist/fancybox/fancybox.css");
+			}
 
-		if (fancyboxSelectors.length > 0) {
-			return; // 已经初始化，直接返回
-		}
+			if (fancyboxSelectors.length > 0) {
+				return;
+			}
 
 		const fancybox = Fancybox;
 		if (!fancybox) return;
@@ -874,6 +879,9 @@ function disableAnimation() {
 		// 绑定单独的 fancybox 图片
 		fancybox.bind(singleFancyboxSelector, commonConfig);
 		fancyboxSelectors.push(singleFancyboxSelector);
+		} finally {
+			fancyboxInitializing = false;
+		}
 	}
 
 	// 清理 Fancybox 实例
@@ -884,6 +892,7 @@ function disableAnimation() {
 			fancybox.unbind(selector);
 		});
 		fancyboxSelectors = [];
+		fancyboxInitializing = false;
 	}
 
 	const setup = () => {

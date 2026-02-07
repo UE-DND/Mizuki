@@ -1,6 +1,7 @@
 import type { APIContext } from "astro";
 import {
 	checkLoginRateLimit,
+	DirectusAuthError,
 	DIRECTUS_ACCESS_COOKIE_NAME,
 	directusGetMe,
 	directusLogin,
@@ -102,8 +103,10 @@ export async function POST(context: APIContext): Promise<Response> {
 
 		return json({ ok: true, user });
 	} catch (error) {
-		const message = String(error?.message ?? error);
-		const status = message.includes("(401)") ? 401 : 500;
+		const status =
+			error instanceof DirectusAuthError && error.directusStatus === 401
+				? 401
+				: 500;
 		return json(
 			{
 				ok: false,

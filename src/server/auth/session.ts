@@ -5,6 +5,7 @@ import { readOneById } from "@/server/directus/client";
 import {
 	DIRECTUS_ACCESS_COOKIE_NAME,
 	DIRECTUS_REFRESH_COOKIE_NAME,
+	DirectusAuthError,
 	buildDirectusAssetUrl,
 	directusGetMe,
 	directusRefresh,
@@ -171,7 +172,16 @@ async function loadUserByAccessToken(
 		const me = await directusGetMe({ accessToken });
 		const fallbackUser = me.id ? await loadDirectusUserById(me.id) : null;
 		return buildSessionUser(me, fallbackUser);
-	} catch {
+	} catch (error) {
+		const isAuthError =
+			error instanceof DirectusAuthError &&
+			(error.directusStatus === 401 || error.directusStatus === 403);
+		if (!isAuthError) {
+			console.error(
+				"[auth/session] loadUserByAccessToken failed:",
+				error,
+			);
+		}
 		return null;
 	}
 }

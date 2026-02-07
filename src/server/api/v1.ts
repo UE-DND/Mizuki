@@ -19,6 +19,7 @@ import type {
 import type { JsonObject, JsonValue } from "@/types/json";
 import {
 	createDirectusUser,
+	countItems,
 	createOne,
 	deleteDirectusFile,
 	deleteOne,
@@ -38,7 +39,10 @@ import {
 	getAppAccessContext,
 	updateProfileUsername,
 } from "@/server/auth/acl";
-import { normalizeRequestedUsername } from "@/server/auth/username";
+import {
+	calculateUsernameWeight,
+	normalizeRequestedUsername,
+} from "@/server/auth/username";
 import { getSessionUser } from "@/server/auth/session";
 import { buildDirectusAssetUrl } from "@/server/directus-auth";
 import { fail, ok } from "@/server/api/response";
@@ -97,7 +101,7 @@ function isWriteMethod(method: string): boolean {
 function assertSameOrigin(context: APIContext): Response | null {
 	const origin = context.request.headers.get("origin");
 	if (!origin) {
-		return null;
+		return fail("缺少 Origin 头", 403);
 	}
 	if (origin !== context.url.origin) {
 		return fail("非法来源请求", 403);
@@ -455,24 +459,12 @@ function parseBodyTextField(body: JsonObject, key: string): string {
 	return toStringValue(body[key]).trim();
 }
 
-function isHanCharacter(char: string): boolean {
-	return /\p{Script=Han}/u.test(char);
-}
-
-function calculateTextWeight(value: string): number {
-	let total = 0;
-	for (const char of String(value || "")) {
-		total += isHanCharacter(char) ? 2 : 1;
-	}
-	return total;
-}
-
 function parseProfileBioField(input: JsonValue | undefined): string | null {
 	const value = toOptionalString(input);
 	if (!value) {
 		return null;
 	}
-	if (calculateTextWeight(value) > PROFILE_BIO_MAX_LENGTH) {
+	if (calculateUsernameWeight(value) > PROFILE_BIO_MAX_LENGTH) {
 		throw new Error("PROFILE_BIO_TOO_LONG");
 	}
 	return value;
@@ -560,40 +552,59 @@ function parseVisibilityPatch(body: JsonObject): JsonObject {
 	return payload;
 }
 
-function toErrorResponse(error: unknown): Response {
+function toErrorResponse(error: unknown, context?: APIContext): Response {
 	const message = String((error as Error)?.message ?? error);
 	if (message.includes("FORBIDDEN")) {
-		return fail("权限不足", 403);
+		return fail("权限不足", 403, "FORBIDDEN");
 	}
 	if (message.includes("ACCOUNT_SUSPENDED")) {
-		return fail("账号已被停用", 403);
+		return fail("账号已被停用", 403, "ACCOUNT_SUSPENDED");
 	}
 	if (message.includes("INVALID_JSON")) {
-		return fail("请求体不是合法 JSON", 400);
+		return fail("请求体不是合法 JSON", 400, "INVALID_JSON");
 	}
 	if (message.includes("USERNAME_EXISTS")) {
-		return fail("用户名已存在", 409);
+		return fail("用户名已存在", 409, "USERNAME_EXISTS");
 	}
 	if (message.includes("USERNAME_EMPTY")) {
-		return fail("用户名不能为空", 400);
+		return fail("用户名不能为空", 400, "USERNAME_EMPTY");
 	}
 	if (message.includes("USERNAME_INVALID")) {
-		return fail("用户名仅支持中文、英文、数字、下划线和短横线", 400);
+		return fail(
+			"用户名仅支持中文、英文、数字、下划线和短横线",
+			400,
+			"USERNAME_INVALID",
+		);
 	}
 	if (message.includes("USERNAME_TOO_LONG")) {
-		return fail("用户名最多 14 字符（中文按 2 字符计）", 400);
+		return fail(
+			"用户名最多 14 字符（中文按 2 字符计）",
+			400,
+			"USERNAME_TOO_LONG",
+		);
 	}
 	if (message.includes("PROFILE_BIO_TOO_LONG")) {
-		return fail("个人简介最多 30 字符（中文按 2 字符计）", 400);
+		return fail(
+			"个人简介最多 30 字符（中文按 2 字符计）",
+			400,
+			"PROFILE_BIO_TOO_LONG",
+		);
 	}
 	if (message.includes("ITEM_NOT_FOUND")) {
-		return fail("资源不存在", 404);
+		return fail("资源不存在", 404, "ITEM_NOT_FOUND");
 	}
 	if (message.includes("UNAUTHORIZED")) {
-		return fail("未登录", 401);
+		return fail("未登录", 401, "UNAUTHORIZED");
 	}
-	console.error("[api/v1] unexpected error:", error);
-	return fail("服务端错误", 500);
+	console.error("[api/v1] unexpected error:", {
+		method: context?.request.method,
+		url: context?.url.pathname,
+		error:
+			error instanceof Error
+				? { message: error.message, stack: error.stack }
+				: error,
+	});
+	return fail("服务端错误", 500, "INTERNAL_ERROR");
 }
 
 async function loadPublicArticleBySlug(
@@ -634,12 +645,28 @@ function toDirectusAssetQuery(
 	const output: Partial<
 		Record<"width" | "height" | "fit" | "quality" | "format", string>
 	> = {};
-	const passThroughKeys = ["width", "height", "fit", "quality", "format"];
-	for (const key of passThroughKeys) {
-		const value = query.get(key);
-		if (value && value.trim()) {
-			output[key as keyof typeof output] = value.trim();
-		}
+	const ALLOWED_FORMATS = ["jpeg", "png", "webp", "avif", "tiff"];
+	const ALLOWED_FITS = ["cover", "contain", "inside", "outside"];
+	const MAX_DIMENSION = 4096;
+	const widthRaw = parseInt(query.get("width") || "", 10);
+	if (widthRaw > 0) {
+		output.width = String(Math.min(widthRaw, MAX_DIMENSION));
+	}
+	const heightRaw = parseInt(query.get("height") || "", 10);
+	if (heightRaw > 0) {
+		output.height = String(Math.min(heightRaw, MAX_DIMENSION));
+	}
+	const fit = query.get("fit")?.trim() || "";
+	if (fit && ALLOWED_FITS.includes(fit)) {
+		output.fit = fit;
+	}
+	const qualityRaw = parseInt(query.get("quality") || "", 10);
+	if (qualityRaw > 0) {
+		output.quality = String(Math.min(Math.max(qualityRaw, 1), 100));
+	}
+	const format = query.get("format")?.trim() || "";
+	if (format && ALLOWED_FORMATS.includes(format)) {
+		output.format = format;
 	}
 	return output;
 }
@@ -715,9 +742,17 @@ async function handlePublicArticles(
 
 	if (segments.length === 2) {
 		const { page, limit, offset } = parsePagination(context.url);
-		const tag = context.url.searchParams.get("tag")?.trim() || "";
-		const category = context.url.searchParams.get("category")?.trim() || "";
-		const q = context.url.searchParams.get("q")?.trim() || "";
+		const tag = (context.url.searchParams.get("tag")?.trim() || "").slice(
+			0,
+			200,
+		);
+		const category = (
+			context.url.searchParams.get("category")?.trim() || ""
+		).slice(0, 200);
+		const q = (context.url.searchParams.get("q")?.trim() || "").slice(
+			0,
+			200,
+		);
 
 		const andFilters: JsonObject[] = [filterPublicStatus()];
 		if (tag) {
@@ -735,14 +770,17 @@ async function handlePublicArticles(
 			});
 		}
 
-		const rows = await readMany("app_articles", {
-			filter: {
-				_and: andFilters,
-			} as JsonObject,
-			sort: ["-published_at", "-date_created"],
-			limit,
-			offset,
-		});
+		const filter = { _and: andFilters } as JsonObject;
+
+		const [rows, total] = await Promise.all([
+			readMany("app_articles", {
+				filter,
+				sort: ["-published_at", "-date_created"],
+				limit,
+				offset,
+			}),
+			countItems("app_articles", filter),
+		]);
 
 		const authorIds = Array.from(
 			new Set(rows.map((row) => row.author_id).filter(Boolean)),
@@ -762,7 +800,7 @@ async function handlePublicArticles(
 			items,
 			page,
 			limit,
-			total: items.length,
+			total,
 		});
 	}
 
@@ -801,12 +839,16 @@ async function handlePublicDiaries(
 
 	if (segments.length === 2) {
 		const { page, limit, offset } = parsePagination(context.url);
-		const rows = await readMany("app_diaries", {
-			filter: filterPublicStatus(),
-			sort: ["-happened_at", "-date_created"],
-			limit,
-			offset,
-		});
+		const filter = filterPublicStatus();
+		const [rows, total] = await Promise.all([
+			readMany("app_diaries", {
+				filter,
+				sort: ["-happened_at", "-date_created"],
+				limit,
+				offset,
+			}),
+			countItems("app_diaries", filter),
+		]);
 
 		const diaryIds = rows.map((row) => row.id);
 		const authorIds = Array.from(
@@ -848,7 +890,7 @@ async function handlePublicDiaries(
 			items,
 			page,
 			limit,
-			total: items.length,
+			total,
 		});
 	}
 
@@ -907,14 +949,16 @@ async function handlePublicAnime(
 		andFilters.push({ watch_status: { _eq: watchStatus } });
 	}
 
-	const rows = await readMany("app_anime_entries", {
-		filter: {
-			_and: andFilters,
-		} as JsonObject,
-		sort: ["-date_created"],
-		limit,
-		offset,
-	});
+	const animeFilter = { _and: andFilters } as JsonObject;
+	const [rows, total] = await Promise.all([
+		readMany("app_anime_entries", {
+			filter: animeFilter,
+			sort: ["-date_created"],
+			limit,
+			offset,
+		}),
+		countItems("app_anime_entries", animeFilter),
+	]);
 
 	const authorIds = Array.from(
 		new Set(rows.map((row) => row.author_id).filter(Boolean)),
@@ -934,7 +978,7 @@ async function handlePublicAnime(
 		items,
 		page,
 		limit,
-		total: items.length,
+		total,
 	});
 }
 
@@ -948,12 +992,16 @@ async function handlePublicAlbums(
 
 	if (segments.length === 2) {
 		const { page, limit, offset } = parsePagination(context.url);
-		const rows = await readMany("app_albums", {
-			filter: filterPublicStatus(),
-			sort: ["-date", "-date_created"],
-			limit,
-			offset,
-		});
+		const filter = filterPublicStatus();
+		const [rows, total] = await Promise.all([
+			readMany("app_albums", {
+				filter,
+				sort: ["-date", "-date_created"],
+				limit,
+				offset,
+			}),
+			countItems("app_albums", filter),
+		]);
 
 		const authorIds = Array.from(
 			new Set(rows.map((row) => row.author_id).filter(Boolean)),
@@ -973,7 +1021,7 @@ async function handlePublicAlbums(
 			items,
 			page,
 			limit,
-			total: items.length,
+			total,
 		});
 	}
 
@@ -3296,6 +3344,6 @@ export async function handleV1(context: APIContext): Promise<Response> {
 
 		return fail("未找到接口", 404);
 	} catch (error) {
-		return toErrorResponse(error);
+		return toErrorResponse(error, context);
 	}
 }

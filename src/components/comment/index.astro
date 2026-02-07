@@ -176,7 +176,7 @@ const hasDirectusTarget = Boolean(moduleName && contentId);
 
 			return `
 				<details class="relative comment-action-menu">
-					<summary class="list-none cursor-pointer btn-plain scale-animation w-8 h-8 rounded-lg flex items-center justify-center text-base select-none">...</summary>
+					<summary class="list-none cursor-pointer btn-plain scale-animation w-8 h-8 rounded-lg flex items-center justify-center text-base select-none" aria-label="评论操作">...</summary>
 					<div class="absolute right-0 top-9 z-10 min-w-[7rem] card-base rounded-xl border border-[var(--line-divider)] p-2">
 						${menuActions.join("")}
 					</div>
@@ -186,7 +186,7 @@ const hasDirectusTarget = Boolean(moduleName && contentId);
 
 		const renderCommentNode = (item, level) => {
 			const avatar = item.author?.avatar_url
-				? `<img src="${escapeHtml(item.author.avatar_url)}" alt="" class="w-8 h-8 rounded-full object-cover" loading="lazy" />`
+				? `<img src="${escapeHtml(item.author.avatar_url)}" alt="用户头像" class="w-8 h-8 rounded-full object-cover" loading="lazy" />`
 				: `<div class="w-8 h-8 rounded-full bg-black/10 dark:bg-white/10"></div>`;
 			const replies = Array.isArray(item.replies) ? item.replies : [];
 

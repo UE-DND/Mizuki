@@ -166,6 +166,15 @@ function getDirectusAuthClient() {
 	return createDirectus(getDirectusUrl()).with(rest());
 }
 
+export class DirectusAuthError extends Error {
+	readonly directusStatus: number | null;
+	constructor(message: string, directusStatus: number | null) {
+		super(message);
+		this.name = "DirectusAuthError";
+		this.directusStatus = directusStatus;
+	}
+}
+
 function getDirectusErrorStatus(error: unknown): number | null {
 	if (!isDirectusError(error)) {
 		return null;
@@ -177,11 +186,16 @@ function getDirectusErrorStatus(error: unknown): number | null {
 	return null;
 }
 
-function toDirectusAuthError(action: string, error: unknown): Error {
+function toDirectusAuthError(
+	action: string,
+	error: unknown,
+): DirectusAuthError {
 	if (!isDirectusError(error)) {
-		return error instanceof Error
-			? error
-			: new Error(`[directus/auth] ${action}失败: ${String(error)}`);
+		const msg =
+			error instanceof Error
+				? error.message
+				: `[directus/auth] ${action}失败: ${String(error)}`;
+		return new DirectusAuthError(msg, null);
 	}
 
 	const status = getDirectusErrorStatus(error);
@@ -201,8 +215,9 @@ function toDirectusAuthError(action: string, error: unknown): Error {
 			})
 			.join("; ") || error.message;
 
-	return new Error(
+	return new DirectusAuthError(
 		`[directus/auth] ${action}失败 ${statusText}${codes ? ` codes=${codes}` : ""}: ${detail}`,
+		status,
 	);
 }
 
