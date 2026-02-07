@@ -8,25 +8,10 @@ import swup from "@swup/astro";
 import { defineConfig } from "astro/config";
 import expressiveCode from "astro-expressive-code";
 import icon from "astro-icon";
-import rehypeAutolinkHeadings from "rehype-autolink-headings";
-import rehypeComponents from "rehype-components";
-import rehypeKatex from "rehype-katex";
-import rehypeSlug from "rehype-slug";
-import remarkDirective from "remark-directive";
-import remarkGithubAdmonitionsToDirectives from "remark-github-admonitions-to-directives";
-import remarkMath from "remark-math";
-import remarkSectionize from "remark-sectionize";
 import { siteConfig } from "./src/config.ts";
 import { pluginCustomCopyButton } from "./src/plugins/expressive-code/custom-copy-button.js";
 import { pluginLanguageBadge } from "./src/plugins/expressive-code/language-badge.ts";
-import { AdmonitionComponent } from "./src/plugins/rehype-component-admonition.mjs";
-import { GithubCardComponent } from "./src/plugins/rehype-component-github-card.mjs";
-import { rehypeMermaid } from "./src/plugins/rehype-mermaid.mjs";
-import { rehypeWrapTable } from "./src/plugins/rehype-wrap-table.mjs";
-import { parseDirectiveNode } from "./src/plugins/remark-directive-rehype.js";
-import { remarkMermaid } from "./src/plugins/remark-mermaid.js";
-import { remarkContent } from "./src/plugins/remark-content.mjs";
-import { rehypeImageWidth } from "./src/plugins/rehype-image-width.mjs";
+import { rehypePlugins, remarkPlugins } from "./src/server/markdown/pipeline.ts";
 
 // https://astro.build/config
 export default defineConfig({
@@ -118,54 +103,8 @@ export default defineConfig({
 		sitemap(),
 	],
 	markdown: {
-		remarkPlugins: [
-			remarkMath,
-			remarkContent,
-			remarkGithubAdmonitionsToDirectives,
-			remarkDirective,
-			remarkSectionize,
-			parseDirectiveNode,
-			remarkMermaid,
-		],
-		rehypePlugins: [
-			rehypeKatex,
-			rehypeSlug,
-			rehypeWrapTable,
-			rehypeMermaid,
-			rehypeImageWidth,
-			[
-				rehypeComponents,
-				{
-					components: {
-						github: GithubCardComponent,
-						note: (x, y) => AdmonitionComponent(x, y, "note"),
-						tip: (x, y) => AdmonitionComponent(x, y, "tip"),
-						important: (x, y) =>
-							AdmonitionComponent(x, y, "important"),
-						caution: (x, y) => AdmonitionComponent(x, y, "caution"),
-						warning: (x, y) => AdmonitionComponent(x, y, "warning"),
-					},
-				},
-			],
-			[
-				rehypeAutolinkHeadings,
-				{
-					behavior: "append",
-					properties: {
-						className: ["anchor"],
-					},
-					content: {
-						type: "element",
-						tagName: "span",
-						properties: {
-							className: ["anchor-icon"],
-							"data-pagefind-ignore": true,
-						},
-						children: [{ type: "text", value: "#" }],
-					},
-				},
-			],
-		],
+		remarkPlugins,
+		rehypePlugins,
 	},
 	vite: {
 		build: {

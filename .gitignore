@@ -62,6 +62,4 @@ ref-upstream/
 .spec-workflow/
 
 # Directus
-directus/
-!src/server/directus/
-!src/server/directus/**
+/directus/

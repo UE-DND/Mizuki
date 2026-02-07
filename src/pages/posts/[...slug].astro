@@ -2,8 +2,8 @@
 import Comment from "@components/comment/index.astro";
 import Markdown from "@components/misc/Markdown.astro";
 import MainGridLayout from "@layouts/MainGridLayout.astro";
+import { renderMarkdownHtml } from "@/server/markdown/render";
 import { buildDirectusAssetUrl } from "@/server/directus-auth";
-import { marked } from "marked";
 
 export const prerender = false;
 
@@ -35,7 +35,9 @@ if (slug) {
 		if (response.ok && data?.ok && data.item) {
 			const resolved = data.item;
 			article = resolved;
-			articleHtml = await marked.parse(String(resolved.body_markdown || ""));
+			articleHtml = await renderMarkdownHtml(
+				String(resolved.body_markdown || ""),
+			);
 		} else {
 			Astro.response.status = 404;
 		}

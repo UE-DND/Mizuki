@@ -1,41 +1,11 @@
 import type { APIContext } from "astro";
-import MarkdownIt from "markdown-it";
-import { parse as htmlParser } from "node-html-parser";
-import sanitizeHtml from "sanitize-html";
 
 import { profileConfig, siteConfig } from "@/config";
+import { renderMarkdownForFeed } from "@/server/markdown/render";
 import { getSortedPosts } from "@/utils/content-utils";
 import { getPostUrl } from "@/utils/url-utils";
 
-const markdownParser = new MarkdownIt();
-
 export const prerender = false;
-
-function toAbsoluteSrc(src: string, site: URL): string {
-	if (/^(?:https?:)?\/\//i.test(src) || src.startsWith("data:")) {
-		return src;
-	}
-	if (src.startsWith("/")) {
-		return new URL(src, site).href;
-	}
-	const normalized = src.replace(/^\.\/+/, "").replace(/^\.\.\/+/, "");
-	return new URL(`/${normalized}`, site).href;
-}
-
-function renderPostHtml(markdown: string, site: URL): string {
-	const body = markdownParser.render(markdown);
-	const html = htmlParser.parse(body);
-	for (const image of html.querySelectorAll("img")) {
-		const src = image.getAttribute("src");
-		if (!src) {
-			continue;
-		}
-		image.setAttribute("src", toAbsoluteSrc(src, site));
-	}
-	return sanitizeHtml(html.toString(), {
-		allowedTags: sanitizeHtml.defaults.allowedTags.concat(["img"]),
-	});
-}
 
 function escapeXml(raw: string): string {
 	return raw
@@ -59,7 +29,7 @@ export async function GET(context: APIContext): Promise<Response> {
 
 	for (const post of posts) {
 		const postUrl = new URL(getPostUrl(post), context.site).href;
-		const content = renderPostHtml(
+		const content = await renderMarkdownForFeed(
 			String(post.body || ""),
 			context.site as URL,
 		);

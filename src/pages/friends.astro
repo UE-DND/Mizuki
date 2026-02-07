@@ -1,6 +1,6 @@
 ---
 import Markdown from "@components/misc/Markdown.astro";
-import { marked } from "marked";
+import { renderMarkdownHtml } from "@/server/markdown/render";
 // import Icon from "../components/misc/Icon.astro";
 import { siteConfig } from "../config";
 import { getShuffledFriendsList } from "../data/friends";
@@ -22,7 +22,7 @@ try {
 	});
 	const data = await response.json().catch(() => null);
 	if (response.ok && data?.ok && data.item?.body_markdown) {
-		friendsDocHtml = await marked.parse(String(data.item.body_markdown));
+		friendsDocHtml = await renderMarkdownHtml(String(data.item.body_markdown));
 	}
 } catch (error) {
 	console.error("[friends] failed to fetch intro content:", error);
