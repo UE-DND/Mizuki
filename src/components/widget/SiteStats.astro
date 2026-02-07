@@ -60,19 +60,6 @@ function formatNumber(num: number): string {
 	return num.toLocaleString();
 }
 
-// 获取最新文章日期（忽略置顶状态，只按发布日期排序）
-const latestPost = posts.reduce(
-	(latest: (typeof posts)[number] | undefined, post: (typeof posts)[number]) => {
-		if (!latest) {return post;}
-		return post.data.published > latest.data.published ? post : latest;
-	},
-	posts[0],
-);
-
-const lastPostDate = latestPost
-	? latestPost.data.published.toISOString()
-	: null;
-
 const stats = [
 	{
 		icon: "material-symbols:article-outline",
@@ -102,14 +89,6 @@ const stats = [
 		suffix: i18n(I18nKey.siteStatsDays).replace("{days}", ""),
 		dynamic: true,
 		id: "running-days",
-	},
-	{
-		icon: "material-symbols:ecg-heart-outline",
-		label: i18n(I18nKey.siteStatsLastUpdate),
-		value: 0, // 将由客户端更新
-		suffix: i18n(I18nKey.siteStatsDaysAgo).replace("{days}", ""),
-		dynamic: true,
-		id: "last-update",
 	},
 ];
 ---
@@ -153,7 +132,7 @@ const stats = [
 	</div>
 </WidgetLayout>
 
-<script is:inline define:vars={{ siteStartDate, lastPostDate }}>
+<script is:inline define:vars={{ siteStartDate }}>
 	function updateDynamicStats() {
 		const today = new Date();
 
@@ -169,26 +148,6 @@ const stats = [
 			runningDaysElements.forEach((element) => {
 				element.textContent = diffDays.toString();
 			});
-		}
-
-		// 更新最近更新时间
-		if (lastPostDate) {
-			const lastPost = new Date(lastPostDate);
-			const timeSinceLastPost = Math.abs(
-				today.getTime() - lastPost.getTime(),
-			);
-			const daysSinceLastUpdate = Math.floor(
-				timeSinceLastPost / (1000 * 60 * 60 * 24),
-			);
-
-			const lastUpdateElements = document.querySelectorAll(
-				'[data-stat-id="last-update"]',
-			);
-			if (lastUpdateElements.length > 0) {
-				lastUpdateElements.forEach((element) => {
-					element.textContent = daysSinceLastUpdate.toString();
-				});
-			}
 		}
 	}
 
