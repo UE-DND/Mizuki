@@ -3,6 +3,7 @@ import {
 	createItem,
 	createUser,
 	customEndpoint,
+	deleteFile,
 	deleteItem,
 	isDirectusError,
 	readItem,
@@ -348,6 +349,27 @@ export async function uploadDirectusFile(params: {
 					undefined)
 				: undefined,
 	};
+}
+
+/**
+ * 删除 Directus 中的文件。
+ * 删除失败时仅打印警告，不抛出异常，避免阻断业务流程。
+ */
+export async function deleteDirectusFile(fileId: string): Promise<void> {
+	if (!fileId) {
+		return;
+	}
+	try {
+		await runDirectusRequest("删除 Directus 文件", async () => {
+			await getDirectusClient().request(deleteFile(fileId));
+		});
+	} catch (err) {
+		console.warn(
+			"[directus/client] 删除文件失败，可能已不存在:",
+			fileId,
+			err,
+		);
+	}
 }
 
 export async function readDirectusAssetResponse(params: {

@@ -20,6 +20,7 @@ import type { JsonObject, JsonValue } from "@/types/json";
 import {
 	createDirectusUser,
 	createOne,
+	deleteDirectusFile,
 	deleteOne,
 	listDirectusUsers,
 	readDirectusAssetResponse,
@@ -1194,7 +1195,8 @@ async function handleMeProfile(
 		const payload: JsonObject = {};
 		const hasAvatarFilePatch = hasOwn(body, "avatar_file");
 		const hasAvatarUrlPatch = hasOwn(body, "avatar_url");
-		let nextAvatarFile = access.profile.avatar_file;
+		const prevAvatarFile = access.profile.avatar_file;
+		let nextAvatarFile = prevAvatarFile;
 		let nextAvatarUrl = access.profile.avatar_url;
 		if (hasOwn(body, "bio")) {
 			payload.bio = parseProfileBioField(body.bio);
@@ -1227,6 +1229,14 @@ async function handleMeProfile(
 			access.profile.id,
 			payload,
 		);
+		// 头像文件发生变更时，删除旧文件避免孤立资源
+		if (
+			hasAvatarFilePatch &&
+			prevAvatarFile &&
+			prevAvatarFile !== nextAvatarFile
+		) {
+			await deleteDirectusFile(prevAvatarFile);
+		}
 		if (
 			(hasAvatarFilePatch || hasAvatarUrlPatch) &&
 			!nextAvatarFile &&
@@ -2663,6 +2673,11 @@ async function handleUploads(context: APIContext): Promise<Response> {
 	const file = formData.get("file");
 	if (!(file instanceof File)) {
 		return fail("缺少上传文件", 400);
+	}
+
+	const UPLOAD_MAX_SIZE = 1.5 * 1024 * 1024; // 1.5 MB
+	if (file.size > UPLOAD_MAX_SIZE) {
+		return fail("文件过大，最大允许 1.5 MB", 413);
 	}
 
 	const titleRaw = formData.get("title");

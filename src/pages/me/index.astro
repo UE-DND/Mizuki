@@ -146,6 +146,7 @@ export const prerender = false;
 				取消
 			</button>
 		</div>
+		<span id="me-avatar-crop-msg" class="text-xs text-red-500"></span>
 	</div>
 </div>
 
@@ -216,6 +217,7 @@ export const prerender = false;
 	const avatarCropApplyBtn = document.getElementById("me-avatar-crop-apply-btn");
 	const avatarCropCancelBtn = document.getElementById("me-avatar-crop-cancel-btn");
 	const avatarCropZoomInput = document.getElementById("me-avatar-crop-zoom");
+	const avatarCropMsg = document.getElementById("me-avatar-crop-msg");
 	const AUTH_ME_RETRY_DELAY_MS = 220;
 	const USERNAME_MAX_WEIGHT = 14;
 	const PROFILE_BIO_MAX_LENGTH = 30;
@@ -269,6 +271,13 @@ export const prerender = false;
 			return;
 		}
 		profileMsg.textContent = message;
+	};
+
+	const setCropMessage = (message) => {
+		if (!avatarCropMsg) {
+			return;
+		}
+		avatarCropMsg.textContent = message;
 	};
 
 	const setUsernameEditing = (editing, focusInput = false) => {
@@ -484,6 +493,7 @@ export const prerender = false;
 		resetAvatarCropState();
 		avatarUploading = false;
 		updateAvatarCropApplyState();
+		setCropMessage("");
 	};
 
 	const measureAvatarCropViewportSize = () => {
@@ -550,13 +560,19 @@ export const prerender = false;
 
 	const loadAvatarCropFile = (file) => {
 		if (!(avatarCropImage instanceof HTMLImageElement)) {
-			setProfileMessage("裁剪层初始化失败");
+			setCropMessage("裁剪层初始化失败");
 			return;
 		}
 		if (!file.type.startsWith("image/")) {
-			setProfileMessage("请选择图片文件");
+			setCropMessage("请选择图片文件");
 			return;
 		}
+		const AVATAR_MAX_SIZE = 1.5 * 1024 * 1024; // 1.5 MB
+		if (file.size > AVATAR_MAX_SIZE) {
+			setCropMessage("图片文件过大，请选择不超过 1.5 MB 的图片");
+			return;
+		}
+		setCropMessage("");
 		const nextObjectUrl = URL.createObjectURL(file);
 		avatarCropImage.onload = () => {
 			avatarCropLoaded = true;
@@ -581,7 +597,7 @@ export const prerender = false;
 			setProfileMessage("");
 		};
 		avatarCropImage.onerror = () => {
-			setProfileMessage("图片读取失败，请重试");
+			setCropMessage("图片读取失败，请重试");
 			resetAvatarCropState();
 		};
 		revokeAvatarCropObjectUrl();
@@ -621,7 +637,7 @@ export const prerender = false;
 
 	const uploadAvatarFromCrop = async () => {
 		if (!avatarCropLoaded) {
-			setProfileMessage("请先选择头像文件");
+			setCropMessage("请先选择头像文件");
 			return;
 		}
 		avatarUploading = true;
@@ -629,7 +645,7 @@ export const prerender = false;
 		try {
 			const croppedBlob = await buildAvatarCropBlob();
 			if (!croppedBlob) {
-				setProfileMessage("头像裁剪失败");
+				setCropMessage("头像裁剪失败");
 				return;
 			}
 			const formData = new FormData();
@@ -640,7 +656,7 @@ export const prerender = false;
 				body: formData,
 			});
 			if (!response.ok || !data?.ok || !data?.file?.id) {
-				setProfileMessage(data?.message || "头像上传失败");
+				setCropMessage(data?.message || "头像上传失败");
 				return;
 			}
 			currentAvatarFileId = String(data.file.id);
