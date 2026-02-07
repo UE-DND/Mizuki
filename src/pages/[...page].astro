@@ -1,26 +1,96 @@
 ---
-import type { GetStaticPaths } from "astro";
-import Pagination from "../components/control/Pagination.astro";
-import PostPage from "../components/PostPage.astro";
-import { PAGE_SIZE } from "../constants/constants";
-import MainGridLayout from "../layouts/MainGridLayout.astro";
-import { getSortedPosts } from "../utils/content-utils";
-import { initPostIdMap } from "../utils/permalink-utils";
+import type { DirectusPostEntry } from "@/utils/content-utils";
+import MainGridLayout from "@layouts/MainGridLayout.astro";
+import PostPage from "@components/PostPage.astro";
+import { PAGE_SIZE } from "@constants/constants";
+import { getSortedPosts } from "@utils/content-utils";
+import { initPostIdMap } from "@utils/permalink-utils";
 
-export const getStaticPaths = (async ({ paginate }) => {
-	const allBlogPosts = await getSortedPosts();
-	// 初始化文章 ID 映射（用于 permalink 功能）
-	initPostIdMap(allBlogPosts);
-	return paginate(allBlogPosts, { pageSize: PAGE_SIZE });
-}) satisfies GetStaticPaths;
-// https://github.com/withastro/astro/issues/6507#issuecomment-1489916992
+export const prerender = false;
 
-const { page } = Astro.props;
+const rawPagePath = Astro.params.page || "";
+const pageSegments = rawPagePath
+	.split("/")
+	.map((segment) => segment.trim())
+	.filter(Boolean);
 
-const len = page.data.length;
+let page = 1;
+let invalidPath = false;
+
+if (pageSegments.length === 0) {
+	page = 1;
+} else if (pageSegments.length === 1 && /^\d+$/.test(pageSegments[0])) {
+	page = Math.max(1, Number(pageSegments[0]));
+} else if (
+	pageSegments.length === 2 &&
+	pageSegments[0] === "page" &&
+	/^\d+$/.test(pageSegments[1])
+) {
+	page = Math.max(1, Number(pageSegments[1]));
+} else {
+	invalidPath = true;
+	Astro.response.status = 404;
+}
+
+let currentPagePosts: DirectusPostEntry[] = [];
+let lastPage = 1;
+
+if (!invalidPath) {
+	try {
+		const allBlogPosts = await getSortedPosts();
+		initPostIdMap(allBlogPosts);
+
+		lastPage = Math.max(1, Math.ceil(allBlogPosts.length / PAGE_SIZE));
+		if (page > lastPage && allBlogPosts.length > 0) {
+			invalidPath = true;
+			Astro.response.status = 404;
+		} else {
+			const start = (page - 1) * PAGE_SIZE;
+			const end = start + PAGE_SIZE;
+			currentPagePosts = allBlogPosts.slice(start, end);
+		}
+	} catch (error) {
+		console.error("[home] failed to load posts:", error);
+	}
+}
+
+const hasPrev = page > 1;
+const hasNext = page < lastPage;
+const prevHref = page - 1 === 1 ? "/" : `/page/${page - 1}/`;
+const nextHref = `/page/${page + 1}/`;
 ---
 
 <MainGridLayout>
-    <PostPage page={page}></PostPage>
-    <Pagination class="mx-auto onload-animation" page={page} style={`animation-delay: calc(var(--content-delay) + ${(len)*50}ms)`}></Pagination>
+	{invalidPath ? (
+		<div class="card-base p-8 rounded-[var(--radius-large)]">
+			<h1 class="text-2xl font-bold mb-2">页面不存在</h1>
+			<p class="text-70">请检查访问路径。</p>
+		</div>
+	) : (
+		<>
+			{currentPagePosts.length === 0 ? (
+				<div class="card-base p-8 rounded-[var(--radius-large)] text-70">
+					暂无公开文章。
+				</div>
+			) : (
+				<PostPage page={{ data: currentPagePosts }} />
+			)}
+
+			<div class="card-base p-4 rounded-[var(--radius-large)] mt-4 flex items-center justify-between text-sm">
+				<a
+					class={`px-3 py-2 rounded-lg border border-[var(--line-divider)] ${hasPrev ? "" : "opacity-40 pointer-events-none"}`}
+					href={hasPrev ? prevHref : "#"}
+				>
+					上一页
+				</a>
+				<span class="text-xs text-60">第 {page} / {lastPage} 页</span>
+				<a
+					class={`px-3 py-2 rounded-lg border border-[var(--line-divider)] ${hasNext ? "" : "opacity-40 pointer-events-none"}`}
+					href={hasNext ? nextHref : "#"}
+				>
+					下一页
+				</a>
+			</div>
+		</>
+	)}
 </MainGridLayout>

@@ -4,6 +4,7 @@ import { LinkPresets } from "../../constants/link-presets";
 import I18nKey from "../../i18n/i18nKey";
 import { i18n } from "../../i18n/translation";
 import type { NavBarLink } from "../../types/config";
+import { isAdminOnlyLink } from "../../utils/nav-link-utils";
 import { url } from "../../utils/url-utils";
 
 interface Props {
@@ -37,9 +38,18 @@ const children =
 	) ?? [];
 
 const hasChildren = children.length > 0;
+const isAdminOnly = isAdminOnlyLink(link);
 ---
 
-<div class:list={["dropdown-container group", className]} data-dropdown>
+<div
+	class:list={[
+		"dropdown-container group",
+		className,
+		isAdminOnly && "hidden",
+	]}
+	data-dropdown
+	data-admin-only={isAdminOnly ? "true" : undefined}
+>
 	{
 		hasChildren ? (
 			<>
@@ -72,7 +82,13 @@ const hasChildren = children.length > 0;
 										? "noopener noreferrer"
 										: null
 								}
-								class="dropdown-item"
+								class:list={[
+									"dropdown-item",
+									isAdminOnlyLink(child) && "hidden",
+								]}
+								data-admin-only={
+									isAdminOnlyLink(child) ? "true" : undefined
+								}
 								aria-label={child.name}
 							>
 								<div class="flex items-center">
@@ -101,7 +117,11 @@ const hasChildren = children.length > 0;
 				href={link.external ? link.url : url(link.url)}
 				target={link.external ? "_blank" : null}
 				rel={link.external ? "noopener noreferrer" : null}
-				class="btn-plain scale-animation rounded-lg h-11 font-bold w-11 lg:w-auto lg:px-5 active:scale-95 flex items-center justify-center lg:justify-start whitespace-nowrap"
+				class:list={[
+					"btn-plain scale-animation rounded-lg h-11 font-bold w-11 lg:w-auto lg:px-5 active:scale-95 flex items-center justify-center lg:justify-start whitespace-nowrap",
+					isAdminOnly && "hidden",
+				]}
+				data-admin-only={isAdminOnly ? "true" : undefined}
 			>
 				{link.icon && (
 					<Icon name={link.icon} class="text-[1.1rem] lg:mr-2 flex-shrink-0" />

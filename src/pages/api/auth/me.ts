@@ -1,11 +1,7 @@
 import type { APIContext } from "astro";
-import {
-	directusGetMe,
-	directusRefresh,
-	DIRECTUS_REFRESH_COOKIE_NAME,
-	getCookieOptions,
-	pickPublicUserInfo,
-} from "../../../server/directus-auth";
+import { getAppAccessContext } from "../../../server/auth/acl";
+import { getSessionUser } from "../../../server/auth/session";
+import { buildDirectusAssetUrl } from "../../../server/directus-auth";
 
 export const prerender = false;
 
@@ -19,43 +15,45 @@ function json<T>(data: T, init?: ResponseInit): Response {
 	});
 }
 
-function clearAuthCookie(cookies: APIContext["cookies"]) {
-	try {
-		cookies.delete(DIRECTUS_REFRESH_COOKIE_NAME, { path: "/" });
-	} catch {
-		// fallback
-		cookies.set(DIRECTUS_REFRESH_COOKIE_NAME, "", {
-			...getCookieOptions(),
-			maxAge: 0,
-		});
-	}
-}
-
 export async function GET(context: APIContext): Promise<Response> {
-	const { cookies } = context;
-	const refreshToken = cookies.get(DIRECTUS_REFRESH_COOKIE_NAME)?.value || "";
-	if (!refreshToken) {
+	const user = await getSessionUser(context);
+	if (!user) {
 		return json({ ok: false, message: "未登录" }, { status: 401 });
 	}
 
 	try {
-		const tokens = await directusRefresh({ refreshToken });
-		cookies.set(
-			DIRECTUS_REFRESH_COOKIE_NAME,
-			tokens.refreshToken,
-			getCookieOptions(),
-		);
+		const access = await getAppAccessContext(user);
+		const profile = access.profile;
+		const username = String(profile.username || "").trim();
+		const name = username || user.name || user.email || "Member";
+		const avatarUrl =
+			profile.avatar_url ||
+			(profile.avatar_file
+				? buildDirectusAssetUrl(profile.avatar_file, {
+						width: 128,
+						height: 128,
+						fit: "cover",
+					})
+				: user.avatarUrl);
 
-		const me = await directusGetMe({ accessToken: tokens.accessToken });
-		return json({ ok: true, user: pickPublicUserInfo(me) });
+		return json({
+			ok: true,
+			user: {
+				id: user.id,
+				email: user.email,
+				name,
+				username: username || undefined,
+				avatarUrl: avatarUrl || undefined,
+			},
+			is_admin: access.isAdmin,
+		});
 	} catch (error) {
-		clearAuthCookie(cookies);
-		const message = String(error?.message ?? error);
-		const status = message.includes("(401)") ? 401 : 500;
+		const message = String((error as Error)?.message ?? error);
+		const status = message.includes("SUSPENDED") ? 403 : 500;
 		return json(
 			{
 				ok: false,
-				message: status === 401 ? "登录已失效" : "获取用户信息失败",
+				message: status === 403 ? "账号已被停用" : "获取用户信息失败",
 			},
 			{ status },
 		);

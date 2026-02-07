@@ -3,10 +3,6 @@
 	"type": "module",
 	"version": "1.1.1",
 	"scripts": {
-		"sync-content": "node scripts/sync-content.js",
-		"init-content": "node scripts/init-content-repo.js",
-		"predev": "node scripts/sync-content.js || true",
-		"prebuild": "node scripts/sync-content.js || true",
 		"dev": "astro dev",
 		"start": "astro dev",
 		"check": "astro check",
@@ -15,7 +11,6 @@
 		"update-bilibili": "node scripts/update-bilibili.mjs",
 		"build": "node scripts/update-anime.mjs && astro build && pagefind --site dist && node scripts/compress-fonts.js",
 		"submit": "node scripts/indexnow-submit.js",
-		"preview": "astro dev",
 		"astro": "astro",
 		"type-check": "tsc --noEmit --isolatedDeclarations --skipLibCheck",
 		"new-post": "node scripts/new-post.js",
@@ -53,6 +48,7 @@
 		"axios": "^1.13.2",
 		"crypto-js": "^4.2.0",
 		"dayjs": "^1.11.19",
+		"dotenv": "^17.2.4",
 		"hastscript": "^9.0.1",
 		"katex": "^0.16.25",
 		"markdown-it": "^14.1.0",
@@ -110,3 +106,4 @@
 		}
 	}
 }
+

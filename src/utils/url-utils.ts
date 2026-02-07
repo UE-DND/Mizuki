@@ -1,8 +1,7 @@
-import type { CollectionEntry } from "astro:content";
 import I18nKey from "@i18n/i18nKey";
 import { i18n } from "@i18n/translation";
 import { permalinkConfig } from "../config";
-import { generatePermalinkSlug } from "./permalink-utils";
+import { generatePermalinkSlug, type PermalinkPost } from "./permalink-utils";
 
 /**
  * 移除文件扩展名（.md, .mdx, .markdown）
@@ -36,36 +35,55 @@ export function getPostUrlByAlias(alias: string): string {
 }
 
 type PostUrlInput =
-	| CollectionEntry<"posts">
-	| { id: string; data: { alias?: string; permalink?: string } };
+	| (PermalinkPost & { slug?: string; url?: string })
+	| {
+			id?: string;
+			slug?: string;
+			url?: string;
+			data?: { alias?: string; permalink?: string };
+	  };
 
-export function getPostUrl(post: CollectionEntry<"posts">): string;
-export function getPostUrl(post: {
-	id: string;
-	data: { alias?: string; permalink?: string };
-}): string;
+function normalizePostSlug(post: PostUrlInput): string {
+	const explicitSlug = "slug" in post ? post.slug : undefined;
+	const candidate = explicitSlug || ("id" in post ? post.id : "");
+	return removeFileExtension(String(candidate || ""));
+}
+
 export function getPostUrl(post: PostUrlInput): string {
+	if ("url" in post && typeof post.url === "string" && post.url.trim()) {
+		return url(post.url.trim());
+	}
+
+	const data =
+		"data" in post && post.data && typeof post.data === "object"
+			? post.data
+			: {};
+
 	// 如果文章有自定义 permalink，优先使用（在根目录下）
-	if (post.data.permalink) {
-		const slug = post.data.permalink
-			.replace(/^\/+/, "")
-			.replace(/\/+$/, "");
+	if (data.permalink) {
+		const slug = data.permalink.replace(/^\/+/, "").replace(/\/+$/, "");
 		return url(`/${slug}/`);
 	}
 
 	// 如果全局 permalink 功能启用，使用生成的 slug（在根目录下）
-	if (permalinkConfig.enable) {
-		const slug = generatePermalinkSlug(post);
+	if (
+		permalinkConfig.enable &&
+		"id" in post &&
+		"data" in post &&
+		post.data &&
+		typeof post.data === "object"
+	) {
+		const slug = generatePermalinkSlug(post as PermalinkPost);
 		return url(`/${slug}/`);
 	}
 
 	// 如果文章有 alias，使用 alias（在 /posts/ 下）
-	if (post.data.alias) {
-		return getPostUrlByAlias(post.data.alias);
+	if (data.alias) {
+		return getPostUrlByAlias(data.alias);
 	}
 
 	// 否则使用默认的 slug 路径
-	return getPostUrlBySlug(post.id);
+	return getPostUrlBySlug(normalizePostSlug(post));
 }
 
 export function getTagUrl(tag: string): string {

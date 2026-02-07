@@ -1,6 +1,7 @@
 import fs from "node:fs/promises";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
+import { createDirectus, readItems, rest, staticToken } from "@directus/sdk";
 import { loadEnv } from "./load-env.js";
 
 const __filename = fileURLToPath(import.meta.url);
@@ -88,47 +89,24 @@ function safeResolveUnder(baseDir, relativePosixPath) {
 	return resolved;
 }
 
-async function fetchJson(url, options) {
-	const response = await fetch(url, options);
-	const text = await response.text();
-	if (!response.ok) {
-		throw new Error(
-			`Directus request failed (${response.status}) ${response.statusText}: ${text}`,
-		);
-	}
-	if (!text) {
-		return null;
-	}
-	return JSON.parse(text);
+function createDirectusClient(baseUrl, token) {
+	return createDirectus(baseUrl).with(staticToken(token)).with(rest());
 }
 
-async function fetchAllItems({ baseUrl, token, collection, filterParams }) {
+async function fetchAllItems({ directus, collection, filter }) {
 	const items = [];
 	const limit = 100;
 	let offset = 0;
 
 	while (true) {
-		const url = new URL(
-			`items/${collection}`,
-			`${String(baseUrl).replace(/\/+$/, "")}/`,
+		const page = await directus.request(
+			readItems(collection, {
+				filter,
+				limit,
+				offset,
+				fields: ["*"],
+			}),
 		);
-		url.searchParams.set("limit", String(limit));
-		url.searchParams.set("offset", String(offset));
-		url.searchParams.set("fields", "*");
-
-		for (const [k, v] of Object.entries(filterParams ?? {})) {
-			url.searchParams.set(k, v);
-		}
-
-		const json = await fetchJson(url, {
-			method: "GET",
-			headers: {
-				Authorization: `Bearer ${token}`,
-				Accept: "application/json",
-			},
-		});
-
-		const page = Array.isArray(json?.data) ? json.data : [];
 		items.push(...page);
 
 		if (page.length < limit) {
@@ -275,9 +253,7 @@ export async function exportDirectusContent(options = {}) {
 		);
 	}
 
-	const contentDir =
-		options.contentDir ??
-		getEnv("CONTENT_DIR", path.join(rootDir, "content"));
+	const contentDir = options.contentDir ?? path.join(rootDir, "content");
 
 	const includeDrafts = parseBooleanEnv(
 		options.includeDrafts ?? process.env.DIRECTUS_EXPORT_INCLUDE_DRAFTS,
@@ -299,6 +275,7 @@ export async function exportDirectusContent(options = {}) {
 
 	const postsDir = path.join(contentDir, "posts");
 	const specDir = path.join(contentDir, "spec");
+	const directus = createDirectusClient(baseUrl, token);
 
 	if (clean) {
 		const allowed = await canClean(contentDir);
@@ -316,12 +293,11 @@ export async function exportDirectusContent(options = {}) {
 	await fs.mkdir(postsDir, { recursive: true });
 	await fs.mkdir(specDir, { recursive: true });
 
-	const postsFilter = includeDrafts ? {} : { "filter[draft][_eq]": "false" };
+	const postsFilter = includeDrafts ? undefined : { draft: { _eq: false } };
 	const posts = await fetchAllItems({
-		baseUrl,
-		token,
+		directus,
 		collection: postsCollection,
-		filterParams: postsFilter,
+		filter: postsFilter,
 	});
 
 	console.log(`Fetched posts: ${posts.length}`);
@@ -341,10 +317,9 @@ export async function exportDirectusContent(options = {}) {
 	console.log(`Wrote posts: ${writtenPosts}`);
 
 	const specs = await fetchAllItems({
-		baseUrl,
-		token,
+		directus,
 		collection: specCollection,
-		filterParams: {},
+		filter: undefined,
 	});
 
 	console.log(`Fetched spec pages: ${specs.length}`);

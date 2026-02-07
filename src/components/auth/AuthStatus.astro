@@ -14,28 +14,27 @@ import { url } from "../../utils/url-utils";
 		<Icon name="material-symbols:login-rounded" class="text-[1.25rem]" />
 	</a>
 
-		<div
-			id="auth-user"
-			class="hidden items-center gap-2 pl-2 pr-1 h-11 rounded-lg border border-[var(--line-divider)] bg-[var(--card-bg)]/50"
+	<div
+		id="auth-user"
+		class="hidden items-center gap-2 pl-2 pr-1 h-11 rounded-lg border border-[var(--line-divider)] bg-[var(--card-bg)]/50"
+	>
+		<a
+			id="auth-account"
+			href="/me/"
+			class="flex items-center justify-center w-8 h-8 rounded-md overflow-hidden bg-black/5 dark:bg-white/10"
+			aria-label="Account Settings"
+			title="账户设置"
 		>
-			<div class="flex items-center justify-center w-8 h-8 rounded-md overflow-hidden bg-black/5 dark:bg-white/10">
-				<img
-					id="auth-user-avatar"
-					class="hidden w-full h-full object-cover"
-					alt=""
-					loading="lazy"
-					decoding="async"
-				/>
-				<Icon
-					id="auth-user-icon"
-					name="material-symbols:person-rounded"
-					class="text-[1.25rem] text-black/70 dark:text-white/70"
-				/>
-			</div>
-			<span
-			id="auth-user-name"
-			class="max-w-[7rem] text-sm text-black/70 dark:text-white/70 truncate"
-		></span>
+			<img id="auth-user-avatar" class="hidden w-full h-full object-cover" alt="" loading="lazy" decoding="async" />
+			<Icon id="auth-user-icon" name="material-symbols:person-rounded" class="text-[1.25rem] text-black/70 dark:text-white/70" />
+		</a>
+
+		<span id="auth-user-name" class="max-w-[7rem] text-sm text-black/70 dark:text-white/70 truncate"></span>
+
+		<a id="auth-admin" href="/admin/" class="hidden btn-plain scale-animation rounded-lg w-9 h-9 active:scale-90 items-center justify-center" aria-label="Admin" title="管理台">
+			<Icon name="material-symbols:admin-panel-settings-rounded" class="text-[1.1rem]" />
+		</a>
+
 		<button
 			id="auth-logout"
 			type="button"
@@ -49,24 +48,68 @@ import { url } from "../../utils/url-utils";
 </div>
 
 <script is:inline>
-	const API_ME = "/api/auth/me/";
-	const API_LOGOUT = "/api/auth/logout/";
+const API_ME = "/api/auth/me/";
+const API_LOGOUT = "/api/auth/logout/";
+const AUTH_ME_RETRY_DELAY_MS = 220;
+let initTask = null;
+const AUTH_STATE_CACHE_KEY = "__mizukiAuthState";
+
+	function buildLoginHref() {
+		try {
+			const pathname = String(window.location.pathname || "/");
+			const search = String(window.location.search || "");
+			const hash = String(window.location.hash || "");
+			const redirect = `${pathname}${search}${hash}` || "/";
+			if (!redirect.startsWith("/") || redirect.startsWith("//")) {
+				return "/login/";
+			}
+			if (pathname === "/login/" || pathname === "/login") {
+				return "/login/";
+			}
+			const params = new URLSearchParams({ redirect });
+			return `/login/?${params.toString()}`;
+		} catch {
+			return "/login/";
+		}
+	}
+
+	function emitAuthState(isLoggedIn, isAdmin, userId) {
+		window[AUTH_STATE_CACHE_KEY] = {
+			isLoggedIn,
+			isAdmin,
+			userId: userId || "",
+		};
+		document.dispatchEvent(
+			new CustomEvent("mizuki:auth-state", {
+				detail: { isLoggedIn, isAdmin, userId: userId || "" },
+			}),
+		);
+	}
 
 	function setAuthState(state) {
+		const userId = state?.user?.id ? String(state.user.id) : "";
+		const isLoggedIn = Boolean(userId);
+		const isAdmin = Boolean(
+			isLoggedIn && (state?.isAdmin || state?.is_admin),
+		);
 		const loginEl = document.getElementById("auth-login");
 		const userEl = document.getElementById("auth-user");
 		const userNameEl = document.getElementById("auth-user-name");
 		const avatarEl = document.getElementById("auth-user-avatar");
 		const iconEl = document.getElementById("auth-user-icon");
-		if (!loginEl || !userEl || !userNameEl) {
+		const adminEl = document.getElementById("auth-admin");
+		if (!loginEl || !userEl || !userNameEl || !adminEl) {
+			emitAuthState(isLoggedIn, isAdmin, userId);
 			return;
 		}
+		loginEl.setAttribute("href", buildLoginHref());
 
-		if (state && state.user && state.user.name) {
+		if (isLoggedIn) {
 			loginEl.classList.add("hidden");
 			userEl.classList.remove("hidden");
 			userEl.classList.add("flex");
-			userNameEl.textContent = state.user.name;
+			userNameEl.textContent =
+				state.user.username || state.user.name || state.user.email || "Member";
 
 			if (avatarEl && iconEl && state.user.avatarUrl) {
 				avatarEl.src = state.user.avatarUrl;
@@ -77,6 +120,15 @@ import { url } from "../../utils/url-utils";
 				avatarEl.classList.add("hidden");
 				iconEl.classList.remove("hidden");
 			}
+
+			if (isAdmin) {
+				adminEl.classList.remove("hidden");
+				adminEl.classList.add("flex");
+			} else {
+				adminEl.classList.add("hidden");
+				adminEl.classList.remove("flex");
+			}
+			emitAuthState(isLoggedIn, isAdmin, userId);
 			return;
 		}
 
@@ -90,28 +142,48 @@ import { url } from "../../utils/url-utils";
 			avatarEl.classList.add("hidden");
 			iconEl.classList.remove("hidden");
 		}
+		adminEl.classList.add("hidden");
+		adminEl.classList.remove("flex");
+		emitAuthState(false, false, "");
 	}
 
 	async function refreshAuthState() {
-		try {
-			const resp = await fetch(API_ME, {
+		const load = async () => {
+			const response = await fetch(API_ME, {
 				method: "GET",
 				credentials: "include",
 				headers: { Accept: "application/json" },
+				cache: "no-store",
 			});
-			if (!resp.ok) {
+			const data = await response.json().catch(() => null);
+			return { response, data };
+		};
+
+		try {
+			let { response, data } = await load();
+			if ((!response.ok || !data?.ok) && response.status === 401) {
+				await new Promise((resolve) =>
+					window.setTimeout(resolve, AUTH_ME_RETRY_DELAY_MS),
+				);
+				({ response, data } = await load());
+			}
+			if (!response.ok || !data?.ok) {
 				setAuthState(null);
 				return;
 			}
-			const data = await resp.json();
-			setAuthState(data);
-		} catch (err) {
-			console.error("Failed to load auth state:", err);
+			setAuthState({ ...data, isAdmin: Boolean(data?.is_admin) });
+		} catch (error) {
+			console.error("Failed to load auth state:", error);
 			setAuthState(null);
 		}
 	}
 
 	async function initAuthStatus() {
+		if (initTask) {
+			await initTask;
+			return;
+		}
+		initTask = (async () => {
 		const logoutBtn = document.getElementById("auth-logout");
 		const avatarEl = document.getElementById("auth-user-avatar");
 		const iconEl = document.getElementById("auth-user-icon");
@@ -135,15 +207,23 @@ import { url } from "../../utils/url-utils";
 						headers: { "Content-Type": "application/json" },
 						body: JSON.stringify({}),
 					});
-				} catch (err) {
-					console.error("Logout failed:", err);
+				} catch (error) {
+					console.error("Logout failed:", error);
 				} finally {
 					setAuthState(null);
+					// 强制刷新当前页，避免停留在旧的登录态 UI。
+					window.location.reload();
 				}
 			});
 		}
 
 		await refreshAuthState();
+		})();
+		try {
+			await initTask;
+		} finally {
+			initTask = null;
+		}
 	}
 
 	initAuthStatus();

@@ -1,14 +1,17 @@
-import { getCollection, type CollectionEntry } from "astro:content";
 import * as fs from "node:fs";
+
 import type { APIContext, GetStaticPaths } from "astro";
 import satori from "satori";
 import sharp from "sharp";
-import { removeFileExtension } from "@/utils/url-utils";
+
+import { readMany } from "@/server/directus/client";
+import type { JsonObject } from "@/types/json";
 
 import { profileConfig, siteConfig } from "../../config";
 
 type Weight = 100 | 200 | 300 | 400 | 500 | 600 | 700 | 800 | 900;
 type FontStyle = "normal" | "italic";
+
 interface FontOptions {
 	data: Buffer | ArrayBuffer;
 	name: string;
@@ -16,6 +19,15 @@ interface FontOptions {
 	style?: FontStyle;
 	lang?: string;
 }
+
+type OgPost = {
+	slug: string;
+	title: string;
+	summary: string | null;
+	published_at: string | null;
+	date_created: string | null;
+};
+
 export const prerender = true;
 
 export const getStaticPaths: GetStaticPaths = async () => {
@@ -23,24 +35,40 @@ export const getStaticPaths: GetStaticPaths = async () => {
 		return [];
 	}
 
-	const allPosts = await getCollection("posts");
-	const publishedPosts = allPosts.filter(
-		(post: CollectionEntry<"posts">) => !post.data.draft,
-	);
-
-	return publishedPosts.map((post: CollectionEntry<"posts">) => {
-		// 将 id 转换为 slug（移除扩展名）以匹配路由参数
-		const slug = removeFileExtension(post.id);
-		return {
-			params: { slug },
-			props: { post },
-		};
+	const rows = await readMany("app_articles", {
+		filter: {
+			_and: [
+				{ status: { _eq: "published" } },
+				{ is_public: { _eq: true } },
+			],
+		} as JsonObject,
+		sort: ["-published_at", "-date_created"],
+		limit: 1000,
+		fields: ["slug", "title", "summary", "published_at", "date_created"],
 	});
+
+	return rows
+		.filter((post) => post.slug)
+		.map((post) => ({
+			params: { slug: post.slug },
+			props: {
+				post: {
+					slug: post.slug,
+					title: post.title,
+					summary: post.summary,
+					published_at: post.published_at,
+					date_created: post.date_created,
+				} satisfies OgPost,
+			},
+		}));
 };
 
 let fontCache: { regular: Buffer | null; bold: Buffer | null } | null = null;
 
-async function fetchNotoSansSCFonts() {
+async function fetchNotoSansSCFonts(): Promise<{
+	regular: Buffer | null;
+	bold: Buffer | null;
+}> {
 	if (fontCache) {
 		return fontCache;
 	}
@@ -54,7 +82,7 @@ async function fetchNotoSansSCFonts() {
 		}
 		const cssText = await cssResp.text();
 
-		const getUrlForWeight = (weight: number) => {
+		const getUrlForWeight = (weight: number): string | null => {
 			const blockRe = new RegExp(
 				`@font-face\\s*{[^}]*font-weight:\\s*${weight}[^}]*}`,
 				"g",
@@ -95,23 +123,33 @@ async function fetchNotoSansSCFonts() {
 
 		fontCache = { regular: rBuf, bold: bBuf };
 		return fontCache;
-	} catch (err) {
-		console.warn("Error fetching fonts:", err);
+	} catch (error) {
+		console.warn("Error fetching fonts:", error);
 		fontCache = { regular: null, bold: null };
 		return fontCache;
 	}
 }
 
+function resolvePublishedDate(post: OgPost): string {
+	const raw = post.published_at || post.date_created;
+	const date = raw ? new Date(raw) : new Date();
+	if (Number.isNaN(date.getTime())) {
+		return "";
+	}
+	return date.toLocaleDateString("en-US", {
+		year: "numeric",
+		month: "short",
+		day: "numeric",
+	});
+}
+
 export async function GET({
 	props,
-}: APIContext<{ post: CollectionEntry<"posts"> }>): Promise<Response> {
+}: APIContext<{ post: OgPost }>): Promise<Response> {
 	const { post } = props;
-
-	// Try to fetch fonts from Google Fonts (woff2) at runtime.
 	const { regular: fontRegular, bold: fontBold } =
 		await fetchNotoSansSCFonts();
 
-	// Avatar + icon: still read from disk (small assets)
 	const avatarBuffer = fs.readFileSync(`./src/${profileConfig.avatar}`);
 	const avatarBase64 = `data:image/png;base64,${avatarBuffer.toString("base64")}`;
 
@@ -129,13 +167,8 @@ export async function GET({
 	const subtleTextColor = `hsl(${hue}, 10%, 75%)`;
 	const backgroundColor = `hsl(${hue}, 15%, 12%)`;
 
-	const pubDate = post.data.published.toLocaleDateString("en-US", {
-		year: "numeric",
-		month: "short",
-		day: "numeric",
-	});
-
-	const description = post.data.description;
+	const pubDate = resolvePublishedDate(post);
+	const description = post.summary;
 
 	const template = {
 		type: "div",
@@ -145,7 +178,7 @@ export async function GET({
 				width: "100%",
 				display: "flex",
 				flexDirection: "column",
-				backgroundColor: backgroundColor,
+				backgroundColor,
 				fontFamily:
 					'"Noto Sans SC", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif',
 				padding: "60px",
@@ -184,7 +217,6 @@ export async function GET({
 						],
 					},
 				},
-
 				{
 					type: "div",
 					props: {
@@ -233,31 +265,33 @@ export async function GET({
 													WebkitLineClamp: 3,
 													WebkitBoxOrient: "vertical",
 												},
-												children: post.data.title,
+												children: post.title,
 											},
 										},
 									],
 								},
 							},
-							description && {
-								type: "div",
-								props: {
-									style: {
-										fontSize: "32px",
-										lineHeight: 1.5,
-										color: subtleTextColor,
-										paddingLeft: "35px",
-										display: "-webkit-box",
-										overflow: "hidden",
-										textOverflow: "ellipsis",
-										lineClamp: 2,
-										WebkitLineClamp: 2,
-										WebkitBoxOrient: "vertical",
-									},
-									children: description,
-								},
-							},
-						],
+							description
+								? {
+										type: "div",
+										props: {
+											style: {
+												fontSize: "32px",
+												lineHeight: 1.5,
+												color: subtleTextColor,
+												paddingLeft: "35px",
+												display: "-webkit-box",
+												overflow: "hidden",
+												textOverflow: "ellipsis",
+												lineClamp: 2,
+												WebkitLineClamp: 2,
+												WebkitBoxOrient: "vertical",
+											},
+											children: description,
+										},
+									}
+								: null,
+						].filter(Boolean),
 					},
 				},
 				{

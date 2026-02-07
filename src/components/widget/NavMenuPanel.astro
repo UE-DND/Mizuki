@@ -4,6 +4,7 @@ import { LinkPresets } from "../../constants/link-presets";
 import I18nKey from "../../i18n/i18nKey";
 import { i18n } from "../../i18n/translation";
 import { LinkPreset, type NavBarLink } from "../../types/config";
+import { isAdminOnlyLink } from "../../utils/nav-link-utils";
 import { url } from "../../utils/url-utils";
 
 interface Props {
@@ -55,7 +56,10 @@ const processedLinks: ProcessedNavBarLink[] = Astro.props.links.map(
 ---
 <div id="nav-menu-panel" class:list={["float-panel float-panel-closed absolute transition-all fixed right-4 px-2 py-2 max-h-[80vh] overflow-y-auto"]}>
     {processedLinks.map((link) => (
-        <div class="mobile-menu-item">
+        <div
+            class:list={["mobile-menu-item", isAdminOnlyLink(link) && "hidden"]}
+            data-admin-only={isAdminOnlyLink(link) ? "true" : undefined}
+        >
             {link.children && link.children.length > 0 ? (
                 <!-- 有子菜单的项目 -->
                 <div class="mobile-dropdown" data-mobile-dropdown>
@@ -76,8 +80,11 @@ const processedLinks: ProcessedNavBarLink[] = Astro.props.links.map(
                     <div class="mobile-submenu" data-mobile-submenu>
                         {link.children.map((child) => (
                             <a href={child.external ? child.url : url(child.url)} 
-                               class="group flex justify-between items-center py-2 pl-6 pr-1 rounded-lg gap-4
-                                   hover:bg-[var(--btn-plain-bg-hover)] active:bg-[var(--btn-plain-bg-active)] transition"
+                               class:list={[
+                                   "group flex justify-between items-center py-2 pl-6 pr-1 rounded-lg gap-4 hover:bg-[var(--btn-plain-bg-hover)] active:bg-[var(--btn-plain-bg-active)] transition",
+                                   isAdminOnlyLink(child) && "hidden",
+                               ]}
+                               data-admin-only={isAdminOnlyLink(child) ? "true" : undefined}
                                target={child.external ? "_blank" : null}
                             >
                                 <div class="flex items-center transition text-black/60 dark:text-white/60 font-medium group-hover:text-[var(--primary)] group-active:text-[var(--primary)]">
@@ -93,9 +100,11 @@ const processedLinks: ProcessedNavBarLink[] = Astro.props.links.map(
                 </div>
             ) : (
                 <!-- 普通链接项目 -->
-                <a href={link.external ? link.url : url(link.url)} class="group flex justify-between items-center py-2 pl-3 pr-1 rounded-lg gap-4
-                    hover:bg-[var(--btn-plain-bg-hover)] active:bg-[var(--btn-plain-bg-active)] transition
-                "
+                <a href={link.external ? link.url : url(link.url)} class:list={[
+                    "group flex justify-between items-center py-2 pl-3 pr-1 rounded-lg gap-4 hover:bg-[var(--btn-plain-bg-hover)] active:bg-[var(--btn-plain-bg-active)] transition",
+                    isAdminOnlyLink(link) && "hidden",
+                ]}
+                   data-admin-only={isAdminOnlyLink(link) ? "true" : undefined}
                    target={link.external ? "_blank" : null}
                 >
                     <div class="flex items-center transition text-black/75 dark:text-white/75 font-bold group-hover:text-[var(--primary)] group-active:text-[var(--primary)]">

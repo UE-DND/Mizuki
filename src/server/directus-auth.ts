@@ -1,4 +1,14 @@
 import type { AstroCookieSetOptions } from "astro";
+import {
+	createDirectus,
+	isDirectusError,
+	login,
+	logout,
+	readMe,
+	refresh,
+	rest,
+	withToken,
+} from "@directus/sdk";
 
 import type { JsonObject, JsonValue } from "@/types/json";
 import { getJsonString, isJsonObject } from "@/utils/json-utils";
@@ -25,16 +35,67 @@ export type PublicUserInfo = {
 	avatarUrl?: string;
 };
 
+const REFRESH_COOKIE_MAX_AGE_SECONDS = 60 * 60 * 24 * 30;
+const ACCESS_COOKIE_DEFAULT_MAX_AGE_SECONDS = 60 * 15;
+const ACCESS_COOKIE_MIN_MAX_AGE_SECONDS = 60;
+const ACCESS_COOKIE_MAX_MAX_AGE_SECONDS = 60 * 60 * 24;
+
+export const DIRECTUS_ACCESS_COOKIE_NAME = "mizuki_directus_access";
 export const DIRECTUS_REFRESH_COOKIE_NAME = "mizuki_directus_refresh";
 
-export function getCookieOptions(): AstroCookieSetOptions {
-	const isProd = import.meta.env.PROD;
+function resolveCookieSecure(requestUrl?: URL): boolean {
+	if (requestUrl) {
+		return requestUrl.protocol === "https:";
+	}
+	return import.meta.env.PROD;
+}
+
+function clampCookieMaxAge(value: number): number {
+	if (!Number.isFinite(value)) {
+		return ACCESS_COOKIE_DEFAULT_MAX_AGE_SECONDS;
+	}
+	return Math.max(
+		ACCESS_COOKIE_MIN_MAX_AGE_SECONDS,
+		Math.min(ACCESS_COOKIE_MAX_MAX_AGE_SECONDS, Math.floor(value)),
+	);
+}
+
+export function resolveAccessTokenMaxAgeSeconds(expiresMs?: number): number {
+	if (!Number.isFinite(expiresMs)) {
+		return ACCESS_COOKIE_DEFAULT_MAX_AGE_SECONDS;
+	}
+
+	const raw = Number(expiresMs);
+	if (raw <= 0) {
+		return ACCESS_COOKIE_DEFAULT_MAX_AGE_SECONDS;
+	}
+
+	let maxAgeSeconds: number;
+	// Directus may return duration (ms/s) or an absolute epoch timestamp.
+	if (raw > Date.now()) {
+		maxAgeSeconds = (raw - Date.now()) / 1000;
+	} else if (raw >= 1000) {
+		maxAgeSeconds = raw / 1000;
+	} else {
+		maxAgeSeconds = raw;
+	}
+
+	return clampCookieMaxAge(maxAgeSeconds - 10);
+}
+
+export function getCookieOptions(params?: {
+	requestUrl?: URL;
+	maxAge?: number;
+}): AstroCookieSetOptions {
 	return {
 		httpOnly: true,
-		secure: isProd,
+		secure: resolveCookieSecure(params?.requestUrl),
 		sameSite: "lax" as const,
 		path: "/",
-		maxAge: 60 * 60 * 24 * 30,
+		maxAge:
+			typeof params?.maxAge === "number"
+				? Math.max(0, Math.floor(params.maxAge))
+				: REFRESH_COOKIE_MAX_AGE_SECONDS,
 	};
 }
 
@@ -44,6 +105,16 @@ export function getDirectusUrl(): string {
 		throw new Error("DIRECTUS_URL 未配置");
 	}
 	return url.trim().replace(/\/+$/, "");
+}
+
+export function getDirectusStaticToken(): string {
+	const token =
+		process.env.DIRECTUS_STATIC_TOKEN ||
+		import.meta.env.DIRECTUS_STATIC_TOKEN;
+	if (!token || !token.trim()) {
+		throw new Error("DIRECTUS_STATIC_TOKEN 未配置");
+	}
+	return token.trim();
 }
 
 function extractDirectusFileId(
@@ -70,8 +141,10 @@ export function buildDirectusAssetUrl(
 		quality?: number;
 	},
 ): string {
-	const baseUrl = getDirectusUrl();
-	const url = new URL(`assets/${fileId}`, `${baseUrl}/`);
+	const url = new URL(
+		`/api/v1/public/assets/${encodeURIComponent(fileId)}/`,
+		"http://localhost",
+	);
 
 	if (options?.width) {
 		url.searchParams.set("width", String(options.width));
@@ -86,44 +159,62 @@ export function buildDirectusAssetUrl(
 		url.searchParams.set("quality", String(options.quality));
 	}
 
-	return url.href;
+	return `${url.pathname}${url.search}`;
 }
 
-function unwrapDirectusData(value: JsonValue): JsonValue {
-	if (isJsonObject(value) && "data" in value) {
-		return value.data;
-	}
-	return value;
+function getDirectusAuthClient() {
+	return createDirectus(getDirectusUrl()).with(rest());
 }
 
-async function directusFetchText(
-	pathname: string,
-	init: RequestInit,
-): Promise<string> {
-	const baseUrl = getDirectusUrl();
-	const normalizedPathname = pathname.replace(/^\/+/, "");
-	const url = new URL(normalizedPathname, `${baseUrl}/`);
-
-	const response = await fetch(url, init);
-	const text = await response.text();
-	if (!response.ok) {
-		throw new Error(
-			`Directus 请求失败 (${response.status}) ${response.statusText}: ${text}`,
-		);
+function getDirectusErrorStatus(error: unknown): number | null {
+	if (!isDirectusError(error)) {
+		return null;
 	}
-
-	return text;
+	const response = error.response;
+	if (response instanceof Response) {
+		return response.status;
+	}
+	return null;
 }
 
-async function directusFetchJson(
-	pathname: string,
-	init: RequestInit,
-): Promise<JsonValue> {
-	const text = await directusFetchText(pathname, init);
-	if (!text) {
-		throw new Error("Directus 响应体为空");
+function toDirectusAuthError(action: string, error: unknown): Error {
+	if (!isDirectusError(error)) {
+		return error instanceof Error
+			? error
+			: new Error(`[directus/auth] ${action}失败: ${String(error)}`);
 	}
-	return JSON.parse(text) as JsonValue;
+
+	const status = getDirectusErrorStatus(error);
+	const statusText =
+		typeof status === "number" ? `(${status})` : "(unknown status)";
+	const codes = error.errors
+		?.map((entry) => entry.extensions?.code)
+		.filter(
+			(code): code is string => typeof code === "string" && Boolean(code),
+		)
+		.join(",");
+	const detail =
+		error.errors
+			?.map((entry) => {
+				const code = entry.extensions?.code || "UNKNOWN";
+				return `${code}:${entry.message}`;
+			})
+			.join("; ") || error.message;
+
+	return new Error(
+		`[directus/auth] ${action}失败 ${statusText}${codes ? ` codes=${codes}` : ""}: ${detail}`,
+	);
+}
+
+async function runDirectusAuthRequest<T>(
+	action: string,
+	request: () => Promise<T>,
+): Promise<T> {
+	try {
+		return await request();
+	} catch (error) {
+		throw toDirectusAuthError(action, error);
+	}
 }
 
 function parseExpiresMs(value: JsonValue | undefined): number | undefined {
@@ -140,16 +231,15 @@ function parseExpiresMs(value: JsonValue | undefined): number | undefined {
 }
 
 function parseTokens(payload: JsonValue): DirectusAuthTokens {
-	const dataValue = unwrapDirectusData(payload);
-	if (!isJsonObject(dataValue)) {
+	if (!isJsonObject(payload)) {
 		throw new Error("Directus 登录/刷新响应不是对象");
 	}
 
-	const accessToken = getJsonString(dataValue, "access_token") ?? "";
-	const refreshToken = getJsonString(dataValue, "refresh_token") ?? "";
+	const accessToken = getJsonString(payload, "access_token") ?? "";
+	const refreshToken = getJsonString(payload, "refresh_token") ?? "";
 
 	const expiresRaw =
-		dataValue.expires ?? dataValue.expires_in ?? dataValue.expires_at;
+		payload.expires ?? payload.expires_in ?? payload.expires_at;
 
 	if (!accessToken || !refreshToken) {
 		throw new Error("Directus 登录/刷新响应缺少 token");
@@ -164,68 +254,73 @@ export async function directusLogin(params: {
 	email: string;
 	password: string;
 }): Promise<DirectusAuthTokens> {
-	const payload = await directusFetchJson("/auth/login", {
-		method: "POST",
-		headers: {
-			"Content-Type": "application/json",
-			Accept: "application/json",
-		},
-		body: JSON.stringify({
-			email: params.email,
-			password: params.password,
-			mode: "json",
-		}),
+	const payload = await runDirectusAuthRequest("登录", async () => {
+		return await getDirectusAuthClient().request(
+			login(
+				{
+					email: params.email,
+					password: params.password,
+				},
+				{
+					mode: "json",
+				},
+			),
+		);
 	});
-	return parseTokens(payload);
+	return parseTokens(payload as unknown as JsonValue);
 }
 
 export async function directusRefresh(params: {
 	refreshToken: string;
 }): Promise<DirectusAuthTokens> {
-	const payload = await directusFetchJson("/auth/refresh", {
-		method: "POST",
-		headers: {
-			"Content-Type": "application/json",
-			Accept: "application/json",
-		},
-		body: JSON.stringify({
-			refresh_token: params.refreshToken,
-			mode: "json",
-		}),
+	const payload = await runDirectusAuthRequest("刷新登录态", async () => {
+		return await getDirectusAuthClient().request(
+			refresh({
+				refresh_token: params.refreshToken,
+				mode: "json",
+			}),
+		);
 	});
-	return parseTokens(payload);
+	return parseTokens(payload as unknown as JsonValue);
 }
 
 export async function directusLogout(params: {
 	refreshToken: string;
 }): Promise<void> {
-	await directusFetchText("/auth/logout", {
-		method: "POST",
-		headers: {
-			"Content-Type": "application/json",
-			Accept: "application/json",
-		},
-		body: JSON.stringify({
-			refresh_token: params.refreshToken,
-		}),
+	await runDirectusAuthRequest("退出登录", async () => {
+		await getDirectusAuthClient().request(
+			logout({
+				refresh_token: params.refreshToken,
+				mode: "json",
+			}),
+		);
 	});
 }
 
 export async function directusGetMe(params: {
 	accessToken: string;
 }): Promise<DirectusMe> {
-	const payload = await directusFetchJson(
-		"/users/me?fields=id,email,first_name,last_name,avatar,role",
-		{
-			method: "GET",
-			headers: {
-				Authorization: `Bearer ${params.accessToken}`,
-				Accept: "application/json",
-			},
-		},
-	);
-	const raw = unwrapDirectusData(payload);
-	const data: JsonObject = isJsonObject(raw) ? raw : {};
+	const payload = await runDirectusAuthRequest("读取当前用户", async () => {
+		return await getDirectusAuthClient().request(
+			withToken(
+				params.accessToken,
+				readMe({
+					fields: [
+						"id",
+						"email",
+						"first_name",
+						"last_name",
+						"avatar",
+						"role",
+					],
+				} as never),
+			),
+		);
+	});
+
+	const data: JsonObject = isJsonObject(payload as JsonValue)
+		? ((payload as unknown as JsonObject) ?? {})
+		: {};
 
 	const idValue = data.id;
 	const id =

@@ -66,14 +66,21 @@ import { Icon } from "astro-icon/components";
 	<script is:inline>
 		const API_LOGIN = "/api/auth/login/";
 
+		function normalizeRedirectTarget(redirect) {
+			const candidate = String(redirect || "").trim();
+			if (!candidate || !candidate.startsWith("/") || candidate.startsWith("//")) {
+				return "/";
+			}
+			if (candidate === "/login" || candidate === "/login/") {
+				return "/";
+			}
+			return candidate;
+		}
+
 		function getRedirectTarget() {
 			try {
 				const u = new URL(window.location.href);
-				const redirect = u.searchParams.get("redirect") || "/";
-				if (!redirect.startsWith("/")) {
-					return "/";
-				}
-				return redirect;
+				return normalizeRedirectTarget(u.searchParams.get("redirect"));
 			} catch {
 				return "/";
 			}

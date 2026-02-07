@@ -42,13 +42,12 @@
 - [x] **图片优化**，PhotoSwipe 画廊集成
 - [x] **SEO 优化**，包含站点地图和元标签
 - [x] **性能优化**，懒加载和缓存机制
-- [x] **评论系统**，支持 Twikoo 集成
+- [x] **评论系统**，基于 Directus 数据（文章/日记二级回复）
 
 ### 内容管理
 
-- **创建新文章：** `pnpm new-post <文件名>`
-- **编辑文章：** 修改 `src/content/posts/` 中的文件
-- **自定义页面：** 编辑 `src/content/spec/` 中的特殊页面
+- **创建/编辑文章：** 使用站内工作台 `/me/` 或调用 `/api/v1/me/articles`
+- **自定义页面：** 在 Directus 的 `app_articles` 维护 `slug=about` / `slug=friends` 页面内容
 - **添加图片：** 将图片放在 `src/assets/` 或 `public/` 中
 
 ## 部署页面
@@ -179,38 +178,20 @@ export const siteConfig: SiteConfig = {
 
 ### 特色页面配置
 
-- **追番页面：** 在 `src/pages/anime.astro` 中编辑动画列表
-- **友链页面：** 在 `src/content/spec/friends.md` 中编辑朋友数据
-- **日记页面：** 在 `src/pages/diary.astro` 中编辑动态
-- **关于页面：** 在 `src/content/spec/about.md` 中编辑内容
+- **追番页面：** 在 `src/pages/anime.astro` 中调整展示逻辑
+- **友链页面：** 在 `src/data/friends.ts` 中编辑朋友数据
+- **日记页面：** 在 `src/pages/diary.astro` 中调整展示逻辑
+- **关于页面：** 在 Directus 的 `app_articles` 中维护 `slug=about` 内容
 
-### 代码内容分离
+### 数据源说明
 
-Mizuki 默认将代码和内容分成两个独立的仓库管理，适合团队协作和大型项目。
+当前项目已改为 Directus 数据驱动，不再使用“代码内容分离”模式。
 
-**快速选择**:
+**核心环境变量**:
 
-| 使用场景     | 配置方式                | 适合人群           |
-| ------------ | ----------------------- | ------------------ |
-| **分离模式** | 配置 `CONTENT_REPO_URL` | 团队协作、私有内容 |
+- `DIRECTUS_URL`: Directus 实例地址
+- `DIRECTUS_STATIC_TOKEN`: 服务端访问 Directus 的静态 Token
 
-**配置步骤**:
-
-```bash
-# 1. 复制配置文件
-cp .env.example .env
-
-# 2. 编辑 .env，配置内容仓库
-CONTENT_REPO_URL=https://github.com/your-username/Mizuki-Content.git
-```
-
-**功能特性**:
-
-- 支持公开和私有仓库
-- 自动同步，部署时自动拉取最新内容
-
-**详细配置**: [内容分离完整指南](docs/CONTENT_SEPARATION.md)
-**迁移教程**: [从单仓库迁移到分离模式](docs/MIGRATION_GUIDE.md)
 **更多文档**: [文档索引](docs/README.md)
 
 ## 贡献者
@@ -229,7 +210,6 @@ CONTENT_REPO_URL=https://github.com/your-username/Mizuki-Content.git
 - **[Yukina](https://github.com/WhitePaper233/yukina)** - 感谢提供设计灵感和创意，帮助塑造了这个项目。Yukina 是一个优雅的博客模板，展现了出色的设计原则和用户体验
 - **[Firefly](https://github.com/CuteLeaf/Firefly)** - 感谢提供优秀的布局设计思路，双侧边栏布局、文章双列网格等布局，及部分小组件的设计与实现，让 Mizuki 的界面更加丰富
 - **[Twilight](https://github.com/spr-aachen/Twilight)** - 感谢提供灵感和技术支持。Twilight 的响应式设计与过渡效果显著提升了 Mizuki 的使用体验
-- **[Pio](https://github.com/Dreamer-Paul/Pio)** 可爱的 Live2D 看板娘插件
 - **[Iconify](https://iconify.design/)** 精美的图标
 
 ## 许可证

@@ -1,12 +1,14 @@
 import type { APIContext } from "astro";
 import {
 	checkLoginRateLimit,
+	DIRECTUS_ACCESS_COOKIE_NAME,
 	directusGetMe,
 	directusLogin,
 	DIRECTUS_REFRESH_COOKIE_NAME,
 	getClientIp,
 	getCookieOptions,
 	pickPublicUserInfo,
+	resolveAccessTokenMaxAgeSeconds,
 	type PublicUserInfo,
 } from "../../../server/directus-auth";
 import type { JsonObject, JsonValue } from "../../../types/json";
@@ -67,7 +69,17 @@ export async function POST(context: APIContext): Promise<Response> {
 		cookies.set(
 			DIRECTUS_REFRESH_COOKIE_NAME,
 			tokens.refreshToken,
-			getCookieOptions(),
+			getCookieOptions({
+				requestUrl: url,
+			}),
+		);
+		cookies.set(
+			DIRECTUS_ACCESS_COOKIE_NAME,
+			tokens.accessToken,
+			getCookieOptions({
+				requestUrl: url,
+				maxAge: resolveAccessTokenMaxAgeSeconds(tokens.expiresMs),
+			}),
 		);
 
 		let user: PublicUserInfo = {
@@ -77,7 +89,13 @@ export async function POST(context: APIContext): Promise<Response> {
 		};
 		try {
 			const me = await directusGetMe({ accessToken: tokens.accessToken });
-			user = pickPublicUserInfo(me);
+			const picked = pickPublicUserInfo(me);
+			user = {
+				id: picked.id || user.id,
+				email: picked.email || user.email,
+				name: picked.name || user.name,
+				avatarUrl: picked.avatarUrl || user.avatarUrl,
+			};
 		} catch {
 			// 若 /users/me 失败，不影响登录态写入，前台可再调用 /api/auth/me
 		}

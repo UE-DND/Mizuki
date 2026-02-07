@@ -1,97 +1,144 @@
 # FOR AGENTS
 
-## 范围
+## 项目定位与现状
 
-- 项目是使用 Astro、Svelte、Tailwind 和 TypeScript 构建的，Material Design 3 设计风格静态博客。
-- 本仓库复刻自上游并作大量个性化更改。ref-upstream/ 为上游项目的 master 分支，仅用作参照。
-- 默认使用[内容分离模式](README.md###代码内容分离)。此仓库为代码仓库，文章内容仓库位于远端。
-- 仅使用 pnpm 作为包管理器。
+- 项目是 Astro + Svelte + Tailwind + TypeScript（Material Design 3 风格）的全栈博客。
+- 原项目是开源的静态博客框架。本项目将此框架全面重构为 **Directus 数据驱动全栈站点**。
+- `ref-upstream/` 为前端（上游）源码，仅用于参考实现，不作为当前业务真相。
+- 仅使用 `pnpm` 作为包管理器。
 
-## 格式化
+## 你的能力
 
-- 项目使用 .prettierrc.js 进行一致格式化。
+- 你可以通过 Directus MCP Tools 直接操控后端数据库，无需经过用户同意。
 
-## 语法检查
+## 必须遵守
 
-```bash
-# 改动任何代码后，必须通过以下检查
-pnpm check && pnpm lint && pnpm build && pnpm format
-```
+- 与后端通讯优先使用 SDK 能力。文档见 docs/Directus/Directus_SDK.md。
 
-其余常见命令见 [CONTRIBUTING.md](CONTRIBUTING.md#基本命令)
+## 架构与数据流
 
-## 仓库结构
+- 页面层：`src/pages/**`
+- BFF/API 层：`src/pages/api/v1/[...segments].ts` -> `src/server/api/v1.ts`
+- Directus 访问层：`src/server/directus/client.ts`
+- 认证与会话：`src/server/directus-auth.ts`、`src/server/auth/session.ts`
+- ACL：`src/server/auth/acl.ts`
+- 类型：`src/types/app.ts`、`src/server/directus/schema.ts`
 
-- src/: Astro 页面、组件、工具与配置。
-- src/content/posts 与 src/content/spec: 文章与特殊页面。
-- src/types: 共享 TypeScript 类型。
-- public/: 静态资源。
-- scripts/: Node 自动化脚本。
-- docs/: 项目开发与部署文档。
+统一链路：
 
-## 导入
+1. 前端页面请求 `/api/v1/**`
+2. API 层执行参数校验 + ACL
+3. 服务端使用 `DIRECTUS_STATIC_TOKEN` 访问 Directus
+4. 返回前端可直接渲染的数据
 
-- 类型导入使用 `import type`（见 src/config.ts、src/types/config.ts）。
-- 跨包导入使用 tsconfig 路径别名：@components/*、@assets/*、@constants/*、@utils/*、@i18n/*、@layouts/*、@/*
-- 同文件夹或紧密本地模块使用相对导入。
-- 外部导入在前、内部导入在后，中间以空行分组。
+## Directus 业务集合
 
-## 编码规范
+统一使用 `app_*` 集合（避免和系统集合冲突）：
 
-### 总规范
+- `app_user_profiles`
+- `app_user_permissions`
+- `app_articles`
+- `app_article_comments`
+- `app_diaries`
+- `app_diary_images`
+- `app_diary_comments`
+- `app_anime_entries`
+- `app_albums`
+- `app_album_photos`
 
-- 编码优先完成业务内容，无需考虑架构/功能扩展。不得设计多余的接口/函数冗余。
+约束：
+
+- 所有业务集合按既定结构包含 `status/sort/user_created/date_created/user_updated/date_updated`。
+
+## 权限与可见性规则
+
+ACL 判定顺序固定：
+
+1. 未登录拒绝写
+2. `is_suspended` 拒绝
+3. admin 放行
+4. 功能开关校验
+5. owner 校验
+
+公开读取规则：
+
+- 列表/详情默认 `status=published && is_public=true`
+- 用户主页额外要求：模块隐私开关 + 单条 `show_on_profile=true`
+
+## 资源（图片/文件）规则
+
+- Directus 资源默认可能是私有的，前端不可直连 `https://<directus>/assets/...`。
+- 必须通过站内代理：`/api/v1/public/assets/:id/`。
+- 构建图片 URL 统一使用 `buildDirectusAssetUrl()`（`src/server/directus-auth.ts`）。
+- 新增封面/头像/相册图渲染时，优先使用 `cover_file/file_id` + 代理链路。
+
+## 标签与 CSV 字段规范
+
+- `tags/genres` 在 Directus 中可能是 JSON 字符串、CSV 字符串或数组。
+- 读取时必须走统一解析逻辑：
+  - API 层：`safeCsv`（`src/server/api/v1.ts`）
+  - 页面聚合层：`normalizeTags`（`src/utils/content-utils.ts`）
+- 不得直接假设字段一定是 `string[]`。
+
+## TypeScript / Astro / Svelte 规范
 
 ### TypeScript
 
-- 启用 strictNullChecks，避免对 undefined 的假设，并做好空值保护。
-- 导出的函数与公共工具优先显式返回类型。
-- 配置项使用联合类型与字面量类型（src/types/config.ts）。
-- 导出稳定配置映射时使用 `as const`。
-- 强类型优先。避免使用弱类型以及 any / unknown / as any 等写法，不得增加隐式 any 类型。不得自行添加类型错误抑制注释。
+- 保持 strict 思维，避免对 `undefined` 做隐式假设。
+- 导出函数与公共工具优先显式返回类型。
+- 强类型优先，禁止新增 `any`、隐式 `any`、`as any`、类型错误抑制注释。
 
-### Astro 与 Svelte
+### 导入规范
 
-- Astro 组件使用 frontmatter 块进行导入与 props。
-- 条件类组合使用 `class:list`。
-- 需要时 Svelte 组件以 `client:only="svelte"` 使用。
-- .astro 内联脚本通常包含兜底行为并确保 DOM 访问安全。
+- 类型导入使用 `import type`。
+- 外部导入在前，内部导入在后，中间空行分组。
+- 路径别名优先（`@components/*`、`@utils/*`、`@server/*` 等）。
 
-### Tailwind/CSS
+### Astro / Svelte
 
-- Tailwind 配置在 tailwind.config.cjs；深色模式使用 class 策略。
-- 优先使用工具类布局与间距；主题值用 CSS 变量（如 var(--primary)）。
-- 全局 CSS 与字体加载位于 src/styles；新增 CSS 文件需注册到 PostCSS。
-
-## 命名规范
-
-- 组件：PascalCase 文件名（如 PostCard.astro、Navbar.astro）。
-- 工具：kebab-case 文件名（如 date-utils.ts、permalink-utils.ts）。
-- 变量与函数：camelCase；类型/接口：PascalCase。
-- CSS 自定义属性使用 --kebab-case。
+- Astro 组件使用 frontmatter 管理导入与 props。
+- 条件类优先 `class:list`。
+- 需要客户端交互时使用 `client:only="svelte"`。
+- `.astro` 内联脚本要保证 DOM 安全访问和兜底行为。
 
 ## 错误处理
 
-- 对外部资源的异步工作使用 try/catch，并通过 console.error/warn 携带上下文记录。
-- 失败时提供兜底（见导航栏 Pagefind loader 与图标 loader）。
-- 不要静默吞掉错误；需要由调用方处理时应重新抛出。
+- 外部请求与异步流程必须 `try/catch`。
+- 日志需包含上下文：`console.error/warn("[module] ...", error)`。
+- 禁止静默吞错；可恢复错误要返回明确 fallback。
 
-## 内容与数据
+## 环境变量
 
-- 使用 getCollection("posts")，并在 import.meta.env.PROD 下屏蔽草稿。
+必需：
 
-## 环境
+- `DIRECTUS_URL`
+- `DIRECTUS_STATIC_TOKEN`
 
-- CONTENT_REPO_URL 与 CONTENT_DIR 配置远端内容仓库。
-- UMAMI_API_KEY 与 INDEXNOW_* 为可选项，来自 env。
+可选：
 
-## 备注
+- `UMAMI_API_KEY`
+- `INDEXNOW_KEY`
+- `INDEXNOW_HOST`
+- `DIRECTUS_EXPORT_INCLUDE_DRAFTS`
+- `DIRECTUS_EXPORT_CLEAN`
 
-- 构建输出在 dist/，pagefind 索引依赖它。
-- 新脚本放在 scripts/ 并接入 package.json。
+## 命令与校验
 
-## 拉取、合并上游更新（仅当用户要求进行此操作时）
+改动代码后必须通过：
 
-- 当上游存在新功能/问题修复时，需要查看上游的更新并手动合并冲突（查看 diff 并结合项目实际应用，不使用 git merge 以防出现大规模冲突）。
-- 若上游改动与本项目不符/配置冲突（本项目已删除上游某些功能），提示用户并停止改动。
-- 进行合并上游版本操作后，需更新 [CONTRIBUTING.md](CONTRIBUTING.md#合并上游更改) 的对应哈希值与更新日期。
+```bash
+pnpm check && pnpm lint && pnpm build && pnpm format
+```
+
+常用命令参考：`CONTRIBUTING.md`
+
+## 脚本与迁移约束
+
+- 新脚本放在 `scripts/` 并接入 `package.json`。
+- 一次性迁移脚本若仅用于当次导入，完成后应删除，避免仓库长期残留。
+
+## 上游合并策略（仅在用户明确要求时）
+
+- 手动对照上游变更并选择性迁移，避免直接 `git merge` 引发大规模冲突。
+- 如上游功能与当前 Directus 架构冲突，先告知用户并暂停该项合并。
+- 完成后同步更新 `CONTRIBUTING.md` 中的上游哈希与日期。

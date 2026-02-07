@@ -1,5 +1,6 @@
 import type { APIContext } from "astro";
 import {
+	DIRECTUS_ACCESS_COOKIE_NAME,
 	directusLogout,
 	DIRECTUS_REFRESH_COOKIE_NAME,
 	getCookieOptions,
@@ -17,12 +18,22 @@ function json<T>(data: T, init?: ResponseInit): Response {
 	});
 }
 
-function clearAuthCookie(cookies: APIContext["cookies"]) {
+function clearAuthCookie(context: APIContext) {
+	const { cookies, url } = context;
 	try {
 		cookies.delete(DIRECTUS_REFRESH_COOKIE_NAME, { path: "/" });
+		cookies.delete(DIRECTUS_ACCESS_COOKIE_NAME, { path: "/" });
 	} catch {
 		cookies.set(DIRECTUS_REFRESH_COOKIE_NAME, "", {
-			...getCookieOptions(),
+			...getCookieOptions({
+				requestUrl: url,
+			}),
+			maxAge: 0,
+		});
+		cookies.set(DIRECTUS_ACCESS_COOKIE_NAME, "", {
+			...getCookieOptions({
+				requestUrl: url,
+			}),
 			maxAge: 0,
 		});
 	}
@@ -46,6 +57,6 @@ export async function POST(context: APIContext): Promise<Response> {
 		}
 	}
 
-	clearAuthCookie(cookies);
+	clearAuthCookie(context);
 	return json({ ok: true });
 }

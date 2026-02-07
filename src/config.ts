@@ -7,7 +7,6 @@ import type {
 	MusicPlayerConfig,
 	NavBarConfig,
 	PermalinkConfig,
-	PioConfig,
 	ProfileConfig,
 	SakuraConfig,
 	ShareConfig,
@@ -266,7 +265,7 @@ export const navBarConfig: NavBarConfig = {
 			icon: "material-symbols:info",
 			children: [
 				{
-					name: "关于我",
+					name: "关于本站",
 					url: "/about/",
 					icon: "material-symbols:person",
 				},
@@ -380,11 +379,7 @@ export const expressiveCodeConfig: ExpressiveCodeConfig = {
 };
 
 export const commentConfig: CommentConfig = {
-	enable: false, // 启用评论功能。当设置为 false 时，评论组件将不会显示在文章区域。
-	twikoo: {
-		envId: "https://twikoo.vercel.app",
-		lang: SITE_LANG,
-	},
+	enable: true, // 启用站内 Directus 评论功能。
 };
 
 export const shareConfig: ShareConfig = {
@@ -560,30 +555,6 @@ export const sakuraConfig: SakuraConfig = {
 	zIndex: 100, // 层级，确保樱花在合适的层级显示
 };
 
-// Pio 看板娘配置
-export const pioConfig: PioConfig = {
-	enable: true, // 启用看板娘
-	models: ["/pio/models/pio/model.json"], // 默认模型路径
-	position: "left", // 模型位置
-	width: 280, // 默认宽度
-	height: 250, // 默认高度
-	mode: "draggable", // 默认为可拖拽模式
-	hiddenOnMobile: true, // 默认在移动设备上隐藏
-	dialog: {
-		welcome: "欢迎来到 Mizuki 博客！", // 欢迎词
-		touch: [
-			"你在做什么？",
-			"不要一直戳我啦！",
-			"变态！",
-			"别这样欺负我嘛！",
-		], // 触摸提示
-		home: "点这里返回首页！", // 首页提示
-		skin: ["想看看我的新衣服吗？", "新衣服看起来很不错哦~"], // 换装提示
-		close: "QWQ 下次再见~", // 关闭提示
-		link: "https://github.com/matsuzaka-yuki/Mizuki", // 关于链接
-	},
-};
-
 // 导出所有配置的统一接口
 export type WidgetConfigs = {
 	profile: ProfileConfig;
@@ -591,7 +562,6 @@ export type WidgetConfigs = {
 	music: MusicPlayerConfig;
 	layout: SidebarLayoutConfig;
 	sakura: SakuraConfig;
-	pio: PioConfig;
 	share: ShareConfig;
 };
 
@@ -601,7 +571,6 @@ export const widgetConfigs: WidgetConfigs = {
 	music: musicPlayerConfig,
 	layout: sidebarLayoutConfig,
 	sakura: sakuraConfig,
-	pio: pioConfig, // 添加 pio 配置
 	share: shareConfig, // 添加分享配置
 };
 

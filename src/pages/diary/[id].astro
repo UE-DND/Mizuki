@@ -1,0 +1,200 @@
+---
+import Comment from "@components/comment/index.astro";
+import Markdown from "@components/misc/Markdown.astro";
+import MainGridLayout from "@layouts/MainGridLayout.astro";
+import { buildDirectusAssetUrl } from "@/server/directus-auth";
+import { marked } from "marked";
+
+export const prerender = false;
+
+const id = (Astro.params.id || "").trim();
+const endpoint = `${Astro.url.origin}/api/v1/public/diaries/${encodeURIComponent(id)}/`;
+
+let diary: {
+	id: string;
+	content: string;
+	mood: string | null;
+	location: string | null;
+	happened_at: string | null;
+	allow_comments: boolean;
+	author?: { id?: string; name?: string };
+	images?: Array<{
+		id: string;
+		image_url: string | null;
+		file_id?: string | null;
+		caption: string | null;
+	}>;
+} | null = null;
+let html = "";
+
+if (id) {
+	try {
+		const response = await fetch(endpoint, {
+			headers: { Accept: "application/json" },
+		});
+		const data = await response.json().catch(() => null);
+		if (response.ok && data?.ok && data.item) {
+			const resolved = data.item;
+			diary = resolved;
+			html = await marked.parse(String(resolved.content || ""));
+		} else {
+			Astro.response.status = 404;
+		}
+	} catch (error) {
+		console.error("[diary] failed to fetch detail:", error);
+		Astro.response.status = 500;
+	}
+} else {
+	Astro.response.status = 404;
+}
+---
+
+<MainGridLayout title="日记详情" description={diary?.content || ""}>
+	{!diary ? (
+		<div class="card-base p-8 rounded-[var(--radius-large)]">
+			<h1 class="text-2xl font-bold mb-2">日记不存在</h1>
+			<p class="text-70">该日记可能未公开或已删除。</p>
+		</div>
+	) : (
+		<>
+			<article class="card-base p-6 md:p-8 rounded-[var(--radius-large)] mb-4">
+				<div
+					id="diary-manage-root"
+					class="hidden mb-4 flex items-center justify-end"
+					data-diary-id={diary.id}
+					data-author-id={diary.author?.id || ""}
+				>
+					<details class="relative">
+						<summary class="list-none cursor-pointer btn-plain scale-animation w-9 h-9 rounded-lg flex items-center justify-center text-lg select-none">
+							...
+						</summary>
+						<div class="absolute right-0 top-10 z-10 min-w-[8rem] card-base rounded-xl border border-[var(--line-divider)] p-2">
+							<button
+								type="button"
+								id="diary-delete-trigger"
+								class="w-full text-left px-3 py-2 rounded-lg text-sm text-red-500 hover:bg-black/5 dark:hover:bg-white/10"
+							>
+								删除日记
+							</button>
+						</div>
+					</details>
+				</div>
+				<header class="mb-4 space-y-2">
+					<h1 class="text-2xl md:text-3xl font-bold">日记详情</h1>
+					<div class="text-xs text-60 flex flex-wrap items-center gap-3">
+						{diary.author?.name && <span>作者：{diary.author.name}</span>}
+						{diary.happened_at && <time datetime={diary.happened_at}>{new Date(diary.happened_at).toLocaleString()}</time>}
+						{diary.location && <span>地点：{diary.location}</span>}
+						{diary.mood && <span>心情：{diary.mood}</span>}
+					</div>
+				</header>
+
+				<Markdown class="markdown-content mb-6">
+					<Fragment set:html={html} />
+				</Markdown>
+
+				{Array.isArray(diary.images) && diary.images.length > 0 && (
+					<div class="grid grid-cols-2 md:grid-cols-3 gap-3">
+						{diary.images
+							.filter((image) => image.image_url || image.file_id)
+							.map((image) => (
+								<figure class="space-y-2">
+									<img
+										src={
+											image.image_url ||
+											(image.file_id
+												? buildDirectusAssetUrl(image.file_id, {
+														width: 960,
+														height: 960,
+														fit: "cover",
+												  })
+												: "")
+										}
+										alt={image.caption || "diary image"}
+										class="w-full h-36 md:h-44 object-cover rounded-xl border border-[var(--line-divider)]"
+										loading="lazy"
+									/>
+									{image.caption && <figcaption class="text-xs text-60">{image.caption}</figcaption>}
+								</figure>
+							))}
+					</div>
+				)}
+			</article>
+
+			<Comment module="diaries" contentId={diary.id} allowComments={diary.allow_comments} />
+		</>
+	)}
+</MainGridLayout>
+
+<script is:inline>
+	const diaryManageRoot = document.getElementById("diary-manage-root");
+
+	if (diaryManageRoot instanceof HTMLElement && !diaryManageRoot.dataset.bound) {
+		diaryManageRoot.dataset.bound = "1";
+		const diaryId = String(diaryManageRoot.dataset.diaryId || "");
+		const authorId = String(diaryManageRoot.dataset.authorId || "");
+		const deleteBtn = document.getElementById("diary-delete-trigger");
+		const AUTH_STATE_CACHE_KEY = "__mizukiAuthState";
+
+		const readCachedAuthState = () => {
+			const raw = window[AUTH_STATE_CACHE_KEY];
+			return {
+				isLoggedIn: Boolean(raw?.isLoggedIn),
+				isAdmin: Boolean(raw?.isAdmin),
+				userId: raw?.userId ? String(raw.userId) : "",
+			};
+		};
+
+		const applyManageMenuVisibility = (state) => {
+			const canDelete =
+				state.isLoggedIn &&
+				Boolean(state.userId) &&
+				(state.isAdmin || state.userId === authorId);
+			diaryManageRoot.classList.toggle("hidden", !canDelete);
+		};
+
+		if (deleteBtn instanceof HTMLButtonElement) {
+			deleteBtn.addEventListener("click", async () => {
+				if (!diaryId) return;
+				const confirmed = window.confirm("确认删除这篇日记？删除后不可恢复。");
+				if (!confirmed) return;
+
+				deleteBtn.disabled = true;
+				try {
+					const response = await fetch(
+						`/api/v1/me/diaries/${encodeURIComponent(diaryId)}/`,
+						{
+							method: "DELETE",
+							credentials: "include",
+							headers: { Accept: "application/json" },
+						},
+					);
+					const data = await response.json().catch(() => null);
+					if (!response.ok || !data?.ok) {
+						window.alert(data?.message || "删除失败");
+						return;
+					}
+					window.location.href = "/diary/";
+				} catch (error) {
+					console.error("[diary] delete failed:", error);
+					window.alert("删除失败，请稍后重试");
+				} finally {
+					deleteBtn.disabled = false;
+				}
+			});
+		}
+
+		applyManageMenuVisibility(readCachedAuthState());
+		document.addEventListener("mizuki:auth-state", (event) => {
+			if (!(event instanceof CustomEvent)) {
+				return;
+			}
+			const detail = event.detail || {};
+			applyManageMenuVisibility({
+				isLoggedIn: Boolean(detail?.isLoggedIn),
+				isAdmin: Boolean(detail?.isAdmin),
+				userId: detail?.userId ? String(detail.userId) : "",
+			});
+		});
+	}
+</script>

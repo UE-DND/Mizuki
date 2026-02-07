@@ -1,16 +1,10 @@
-import type { CollectionEntry } from "astro:content";
-
 import { getSortedPosts } from "../../utils/content-utils";
-import { initPostIdMap } from "../../utils/permalink-utils";
-import { getPostUrl } from "../../utils/url-utils";
 
-export const prerender = true;
+export const prerender = false;
 
 export async function GET(): Promise<Response> {
 	const posts = await getSortedPosts();
-	initPostIdMap(posts);
-
-	const allPostsData = posts.map((post: CollectionEntry<"posts">) => {
+	const allPostsData = posts.map((post) => {
 		const date = new Date(post.data.published);
 		const year = date.getFullYear();
 		const month = String(date.getMonth() + 1).padStart(2, "0");
@@ -19,7 +13,7 @@ export async function GET(): Promise<Response> {
 		return {
 			id: post.id,
 			title: post.data.title,
-			url: getPostUrl(post),
+			url: post.url || `/posts/${post.id}/`,
 			date: `${year}-${month}-${day}`,
 		};
 	});

@@ -1,0 +1,19 @@
+---
+import MainGridLayout from "@layouts/MainGridLayout.astro";
+
+export const prerender = false;
+---
+
+<MainGridLayout title="管理台" description="站内管理员工作台入口">
+	<section class="card-base p-6 rounded-[var(--radius-large)] mb-4">
+		<h1 class="text-2xl font-bold mb-2">管理台</h1>
+		<p class="text-sm text-70">管理员可以创建账号、调整权限、重置密码和启停账户。</p>
+	</section>
+
+	<section class="grid grid-cols-1 gap-4">
+		<a href="/admin/users/" class="card-base p-6 rounded-[var(--radius-large)] border border-[var(--line-divider)] hover:border-[var(--primary)] transition-colors">
+			<h2 class="text-xl font-semibold mb-2">用户管理</h2>
+			<p class="text-sm text-70">创建账号、修改权限、重置密码、启用或禁用账号。</p>
+		</a>
+	</section>
+</MainGridLayout>

@@ -63,3 +63,5 @@ ref-upstream/
 
 # Directus
 directus/
+!src/server/directus/
+!src/server/directus/**

@@ -1,6 +1,6 @@
 ---
-import { getEntry, render } from "astro:content";
 import Markdown from "@components/misc/Markdown.astro";
+import { marked } from "marked";
 // import Icon from "../components/misc/Icon.astro";
 import { siteConfig } from "../config";
 import { getShuffledFriendsList } from "../data/friends";
@@ -8,18 +8,29 @@ import I18nKey from "../i18n/i18nKey";
 import { i18n } from "../i18n/translation";
 import MainGridLayout from "../layouts/MainGridLayout.astro";
 
+export const prerender = false;
+
 // 检查友链页面是否启用
 if (!siteConfig.featurePages.friends) {
 	return Astro.redirect("/404/");
 }
 
-const friendsPost = await getEntry("spec", "friends");
-
-if (!friendsPost) {
-	throw new Error("friends page content not found");
+let friendsDocHtml = "";
+try {
+	const response = await fetch(`${Astro.url.origin}/api/v1/public/articles/friends/`, {
+		headers: { Accept: "application/json" },
+	});
+	const data = await response.json().catch(() => null);
+	if (response.ok && data?.ok && data.item?.body_markdown) {
+		friendsDocHtml = await marked.parse(String(data.item.body_markdown));
+	}
+} catch (error) {
+	console.error("[friends] failed to fetch intro content:", error);
 }
 
-const { Content } = await render(friendsPost);
+if (!friendsDocHtml) {
+	friendsDocHtml = "<p>欢迎交换友链。</p>";
+}
 const friendsList = getShuffledFriendsList();
 
 // 获取所有标签
@@ -207,7 +218,7 @@ const allTags = Array.from(new Set(friendsList.flatMap((item) => item.tags)));
 
 			<!-- 说明文档 -->
 			<Markdown class="mt-8 prose dark:prose-invert max-w-none">
-				<Content />
+				<Fragment set:html={friendsDocHtml} />
 			</Markdown>
 			
 			<!-- 隐藏元素用于传递 i18n 文本到全局脚本 -->

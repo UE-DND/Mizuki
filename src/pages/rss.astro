@@ -3,13 +3,12 @@ import MainGridLayout from "@layouts/MainGridLayout.astro";
 import { getSortedPosts } from "@utils/content-utils";
 import { formatDateToYYYYMMDD } from "@utils/date-utils";
 import { Icon } from "astro-icon/components";
-import type { CollectionEntry } from "astro:content";
 import I18nKey from "../i18n/i18nKey";
 import { i18n } from "../i18n/translation";
 
-const posts = (await getSortedPosts()).filter(
-	(post: CollectionEntry<"posts">) => !post.data.encrypted,
-);
+export const prerender = false;
+
+const posts = (await getSortedPosts()).filter((post) => !post.data.encrypted);
 const recentPosts = posts.slice(0, 6);
 ---
 
@@ -66,10 +65,10 @@ const recentPosts = posts.slice(0, 6);
                 {i18n(I18nKey.rssLatestPosts)}
             </h2>
             <div class="space-y-4">
-				{recentPosts.map((post: CollectionEntry<"posts">) => (
+				{recentPosts.map((post) => (
                     <article class="bg-[var(--card-bg)] rounded-xl p-4 border border-[var(--line-divider)] hover:border-[var(--primary)] transition-all duration-300">
                         <h3 class="text-lg font-semibold text-90 mb-2 hover:text-[var(--primary)] transition-colors">
-                            <a href={`/posts/${post.id}/`} class="hover:underline">
+                            <a href={post.url || `/posts/${post.id}/`} class="hover:underline">
                                 {post.data.title}
                             </a>
                         </h3>
