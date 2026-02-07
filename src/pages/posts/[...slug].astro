@@ -58,7 +58,11 @@ const coverUrl = article?.cover_url
 		: null;
 ---
 
-<MainGridLayout title={article?.title || "文章未找到"} description={article?.summary || ""}>
+<MainGridLayout
+	setOGTypeArticle={true}
+	title={article?.title || "文章未找到"}
+	description={article?.summary || ""}
+>
 	{!article ? (
 		<div class="card-base p-8 rounded-[var(--radius-large)]">
 			<h1 class="text-2xl font-bold mb-2">文章不存在</h1>
