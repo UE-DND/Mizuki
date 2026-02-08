@@ -1,10 +1,10 @@
 ---
 import MainGridLayout from "@layouts/MainGridLayout.astro";
+import { loadUserDiaryList } from "@/server/api/v1/public-data";
 
 export const prerender = false;
 
 const username = (Astro.params.username || "").trim();
-const endpoint = `${Astro.url.origin}/api/v1/users/${encodeURIComponent(username)}/diary/?limit=100`;
 let items: Array<{
 	id: string;
 	content: string;
@@ -19,18 +19,15 @@ try {
 	if (!username) {
 		Astro.response.status = 404;
 	} else {
-		const response = await fetch(endpoint, {
-			headers: { Accept: "application/json" },
-		});
-		const data = await response.json().catch(() => null);
-		if (response.ok && data?.ok) {
-			items = Array.isArray(data.items) ? data.items : [];
+		const result = await loadUserDiaryList(username, { limit: 100 });
+		if (result) {
+			items = result.items;
 		} else {
-			Astro.response.status = response.status || 404;
+			Astro.response.status = 404;
 		}
 	}
 } catch (error) {
-	console.error("[diary] failed to fetch entries:", error);
+	console.error("[diary] failed to load entries:", error);
 	Astro.response.status = 500;
 }
 

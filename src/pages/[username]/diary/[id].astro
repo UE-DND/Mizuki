@@ -4,12 +4,12 @@ import Markdown from "@components/misc/Markdown.astro";
 import MainGridLayout from "@layouts/MainGridLayout.astro";
 import { renderMarkdownHtml } from "@/server/markdown/render";
 import { buildDirectusAssetUrl } from "@/server/directus-auth";
+import { loadUserDiaryDetail } from "@/server/api/v1/public-data";
 
 export const prerender = false;
 
 const username = (Astro.params.username || "").trim();
 const id = (Astro.params.id || "").trim();
-const endpoint = `${Astro.url.origin}/api/v1/users/${encodeURIComponent(username)}/diary/${encodeURIComponent(id)}/`;
 
 let diary: {
 	id: string;
@@ -32,19 +32,15 @@ if (!username || !id) {
 	Astro.response.status = 404;
 } else {
 	try {
-		const response = await fetch(endpoint, {
-			headers: { Accept: "application/json" },
-		});
-		const data = await response.json().catch(() => null);
-		if (response.ok && data?.ok && data.item) {
-			const resolved = data.item;
-			diary = resolved;
-			html = await renderMarkdownHtml(String(resolved.content || ""));
+		const result = await loadUserDiaryDetail(username, id);
+		if (result) {
+			diary = result;
+			html = await renderMarkdownHtml(String(result.content || ""));
 		} else {
 			Astro.response.status = 404;
 		}
 	} catch (error) {
-		console.error("[diary] failed to fetch detail:", error);
+		console.error("[diary] failed to load detail:", error);
 		Astro.response.status = 500;
 	}
 }

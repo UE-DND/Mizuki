@@ -1,5 +1,10 @@
 ---
 import MainGridLayout from "@layouts/MainGridLayout.astro";
+import {
+	isSpecialArticleSlug,
+	loadPublicArticleById,
+	loadPublicArticleBySlug,
+} from "@/server/api/v1/shared";
 
 export const prerender = false;
 
@@ -11,16 +16,14 @@ if (!permalink) {
 	Astro.response.status = 404;
 } else {
 	try {
-		const endpoint = `${Astro.url.origin}/api/v1/public/articles/${encodeURIComponent(permalink)}/`;
-		const response = await fetch(endpoint, {
-			headers: {
-				Accept: "application/json",
-			},
-		});
-		const data = await response.json().catch(() => null);
+		const article =
+			(await loadPublicArticleById(permalink)) ||
+			(isSpecialArticleSlug(permalink)
+				? await loadPublicArticleBySlug(permalink)
+				: null);
 
-		if (response.ok && data?.ok && data.item?.id) {
-			return Astro.redirect(`/posts/${data.item.id}/`, 302);
+		if (article?.id) {
+			return Astro.redirect(`/posts/${article.id}/`, 302);
 		}
 
 		notFound = true;

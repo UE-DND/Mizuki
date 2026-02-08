@@ -1,43 +1,24 @@
 ---
 import MainGridLayout from "@layouts/MainGridLayout.astro";
+import { loadUserHomeData } from "@/server/api/v1/public-data";
 
 export const prerender = false;
 
 const username = (Astro.params.username || "").trim();
-const endpoint = `${Astro.url.origin}/api/v1/users/${encodeURIComponent(username)}/home/`;
 
-let payload: {
-	owner?: { name?: string; username?: string; avatar_url?: string };
-	profile?: {
-		bio?: string | null;
-		show_articles_on_profile?: boolean;
-		show_diaries_on_profile?: boolean;
-		show_anime_on_profile?: boolean;
-		show_albums_on_profile?: boolean;
-		show_comments_on_profile?: boolean;
-	};
-	articles?: Array<{ id: string; title: string; slug?: string }>;
-	diaries?: Array<{ id: string; content: string; happened_at: string | null }>;
-	anime?: Array<{ id: string; title: string; watch_status: string }>;
-	albums?: Array<{ id: string; title: string }>;
-	comments?: {
-		article_comments?: Array<{ id: string; body: string }>;
-		diary_comments?: Array<{ id: string; body: string }>;
-	};
-} | null = null;
+let payload: Awaited<ReturnType<typeof loadUserHomeData>> = null;
 
 try {
-	const response = await fetch(endpoint, {
-		headers: { Accept: "application/json" },
-	});
-	const data = await response.json().catch(() => null);
-	if (response.ok && data?.ok) {
-		payload = data;
-	} else {
+	if (!username) {
 		Astro.response.status = 404;
+	} else {
+		payload = await loadUserHomeData(username);
+		if (!payload) {
+			Astro.response.status = 404;
+		}
 	}
 } catch (error) {
-	console.error("[profile] failed to fetch user home:", error);
+	console.error("[profile] failed to load user home:", error);
 	Astro.response.status = 500;
 }
 

@@ -1,6 +1,7 @@
 ---
 import Markdown from "@components/misc/Markdown.astro";
 import { renderMarkdownHtml } from "@/server/markdown/render";
+import { loadPublicArticleBySlug } from "@/server/api/v1/shared";
 // import Icon from "../components/misc/Icon.astro";
 import { siteConfig } from "../config";
 import { getShuffledFriendsList } from "../data/friends";
@@ -17,15 +18,12 @@ if (!siteConfig.featurePages.friends) {
 
 let friendsDocHtml = "";
 try {
-	const response = await fetch(`${Astro.url.origin}/api/v1/public/articles/friends/`, {
-		headers: { Accept: "application/json" },
-	});
-	const data = await response.json().catch(() => null);
-	if (response.ok && data?.ok && data.item?.body_markdown) {
-		friendsDocHtml = await renderMarkdownHtml(String(data.item.body_markdown));
+	const article = await loadPublicArticleBySlug("friends");
+	if (article?.body_markdown) {
+		friendsDocHtml = await renderMarkdownHtml(String(article.body_markdown));
 	}
 } catch (error) {
-	console.error("[friends] failed to fetch intro content:", error);
+	console.error("[friends] failed to load intro content:", error);
 }
 
 if (!friendsDocHtml) {
