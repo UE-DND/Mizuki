@@ -131,7 +131,6 @@ export function initMePage(): void {
 	}
 
 	// ---- DOM queries (fresh every call) ----
-	const authMessage = document.getElementById("me-auth-message");
 	const authenticatedSections = document.getElementById(
 		"me-authenticated-sections",
 	);
@@ -191,7 +190,7 @@ export function initMePage(): void {
 	) as HTMLInputElement | null;
 	const avatarCropMsg = document.getElementById("me-avatar-crop-msg");
 
-	if (!authMessage) {
+	if (!authenticatedSections) {
 		return;
 	}
 
@@ -971,13 +970,10 @@ export function initMePage(): void {
 	// ---- kick off auth check ----
 
 	const runInit = async (): Promise<void> => {
-		if (authenticatedSections) {
-			authenticatedSections.classList.add("hidden");
-		}
-		authMessage.textContent = "正在验证登录状态…";
+		authenticatedSections.classList.add("hidden");
 		const me = await loadAuthMe();
 		if (!me.response.ok || !me.data?.ok) {
-			authMessage.innerHTML = `未登录账户，请先 <a href="${buildLoginRedirectHref()}" class="text-[var(--primary)] underline">登录</a>。`;
+			window.location.href = buildLoginRedirectHref();
 			return;
 		}
 		const loginEmail = String(
@@ -992,7 +988,6 @@ export function initMePage(): void {
 		}
 		currentAvatarFallbackUrl = fallbackAvatarUrl;
 		updateAvatarPreview();
-		authMessage.textContent = "";
 
 		const [profileResp, privacyResp] = await Promise.all([
 			api("/api/v1/me/profile"),
@@ -1009,14 +1004,11 @@ export function initMePage(): void {
 				privacyResp.data.privacy as Record<string, unknown> | undefined,
 			);
 		}
-		if (authenticatedSections) {
-			authenticatedSections.classList.remove("hidden");
-		}
+		authenticatedSections.classList.remove("hidden");
 	};
 
 	runInit().catch((err) => {
 		console.error("[me-page] init failed", err);
-		authMessage.textContent = "加载失败，请刷新重试。";
 	});
 }
 

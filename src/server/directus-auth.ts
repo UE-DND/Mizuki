@@ -42,6 +42,7 @@ const ACCESS_COOKIE_MAX_MAX_AGE_SECONDS = 60 * 60 * 24;
 
 export const DIRECTUS_ACCESS_COOKIE_NAME = "mizuki_directus_access";
 export const DIRECTUS_REFRESH_COOKIE_NAME = "mizuki_directus_refresh";
+export const REMEMBER_COOKIE_NAME = "mizuki_remember";
 
 function resolveCookieSecure(requestUrl?: URL): boolean {
 	if (requestUrl) {
@@ -83,19 +84,49 @@ export function resolveAccessTokenMaxAgeSeconds(expiresMs?: number): number {
 	return clampCookieMaxAge(maxAgeSeconds - 10);
 }
 
+export function isSessionOnlyMode(value: string | undefined | null): boolean {
+	return value === "0";
+}
+
 export function getCookieOptions(params?: {
 	requestUrl?: URL;
 	maxAge?: number;
+	sessionOnly?: boolean;
 }): AstroCookieSetOptions {
-	return {
+	const base: AstroCookieSetOptions = {
 		httpOnly: true,
 		secure: resolveCookieSecure(params?.requestUrl),
 		sameSite: "lax" as const,
 		path: "/",
+	};
+	if (params?.sessionOnly) {
+		return base;
+	}
+	return {
+		...base,
 		maxAge:
 			typeof params?.maxAge === "number"
 				? Math.max(0, Math.floor(params.maxAge))
 				: REFRESH_COOKIE_MAX_AGE_SECONDS,
+	};
+}
+
+export function getRememberCookieOptions(params: {
+	requestUrl?: URL;
+	remember: boolean;
+}): AstroCookieSetOptions {
+	const base: AstroCookieSetOptions = {
+		httpOnly: true,
+		secure: resolveCookieSecure(params.requestUrl),
+		sameSite: "lax" as const,
+		path: "/",
+	};
+	if (!params.remember) {
+		return base;
+	}
+	return {
+		...base,
+		maxAge: REFRESH_COOKIE_MAX_AGE_SECONDS,
 	};
 }
 

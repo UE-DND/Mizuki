@@ -4,6 +4,7 @@ import {
 	directusLogout,
 	DIRECTUS_REFRESH_COOKIE_NAME,
 	getCookieOptions,
+	REMEMBER_COOKIE_NAME,
 } from "../../../server/directus-auth";
 
 export const prerender = false;
@@ -23,6 +24,7 @@ function clearAuthCookie(context: APIContext) {
 	try {
 		cookies.delete(DIRECTUS_REFRESH_COOKIE_NAME, { path: "/" });
 		cookies.delete(DIRECTUS_ACCESS_COOKIE_NAME, { path: "/" });
+		cookies.delete(REMEMBER_COOKIE_NAME, { path: "/" });
 	} catch {
 		cookies.set(DIRECTUS_REFRESH_COOKIE_NAME, "", {
 			...getCookieOptions({
@@ -31,6 +33,12 @@ function clearAuthCookie(context: APIContext) {
 			maxAge: 0,
 		});
 		cookies.set(DIRECTUS_ACCESS_COOKIE_NAME, "", {
+			...getCookieOptions({
+				requestUrl: url,
+			}),
+			maxAge: 0,
+		});
+		cookies.set(REMEMBER_COOKIE_NAME, "", {
 			...getCookieOptions({
 				requestUrl: url,
 			}),

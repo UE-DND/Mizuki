@@ -6,7 +6,9 @@ import {
 	directusLogin,
 	DIRECTUS_REFRESH_COOKIE_NAME,
 	getCookieOptions,
+	getRememberCookieOptions,
 	pickPublicUserInfo,
+	REMEMBER_COOKIE_NAME,
 	resolveAccessTokenMaxAgeSeconds,
 	type PublicUserInfo,
 } from "../../../server/directus-auth";
@@ -105,6 +107,7 @@ export async function POST(context: APIContext): Promise<Response> {
 	const bodyObject: JsonObject = isJsonObject(body) ? body : {};
 	const email = (getJsonString(bodyObject, "email") ?? "").trim();
 	const password = getJsonString(bodyObject, "password") ?? "";
+	const remember = bodyObject.remember !== false;
 
 	if (!email || !password) {
 		return json(
@@ -113,6 +116,8 @@ export async function POST(context: APIContext): Promise<Response> {
 		);
 	}
 
+	const sessionOnly = !remember;
+
 	try {
 		const tokens = await directusLogin({ email, password });
 		cookies.set(
@@ -120,6 +125,7 @@ export async function POST(context: APIContext): Promise<Response> {
 			tokens.refreshToken,
 			getCookieOptions({
 				requestUrl: url,
+				sessionOnly,
 			}),
 		);
 		cookies.set(
@@ -128,7 +134,13 @@ export async function POST(context: APIContext): Promise<Response> {
 			getCookieOptions({
 				requestUrl: url,
 				maxAge: resolveAccessTokenMaxAgeSeconds(tokens.expiresMs),
+				sessionOnly,
 			}),
+		);
+		cookies.set(
+			REMEMBER_COOKIE_NAME,
+			remember ? "1" : "0",
+			getRememberCookieOptions({ requestUrl: url, remember }),
 		);
 
 		let user: PublicUserInfo = {

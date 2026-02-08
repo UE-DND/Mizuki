@@ -6,10 +6,12 @@ import {
 	DIRECTUS_ACCESS_COOKIE_NAME,
 	DIRECTUS_REFRESH_COOKIE_NAME,
 	DirectusAuthError,
+	REMEMBER_COOKIE_NAME,
 	buildDirectusAssetUrl,
 	directusGetMe,
 	directusRefresh,
 	getCookieOptions,
+	isSessionOnlyMode,
 	resolveAccessTokenMaxAgeSeconds,
 } from "@/server/directus-auth";
 
@@ -144,12 +146,17 @@ function clearCookie(context: APIContext, cookieName: string): void {
 	}
 }
 
-function setSessionCookies(context: APIContext, tokens: RefreshedTokens): void {
+function setSessionCookies(
+	context: APIContext,
+	tokens: RefreshedTokens,
+	sessionOnly: boolean,
+): void {
 	context.cookies.set(
 		DIRECTUS_REFRESH_COOKIE_NAME,
 		tokens.refreshToken,
 		getCookieOptions({
 			requestUrl: context.url,
+			sessionOnly,
 		}),
 	);
 	context.cookies.set(
@@ -158,6 +165,7 @@ function setSessionCookies(context: APIContext, tokens: RefreshedTokens): void {
 		getCookieOptions({
 			requestUrl: context.url,
 			maxAge: resolveAccessTokenMaxAgeSeconds(tokens.expiresMs),
+			sessionOnly,
 		}),
 	);
 }
@@ -238,7 +246,10 @@ export async function getSessionUser(
 
 	try {
 		const tokens = await refreshWithLock(refreshToken);
-		setSessionCookies(context, tokens);
+		const rememberValue =
+			context.cookies.get(REMEMBER_COOKIE_NAME)?.value ?? undefined;
+		const sessionOnly = isSessionOnlyMode(rememberValue);
+		setSessionCookies(context, tokens, sessionOnly);
 		const user = await loadUserByAccessToken(tokens.accessToken);
 		if (!user) {
 			clearSession(context);
@@ -254,4 +265,5 @@ export async function getSessionUser(
 export function clearSession(context: APIContext): void {
 	clearCookie(context, DIRECTUS_REFRESH_COOKIE_NAME);
 	clearCookie(context, DIRECTUS_ACCESS_COOKIE_NAME);
+	clearCookie(context, REMEMBER_COOKIE_NAME);
 }
