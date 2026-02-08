@@ -540,12 +540,21 @@ export async function loadPublicDiaryById(
 	return rows[0] || null;
 }
 
-export async function loadPublicAlbumBySlug(
-	slug: string,
+export async function loadPublicAlbumById(
+	id: string,
 ): Promise<AppAlbum | null> {
+	const normalizedId = String(id || "").trim();
+	const isUuid =
+		/^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(
+			normalizedId,
+		);
+	if (!isUuid) {
+		return null;
+	}
+
 	const rows = await readMany("app_albums", {
 		filter: {
-			_and: [{ slug: { _eq: slug } }, filterPublicStatus()],
+			_and: [{ id: { _eq: normalizedId } }, filterPublicStatus()],
 		} as JsonObject,
 		limit: 1,
 	});

@@ -244,17 +244,17 @@ export const navBarConfig: NavBarConfig = {
 			children: [
 				{
 					name: "番剧",
-					url: "/anime/",
+					url: "/me/#anime",
 					icon: "material-symbols:movie",
 				},
 				{
 					name: "日记",
-					url: "/diary/",
+					url: "/me/#diary",
 					icon: "material-symbols:book",
 				},
 				{
 					name: "相册",
-					url: "/albums/",
+					url: "/me/#albums",
 					icon: "material-symbols:photo-library",
 				},
 			],

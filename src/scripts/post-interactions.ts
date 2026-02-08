@@ -84,6 +84,7 @@ function setupCalendarFilterListeners() {
 
 let currentAuthState: AuthState = {
 	userId: "",
+	username: "",
 	isAdmin: false,
 	isLoggedIn: false,
 };

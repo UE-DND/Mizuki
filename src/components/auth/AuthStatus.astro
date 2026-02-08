@@ -91,16 +91,21 @@ let initTask: Promise<void> | null = null;
 			isLoggedIn: boolean,
 			isAdmin: boolean,
 			userId: string,
+			username: string,
 		) {
 			emitAuthState({
 				isLoggedIn,
 				isAdmin,
 				userId: userId || "",
+				username: username || "",
 			});
 		}
 
 		function setAuthState(state: AuthPayload | null) {
 			const userId = state?.user?.id ? String(state.user.id) : "";
+			const username = state?.user?.username
+				? String(state.user.username)
+				: "";
 			const user = state?.user;
 			const isLoggedIn = Boolean(userId);
 			const isAdmin = Boolean(
@@ -115,7 +120,7 @@ let initTask: Promise<void> | null = null;
 		const iconEl = document.getElementById("auth-user-icon");
 		const adminEl = document.getElementById("auth-admin");
 		if (!loginEl || !userEl || !userNameEl || !adminEl) {
-			publishAuthState(isLoggedIn, isAdmin, userId);
+			publishAuthState(isLoggedIn, isAdmin, userId, username);
 			return;
 		}
 		loginEl.setAttribute("href", buildLoginHref());
@@ -144,7 +149,7 @@ let initTask: Promise<void> | null = null;
 				adminEl.classList.add("hidden");
 				adminEl.classList.remove("flex");
 			}
-			publishAuthState(isLoggedIn, isAdmin, userId);
+			publishAuthState(isLoggedIn, isAdmin, userId, username);
 			return;
 		}
 
@@ -160,7 +165,7 @@ let initTask: Promise<void> | null = null;
 		}
 		adminEl.classList.add("hidden");
 		adminEl.classList.remove("flex");
-		publishAuthState(false, false, "");
+		publishAuthState(false, false, "", "");
 	}
 
 	async function refreshAuthState() {
@@ -229,8 +234,7 @@ let initTask: Promise<void> | null = null;
 					console.error("Logout failed:", error);
 				} finally {
 					setAuthState(null);
-					// 强制刷新当前页，避免停留在旧的登录态 UI。
-					window.location.reload();
+					window.location.href = "/";
 				}
 			});
 		}

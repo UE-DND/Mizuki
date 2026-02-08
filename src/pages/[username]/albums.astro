@@ -4,11 +4,11 @@ import { buildDirectusAssetUrl } from "@/server/directus-auth";
 
 export const prerender = false;
 
-const endpoint = `${Astro.url.origin}/api/v1/public/albums/?limit=100`;
+const username = (Astro.params.username || "").trim();
+const endpoint = `${Astro.url.origin}/api/v1/users/${encodeURIComponent(username)}/albums/?limit=100`;
 let items: Array<{
 	id: string;
 	title: string;
-	slug: string;
 	description: string | null;
 	cover_file: string | null;
 	cover_url: string | null;
@@ -19,15 +19,22 @@ let items: Array<{
 }> = [];
 
 try {
-	const response = await fetch(endpoint, {
-		headers: { Accept: "application/json" },
-	});
-	const data = await response.json().catch(() => null);
-	if (response.ok && data?.ok) {
-		items = Array.isArray(data.items) ? data.items : [];
+	if (!username) {
+		Astro.response.status = 404;
+	} else {
+		const response = await fetch(endpoint, {
+			headers: { Accept: "application/json" },
+		});
+		const data = await response.json().catch(() => null);
+		if (response.ok && data?.ok) {
+			items = Array.isArray(data.items) ? data.items : [];
+		} else {
+			Astro.response.status = response.status || 404;
+		}
 	}
 } catch (error) {
 	console.error("[albums] failed to fetch entries:", error);
+	Astro.response.status = 500;
 }
 
 function coverUrl(item: {
@@ -48,10 +55,10 @@ function coverUrl(item: {
 }
 ---
 
-<MainGridLayout title="相册" description="全站公开相册聚合">
+<MainGridLayout title="相册" description="用户公开相册列表">
 	<section class="card-base p-6 rounded-[var(--radius-large)] mb-4">
 		<h1 class="text-2xl font-bold mb-2">相册</h1>
-		<p class="text-sm text-70">由 Directus 实时驱动的公开相册内容。</p>
+		<p class="text-sm text-70">用户公开的相册内容。</p>
 	</section>
 
 	{items.length === 0 ? (
@@ -60,7 +67,7 @@ function coverUrl(item: {
 		<div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
 			{items.map((item) => (
 				<article class="card-base rounded-[var(--radius-large)] overflow-hidden border border-[var(--line-divider)]">
-					<a href={`/albums/${item.slug}/`} class="block h-full">
+					<a href={`/${username}/albums/${item.id}/`} class="block h-full">
 						{coverUrl(item) && (
 							<img
 								src={coverUrl(item) || ""}

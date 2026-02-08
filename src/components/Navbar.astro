@@ -98,8 +98,112 @@ const links: NavBarLink[] = navBarConfig.links
 </div>
 
 <script>
+    import {
+        emitAuthState,
+        getAuthState,
+        subscribeAuthState,
+        type AuthState,
+    } from "@/scripts/auth-state";
+
 	const searchContainer = document.getElementById("search-container");
 	const navbarLinksContainer = document.getElementById("navbar-links-container");
+
+    const updateUserRouteLinks = (username: string, isLoggedIn: boolean): void => {
+        const cleanUsername = String(username || "").trim();
+        const fallbackHref = isLoggedIn ? "/me/" : "/login/";
+        const anchors = Array.from(
+            document.querySelectorAll<HTMLAnchorElement>("a[href]"),
+        );
+        anchors.forEach((anchor) => {
+            const rawHref = anchor.getAttribute("href") || "";
+            if (!rawHref.startsWith("/")) return;
+            if (rawHref.includes("/__user__/")) {
+                anchor.setAttribute(
+                    "href",
+                    cleanUsername
+                        ? rawHref.replace("/__user__/", `/${cleanUsername}/`)
+                        : fallbackHref,
+                );
+                return;
+            }
+            let pathname = rawHref;
+            let hash = "";
+            try {
+                const parsed = new URL(rawHref, window.location.origin);
+                pathname = parsed.pathname;
+                hash = parsed.hash.replace(/^#/, "").trim().toLowerCase();
+            } catch {
+                pathname = rawHref;
+            }
+            if (pathname === "/me" || pathname === "/me/") {
+                if (hash === "anime" || hash === "diary" || hash === "albums") {
+                    anchor.setAttribute(
+                        "href",
+                        cleanUsername
+                            ? `/${cleanUsername}/${hash}/`
+                            : fallbackHref,
+                    );
+                }
+                return;
+            }
+            const legacyTarget = ["/anime", "/anime/", "/diary", "/diary/", "/albums", "/albums/"];
+            if (!legacyTarget.includes(pathname)) return;
+            const target = pathname.replace(/^\//, "").replace(/\/$/, "");
+            anchor.setAttribute(
+                "href",
+                cleanUsername ? `/${cleanUsername}/${target}/` : fallbackHref,
+            );
+        });
+    };
+
+    const fetchAuthProfile = async () => {
+        try {
+            const response = await fetch("/api/auth/me/", {
+                method: "GET",
+                credentials: "include",
+                headers: { Accept: "application/json" },
+                cache: "no-store",
+            });
+            const data = await response.json().catch(() => null);
+            if (!response.ok || !data?.ok) {
+                return { ok: false, username: "", isAdmin: false, userId: "" };
+            }
+            return {
+                ok: true,
+                username: String(data?.user?.username || "").trim(),
+                isAdmin: Boolean(data?.is_admin || data?.isAdmin),
+                userId: String(data?.user?.id || "").trim(),
+            };
+        } catch (error) {
+            console.warn("[navbar] failed to load username:", error);
+            return { ok: false, username: "", isAdmin: false, userId: "" };
+        }
+    };
+
+    const applyAuthRouting = async (state: AuthState | null | undefined): Promise<void> => {
+        let username = String(state?.username || "").trim();
+        let isLoggedIn = Boolean(state?.isLoggedIn);
+        if (!username) {
+            const profile = await fetchAuthProfile();
+            if (profile.ok) {
+                username = profile.username;
+                isLoggedIn = true;
+                emitAuthState({
+                    isLoggedIn: true,
+                    isAdmin: profile.isAdmin,
+                    userId: profile.userId,
+                    username,
+                });
+            }
+        }
+        updateUserRouteLinks(username, isLoggedIn);
+    };
+
+    const initialAuth = getAuthState();
+    applyAuthRouting(initialAuth);
+    subscribeAuthState((state) => {
+        applyAuthRouting(state);
+    });
 
 	if (searchContainer && navbarLinksContainer) {
 		// 鼠标移入/触摸开始时隐藏导航链接

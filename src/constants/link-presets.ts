@@ -25,17 +25,17 @@ export const LinkPresets: { [key in LinkPreset]: NavBarLink } = {
 	},
 	[LinkPreset.Anime]: {
 		name: i18n(I18nKey.anime),
-		url: "/anime/",
+		url: "/me/#anime",
 		icon: "material-symbols:movie",
 	},
 	[LinkPreset.Diary]: {
 		name: i18n(I18nKey.diary),
-		url: "/diary/",
+		url: "/me/#diary",
 		icon: "material-symbols:book",
 	},
 	[LinkPreset.Albums]: {
 		name: i18n(I18nKey.albums),
-		url: "/albums/",
+		url: "/me/#albums",
 		icon: "material-symbols:photo-library",
 	},
 	[LinkPreset.Projects]: {

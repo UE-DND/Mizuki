@@ -19,7 +19,7 @@ let payload: {
 	articles?: Array<{ id: string; title: string; slug?: string }>;
 	diaries?: Array<{ id: string; content: string; happened_at: string | null }>;
 	anime?: Array<{ id: string; title: string; watch_status: string }>;
-	albums?: Array<{ id: string; title: string; slug: string }>;
+	albums?: Array<{ id: string; title: string }>;
 	comments?: {
 		article_comments?: Array<{ id: string; body: string }>;
 		diary_comments?: Array<{ id: string; body: string }>;
@@ -92,7 +92,7 @@ function shortDiary(text: string): string {
 					<ul class="space-y-2 text-sm text-75">
 						{payload.diaries.map((item) => (
 							<li>
-								<a href={`/diary/${item.id}/`} class="hover:text-[var(--primary)] transition-colors">
+								<a href={`/${payload.owner?.username || username}/diary/${item.id}/`} class="hover:text-[var(--primary)] transition-colors">
 									{shortDiary(item.content)}
 								</a>
 							</li>
@@ -118,7 +118,7 @@ function shortDiary(text: string): string {
 					<ul class="space-y-2">
 						{payload.albums.map((item) => (
 							<li>
-								<a href={`/albums/${item.slug}/`} class="hover:text-[var(--primary)] transition-colors">{item.title}</a>
+								<a href={`/${payload.owner?.username || username}/albums/${item.id}/`} class="hover:text-[var(--primary)] transition-colors">{item.title}</a>
 							</li>
 						))}
 					</ul>

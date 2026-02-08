@@ -3,7 +3,8 @@ import MainGridLayout from "@layouts/MainGridLayout.astro";
 
 export const prerender = false;
 
-const endpoint = `${Astro.url.origin}/api/v1/public/diaries/?limit=100`;
+const username = (Astro.params.username || "").trim();
+const endpoint = `${Astro.url.origin}/api/v1/users/${encodeURIComponent(username)}/diary/?limit=100`;
 let items: Array<{
 	id: string;
 	content: string;
@@ -15,15 +16,22 @@ let items: Array<{
 }> = [];
 
 try {
-	const response = await fetch(endpoint, {
-		headers: { Accept: "application/json" },
-	});
-	const data = await response.json().catch(() => null);
-	if (response.ok && data?.ok) {
-		items = Array.isArray(data.items) ? data.items : [];
+	if (!username) {
+		Astro.response.status = 404;
+	} else {
+		const response = await fetch(endpoint, {
+			headers: { Accept: "application/json" },
+		});
+		const data = await response.json().catch(() => null);
+		if (response.ok && data?.ok) {
+			items = Array.isArray(data.items) ? data.items : [];
+		} else {
+			Astro.response.status = response.status || 404;
+		}
 	}
 } catch (error) {
 	console.error("[diary] failed to fetch entries:", error);
+	Astro.response.status = 500;
 }
 
 function shortText(input: string): string {
@@ -35,10 +43,10 @@ function shortText(input: string): string {
 }
 ---
 
-<MainGridLayout title="日记" description="全站公开日记聚合">
+<MainGridLayout title="日记" description="用户公开日记列表">
 	<section class="card-base p-6 rounded-[var(--radius-large)] mb-4">
 		<h1 class="text-2xl font-bold mb-2">日记</h1>
-		<p class="text-sm text-70">由 Directus 实时驱动的公开日记内容。</p>
+		<p class="text-sm text-70">用户公开的日记内容。</p>
 	</section>
 
 	{items.length === 0 ? (
@@ -47,7 +55,7 @@ function shortText(input: string): string {
 		<div class="space-y-4">
 			{items.map((item) => (
 				<article class="card-base p-5 rounded-[var(--radius-large)] border border-[var(--line-divider)]">
-					<a href={`/diary/${item.id}/`} class="block space-y-3">
+					<a href={`/${username}/diary/${item.id}/`} class="block space-y-3">
 						<div class="flex flex-wrap items-center gap-3 text-xs text-60">
 							{item.author?.name && <span>作者：{item.author.name}</span>}
 							{item.happened_at && <time datetime={item.happened_at}>{new Date(item.happened_at).toLocaleString()}</time>}

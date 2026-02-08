@@ -4,8 +4,9 @@ import { buildDirectusAssetUrl } from "@/server/directus-auth";
 
 export const prerender = false;
 
-const slug = (Astro.params.id || "").trim();
-const endpoint = `${Astro.url.origin}/api/v1/public/albums/${encodeURIComponent(slug)}/`;
+const username = (Astro.params.username || "").trim();
+const id = (Astro.params.id || "").trim();
+const endpoint = `${Astro.url.origin}/api/v1/users/${encodeURIComponent(username)}/albums/${encodeURIComponent(id)}/`;
 
 let album: {
 	id: string;
@@ -19,7 +20,7 @@ let album: {
 	tags: string[];
 	layout: "grid" | "masonry";
 	columns: number;
-	author?: { name?: string };
+	author?: { name?: string; username?: string };
 	photos: Array<{
 		id: string;
 		file_id: string | null;
@@ -31,20 +32,26 @@ let album: {
 	}>;
 } | null = null;
 
-try {
-	const response = await fetch(endpoint, {
-		headers: { Accept: "application/json" },
-	});
-	const data = await response.json().catch(() => null);
-	if (response.ok && data?.ok && data.item) {
-		album = data.item;
-	} else {
-		Astro.response.status = 404;
+if (!username || !id) {
+	Astro.response.status = 404;
+} else {
+	try {
+		const response = await fetch(endpoint, {
+			headers: { Accept: "application/json" },
+		});
+		const data = await response.json().catch(() => null);
+		if (response.ok && data?.ok && data.item) {
+			album = data.item;
+		} else {
+			Astro.response.status = 404;
+		}
+	} catch (error) {
+		console.error("[albums] failed to fetch detail:", error);
+		Astro.response.status = 500;
 	}
-} catch (error) {
-	console.error("[albums] failed to fetch detail:", error);
-	Astro.response.status = 500;
 }
+
+const backHref = username ? `/${username}/albums/` : "/";
 
 function photoUrl(photo: { file_id: string | null; image_url: string | null }): string | null {
 	if (photo.image_url) {
@@ -70,7 +77,7 @@ function photoUrl(photo: { file_id: string | null; image_url: string | null }): 
 	) : (
 		<>
 			<section class="card-base p-6 rounded-[var(--radius-large)] mb-4 space-y-3">
-				<a href="/albums/" class="text-sm text-[var(--primary)] hover:underline">返回相册列表</a>
+				<a href={backHref} class="text-sm text-[var(--primary)] hover:underline">返回相册列表</a>
 				<h1 class="text-3xl font-bold">{album.title}</h1>
 				<div class="text-xs text-60 flex flex-wrap items-center gap-2">
 					{album.author?.name && <span>作者：{album.author.name}</span>}

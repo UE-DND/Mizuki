@@ -8,6 +8,7 @@ import type {
 	AppDiary,
 	AppDiaryComment,
 	AppDiaryImage,
+	AppProfile,
 } from "@/types/app";
 import type { JsonObject } from "@/types/json";
 import {
@@ -23,7 +24,7 @@ import {
 	DEFAULT_LIST_LIMIT,
 	filterPublicStatus,
 	isSpecialArticleSlug,
-	loadPublicAlbumBySlug,
+	loadPublicAlbumById,
 	loadPublicArticleById,
 	loadPublicArticleBySlug,
 	loadPublicDiaryById,
@@ -55,6 +56,21 @@ function readAuthor(
 	userId: string,
 ): { id: string; name: string; username?: string; avatar_url?: string } {
 	return authorMap.get(userId) || toAuthorFallback(userId);
+}
+
+async function loadPublicProfileByUsername(
+	username: string,
+): Promise<AppProfile | null> {
+	const rows = await readMany("app_user_profiles", {
+		filter: {
+			_and: [
+				{ username: { _eq: username } },
+				{ profile_public: { _eq: true } },
+			],
+		} as JsonObject,
+		limit: 1,
+	});
+	return rows[0] || null;
 }
 
 async function handlePublicAsset(
@@ -403,11 +419,11 @@ async function handlePublicAlbums(
 	}
 
 	if (segments.length === 3) {
-		const slug = parseRouteId(segments[2]);
-		if (!slug) {
-			return fail("缺少相册 slug", 400);
+		const albumId = parseRouteId(segments[2]);
+		if (!albumId) {
+			return fail("缺少相册 ID", 400);
 		}
-		const album = await loadPublicAlbumBySlug(slug);
+		const album = await loadPublicAlbumById(albumId);
 		if (!album) {
 			return fail("相册不存在", 404);
 		}
@@ -450,8 +466,253 @@ async function handleUserHome(
 	if (context.request.method !== "GET") {
 		return fail("方法不允许", 405);
 	}
-	if (segments.length !== 3 || segments[2] !== "home") {
+	if (segments.length < 3 || segments.length > 4) {
 		return fail("未找到接口", 404);
+	}
+
+	const moduleKey = segments[2];
+	if (
+		moduleKey !== "home" &&
+		moduleKey !== "anime" &&
+		moduleKey !== "diary" &&
+		moduleKey !== "albums"
+	) {
+		return fail("未找到接口", 404);
+	}
+	if (moduleKey === "home" && segments.length !== 3) {
+		return fail("未找到接口", 404);
+	}
+
+	if (moduleKey !== "home") {
+		const username = parseRouteId(segments[1]);
+		if (!username) {
+			return fail("缺少用户名", 400);
+		}
+
+		const profile = await loadPublicProfileByUsername(username);
+		if (!profile) {
+			return fail("用户主页不存在", 404);
+		}
+		const userId = profile.user_id;
+
+		if (moduleKey === "anime" && !profile.show_anime_on_profile) {
+			return fail("内容未公开", 404);
+		}
+		if (moduleKey === "diary" && !profile.show_diaries_on_profile) {
+			return fail("内容未公开", 404);
+		}
+		if (moduleKey === "albums" && !profile.show_albums_on_profile) {
+			return fail("内容未公开", 404);
+		}
+		const detailId = segments.length === 4 ? parseRouteId(segments[3]) : "";
+		if (segments.length === 4 && !detailId) {
+			return fail("缺少内容 ID", 400);
+		}
+
+		if (moduleKey === "anime") {
+			if (detailId) {
+				return fail("未找到接口", 404);
+			}
+			const { page, limit, offset } = parsePagination(context.url);
+			const watchStatus =
+				context.url.searchParams.get("status")?.trim() || "";
+			const andFilters: JsonObject[] = [
+				filterPublicStatus(),
+				{ author_id: { _eq: userId } },
+				{ show_on_profile: { _eq: true } },
+			];
+			if (watchStatus) {
+				andFilters.push({ watch_status: { _eq: watchStatus } });
+			}
+
+			const animeFilter = { _and: andFilters } as JsonObject;
+			const [rows, total, authorMap] = await Promise.all([
+				readMany("app_anime_entries", {
+					filter: animeFilter,
+					sort: ["-date_created"],
+					limit,
+					offset,
+				}),
+				countItems("app_anime_entries", animeFilter),
+				getAuthorBundle([userId]),
+			]);
+
+			const items = rows.map((row) => ({
+				...row,
+				genres: safeCsv(row.genres),
+				author: readAuthor(authorMap, row.author_id),
+			}));
+
+			return ok({
+				items,
+				page,
+				limit,
+				total,
+			});
+		}
+
+		if (moduleKey === "diary") {
+			if (detailId) {
+				const diary = await loadPublicDiaryById(detailId);
+				if (
+					!diary ||
+					diary.author_id !== userId ||
+					!diary.show_on_profile
+				) {
+					return fail("内容未公开", 404);
+				}
+
+				const [images, authorMap] = await Promise.all([
+					readMany("app_diary_images", {
+						filter: {
+							_and: [
+								{ diary_id: { _eq: diary.id } },
+								{ status: { _eq: "published" } },
+								{ is_public: { _eq: true } },
+							],
+						} as JsonObject,
+						sort: ["sort", "-date_created"],
+						limit: 100,
+					}),
+					getAuthorBundle([userId]),
+				]);
+
+				return ok({
+					item: {
+						...diary,
+						author: readAuthor(authorMap, diary.author_id),
+						images,
+					},
+				});
+			}
+
+			const { page, limit, offset } = parsePagination(context.url);
+			const diaryFilter = {
+				_and: [
+					filterPublicStatus(),
+					{ author_id: { _eq: userId } },
+					{ show_on_profile: { _eq: true } },
+				],
+			} as JsonObject;
+			const [rows, total] = await Promise.all([
+				readMany("app_diaries", {
+					filter: diaryFilter,
+					sort: ["-happened_at", "-date_created"],
+					limit,
+					offset,
+				}),
+				countItems("app_diaries", diaryFilter),
+			]);
+
+			const diaryIds = rows.map((row) => row.id);
+			const [images, authorMap] = await Promise.all([
+				readMany("app_diary_images", {
+					filter:
+						diaryIds.length > 0
+							? ({
+									_and: [
+										{ diary_id: { _in: diaryIds } },
+										{ status: { _eq: "published" } },
+										{ is_public: { _eq: true } },
+									],
+								} as JsonObject)
+							: ({ id: { _null: true } } as JsonObject),
+					sort: ["sort", "-date_created"],
+					limit: Math.max(diaryIds.length * 6, DEFAULT_LIST_LIMIT),
+				}),
+				getAuthorBundle([userId]),
+			]);
+
+			const imageMap = new Map<string, AppDiaryImage[]>();
+			for (const image of images) {
+				const list = imageMap.get(image.diary_id) || [];
+				list.push(image);
+				imageMap.set(image.diary_id, list);
+			}
+
+			const items = rows.map((row) => ({
+				...row,
+				author: readAuthor(authorMap, row.author_id),
+				images: imageMap.get(row.id) || [],
+			}));
+
+			return ok({
+				items,
+				page,
+				limit,
+				total,
+			});
+		}
+
+		if (detailId) {
+			const album = await loadPublicAlbumById(detailId);
+			if (
+				!album ||
+				album.author_id !== userId ||
+				!album.show_on_profile
+			) {
+				return fail("内容未公开", 404);
+			}
+
+			const [photos, authorMap] = await Promise.all([
+				readMany("app_album_photos", {
+					filter: {
+						_and: [
+							{ album_id: { _eq: album.id } },
+							{ status: { _eq: "published" } },
+							{ is_public: { _eq: true } },
+						],
+					} as JsonObject,
+					sort: ["sort", "-date_created"],
+					limit: 200,
+				}),
+				getAuthorBundle([userId]),
+			]);
+
+			return ok({
+				item: {
+					...album,
+					tags: safeCsv(album.tags),
+					author: readAuthor(authorMap, album.author_id),
+					photos: photos.map((photo) => ({
+						...photo,
+						tags: safeCsv(photo.tags),
+					})),
+				},
+			});
+		}
+
+		const { page, limit, offset } = parsePagination(context.url);
+		const albumFilter = {
+			_and: [
+				filterPublicStatus(),
+				{ author_id: { _eq: userId } },
+				{ show_on_profile: { _eq: true } },
+			],
+		} as JsonObject;
+		const [rows, total, authorMap] = await Promise.all([
+			readMany("app_albums", {
+				filter: albumFilter,
+				sort: ["-date", "-date_created"],
+				limit,
+				offset,
+			}),
+			countItems("app_albums", albumFilter),
+			getAuthorBundle([userId]),
+		]);
+
+		const items = rows.map((row) => ({
+			...row,
+			tags: safeCsv(row.tags),
+			author: readAuthor(authorMap, row.author_id),
+		}));
+
+		return ok({
+			items,
+			page,
+			limit,
+			total,
+		});
 	}
 
 	const username = parseRouteId(segments[1]);

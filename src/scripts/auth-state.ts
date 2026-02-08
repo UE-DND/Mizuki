@@ -1,5 +1,6 @@
 export type AuthState = {
 	userId: string;
+	username: string;
 	isAdmin: boolean;
 	isLoggedIn: boolean;
 };
@@ -11,6 +12,7 @@ function normalizeState(
 ): AuthState {
 	return {
 		userId: input?.userId ? String(input.userId) : "",
+		username: input?.username ? String(input.username) : "",
 		isAdmin: Boolean(input?.isAdmin),
 		isLoggedIn: Boolean(input?.isLoggedIn),
 	};

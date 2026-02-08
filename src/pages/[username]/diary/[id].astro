@@ -7,8 +7,9 @@ import { buildDirectusAssetUrl } from "@/server/directus-auth";
 
 export const prerender = false;
 
+const username = (Astro.params.username || "").trim();
 const id = (Astro.params.id || "").trim();
-const endpoint = `${Astro.url.origin}/api/v1/public/diaries/${encodeURIComponent(id)}/`;
+const endpoint = `${Astro.url.origin}/api/v1/users/${encodeURIComponent(username)}/diary/${encodeURIComponent(id)}/`;
 
 let diary: {
 	id: string;
@@ -27,7 +28,9 @@ let diary: {
 } | null = null;
 let html = "";
 
-if (id) {
+if (!username || !id) {
+	Astro.response.status = 404;
+} else {
 	try {
 		const response = await fetch(endpoint, {
 			headers: { Accept: "application/json" },
@@ -44,8 +47,6 @@ if (id) {
 		console.error("[diary] failed to fetch detail:", error);
 		Astro.response.status = 500;
 	}
-} else {
-	Astro.response.status = 404;
 }
 ---
 
@@ -58,6 +59,7 @@ if (id) {
 	) : (
 		<>
 			<article class="card-base p-6 md:p-8 rounded-[var(--radius-large)] mb-4">
+				<a href={`/${username}/diary/`} class="inline-block text-sm text-[var(--primary)] hover:underline mb-4">返回日记列表</a>
 				<div
 					id="diary-manage-root"
 					class="hidden mb-4 flex items-center justify-end"
@@ -107,7 +109,7 @@ if (id) {
 														width: 960,
 														height: 960,
 														fit: "cover",
-												  })
+													  })
 												: "")
 										}
 										alt={image.caption || "diary image"}
@@ -166,7 +168,12 @@ if (id) {
 						window.alert(data?.message || "删除失败");
 						return;
 					}
-					window.location.href = "/diary/";
+					const authState = getAuthState();
+					if (authState.username) {
+						window.location.href = `/${authState.username}/diary/`;
+						return;
+					}
+					window.location.href = "/login/";
 				} catch (error) {
 					console.error("[diary] delete failed:", error);
 					window.alert("删除失败，请稍后重试");
