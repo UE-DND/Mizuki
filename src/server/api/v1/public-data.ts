@@ -8,6 +8,7 @@ import type {
 	AppDiaryComment,
 	AppDiaryImage,
 	AppProfile,
+	SidebarProfileData,
 } from "@/types/app";
 import type { JsonObject } from "@/types/json";
 import { countItems, readMany } from "@/server/directus/client";
@@ -515,4 +516,76 @@ export async function loadUserAlbumDetail(
 			tags: safeCsv(photo.tags),
 		})),
 	};
+}
+
+export function profileToSidebarData(profile: AppProfile): SidebarProfileData {
+	const avatarUrl = profile.avatar_file
+		? buildDirectusAssetUrl(profile.avatar_file)
+		: profile.avatar_url || null;
+
+	return {
+		display_name: profile.display_name || profile.username || "user",
+		bio: profile.bio ?? null,
+		avatar_url: avatarUrl,
+		username: profile.username || null,
+		social_links: profile.social_links ?? null,
+		is_official: profile.is_official ?? false,
+	};
+}
+
+export async function loadPublicProfileByUserId(
+	userId: string,
+): Promise<AppProfile | null> {
+	const rows = await readMany("app_user_profiles", {
+		filter: {
+			_and: [
+				{ user_id: { _eq: userId } },
+				{ profile_public: { _eq: true } },
+			],
+		} as JsonObject,
+		limit: 1,
+	});
+	return rows[0] || null;
+}
+
+let officialSidebarCache: {
+	data: SidebarProfileData;
+	expiry: number;
+} | null = null;
+
+const OFFICIAL_CACHE_TTL = 10 * 60 * 1000;
+
+export async function loadOfficialSidebarProfile(): Promise<SidebarProfileData> {
+	if (officialSidebarCache && Date.now() < officialSidebarCache.expiry) {
+		return officialSidebarCache.data;
+	}
+
+	const rows = await readMany("app_user_profiles", {
+		filter: {
+			_and: [
+				{ is_official: { _eq: true } },
+				{ profile_public: { _eq: true } },
+			],
+		} as JsonObject,
+		limit: 1,
+	});
+
+	const profile = rows[0] as AppProfile | undefined;
+	if (!profile) {
+		return {
+			display_name: "Mizuki",
+			bio: null,
+			avatar_url: null,
+			username: null,
+			social_links: null,
+			is_official: true,
+		};
+	}
+
+	const data = profileToSidebarData(profile);
+	officialSidebarCache = {
+		data,
+		expiry: Date.now() + OFFICIAL_CACHE_TTL,
+	};
+	return data;
 }

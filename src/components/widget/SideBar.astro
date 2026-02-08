@@ -36,9 +36,11 @@ const tabletStickyComponents = filterCalendar(
 );
 
 const stickyContainerClass = "transition-all duration-700 flex flex-col w-full gap-4 sticky top-4";
+
+const sidebarUid = Astro.locals.sidebarProfile?.username || "__official__";
 ---
 
-<div id="sidebar" class:list={[className, "w-full sidebar-root"]}>
+<div id="sidebar" data-sidebar-uid={sidebarUid} class:list={[className, "w-full sidebar-root"]}>
 	<!-- 顶部组件区域 -->
 	<div class="flex flex-col w-full gap-4 mb-4">
 		<!-- 手机端顶部组件 -->

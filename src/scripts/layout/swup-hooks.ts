@@ -1,6 +1,13 @@
 import type { LayoutController } from "./layout-controller";
 import { scrollToHashBelowTocBaseline } from "@/utils/hash-scroll";
 
+type SwupVisit = {
+	containers: string[];
+	to: {
+		document?: Document;
+	};
+};
+
 type SwupIntentSourceDependencies = {
 	controller: LayoutController;
 	initFancybox: () => Promise<void>;
@@ -24,6 +31,10 @@ export function setupSwupIntentSource(
 						event: string,
 						callback: (...args: never[]) => void,
 					) => void;
+					before: (
+						event: string,
+						callback: (visit: SwupVisit) => void,
+					) => void;
 				};
 			};
 			mobileTOCInit?: () => void;
@@ -34,6 +45,22 @@ export function setupSwupIntentSource(
 	if (!swup?.hooks) {
 		return;
 	}
+
+	swup.hooks.before("content:replace", (visit: SwupVisit) => {
+		const currentSidebar = document.querySelector<HTMLElement>("#sidebar");
+		const newSidebar = visit.to.document?.querySelector("#sidebar");
+		if (!currentSidebar || !newSidebar) {
+			return;
+		}
+
+		const currentUid = currentSidebar.getAttribute("data-sidebar-uid");
+		const newUid = newSidebar.getAttribute("data-sidebar-uid");
+
+		if (currentUid && newUid && currentUid === newUid) {
+			visit.containers = visit.containers.filter((c) => c !== "#sidebar");
+			currentSidebar.dataset.sidebarPreserved = "";
+		}
+	});
 
 	swup.hooks.on("link:click", () => {
 		document.documentElement.style.setProperty("--content-delay", "0ms");
@@ -157,6 +184,11 @@ export function setupSwupIntentSource(
 	});
 
 	swup.hooks.on("visit:end", () => {
+		const sidebar = document.getElementById("sidebar");
+		if (sidebar) {
+			delete sidebar.dataset.sidebarPreserved;
+		}
+
 		window.setTimeout(() => {
 			const heightExtend = document.getElementById("page-height-extend");
 			if (heightExtend) {

@@ -11,6 +11,7 @@ import type {
 	AppRole,
 	AppStatus,
 	CommentStatus,
+	SocialLink,
 } from "@/types/app";
 import type { JsonObject, JsonValue } from "@/types/json";
 import { assertNotSuspended, getAppAccessContext } from "@/server/auth/acl";
@@ -386,6 +387,42 @@ export function parseProfileBioField(
 	return value;
 }
 
+const SOCIAL_LINKS_MAX = 20;
+const SOCIAL_LINK_URL_MAX_LENGTH = 500;
+
+export function parseSocialLinks(
+	input: JsonValue | undefined,
+): SocialLink[] | null {
+	if (input === null || input === undefined) {
+		return null;
+	}
+	if (!Array.isArray(input)) {
+		throw new Error("SOCIAL_LINKS_INVALID");
+	}
+	if (input.length > SOCIAL_LINKS_MAX) {
+		throw new Error("SOCIAL_LINKS_TOO_MANY");
+	}
+	const result: SocialLink[] = [];
+	for (const item of input) {
+		if (!item || typeof item !== "object" || Array.isArray(item)) {
+			throw new Error("SOCIAL_LINKS_INVALID");
+		}
+		const record = item as Record<string, unknown>;
+		const platform = String(record.platform || "").trim();
+		const url = String(record.url || "").trim();
+		if (!platform || !url) {
+			continue;
+		}
+		if (url.length > SOCIAL_LINK_URL_MAX_LENGTH) {
+			throw new Error("SOCIAL_LINKS_INVALID");
+		}
+		const enabled =
+			record.enabled === undefined ? true : Boolean(record.enabled);
+		result.push({ platform, url, enabled });
+	}
+	return result;
+}
+
 export function parseBodyStatus(
 	body: JsonObject,
 	key: string,
@@ -477,6 +514,25 @@ export function toErrorResponse(
 			400,
 			"PROFILE_BIO_TOO_LONG",
 		);
+	}
+	if (message.includes("DISPLAY_NAME_EMPTY")) {
+		return fail("昵称不能为空", 400, "DISPLAY_NAME_EMPTY");
+	}
+	if (message.includes("DISPLAY_NAME_INVALID")) {
+		return fail("昵称包含非法字符", 400, "DISPLAY_NAME_INVALID");
+	}
+	if (message.includes("DISPLAY_NAME_TOO_LONG")) {
+		return fail(
+			"昵称最多 20 字符（中文按 2 字符计）",
+			400,
+			"DISPLAY_NAME_TOO_LONG",
+		);
+	}
+	if (message.includes("SOCIAL_LINKS_INVALID")) {
+		return fail("社交链接格式不正确", 400, "SOCIAL_LINKS_INVALID");
+	}
+	if (message.includes("SOCIAL_LINKS_TOO_MANY")) {
+		return fail("社交链接最多 20 条", 400, "SOCIAL_LINKS_TOO_MANY");
 	}
 	if (message.includes("ITEM_NOT_FOUND")) {
 		return fail("资源不存在", 404, "ITEM_NOT_FOUND");

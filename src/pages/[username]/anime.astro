@@ -1,7 +1,11 @@
 ---
 import MainGridLayout from "@layouts/MainGridLayout.astro";
 import { buildDirectusAssetUrl } from "@/server/directus-auth";
-import { loadUserAnimeList } from "@/server/api/v1/public-data";
+import {
+	loadPublicProfileByUsername,
+	loadUserAnimeList,
+	profileToSidebarData,
+} from "@/server/api/v1/public-data";
 
 export const prerender = false;
 
@@ -30,6 +34,10 @@ try {
 		const result = await loadUserAnimeList(username, { limit: 200 });
 		if (result) {
 			items = result.items;
+			const sidebarProfile = await loadPublicProfileByUsername(username);
+			if (sidebarProfile) {
+				Astro.locals.sidebarProfile = profileToSidebarData(sidebarProfile);
+			}
 		} else {
 			Astro.response.status = 404;
 		}

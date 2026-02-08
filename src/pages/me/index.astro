@@ -1,7 +1,24 @@
 ---
 import MainGridLayout from "@layouts/MainGridLayout.astro";
+import { getSessionUser } from "@/server/auth/session";
+import {
+	loadPublicProfileByUserId,
+	profileToSidebarData,
+} from "@/server/api/v1/public-data";
 
 export const prerender = false;
+
+try {
+	const user = await getSessionUser(Astro);
+	if (user) {
+		const profile = await loadPublicProfileByUserId(user.id);
+		if (profile) {
+			Astro.locals.sidebarProfile = profileToSidebarData(profile);
+		}
+	}
+} catch {
+	// 未登录时不设置 sidebarProfile，Profile.astro 会回退到官方账户
+}
 ---
 
 <MainGridLayout title="账户设置" description="管理个人资料与隐私">
@@ -35,6 +52,20 @@ export const prerender = false;
 						<div id="me-username-editor" class="relative hidden">
 							<input id="me-username" class="w-full rounded-lg border border-[var(--line-divider)] px-3 py-2 pr-14 text-70 bg-transparent" />
 							<span id="me-username-counter" class="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-xs text-60 tabular-nums">0/14</span>
+						</div>
+					</label>
+					<label class="space-y-1">
+						<span class="text-xs text-60">昵称</span>
+						<button
+							type="button"
+							id="me-displayname-display-btn"
+							class="w-full appearance-none rounded-lg border border-[var(--line-divider)] px-3 py-2 text-left text-70 bg-black/5 dark:bg-white/5 leading-normal"
+						>
+							<span id="me-displayname-display" class="block truncate leading-6 text-70">点击编辑昵称</span>
+						</button>
+						<div id="me-displayname-editor" class="relative hidden">
+							<input id="me-displayname" class="w-full rounded-lg border border-[var(--line-divider)] px-3 py-2 pr-14 text-70 bg-transparent" />
+							<span id="me-displayname-counter" class="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-xs text-60 tabular-nums">0/20</span>
 						</div>
 					</label>
 					<div class="space-y-2 md:col-span-2">
@@ -84,6 +115,20 @@ export const prerender = false;
 						<span id="me-profile-msg" class="text-xs text-60"></span>
 					</div>
 				</form>
+			</section>
+
+			<section class="card-base p-6 rounded-[var(--radius-large)] space-y-3">
+				<h2 class="text-xl font-semibold text-90">社交链接</h2>
+				<div id="me-social-links-list" class="space-y-2"></div>
+				<div class="flex items-center gap-2">
+					<button type="button" id="me-social-add-btn" class="px-3 py-2 rounded-lg border border-[var(--line-divider)] text-xs text-75">
+						添加链接
+					</button>
+					<button type="button" id="me-social-save-btn" class="px-4 py-2 rounded-lg bg-[var(--btn-regular-bg)] text-[var(--btn-content)] text-sm">
+						保存社交链接
+					</button>
+					<span id="me-social-msg" class="text-xs text-60"></span>
+				</div>
 			</section>
 
 			<section class="card-base p-6 rounded-[var(--radius-large)] space-y-3">

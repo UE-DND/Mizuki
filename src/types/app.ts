@@ -1,5 +1,11 @@
 export type AppStatus = "draft" | "published" | "archived";
 
+export type SocialLink = {
+	platform: string;
+	url: string;
+	enabled: boolean;
+};
+
 export type CommentStatus = "published" | "hidden" | "archived";
 
 export type AppRole = "admin" | "member";
@@ -18,7 +24,18 @@ export type AppProfile = {
 	show_anime_on_profile: boolean;
 	show_albums_on_profile: boolean;
 	show_comments_on_profile: boolean;
+	social_links: SocialLink[] | null;
+	is_official: boolean;
 	status: AppStatus;
+};
+
+export type SidebarProfileData = {
+	display_name: string;
+	bio: string | null;
+	avatar_url: string | null;
+	username: string | null;
+	social_links: SocialLink[] | null;
+	is_official: boolean;
 };
 
 export type AppPermissions = {

@@ -12,6 +12,10 @@ import {
 } from "@/server/api/v1/shared";
 import { getAuthorBundle } from "@/server/api/v1/shared/author-cache";
 import { readAuthor } from "@/server/api/v1/public-data";
+import {
+	loadPublicProfileByUserId,
+	profileToSidebarData,
+} from "@/server/api/v1/public-data";
 
 export const prerender = false;
 
@@ -53,6 +57,10 @@ if (articleId) {
 					target: "page",
 				},
 			);
+			const authorProfile = await loadPublicProfileByUserId(rawArticle.author_id);
+			if (authorProfile) {
+				Astro.locals.sidebarProfile = profileToSidebarData(authorProfile);
+			}
 		} else {
 			Astro.response.status = 404;
 		}
