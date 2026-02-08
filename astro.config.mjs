@@ -29,7 +29,7 @@ export default defineConfig({
 		swup({
 			theme: false,
 			animationClass: "transition-swup-",
-			containers: ["main", "#right-sidebar-slot"],
+			containers: ["main", "#right-sidebar-slot", "#sidebar"],
 			smoothScrolling: false, // 禁用平滑滚动以提升性能，避免与锚点导航冲突
 			cache: true,
 			preload: true, // swup 默认鼠标悬停预加载

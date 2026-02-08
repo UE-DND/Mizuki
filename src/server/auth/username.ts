@@ -86,3 +86,22 @@ export function composeUsernameWithSuffix(
 	);
 	return `${trimmedBase || "u"}${suffix}`;
 }
+
+export const DISPLAY_NAME_MAX_WEIGHT = 20;
+
+// eslint-disable-next-line no-control-regex
+const DISPLAY_NAME_INVALID_PATTERN = /[\x00-\x1F\x7F]/;
+
+export function validateDisplayName(input: string): string {
+	const value = String(input || "").trim();
+	if (!value) {
+		throw new Error("DISPLAY_NAME_EMPTY");
+	}
+	if (DISPLAY_NAME_INVALID_PATTERN.test(value)) {
+		throw new Error("DISPLAY_NAME_INVALID");
+	}
+	if (calculateUsernameWeight(value) > DISPLAY_NAME_MAX_WEIGHT) {
+		throw new Error("DISPLAY_NAME_TOO_LONG");
+	}
+	return value;
+}

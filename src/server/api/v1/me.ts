@@ -6,6 +6,7 @@ import {
 	assertOwnerOrAdmin,
 	updateProfileUsername,
 } from "@/server/auth/acl";
+import { validateDisplayName } from "@/server/auth/username";
 import {
 	createOne,
 	deleteDirectusFile,
@@ -35,6 +36,7 @@ import {
 	nowIso,
 	parseBodyStatus,
 	parseBodyTextField,
+	parseSocialLinks,
 	parseProfileBioField,
 	parseRouteId,
 	parseVisibilityPatch,
@@ -86,8 +88,14 @@ async function handleMeProfile(
 				username,
 			);
 			payload.username = normalized;
-			// Keep legacy display_name in sync to avoid stale email-like labels.
-			payload.display_name = normalized;
+		}
+		if (hasOwn(body, "display_name")) {
+			payload.display_name = validateDisplayName(
+				parseBodyTextField(body, "display_name"),
+			);
+		}
+		if (hasOwn(body, "social_links")) {
+			payload.social_links = parseSocialLinks(body.social_links);
 		}
 
 		const updated = await updateOne(

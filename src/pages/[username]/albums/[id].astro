@@ -1,7 +1,11 @@
 ---
 import MainGridLayout from "@layouts/MainGridLayout.astro";
 import { buildDirectusAssetUrl } from "@/server/directus-auth";
-import { loadUserAlbumDetail } from "@/server/api/v1/public-data";
+import {
+	loadPublicProfileByUsername,
+	loadUserAlbumDetail,
+	profileToSidebarData,
+} from "@/server/api/v1/public-data";
 
 export const prerender = false;
 
@@ -41,6 +45,10 @@ if (!username || !id) {
 		const result = await loadUserAlbumDetail(username, id);
 		if (result) {
 			album = result as AlbumPageData;
+			const sidebarProfile = await loadPublicProfileByUsername(username);
+			if (sidebarProfile) {
+				Astro.locals.sidebarProfile = profileToSidebarData(sidebarProfile);
+			}
 		} else {
 			Astro.response.status = 404;
 		}

@@ -1,5 +1,13 @@
 /// <reference types="astro/client" />
-import "../.astro/types.d.ts";
+
+// eslint-disable-next-line @typescript-eslint/triple-slash-reference
+/// <reference path="../.astro/types.d.ts" />
+
+declare namespace App {
+	interface Locals {
+		sidebarProfile?: import("./types/app").SidebarProfileData;
+	}
+}
 
 interface ImportMetaEnv {
 	readonly UMAMI_API_KEY?: string;

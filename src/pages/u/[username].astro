@@ -1,6 +1,9 @@
 ---
 import MainGridLayout from "@layouts/MainGridLayout.astro";
-import { loadUserHomeData } from "@/server/api/v1/public-data";
+import {
+	loadUserHomeData,
+	profileToSidebarData,
+} from "@/server/api/v1/public-data";
 
 export const prerender = false;
 
@@ -15,6 +18,8 @@ try {
 		payload = await loadUserHomeData(username);
 		if (!payload) {
 			Astro.response.status = 404;
+		} else {
+			Astro.locals.sidebarProfile = profileToSidebarData(payload.profile);
 		}
 	}
 } catch (error) {

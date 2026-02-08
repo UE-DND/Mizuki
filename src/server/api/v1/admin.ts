@@ -3,7 +3,10 @@ import type { APIContext } from "astro";
 import type { AppPermissions, AppProfile } from "@/types/app";
 import type { JsonObject } from "@/types/json";
 import { createUniqueUsername } from "@/server/auth/acl";
-import { normalizeRequestedUsername } from "@/server/auth/username";
+import {
+	normalizeRequestedUsername,
+	validateDisplayName,
+} from "@/server/auth/username";
 import {
 	createDirectusUser,
 	createOne,
@@ -32,6 +35,7 @@ import {
 	parseBodyTextField,
 	parseProfileBioField,
 	parseRouteId,
+	parseSocialLinks,
 	requireAdmin,
 } from "./shared";
 import { invalidateAuthorCache } from "./shared/author-cache";
@@ -318,7 +322,16 @@ export async function handleAdminUsers(
 				);
 				await ensureUsernameAvailable(normalized, profile.id);
 				profilePayload.username = normalized;
-				profilePayload.display_name = normalized;
+			}
+			if (hasOwn(body, "display_name")) {
+				profilePayload.display_name = validateDisplayName(
+					parseBodyTextField(body, "display_name"),
+				);
+			}
+			if (hasOwn(body, "social_links")) {
+				profilePayload.social_links = parseSocialLinks(
+					body.social_links,
+				);
 			}
 			if (hasOwn(body, "bio")) {
 				profilePayload.bio = parseProfileBioField(body.bio);

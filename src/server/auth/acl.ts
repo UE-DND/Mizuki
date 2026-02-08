@@ -49,6 +49,8 @@ function normalizeProfile(raw: Partial<AppProfile>): AppProfile {
 		show_anime_on_profile: raw.show_anime_on_profile ?? true,
 		show_albums_on_profile: raw.show_albums_on_profile ?? true,
 		show_comments_on_profile: raw.show_comments_on_profile ?? true,
+		social_links: raw.social_links ?? null,
+		is_official: raw.is_official ?? false,
 		status: raw.status || "published",
 	};
 }
@@ -251,7 +253,6 @@ export async function updateProfileUsername(
 	}
 	await updateOne("app_user_profiles", profileId, {
 		username: normalized,
-		display_name: normalized,
 	});
 	return normalized;
 }

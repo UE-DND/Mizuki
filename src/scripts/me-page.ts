@@ -76,7 +76,7 @@ const buildAssetUrl = (fileId: string): string => {
 	if (!normalized) {
 		return "";
 	}
-	return `/api/v1/public/assets/${encodeURIComponent(normalized)}/?width=128&height=128&fit=cover`;
+	return `/api/v1/public/assets/${encodeURIComponent(normalized)}/`;
 };
 
 const buildLoginRedirectHref = (): string => {
@@ -110,6 +110,7 @@ const extractFileId = (value: unknown): string => {
 
 const AUTH_ME_RETRY_DELAY_MS = 220;
 const USERNAME_MAX_WEIGHT = 14;
+const DISPLAY_NAME_MAX_WEIGHT = 20;
 const PROFILE_BIO_MAX_LENGTH = 30;
 const AVATAR_CROP_OUTPUT_SIZE = 512;
 const AVATAR_CROP_ZOOM_MIN = 100;
@@ -157,6 +158,23 @@ export function initMePage(): void {
 		"me-bio",
 	) as HTMLTextAreaElement | null;
 	const bioCounter = document.getElementById("me-bio-counter");
+	const displaynameDisplayBtn = document.getElementById(
+		"me-displayname-display-btn",
+	) as HTMLButtonElement | null;
+	const displaynameDisplayText = document.getElementById(
+		"me-displayname-display",
+	);
+	const displaynameEditor = document.getElementById("me-displayname-editor");
+	const displaynameInput = document.getElementById(
+		"me-displayname",
+	) as HTMLInputElement | null;
+	const displaynameCounter = document.getElementById(
+		"me-displayname-counter",
+	);
+	const socialLinksList = document.getElementById("me-social-links-list");
+	const socialAddBtn = document.getElementById("me-social-add-btn");
+	const socialSaveBtn = document.getElementById("me-social-save-btn");
+	const socialMsg = document.getElementById("me-social-msg");
 	const avatarPreviewEl = document.getElementById(
 		"me-avatar-preview",
 	) as HTMLImageElement | null;
@@ -305,6 +323,205 @@ export function initMePage(): void {
 		const hasValue = Boolean(text);
 		bioDisplayText.textContent = hasValue ? text : "点击编辑简介";
 		bioDisplayText.classList.toggle("text-60", !hasValue);
+	};
+
+	const setDisplaynameEditing = (
+		editing: boolean,
+		focusInput = false,
+	): void => {
+		if (!displaynameDisplayBtn || !displaynameEditor) {
+			return;
+		}
+		displaynameDisplayBtn.classList.toggle("hidden", editing);
+		displaynameEditor.classList.toggle("hidden", !editing);
+		if (editing && focusInput && displaynameInput) {
+			window.requestAnimationFrame(() => {
+				displaynameInput.focus();
+				const length = displaynameInput.value.length;
+				displaynameInput.setSelectionRange(length, length);
+			});
+		}
+	};
+
+	const updateDisplaynameCounter = (): void => {
+		if (!displaynameInput || !displaynameCounter) {
+			return;
+		}
+		const current = calculateTextWeight(
+			String(displaynameInput.value || "").trim(),
+		);
+		displaynameCounter.textContent = `${current}/${DISPLAY_NAME_MAX_WEIGHT}`;
+	};
+
+	const updateDisplaynameDisplay = (): void => {
+		if (!displaynameDisplayText || !displaynameInput) {
+			return;
+		}
+		const text = String(displaynameInput.value || "").trim();
+		const hasValue = Boolean(text);
+		displaynameDisplayText.textContent = hasValue ? text : "点击编辑昵称";
+		displaynameDisplayText.classList.toggle("text-60", !hasValue);
+	};
+
+	const validateDisplaynameInput = (): string | null => {
+		if (!displaynameInput) {
+			return null;
+		}
+		const raw = String(displaynameInput.value || "").trim();
+		if (!raw) {
+			return "昵称不能为空";
+		}
+		if (calculateTextWeight(raw) > DISPLAY_NAME_MAX_WEIGHT) {
+			return "昵称最多 20 字符（中文按 2 字符计）";
+		}
+		return null;
+	};
+
+	const SOCIAL_PLATFORMS = [
+		"github",
+		"twitter",
+		"bilibili",
+		"discord",
+		"youtube",
+		"mastodon",
+		"telegram",
+		"steam",
+		"email",
+		"website",
+		"gitee",
+		"codeberg",
+	];
+
+	const SOCIAL_PLATFORM_LABELS: Record<string, string> = {
+		github: "GitHub",
+		twitter: "Twitter",
+		bilibili: "Bilibili",
+		discord: "Discord",
+		youtube: "YouTube",
+		mastodon: "Mastodon",
+		telegram: "Telegram",
+		steam: "Steam",
+		email: "Email",
+		website: "Website",
+		gitee: "Gitee",
+		codeberg: "Codeberg",
+	};
+
+	const createSocialLinkRow = (
+		platform = "",
+		linkUrl = "",
+		enabled = true,
+	): HTMLElement => {
+		const row = document.createElement("div");
+		row.className = "flex flex-wrap items-center gap-2";
+
+		const select = document.createElement("select");
+		select.className =
+			"rounded-lg border border-[var(--line-divider)] px-2 py-1.5 text-sm text-75 bg-transparent";
+		select.dataset.socialField = "platform";
+		const defaultOption = document.createElement("option");
+		defaultOption.value = "";
+		defaultOption.textContent = "选择平台";
+		select.appendChild(defaultOption);
+		for (const p of SOCIAL_PLATFORMS) {
+			const opt = document.createElement("option");
+			opt.value = p;
+			opt.textContent = SOCIAL_PLATFORM_LABELS[p] || p;
+			if (p === platform) {
+				opt.selected = true;
+			}
+			select.appendChild(opt);
+		}
+		row.appendChild(select);
+
+		const urlInput = document.createElement("input");
+		urlInput.type = "text";
+		urlInput.placeholder = "链接 URL";
+		urlInput.value = linkUrl;
+		urlInput.className =
+			"flex-1 min-w-[120px] rounded-lg border border-[var(--line-divider)] px-2 py-1.5 text-sm text-75 bg-transparent placeholder:text-50";
+		urlInput.dataset.socialField = "url";
+		row.appendChild(urlInput);
+
+		const checkLabel = document.createElement("label");
+		checkLabel.className = "flex items-center gap-1 text-xs text-60";
+		const checkInput = document.createElement("input");
+		checkInput.type = "checkbox";
+		checkInput.checked = enabled;
+		checkInput.dataset.socialField = "enabled";
+		checkLabel.appendChild(checkInput);
+		checkLabel.appendChild(document.createTextNode("启用"));
+		row.appendChild(checkLabel);
+
+		const removeBtn = document.createElement("button");
+		removeBtn.type = "button";
+		removeBtn.textContent = "删除";
+		removeBtn.className =
+			"px-2 py-1 rounded-lg border border-[var(--line-divider)] text-xs text-75";
+		removeBtn.addEventListener("click", () => {
+			row.remove();
+		});
+		row.appendChild(removeBtn);
+
+		return row;
+	};
+
+	const fillSocialLinks = (
+		links: Array<{
+			platform: string;
+			url: string;
+			enabled: boolean;
+		}> | null,
+	): void => {
+		if (!socialLinksList) {
+			return;
+		}
+		socialLinksList.innerHTML = "";
+		if (!links || links.length === 0) {
+			return;
+		}
+		for (const link of links) {
+			socialLinksList.appendChild(
+				createSocialLinkRow(link.platform, link.url, link.enabled),
+			);
+		}
+	};
+
+	const collectSocialLinks = (): Array<{
+		platform: string;
+		url: string;
+		enabled: boolean;
+	}> => {
+		if (!socialLinksList) {
+			return [];
+		}
+		const rows = socialLinksList.querySelectorAll(":scope > div");
+		const result: Array<{
+			platform: string;
+			url: string;
+			enabled: boolean;
+		}> = [];
+		for (const row of rows) {
+			const platformEl = row.querySelector(
+				'[data-social-field="platform"]',
+			) as HTMLSelectElement | null;
+			const urlEl = row.querySelector(
+				'[data-social-field="url"]',
+			) as HTMLInputElement | null;
+			const enabledEl = row.querySelector(
+				'[data-social-field="enabled"]',
+			) as HTMLInputElement | null;
+			const platform = platformEl?.value?.trim() || "";
+			const url = urlEl?.value?.trim() || "";
+			if (platform && url) {
+				result.push({
+					platform,
+					url,
+					enabled: enabledEl?.checked ?? true,
+				});
+			}
+		}
+		return result;
 	};
 
 	const validateUsernameInput = (): string | null => {
@@ -633,6 +850,12 @@ export function initMePage(): void {
 			updateUsernameDisplay();
 			setUsernameEditing(false);
 		}
+		if (displaynameInput) {
+			displaynameInput.value = (profile?.display_name as string) || "";
+			updateDisplaynameCounter();
+			updateDisplaynameDisplay();
+			setDisplaynameEditing(false);
+		}
 		if (avatarUrlInput) {
 			avatarUrlInput.value = (profile?.avatar_url as string) || "";
 		}
@@ -645,6 +868,15 @@ export function initMePage(): void {
 			updateBioDisplay();
 			setBioEditing(false);
 		}
+		fillSocialLinks(
+			Array.isArray(profile?.social_links)
+				? (profile.social_links as Array<{
+						platform: string;
+						url: string;
+						enabled: boolean;
+					}>)
+				: null,
+		);
 	};
 
 	const fillPrivacy = (
@@ -688,8 +920,11 @@ export function initMePage(): void {
 	updateBioCounter();
 	updateUsernameDisplay();
 	updateBioDisplay();
+	updateDisplaynameCounter();
+	updateDisplaynameDisplay();
 	setUsernameEditing(false);
 	setBioEditing(false);
+	setDisplaynameEditing(false);
 
 	// ---- event bindings (guarded with data-bound to prevent duplicates) ----
 
@@ -703,6 +938,11 @@ export function initMePage(): void {
 				setProfileMessage(usernameError);
 				return;
 			}
+			const displaynameError = validateDisplaynameInput();
+			if (displaynameError) {
+				setProfileMessage(displaynameError);
+				return;
+			}
 			const bioError = validateBioInput();
 			if (bioError) {
 				setProfileMessage(bioError);
@@ -713,6 +953,7 @@ export function initMePage(): void {
 				: "";
 			const payload = {
 				username: usernameInput ? usernameInput.value : "",
+				display_name: displaynameInput ? displaynameInput.value : "",
 				bio: bioInput ? bioInput.value : "",
 				avatar_url: avatarUrl || null,
 				avatar_file: avatarUrl ? null : currentAvatarFileId || null,
@@ -755,6 +996,14 @@ export function initMePage(): void {
 		});
 	}
 
+	if (displaynameInput && !displaynameInput.hasAttribute(DATA_BOUND)) {
+		displaynameInput.setAttribute(DATA_BOUND, "");
+		displaynameInput.addEventListener("input", () => {
+			updateDisplaynameCounter();
+			updateDisplaynameDisplay();
+		});
+	}
+
 	if (usernameDisplayBtn && !usernameDisplayBtn.hasAttribute(DATA_BOUND)) {
 		usernameDisplayBtn.setAttribute(DATA_BOUND, "");
 		usernameDisplayBtn.addEventListener("click", () =>
@@ -766,6 +1015,16 @@ export function initMePage(): void {
 		bioDisplayBtn.setAttribute(DATA_BOUND, "");
 		bioDisplayBtn.addEventListener("click", () =>
 			setBioEditing(true, true),
+		);
+	}
+
+	if (
+		displaynameDisplayBtn &&
+		!displaynameDisplayBtn.hasAttribute(DATA_BOUND)
+	) {
+		displaynameDisplayBtn.setAttribute(DATA_BOUND, "");
+		displaynameDisplayBtn.addEventListener("click", () =>
+			setDisplaynameEditing(true, true),
 		);
 	}
 
@@ -792,6 +1051,16 @@ export function initMePage(): void {
 			const insideDisplay = bioDisplayBtn?.contains(target);
 			if (!insideEditor && !insideDisplay) {
 				setBioEditing(false);
+			}
+		}
+		if (
+			displaynameEditor &&
+			!displaynameEditor.classList.contains("hidden")
+		) {
+			const insideEditor = displaynameEditor.contains(target);
+			const insideDisplay = displaynameDisplayBtn?.contains(target);
+			if (!insideEditor && !insideDisplay) {
+				setDisplaynameEditing(false);
 			}
 		}
 	};
@@ -931,6 +1200,43 @@ export function initMePage(): void {
 			}
 			updateAvatarPreview();
 			setProfileMessage("已清空头像，点击\u201C保存资料\u201D生效");
+		});
+	}
+
+	if (socialAddBtn && !socialAddBtn.hasAttribute(DATA_BOUND)) {
+		socialAddBtn.setAttribute(DATA_BOUND, "");
+		socialAddBtn.addEventListener("click", () => {
+			if (socialLinksList) {
+				socialLinksList.appendChild(createSocialLinkRow());
+			}
+		});
+	}
+
+	if (socialSaveBtn && !socialSaveBtn.hasAttribute(DATA_BOUND)) {
+		socialSaveBtn.setAttribute(DATA_BOUND, "");
+		socialSaveBtn.addEventListener("click", async () => {
+			const links = collectSocialLinks();
+			const setSocialMsg = (msg: string): void => {
+				if (socialMsg) {
+					socialMsg.textContent = msg;
+				}
+			};
+			setSocialMsg("保存中...");
+			try {
+				const { response, data } = await api("/api/v1/me/profile", {
+					method: "PATCH",
+					body: JSON.stringify({ social_links: links }),
+				});
+				if (!response.ok || !data?.ok) {
+					setSocialMsg(
+						(data?.message as string | undefined) || "保存失败",
+					);
+					return;
+				}
+				setSocialMsg("已保存");
+			} catch {
+				setSocialMsg("保存失败，请稍后重试");
+			}
 		});
 	}
 

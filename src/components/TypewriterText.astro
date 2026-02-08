@@ -120,20 +120,18 @@ class TypewriterEffect {
 }
 
 // 初始化所有打字机效果
-document.addEventListener('DOMContentLoaded', () => {
+function initTypewriters() {
     const typewriterElements = document.querySelectorAll('.typewriter');
     typewriterElements.forEach((element) => {
-        new TypewriterEffect(element as HTMLElement);
+        if (!(element as HTMLElement).dataset.twBound) {
+            (element as HTMLElement).dataset.twBound = '1';
+            new TypewriterEffect(element as HTMLElement);
+        }
     });
-});
+}
 
-// 支持页面切换时重新初始化
-document.addEventListener('swup:contentReplaced', () => {
-    const typewriterElements = document.querySelectorAll('.typewriter');
-    typewriterElements.forEach((element) => {
-        new TypewriterEffect(element as HTMLElement);
-    });
-});
+document.addEventListener('DOMContentLoaded', initTypewriters);
+document.addEventListener('astro:after-swap', initTypewriters);
 </script>
 
 <style>

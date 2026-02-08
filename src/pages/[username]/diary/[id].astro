@@ -4,7 +4,11 @@ import Markdown from "@components/misc/Markdown.astro";
 import MainGridLayout from "@layouts/MainGridLayout.astro";
 import { renderMarkdownHtml } from "@/server/markdown/render";
 import { buildDirectusAssetUrl } from "@/server/directus-auth";
-import { loadUserDiaryDetail } from "@/server/api/v1/public-data";
+import {
+	loadPublicProfileByUsername,
+	loadUserDiaryDetail,
+	profileToSidebarData,
+} from "@/server/api/v1/public-data";
 
 export const prerender = false;
 
@@ -36,6 +40,10 @@ if (!username || !id) {
 		if (result) {
 			diary = result;
 			html = await renderMarkdownHtml(String(result.content || ""));
+			const sidebarProfile = await loadPublicProfileByUsername(username);
+			if (sidebarProfile) {
+				Astro.locals.sidebarProfile = profileToSidebarData(sidebarProfile);
+			}
 		} else {
 			Astro.response.status = 404;
 		}
