@@ -53,7 +53,7 @@ function coverUrl(item: {
 ---
 
 <MainGridLayout title="相册" description="用户公开相册列表">
-	<section class="card-base p-6 rounded-[var(--radius-large)] mb-4">
+	<section class="card-base p-6 rounded-[var(--radius-large)] mb-4 text-90">
 		<h1 class="text-2xl font-bold mb-2">相册</h1>
 		<p class="text-sm text-70">用户公开的相册内容。</p>
 	</section>
@@ -63,7 +63,7 @@ function coverUrl(item: {
 	) : (
 		<div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
 			{items.map((item) => (
-				<article class="card-base rounded-[var(--radius-large)] overflow-hidden border border-[var(--line-divider)]">
+				<article class="card-base rounded-[var(--radius-large)] overflow-hidden border border-[var(--line-divider)] text-90">
 					<a href={`/${username}/albums/${item.id}/`} class="block h-full">
 						{coverUrl(item) && (
 							<img

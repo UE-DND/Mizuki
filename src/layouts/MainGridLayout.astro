@@ -103,8 +103,12 @@ const {
 	postSlug,
 	headings = [],
 } = Astro.props;
+const hasHeadings = Array.isArray(headings) && headings.length > 0;
 const hasBannerCredit = siteConfig.banner.credit.enable;
 const hasBannerLink = !!siteConfig.banner.credit.url;
+
+// 检查是否有自定义右侧栏插槽（如归档页筛选面板）
+const hasCustomRightSidebar = Astro.slots.has('sidebar-right');
 
 // 检查是否为首页
 const isHomePage = Astro.url.pathname === "/" || Astro.url.pathname === "";
@@ -149,14 +153,17 @@ const hasTabletLeftSidebarComponents =
 	widgetManager.getComponentsByPosition("top", "left", "tablet").length > 0 ||
 	widgetManager.getComponentsByPosition("sticky", "left", "tablet").length > 0;
 
-// 检查侧边栏是否启用，动态调整网格布局
-const mobileShowSidebar = hasMobileDrawerComponents;
-const tabletShowSidebar = hasTabletLeftSidebarComponents;
-const desktopShowSidebar = hasLeftSidebarComponents || hasRightSidebarComponents;
-
 // 桌面端侧边栏最终显示状态（考虑是否有组件）
 const desktopShowLeftSidebar = hasLeftSidebarComponents;
 const desktopShowRightSidebar = hasRightSidebarComponents;
+
+// 右侧栏有效显示：有 widget 组件 或 有自定义插槽（如归档页筛选面板）
+const effectiveShowRightSidebar = hasRightSidebarComponents || hasCustomRightSidebar;
+
+// 检查侧边栏是否启用，动态调整网格布局
+const mobileShowSidebar = hasMobileDrawerComponents;
+const tabletShowSidebar = hasTabletLeftSidebarComponents;
+const desktopShowSidebar = hasLeftSidebarComponents || effectiveShowRightSidebar;
 
 // 平板端侧边栏最终显示状态
 const tabletShowLeftSidebar = hasTabletLeftSidebarComponents;
@@ -167,11 +174,11 @@ const tabletAnySidebar = tabletShowLeftSidebar;
 
 // 动态网格布局类名 - 根据侧边栏模式和是否有组件调整列宽
 let desktopGridCols = "lg:grid-cols-1";
-if (desktopShowLeftSidebar && desktopShowRightSidebar) {
+if (desktopShowLeftSidebar && effectiveShowRightSidebar) {
 	desktopGridCols = "lg:grid-cols-[17.5rem_1fr_17.5rem]";
 } else if (desktopShowLeftSidebar) {
 	desktopGridCols = "lg:grid-cols-[17.5rem_1fr]";
-} else if (desktopShowRightSidebar) {
+} else if (effectiveShowRightSidebar) {
 	desktopGridCols = "lg:grid-cols-[1fr_17.5rem]";
 }
 
@@ -187,41 +194,57 @@ const gridCols = `
 const sidebarClass = `
 	onload-animation
 	${mobileShowSidebar && hasMobileDrawerComponents ? "block" : "hidden"}
-	${tabletShowLeftSidebar ? "md:block md:mb-4 md:max-w-[17.5rem]" : "md:hidden"}
+	${tabletShowLeftSidebar ? `md:block md:mb-4 md:max-w-[17.5rem]${hasCustomRightSidebar ? " md:row-span-2" : ""}` : "md:hidden"}
 	${desktopShowLeftSidebar ? "lg:block lg:mb-4 lg:row-start-1 lg:row-end-2 lg:max-w-[17.5rem] lg:col-start-1 lg:col-end-2" : "lg:hidden"}
 `
 	.trim()
 	.replace(/\s+/g, " ");
 
 // 右侧边栏容器类名
-// 手机端：隐藏（手机端只通过 drawer 显示组件）
-// 平板端：根据简化逻辑显示（只有当左侧为空时才显示并移到左侧）
-// 桌面端：定位到网格最后一列（右侧）
-// 如果默认是 grid 模式，初始就隐藏
-const rightSidebarClass = `
+let rightSidebarClass: string;
+if (hasCustomRightSidebar) {
+	// 自定义右侧栏（如归档筛选面板）：手机/平板可见，桌面端定位到右列
+	const tabletCol = tabletShowLeftSidebar
+		? "md:col-start-2 md:col-end-3"
+		: "md:col-start-1 md:col-end-2";
+	const desktopCol = desktopShowLeftSidebar
+		? "lg:col-start-3 lg:col-end-4"
+		: "lg:col-start-2 lg:col-end-3";
+	rightSidebarClass = `onload-animation block ${tabletCol} ${desktopCol} lg:row-start-1 lg:row-end-2 lg:max-w-[17.5rem]`;
+} else if (hasRightSidebarComponents) {
+	// 原有 widget 侧边栏逻辑
+	rightSidebarClass = `
 	onload-animation
 	hidden
 	${tabletShowRightSidebar ? "md:block md:mb-4 md:max-w-[17.5rem]" : "md:hidden"}
 	${desktopShowRightSidebar ? `lg:block lg:mb-4 lg:row-start-1 lg:row-end-2 lg:max-w-[17.5rem] ${desktopShowLeftSidebar ? "lg:col-start-3 lg:col-end-4" : "lg:col-start-2 lg:col-end-3"} lg:col-span-1` : "lg:hidden"}
 `
-	.trim()
-	.replace(/\s+/g, " ");
+		.trim()
+		.replace(/\s+/g, " ");
+} else {
+	rightSidebarClass = "hidden";
+}
 
 // 主内容区域类名 - 根据侧边栏模式调整grid-column
 // 平板设备和手机端：主内容在最上方row-1，侧边栏在下方
 // 桌面端：主内容和侧边栏并排显示
 let desktopMainPos = "lg:col-span-1";
-if (desktopShowLeftSidebar && desktopShowRightSidebar) {
+if (desktopShowLeftSidebar && effectiveShowRightSidebar) {
 	desktopMainPos = "lg:col-start-2 lg:col-end-3";
 } else if (desktopShowLeftSidebar) {
 	desktopMainPos = "lg:col-start-2 lg:col-end-3";
-} else if (desktopShowRightSidebar) {
+} else if (effectiveShowRightSidebar) {
 	desktopMainPos = "lg:col-start-1 lg:col-end-2";
 }
 
+// 当 hasCustomRightSidebar 时，手机/平板端不设 row-start-1，让筛选面板 auto-place 排在前面
+const rowStart = hasCustomRightSidebar
+	? "lg:row-start-1 lg:row-end-2"
+	: "row-start-1 row-end-2";
+
 const mainContentClass = `
 	transition-swup-fade overflow-hidden w-full
-	col-span-1 row-start-1 row-end-2
+	col-span-1 ${rowStart}
 	${tabletAnySidebar ? "md:col-start-2 md:col-end-3" : "md:col-start-1 md:col-end-2"}
 	${desktopShowSidebar ? desktopMainPos : "lg:col-span-1"}
 `
@@ -231,153 +254,6 @@ const mainContentClass = `
 ---
 
 <Layout title={title} banner={banner} description={description} lang={lang} setOGTypeArticle={setOGTypeArticle} postSlug={postSlug}>
-
-<script type="module" is:inline define:vars={{navbarTransparentMode: siteConfig.banner?.navbar?.transparentMode || "semi", defaultWallpaperMode: configuredWallpaperMode, initialWallpaperMode, BANNER_HEIGHT: BANNER_HEIGHT, pageScaling: siteConfig.pageScaling}}>
-
-	// 立即执行，在页面渲染前应用壁纸模式和布局模式，避免闪烁
-	(function() {
-		// 壁纸模式由配置控制，不再从 localStorage 读取
-		const wallpaperMode = initialWallpaperMode;
-		const body = document.body;
-		
-		// 定义 banner 高度常量（与 constants.ts 保持一致）
-		// const BANNER_HEIGHT = 35;
-		// const BANNER_HEIGHT_EXTEND = 30;
-		// const BANNER_HEIGHT_HOME = BANNER_HEIGHT + BANNER_HEIGHT_EXTEND;
-		// const MAIN_PANEL_OVERLAPS_BANNER_HEIGHT = 3.5;
-		
-		// 立即应用 body 类，确保首次渲染就是正确的状态
-		switch(wallpaperMode) {
-			case 'banner':
-				body.classList.add('enable-banner');
-				body.classList.remove('no-banner-mode');
-				body.classList.remove('waves-paused');
-				break;
-			case 'none':
-				body.classList.remove('enable-banner');
-				body.classList.add('no-banner-mode');
-				body.classList.add('waves-paused');
-				break;
-		}
-	})();
-
-	function getActiveWallpaperMode() {
-		const path = window.location.pathname;
-		const isHome = path === '/' || path === '';
-		return isHome ? defaultWallpaperMode : "none";
-	}
-	
-	// 根据壁纸模式动态设置 banner 的显示
-	
-	// 在 DOM 加载后执行
-	if (document.readyState === 'loading') {
-		document.addEventListener('DOMContentLoaded', applyWallpaperMode);
-	} else {
-		applyWallpaperMode();
-	}
-	
-	function applyWallpaperMode() {
-		// 壁纸模式由配置控制，不再从 localStorage 读取
-		var wallpaperMode = getActiveWallpaperMode();
-		var bannerWrapper = document.getElementById('banner-wrapper');
-		var navbar = document.getElementById('navbar');
-		var body = document.body;
-		var mainContent = document.querySelector('.absolute.w-full.z-30.pointer-events-none');
-		var tocWrapper = document.getElementById('toc-wrapper');
-
-		if (mainContent) {
-			mainContent.classList.toggle(
-				'no-banner-layout',
-				wallpaperMode === 'none',
-			);
-		}
-		
-		if (bannerWrapper) {
-			const shouldShowBanner = wallpaperMode === 'banner';
-			const isHidden = bannerWrapper.classList.contains(
-				'wallpaper-layer-hidden',
-			);
-
-			if (shouldShowBanner) {
-				bannerWrapper.classList.remove('wallpaper-layer-hidden');
-				bannerWrapper.removeAttribute('aria-hidden');
-				bannerWrapper.removeAttribute('inert');
-				bannerWrapper.style.removeProperty('height');
-			} else {
-				if (!isHidden) {
-					const rect = bannerWrapper.getBoundingClientRect();
-					if (rect.height > 0) {
-						bannerWrapper.style.height = `${rect.height}px`;
-					}
-					bannerWrapper.addEventListener(
-						'transitionend',
-						(event) => {
-							if (event.propertyName !== 'opacity') {
-								return;
-							}
-							bannerWrapper.style.removeProperty('height');
-						},
-						{ once: true },
-					);
-				}
-				bannerWrapper.classList.add('wallpaper-layer-hidden');
-				bannerWrapper.setAttribute('aria-hidden', 'true');
-				bannerWrapper.setAttribute('inert', '');
-			}
-		}
-
-		body.classList.toggle('enable-banner', wallpaperMode === 'banner');
-		body.classList.toggle('no-banner-mode', wallpaperMode !== 'banner');
-		body.classList.toggle('waves-paused', wallpaperMode !== 'banner');
-
-		switch(wallpaperMode) {
-			case 'banner':
-				// 恢复 TOC 在 banner 模式下的隐藏状态，让滚动逻辑接管
-				if (tocWrapper) {
-					const scrollTop = document.documentElement.scrollTop;
-					const bannerHeight = window.innerHeight * (BANNER_HEIGHT / 100);
-					if (scrollTop <= bannerHeight) {
-						tocWrapper.classList.add('toc-hide');
-					}
-				}
-				// navbar 恢复原始透明模式（从 config 读取）
-				if (navbar) {
-					navbar.removeAttribute('data-dynamic-transparent');
-					// 恢复 config 中设置的 data-transparent-mode
-					navbar.setAttribute('data-transparent-mode', navbarTransparentMode);
-					// 如果是 semifull 模式，重新初始化滚动检测
-					if (navbarTransparentMode === 'semifull' && window.initSemifullScrollDetection) {
-						window.initSemifullScrollDetection();
-					}
-				}
-				break;
-
-			case 'none':
-				// 在无壁纸模式下也始终显示 TOC
-				if (tocWrapper) {
-					tocWrapper.classList.remove('toc-hide');
-				}
-				// navbar 强制设置为不透明（忽略 config 配置）
-				if (navbar) {
-					navbar.setAttribute('data-dynamic-transparent', 'none');
-					// 强制移除 config 中的 data-transparent-mode 影响
-					navbar.removeAttribute('data-transparent-mode');
-				}
-				break;
-		}
-
-		if (window.__updateBannerCarouselState) {
-			requestAnimationFrame(() => {
-				window.__updateBannerCarouselState();
-			});
-		}
-	}
-	
-	// 支持 Swup 页面过渡
-	document.addEventListener('swup:page:view', function() {
-		applyWallpaperMode();
-	});
-</script>
 
 <!-- 全局图标加载器 -->
 <IconifyLoader />
@@ -598,7 +474,7 @@ const mainContentClass = `
 >
     <!-- The pointer-events-none here prevent blocking the click event of the TOC -->
     <div class="relative max-w-[var(--page-width)] mx-auto pointer-events-auto">
-		<div id="main-grid" class={`transition duration-700 w-full left-0 right-0 grid ${gridCols} grid-rows-none md:grid-rows-[auto] mx-auto gap-4 px-2 md:px-4 ${!mobileShowSidebar || !hasMobileDrawerComponents ? 'mobile-no-sidebar' : ''} ${hasRightSidebarComponents ? 'mobile-both-sidebar' : ''}`}>
+		<div id="main-grid" class={`transition duration-700 w-full left-0 right-0 grid ${gridCols} grid-rows-none md:grid-rows-[auto] mx-auto gap-4 px-2 md:px-4 ${!mobileShowSidebar || !hasMobileDrawerComponents ? 'mobile-no-sidebar' : ''} ${effectiveShowRightSidebar ? 'mobile-both-sidebar' : ''}`}>
             <!-- Banner image credit -->
             {hasBannerCredit && <a href={siteConfig.banner.credit.url} id="banner-credit" target="_blank" rel="noopener" aria-label="Visit image source"
                                    class:list={["group onload-animation transition-all absolute flex justify-center items-center rounded-full " +
@@ -618,12 +494,14 @@ const mainContentClass = `
                 {(mobileShowSidebar || tabletShowSidebar || desktopShowSidebar) && (
                     <SideBar class={sidebarClass} headings={headings}></SideBar>
                 )}
-                
-                {hasRightSidebarComponents && (
-                    <div class={`right-sidebar-container ${rightSidebarClass}`}>
+
+                <div id="right-sidebar-slot" class={`right-sidebar-container ${rightSidebarClass}`}>
+                    {hasCustomRightSidebar ? (
+                        <slot name="sidebar-right" />
+                    ) : hasRightSidebarComponents ? (
                         <RightSideBar headings={headings}></RightSideBar>
-                    </div>
-                )}
+                    ) : null}
+                </div>
             </div>
 
             <main id="swup-container" class={`${mainContentClass} transition-main`}>
@@ -643,12 +521,12 @@ const mainContentClass = `
         </div>
 
         <BackToTop></BackToTop>
-        {siteConfig.toc.enable && isFloatTOC && <FloatingTOC />}
+        {siteConfig.toc.enable && isFloatTOC && hasHeadings && <FloatingTOC />}
     </div>
 </div>
 
 <!-- 侧边栏TOC模式 -->
-{siteConfig.toc.enable && isSidebarTOC && (
+{siteConfig.toc.enable && isSidebarTOC && hasHeadings && (
     <div class="absolute w-full z-0 hidden 2xl:block">
         <div class="relative max-w-[var(--page-width)] mx-auto">
             <div id="toc-wrapper" class:list={["hidden lg:block transition absolute top-0 w-[var(--toc-width)] items-center",
@@ -670,6 +548,11 @@ const mainContentClass = `
 </Layout>
 
 <style>
+:root {
+    --layout-mode-transition-duration: 0.5s;
+    --layout-mode-transition-easing: cubic-bezier(0.22, 1, 0.36, 1);
+}
+
 /* 导航区顶部遮罩层 */
 .navbar-scrim {
     position: absolute;
@@ -724,7 +607,7 @@ const mainContentClass = `
 /* 壁纸层淡入淡出过渡 */
 :global(.wallpaper-layer) {
     opacity: 1;
-    transition: opacity 0.3s ease;
+    transition: opacity var(--layout-mode-transition-duration) var(--layout-mode-transition-easing);
     will-change: opacity;
 }
 
@@ -735,32 +618,50 @@ const mainContentClass = `
 
 /* 主内容区位移动画 */
 .main-panel-wrapper {
-    transition: top 0.3s ease, min-height 0.3s ease;
+    transition:
+        top var(--layout-mode-transition-duration) var(--layout-mode-transition-easing),
+        min-height var(--layout-mode-transition-duration) var(--layout-mode-transition-easing);
     will-change: top;
 }
 
 #toc-inner-wrapper {
-    transition: top 0.3s ease, max-height 0.3s ease;
+    transition:
+        top var(--layout-mode-transition-duration) var(--layout-mode-transition-easing),
+        max-height var(--layout-mode-transition-duration) var(--layout-mode-transition-easing);
 }
 
-body.no-banner-mode #main-grid {
-    transition-duration: 0.3s !important;
+body[data-layout-mode="none"] #main-grid,
+body[data-layout-mode="collapsed"] #main-grid {
+    transition-duration: var(--layout-mode-transition-duration) !important;
+}
+
+/* 无 banner 模式下导航栏固定在视口顶部 */
+body[data-layout-mode="none"] #top-row,
+body[data-layout-mode="collapsed"] #top-row {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: auto;
+    z-index: 50;
 }
 
 /* 当没有 banner 时，主内容区域移到顶部 */
-body.no-banner-mode .absolute.w-full.z-30 {
+body[data-layout-mode="none"] .absolute.w-full.z-30,
+body[data-layout-mode="collapsed"] .absolute.w-full.z-30 {
     top: 5.5rem !important;
 }
 
 /* TOC 垂直对齐优化 */
-body.no-banner-mode #toc-inner-wrapper {
+body[data-layout-mode="none"] #toc-inner-wrapper,
+body[data-layout-mode="collapsed"] #toc-inner-wrapper {
     top: 5.5rem !important;
     max-height: calc(100vh - 8rem) !important;
 }
 
 /* 桌面端 banner 模式下的主内容区域位置 */
 @media (min-width: 1280px) {
-    body.enable-banner .absolute.w-full.z-30 {
+    body[data-layout-mode="banner"] .absolute.w-full.z-30 {
         top: 35vh !important;
     }
 }
@@ -811,7 +712,7 @@ body.no-banner-mode #toc-inner-wrapper {
 /* 移动端横幅优化 - 小屏手机 (320px - 479px) */
 @media (max-width: 479px) {
     /* Banner wrapper 高度优化 - 优先保持banner显示 */
-    body.enable-banner #banner-wrapper:not(.mobile-hide-banner) {
+    body[data-layout-mode="banner"] #banner-wrapper:not(.mobile-hide-banner) {
         height: 70vh !important; /* 保持较大高度优先显示banner */
         min-height: 450px;
         max-height: none; /* 移除最大高度限制 */
@@ -819,7 +720,7 @@ body.no-banner-mode #toc-inner-wrapper {
     }
     
     /* 主内容区域位置调整 - 确保在banner下面 */
-    body.enable-banner .absolute.w-full.z-30:not(.mobile-main-no-banner) {
+    body[data-layout-mode="banner"] .absolute.w-full.z-30:not(.mobile-main-no-banner) {
         top: 70vh !important; /* 与banner高度对应 */
         min-height: calc(100vh - 70vh) !important;
     }
@@ -865,7 +766,7 @@ body.no-banner-mode #toc-inner-wrapper {
 /* 移动端横幅优化 - 大屏手机 (480px - 767px) */
 @media (min-width: 480px) and (max-width: 767px) {
     /* Banner wrapper 高度优化 - 优先保持banner显示 */
-    body.enable-banner #banner-wrapper:not(.mobile-hide-banner) {
+    body[data-layout-mode="banner"] #banner-wrapper:not(.mobile-hide-banner) {
         height: 75vh !important;
         min-height: 500px;
         max-height: none; /* 移除最大高度限制 */
@@ -873,7 +774,7 @@ body.no-banner-mode #toc-inner-wrapper {
     }
     
     /* 主内容区域位置调整 - 确保在banner下面 */
-    body.enable-banner .absolute.w-full.z-30:not(.mobile-main-no-banner) {
+    body[data-layout-mode="banner"] .absolute.w-full.z-30:not(.mobile-main-no-banner) {
         top: 75vh !important; /* 与banner高度对应 */
         min-height: calc(100vh - 75vh) !important;
     }
@@ -919,14 +820,14 @@ body.no-banner-mode #toc-inner-wrapper {
 /* 平板设备横幅优化 (768px - 1279px) */
 @media (min-width: 768px) and (max-width: 1279px) {
     /* Banner wrapper 高度优化 */
-    body.enable-banner #banner-wrapper:not(.mobile-hide-banner) {
+    body[data-layout-mode="banner"] #banner-wrapper:not(.mobile-hide-banner) {
         height: 70vh !important;
         min-height: 500px;
         top: 0 !important; /* 移动端从顶部开始，避免被导航栏覆盖 */
     }
     
     /* 主内容区域位置调整 - 确保在banner下面 */
-    body.enable-banner .absolute.w-full.z-30:not(.mobile-main-no-banner) {
+    body[data-layout-mode="banner"] .absolute.w-full.z-30:not(.mobile-main-no-banner) {
         top: 70vh !important; /* 与banner高度对应 */
         min-height: calc(100vh - 70vh) !important;
     }
@@ -1096,7 +997,9 @@ body.no-banner-mode #toc-inner-wrapper {
 /* 手机端非首页隐藏banner - 改进的分阶段动画 */
 @media (max-width: 1279px) {
     #banner-wrapper {
-        transition: transform 0.25s ease, opacity 0.25s ease;
+        transition:
+            transform var(--layout-mode-transition-duration) var(--layout-mode-transition-easing),
+            opacity var(--layout-mode-transition-duration) var(--layout-mode-transition-easing);
         transform-origin: top center;
         /* 硬件加速优化 */
         will-change: transform, opacity;
@@ -1111,12 +1014,14 @@ body.no-banner-mode #toc-inner-wrapper {
         opacity: 0 !important;
         pointer-events: none !important;
         /* 快速消失 */
-        transition: transform 0.25s ease, opacity 0.25s ease !important;
+        transition:
+            transform var(--layout-mode-transition-duration) var(--layout-mode-transition-easing),
+            opacity var(--layout-mode-transition-duration) var(--layout-mode-transition-easing) !important;
     }
     
     /* 手机端非首页时主内容区域从顶部开始 - 延迟出现的动画 */
     .absolute.w-full.z-30 {
-        transition: top 0.25s ease;
+        transition: top var(--layout-mode-transition-duration) var(--layout-mode-transition-easing);
         /* 硬件加速优化 */
         will-change: top;
         /* 禁用transform以保证back to top 按钮可以显示
@@ -1129,7 +1034,7 @@ body.no-banner-mode #toc-inner-wrapper {
         top: 5.5rem !important;
         min-height: calc(100vh - 5.5rem) !important;
         /* 内容区域快速上移 */
-        transition: top 0.25s ease !important;
+        transition: top var(--layout-mode-transition-duration) var(--layout-mode-transition-easing) !important;
     }
 }
 
@@ -1341,8 +1246,9 @@ body.no-banner-mode #toc-inner-wrapper {
     will-change: fill;
 }
 
-/* 进入文章页面时，暂停波浪动画 */
-body.waves-paused .waves > .parallax use {
+/* 非 banner 模式下，暂停波浪动画 */
+body[data-layout-mode="none"] .waves > .parallax use,
+body[data-layout-mode="collapsed"] .waves > .parallax use {
     animation-play-state: paused;
 }
 
@@ -1511,5 +1417,29 @@ body.waves-paused .waves > .parallax use {
         height: 4vh !important;
         min-height: 30px !important;
         max-height: 40px !important;
+    }
+}
+
+/* 无 banner 模式下侧边栏固定 — 仅桌面端 */
+@media (min-width: 1280px) {
+    :global(body[data-layout-mode="none"] #sidebar),
+    :global(body[data-layout-mode="none"] #right-sidebar),
+    :global(body[data-layout-mode="collapsed"] #sidebar),
+    :global(body[data-layout-mode="collapsed"] #right-sidebar) {
+        position: sticky;
+        top: 5.5rem;
+        align-self: start;
+        max-height: calc(100vh - 6.5rem);
+        overflow-y: auto;
+        scrollbar-width: thin;
+    }
+
+    /* 内部 sticky 区域在外层已 sticky 时改为 relative */
+    :global(body[data-layout-mode="none"] #sidebar #sidebar-sticky),
+    :global(body[data-layout-mode="none"] #right-sidebar #right-sidebar-sticky),
+    :global(body[data-layout-mode="collapsed"] #sidebar #sidebar-sticky),
+    :global(body[data-layout-mode="collapsed"] #right-sidebar #right-sidebar-sticky) {
+        position: relative;
+        top: auto;
     }
 }

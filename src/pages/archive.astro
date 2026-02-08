@@ -15,119 +15,100 @@ const uncategorizedLabel = i18n(I18nKey.uncategorized);
 ---
 
 <MainGridLayout title={i18n(I18nKey.archive)}>
-	<div class="archive-layout" data-uncategorized-label={uncategorizedLabel}>
-		<!-- 文章卡片列表 -->
-		<div class="archive-posts min-w-0">
-			{allPosts.length === 0 ? (
-				<div class="card-base p-8 rounded-[var(--radius-large)] text-70">
-					暂无公开文章。
-				</div>
-			) : (
-				<PostPage page={{ data: allPosts }} maxAnimationIndex={15} />
-			)}
-
-			<!-- 无筛选结果提示 -->
-			<div id="archive-no-results" class="hidden card-base p-8 rounded-[var(--radius-large)] text-70 mt-4">
-				没有匹配的文章。
+	<!-- 默认 slot: 文章列表 -->
+	<div class="archive-posts min-w-0" data-uncategorized-label={uncategorizedLabel}>
+		{allPosts.length === 0 ? (
+			<div class="card-base p-8 rounded-[var(--radius-large)] text-70">
+				暂无公开文章。
 			</div>
+		) : (
+			<PostPage page={{ data: allPosts }} maxAnimationIndex={15} />
+		)}
 
-			<!-- 分页控件 -->
-			<div id="archive-pagination" class="hidden mt-4">
-				<div class="card-base p-3 rounded-[var(--radius-large)] flex items-center justify-center gap-2">
-					<button id="page-prev" class="pagination-btn" aria-label="上一页">＜</button>
-					<div id="page-numbers" class="flex items-center gap-1"></div>
-					<button id="page-next" class="pagination-btn" aria-label="下一页">＞</button>
-				</div>
+		<!-- 无筛选结果提示 -->
+		<div id="archive-no-results" class="hidden card-base p-8 rounded-[var(--radius-large)] text-70 mt-4">
+			没有匹配的文章。
+		</div>
+
+		<!-- 分页控件 -->
+		<div id="archive-pagination" class="hidden mt-4">
+			<div class="card-base p-3 rounded-[var(--radius-large)] flex items-center justify-center gap-2">
+				<button id="page-prev" class="pagination-btn" aria-label="上一页">＜</button>
+				<div id="page-numbers" class="flex items-center gap-1"></div>
+				<button id="page-next" class="pagination-btn" aria-label="下一页">＞</button>
+			</div>
+		</div>
+	</div>
+
+	<!-- 右侧栏 slot: 筛选面板 -->
+	<div slot="sidebar-right" class="archive-filter-panel sticky top-[5.5rem] max-h-[calc(100vh-6.5rem)] overflow-y-auto flex flex-col gap-4 self-start">
+		<!-- 筛选状态栏 -->
+		<div id="filter-status" class="hidden card-base rounded-[var(--radius-large)] px-4 py-3 flex items-center justify-between gap-2">
+			<span id="filter-status-label" class="text-sm text-75 truncate"></span>
+			<button id="filter-clear-btn" class="shrink-0 text-sm text-[var(--primary)] hover:underline cursor-pointer">
+				清除
+			</button>
+		</div>
+
+		<!-- 日历 -->
+		<Calendar />
+
+		<!-- 分类 -->
+		<div class="card-base rounded-[var(--radius-large)] pb-4">
+			<div class="font-bold transition text-lg text-neutral-900 dark:text-neutral-100 relative ml-8 mt-4 mb-2 flex items-center
+				before:w-1 before:h-4 before:rounded-md before:bg-[var(--primary)]
+				before:absolute before:left-[-16px] before:top-[5.5px]">
+				{i18n(I18nKey.categories)}
+			</div>
+			<div class="px-4 flex flex-col gap-0.5" id="archive-categories">
+				{categories.map((c) => (
+					<button
+						data-filter="category"
+						data-value={c.name}
+						class="archive-filter-btn w-full h-10 rounded-lg bg-none
+							hover:bg-[var(--btn-plain-bg-hover)] active:bg-[var(--btn-plain-bg-active)]
+							transition-all pl-2 hover:pl-3 text-left
+							text-neutral-700 hover:text-[var(--primary)]
+							dark:text-neutral-300 dark:hover:text-[var(--primary)]
+							cursor-pointer"
+					>
+						<div class="flex items-center justify-between mr-2">
+							<span class="overflow-hidden whitespace-nowrap text-ellipsis">{c.name.trim()}</span>
+							<span class="transition px-2 h-7 ml-4 min-w-[2rem] rounded-lg text-sm font-bold
+								text-[var(--btn-content)] dark:text-[var(--deep-text)]
+								bg-[oklch(0.95_0.025_var(--hue))] dark:bg-[var(--primary)]
+								flex items-center justify-center shrink-0">
+								{c.count}
+							</span>
+						</div>
+					</button>
+				))}
 			</div>
 		</div>
 
-		<!-- 筛选面板 -->
-		<div class="archive-filter-panel">
-			<!-- 筛选状态栏 -->
-			<div id="filter-status" class="hidden card-base rounded-[var(--radius-large)] px-4 py-3 flex items-center justify-between gap-2">
-				<span id="filter-status-label" class="text-sm text-75 truncate"></span>
-				<button id="filter-clear-btn" class="shrink-0 text-sm text-[var(--primary)] hover:underline cursor-pointer">
-					清除
-				</button>
+		<!-- 标签 -->
+		<div class="card-base rounded-[var(--radius-large)] pb-4">
+			<div class="font-bold transition text-lg text-neutral-900 dark:text-neutral-100 relative ml-8 mt-4 mb-2 flex items-center
+				before:w-1 before:h-4 before:rounded-md before:bg-[var(--primary)]
+				before:absolute before:left-[-16px] before:top-[5.5px]">
+				{i18n(I18nKey.tags)}
 			</div>
-
-			<!-- 日历 -->
-			<Calendar />
-
-			<!-- 分类 -->
-			<div class="card-base rounded-[var(--radius-large)] pb-4">
-				<div class="font-bold transition text-lg text-neutral-900 dark:text-neutral-100 relative ml-8 mt-4 mb-2 flex items-center
-					before:w-1 before:h-4 before:rounded-md before:bg-[var(--primary)]
-					before:absolute before:left-[-16px] before:top-[5.5px]">
-					{i18n(I18nKey.categories)}
-				</div>
-				<div class="px-4 flex flex-col gap-0.5" id="archive-categories">
-					{categories.map((c) => (
-						<button
-							data-filter="category"
-							data-value={c.name}
-							class="archive-filter-btn w-full h-10 rounded-lg bg-none
-								hover:bg-[var(--btn-plain-bg-hover)] active:bg-[var(--btn-plain-bg-active)]
-								transition-all pl-2 hover:pl-3 text-left
-								text-neutral-700 hover:text-[var(--primary)]
-								dark:text-neutral-300 dark:hover:text-[var(--primary)]
-								cursor-pointer"
-						>
-							<div class="flex items-center justify-between mr-2">
-								<span class="overflow-hidden whitespace-nowrap text-ellipsis">{c.name.trim()}</span>
-								<span class="transition px-2 h-7 ml-4 min-w-[2rem] rounded-lg text-sm font-bold
-									text-[var(--btn-content)] dark:text-[var(--deep-text)]
-									bg-[oklch(0.95_0.025_var(--hue))] dark:bg-[var(--primary)]
-									flex items-center justify-center shrink-0">
-									{c.count}
-								</span>
-							</div>
-						</button>
-					))}
-				</div>
-			</div>
-
-			<!-- 标签 -->
-			<div class="card-base rounded-[var(--radius-large)] pb-4">
-				<div class="font-bold transition text-lg text-neutral-900 dark:text-neutral-100 relative ml-8 mt-4 mb-2 flex items-center
-					before:w-1 before:h-4 before:rounded-md before:bg-[var(--primary)]
-					before:absolute before:left-[-16px] before:top-[5.5px]">
-					{i18n(I18nKey.tags)}
-				</div>
-				<div class="px-4 flex gap-2 flex-wrap" id="archive-tags">
-					{tags.map((t) => (
-						<button
-							data-filter="tag"
-							data-value={t.name}
-							class="archive-filter-btn btn-regular h-8 text-sm px-3 rounded-lg cursor-pointer"
-						>
-							{t.name.trim()}
-						</button>
-					))}
-				</div>
+			<div class="px-4 flex gap-2 flex-wrap" id="archive-tags">
+				{tags.map((t) => (
+					<button
+						data-filter="tag"
+						data-value={t.name}
+						class="archive-filter-btn btn-regular h-8 text-sm px-3 rounded-lg cursor-pointer"
+					>
+						{t.name.trim()}
+					</button>
+				))}
 			</div>
 		</div>
 	</div>
 </MainGridLayout>
 
 <style>
-	.archive-layout {
-		display: grid;
-		grid-template-columns: 1fr 17.5rem;
-		gap: 1rem;
-		align-items: start;
-	}
-
-	.archive-filter-panel {
-		position: sticky;
-		top: 1rem;
-		display: flex;
-		flex-direction: column;
-		gap: 1rem;
-		max-height: calc(100vh - 2rem);
-		overflow-y: auto;
-	}
-
 	/* 自定义滚动条 */
 	.archive-filter-panel::-webkit-scrollbar {
 		width: 4px;
@@ -140,16 +121,12 @@ const uncategorizedLabel = i18n(I18nKey.uncategorized);
 		border-radius: 2px;
 	}
 
-	/* 移动端/平板端：单列，筛选在上 */
-	@media (max-width: 1024px) {
-		.archive-layout {
-			grid-template-columns: 1fr;
-		}
+	/* 移动端/平板端：筛选面板不 sticky */
+	@media (max-width: 1279px) {
 		.archive-filter-panel {
-			order: -1;
-			position: static;
-			max-height: none;
-			overflow-y: visible;
+			position: static !important;
+			max-height: none !important;
+			overflow-y: visible !important;
 		}
 	}
 
@@ -199,7 +176,7 @@ const uncategorizedLabel = i18n(I18nKey.uncategorized);
 	let currentFilter: FilterState = { type: "none", value: "" };
 
 	const UNCATEGORIZED_LABEL =
-		document.querySelector<HTMLElement>(".archive-layout")?.dataset
+		document.querySelector<HTMLElement>(".archive-posts")?.dataset
 			.uncategorizedLabel || "";
 
 	function isUncategorizedValue(value: string): boolean {

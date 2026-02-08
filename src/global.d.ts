@@ -53,7 +53,6 @@ declare global {
 		__updateBannerCarouselState?: () => void;
 		sakuraInitialized?: boolean;
 		_calendarFilterListenerAttached?: boolean;
-		semifullScrollHandler?: EventListener;
 
 		panelManager?: typeof import("./utils/panel-manager").panelManager;
 
@@ -73,7 +72,6 @@ declare global {
 		clearUmamiShareCache?: () => void;
 
 		mobileTOCInit?: () => void;
-		initSemifullScrollDetection?: () => void;
 		iconifyLoaded?: boolean;
 		__iconifyLoader?: {
 			load: () => Promise<void>;

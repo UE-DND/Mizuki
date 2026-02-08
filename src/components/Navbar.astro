@@ -57,7 +57,7 @@ const links: NavBarLink[] = navBarConfig.links
 <div id="navbar" class="z-50 onload-animation group" data-transparent-mode={navbarTransparentMode} data-is-home={isHomePage}>
     <div class="absolute h-8 left-0 right-0 -top-8 bg-[var(--card-bg)] transition"></div> <!-- used for onload animation -->
     <div class:list={[className, "!overflow-visible max-w-[var(--page-width)] h-[4.5rem] mx-auto flex items-center justify-between px-4"]}>
-        <a href={url('/')} class="btn-plain scale-animation rounded-lg h-[3.25rem] [.enable-banner_&]:h-[2.5rem] [.enable-banner_&]:group-[.scrolled]:h-[3.25rem] px-5 font-bold active:scale-95 shrink-0 transition-all duration-[600ms]">
+        <a id="navbar-logo" href={url('/')} class="btn-plain scale-animation rounded-lg h-[3.25rem] [.enable-banner_&]:h-[2.5rem] [.enable-banner_&]:group-[.scrolled]:h-[3.25rem] px-5 font-bold active:scale-95 shrink-0 transition-all duration-[600ms]">
             <div class="flex flex-row items-center text-md">
 				{/* 使用navbarTitle配置或默认配置 */}
                 {siteConfig.navbarTitle ? (
@@ -301,61 +301,6 @@ async function loadButtonScript() {
 
 loadButtonScript();
 
-// 为semifull模式添加滚动检测逻辑
-function initSemifullScrollDetection() {
-    const navbar = document.getElementById('navbar');
-    if (!navbar) return;
-    
-    // 移除之前的滚动事件监听器（如果存在）
-    // @ts-ignore
-    if (window.semifullScrollHandler) {
-        // @ts-ignore
-        window.removeEventListener('scroll', window.semifullScrollHandler);
-    }
-    
-    let ticking = false;
-    
-    function updateNavbarState() {
-        const scrollTop = window.scrollY || document.documentElement.scrollTop;
-        const threshold = 50; // 滚动阈值，可以根据需要调整
-        
-        if (navbar && scrollTop > threshold) {
-            navbar.classList.add('scrolled');
-        } else if (navbar) {
-            navbar.classList.remove('scrolled');
-        }
-        
-        ticking = false;
-    }
-    
-    function requestTick() {
-        if (!ticking) {
-            requestAnimationFrame(updateNavbarState);
-            ticking = true;
-        }
-    }
-    
-    // 保存新的事件处理器引用
-    // @ts-ignore
-    window.semifullScrollHandler = requestTick;
-    
-    // 监听滚动事件
-    window.addEventListener('scroll', requestTick, { passive: true });
-    
-    // 初始化状态
-    updateNavbarState();
-}
-
-// 将函数暴露到全局对象，供页面切换时调用
-// @ts-ignore
-window.initSemifullScrollDetection = initSemifullScrollDetection;
-
-// 页面加载完成后初始化滚动检测
-if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', initSemifullScrollDetection);
-} else {
-    initSemifullScrollDetection();
-}
 </script>
 
 {import.meta.env.PROD && <script is:inline define:vars={{scriptUrl: url('/pagefind/pagefind.js')}}>

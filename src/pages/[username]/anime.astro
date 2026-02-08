@@ -75,7 +75,7 @@ function statusLabel(status: string): string {
 ---
 
 <MainGridLayout title="番剧" description="用户公开番剧列表">
-	<section class="card-base p-6 rounded-[var(--radius-large)] mb-4">
+	<section class="card-base p-6 rounded-[var(--radius-large)] mb-4 text-90">
 		<h1 class="text-2xl font-bold mb-2">番剧</h1>
 		<p class="text-sm text-70">用户公开的番剧条目。</p>
 	</section>
@@ -85,7 +85,7 @@ function statusLabel(status: string): string {
 	) : (
 		<div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
 			{items.map((item) => (
-				<article class="card-base p-4 rounded-[var(--radius-large)] border border-[var(--line-divider)] h-full">
+				<article class="card-base p-4 rounded-[var(--radius-large)] border border-[var(--line-divider)] h-full text-90">
 					<div class="flex gap-4 h-full">
 						{coverUrl(item) && (
 							<img src={coverUrl(item) || ""} alt={item.title} class="w-24 h-32 rounded-lg object-cover border border-[var(--line-divider)] shrink-0" loading="lazy" />

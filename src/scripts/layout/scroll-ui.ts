@@ -1,5 +1,7 @@
-type ScrollUiOptions = {
-	bannerEnabled: boolean;
+import type { LayoutController } from "./layout-controller";
+
+type ScrollIntentSourceOptions = {
+	controller: LayoutController;
 	bannerHeight: number;
 	bannerHeightHome: number;
 	bannerHeightExtend: number;
@@ -19,78 +21,93 @@ function throttle(func: () => void, limit: number): () => void {
 	};
 }
 
-export function setupScrollUi(options: ScrollUiOptions): void {
+function updateBackToTopButton(
+	backToTopBtn: HTMLElement | null,
+	bannerHeight: number,
+): void {
+	if (!backToTopBtn) {
+		return;
+	}
+
+	const scrollTop = document.documentElement.scrollTop;
+	const bannerHeightPx = window.innerHeight * (bannerHeight / 100);
+	const contentWrapper = document.getElementById("content-wrapper");
+	let showBackToTopThreshold = bannerHeightPx + 100;
+
+	if (contentWrapper) {
+		const rect = contentWrapper.getBoundingClientRect();
+		const absoluteTop = rect.top + scrollTop;
+		showBackToTopThreshold = absoluteTop + window.innerHeight / 4;
+	}
+
+	if (scrollTop > showBackToTopThreshold) {
+		backToTopBtn.classList.remove("hide");
+	} else {
+		backToTopBtn.classList.add("hide");
+	}
+}
+
+function updateBannerExtendCssVar(bannerHeightExtend: number): void {
+	let offset = Math.floor(window.innerHeight * (bannerHeightExtend / 100));
+	offset = offset - (offset % 4);
+	document.documentElement.style.setProperty(
+		"--banner-height-extend",
+		`${offset}px`,
+	);
+}
+
+export function setupScrollIntentSource(
+	options: ScrollIntentSourceOptions,
+): () => void {
 	const backToTopBtn = document.getElementById("back-to-top-btn");
-	const toc = document.getElementById("toc-wrapper");
-	const navbar = document.getElementById("navbar-wrapper");
 
-	const scrollFunction = () => {
+	const handleScroll = () => {
 		const scrollTop = document.documentElement.scrollTop;
-		const bannerHeightPx =
-			window.innerHeight * (options.bannerHeight / 100);
-		const contentWrapper = document.getElementById("content-wrapper");
-		let showBackToTopThreshold = bannerHeightPx + 100;
-
-		if (contentWrapper) {
-			const rect = contentWrapper.getBoundingClientRect();
-			const absoluteTop = rect.top + scrollTop;
-			showBackToTopThreshold = absoluteTop + window.innerHeight / 4;
-		}
+		const viewportWidth = window.innerWidth;
+		const currentState = options.controller.dispatch({
+			type: "SCROLL_UPDATE",
+			scrollTop,
+			viewportWidth,
+		});
 
 		requestAnimationFrame(() => {
-			if (backToTopBtn) {
-				if (scrollTop > showBackToTopThreshold) {
-					backToTopBtn.classList.remove("hide");
-				} else {
-					backToTopBtn.classList.add("hide");
-				}
-			}
+			updateBackToTopButton(backToTopBtn, options.bannerHeight);
 
-			if (options.bannerEnabled && toc) {
-				const isBannerMode =
-					document.body.classList.contains("enable-banner");
-				if (isBannerMode) {
-					if (scrollTop > bannerHeightPx) {
-						toc.classList.remove("toc-hide");
-					} else {
-						toc.classList.add("toc-hide");
-					}
-				} else {
-					toc.classList.remove("toc-hide");
-				}
-			}
-
-			if (options.bannerEnabled && navbar) {
-				const isHome =
-					document.body.classList.contains("lg:is-home") &&
-					window.innerWidth >= 1024;
-				const currentBannerHeight = isHome
-					? options.bannerHeightHome
-					: options.bannerHeight;
-
+			if (
+				currentState.mode === "banner" &&
+				currentState.isHome &&
+				viewportWidth >= 1024
+			) {
 				const threshold =
-					window.innerHeight * (currentBannerHeight / 100) - 88;
+					window.innerHeight * (options.bannerHeightHome / 100) - 88;
 				if (scrollTop >= threshold) {
-					navbar.classList.add("navbar-hidden");
-				} else {
-					navbar.classList.remove("navbar-hidden");
+					options.controller.dispatch({
+						type: "COLLAPSE_BANNER",
+						reason: "scroll-collapse",
+					});
 				}
 			}
 		});
 	};
 
 	const handleResize = () => {
-		let offset = Math.floor(
-			window.innerHeight * (options.bannerHeightExtend / 100),
-		);
-		offset = offset - (offset % 4);
-		document.documentElement.style.setProperty(
-			"--banner-height-extend",
-			`${offset}px`,
-		);
+		options.controller.dispatch({
+			type: "RESIZE",
+			scrollTop: document.documentElement.scrollTop,
+			viewportWidth: window.innerWidth,
+		});
+		updateBannerExtendCssVar(options.bannerHeightExtend);
 	};
-	window.onscroll = throttle(scrollFunction, 16);
-	window.onresize = handleResize;
 
-	handleResize();
+	const throttledScroll = throttle(handleScroll, 16);
+	window.addEventListener("scroll", throttledScroll, { passive: true });
+	window.addEventListener("resize", handleResize, { passive: true });
+
+	updateBannerExtendCssVar(options.bannerHeightExtend);
+	handleScroll();
+
+	return () => {
+		window.removeEventListener("scroll", throttledScroll);
+		window.removeEventListener("resize", handleResize);
+	};
 }

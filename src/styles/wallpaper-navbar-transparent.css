@@ -95,3 +95,11 @@
     background: var(--card-bg);
   }
 }
+
+/* Layout state machine override:
+ * In banner-hidden modes, navbar shape is rectangular on all devices.
+ */
+body[data-layout-mode="none"] #navbar > div,
+body[data-layout-mode="collapsed"] #navbar > div {
+  border-radius: 0 !important;
+}

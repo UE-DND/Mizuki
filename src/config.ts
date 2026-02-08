@@ -64,6 +64,10 @@ export const siteConfig: SiteConfig = {
 		targetWidth: 2000, // 目标宽度，低于此宽度时开始缩放
 	},
 
+	experimental: {
+		layoutStateMachineV2: true, // 新版布局状态机开关（可快速回退）
+	},
+
 	bangumi: {
 		userId: "your-bangumi-id", // 在此处设置你的Bangumi用户ID，可以设置为 "sai" 测试
 		fetchOnDev: false, // 是否在开发环境下获取 Bangumi 数据（默认 false），获取前先执行 pnpm build 构建 json 文件
@@ -137,8 +141,8 @@ export const siteConfig: SiteConfig = {
 		// 请自行搭建API
 
 		homeText: {
-			enable: true, // 在主页显示自定义文本
-			title: "我的小屋", // 主页横幅主标题
+			enable: true, // 在首页显示自定义文本
+			title: "我的小屋", // 首页横幅主标题
 
 			subtitle: [
 				"没有什么特别的事，但有你就足够了",

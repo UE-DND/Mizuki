@@ -1,20 +1,21 @@
-import type { LayoutController } from "./layout-controller";
+import { resetScrollCollapseState } from "./scroll-ui-legacy";
 
-type SwupIntentSourceDependencies = {
-	controller: LayoutController;
+type SwupHookDependencies = {
+	bannerEnabled: boolean;
+	bannerHeight: number;
+	bannerHeightHome: number;
 	initFancybox: () => Promise<void>;
 	cleanupFancybox: () => void;
 	checkKatex: () => void;
 	initKatexScrollbars: () => void;
+	updateBannerCarouselState: () => void;
 	defaultTheme: string;
 	darkMode: string;
 	pathsEqual: (left: string, right: string) => boolean;
 	url: (path: string) => string;
 };
 
-export function setupSwupIntentSource(
-	deps: SwupIntentSourceDependencies,
-): void {
+export function setupSwupHooks(deps: SwupHookDependencies): void {
 	const runtimeWindow = window as Window &
 		typeof globalThis & {
 			swup?: {
@@ -26,6 +27,7 @@ export function setupSwupIntentSource(
 				};
 			};
 			mobileTOCInit?: () => void;
+			initSemifullScrollDetection?: () => void;
 		};
 
 	const swup = runtimeWindow.swup;
@@ -35,6 +37,23 @@ export function setupSwupIntentSource(
 
 	swup.hooks.on("link:click", () => {
 		document.documentElement.style.setProperty("--content-delay", "0ms");
+
+		if (deps.bannerEnabled) {
+			const navbar = document.getElementById("navbar-wrapper");
+			if (navbar && document.body.classList.contains("lg:is-home")) {
+				// Banner 已被滚动折叠时，不隐藏导航栏
+				if (
+					document.body.classList.contains("scroll-collapsed-banner")
+				) {
+					return;
+				}
+				const threshold =
+					window.innerHeight * (deps.bannerHeight / 100) - 88;
+				if (document.documentElement.scrollTop >= threshold) {
+					navbar.classList.add("navbar-hidden");
+				}
+			}
+		}
 	});
 
 	swup.hooks.on("content:replace", () => {
@@ -60,10 +79,46 @@ export function setupSwupIntentSource(
 				}, 100);
 			}
 		}
+
+		const navbar = document.getElementById("navbar");
+		if (navbar) {
+			const transparentMode = navbar.getAttribute(
+				"data-transparent-mode",
+			);
+			if (transparentMode === "semifull") {
+				if (
+					typeof runtimeWindow.initSemifullScrollDetection ===
+					"function"
+				) {
+					runtimeWindow.initSemifullScrollDetection?.();
+				}
+			}
+		}
 	});
 
-	swup.hooks.on("visit:start", () => {
+	swup.hooks.on("visit:start", (visit: { to: { url: string } }) => {
 		deps.cleanupFancybox();
+		const isHomePage = deps.pathsEqual(visit.to.url, deps.url("/"));
+		const bannerWrapper = document.getElementById("banner-wrapper");
+		const mainContentWrapper = document.querySelector(
+			".absolute.w-full.z-30",
+		);
+
+		if (bannerWrapper && mainContentWrapper) {
+			if (isHomePage) {
+				requestAnimationFrame(() => {
+					bannerWrapper.classList.remove("mobile-hide-banner");
+					mainContentWrapper.classList.remove(
+						"mobile-main-no-banner",
+					);
+				});
+			} else {
+				requestAnimationFrame(() => {
+					bannerWrapper.classList.add("mobile-hide-banner");
+					mainContentWrapper.classList.add("mobile-main-no-banner");
+				});
+			}
+		}
 
 		const heightExtend = document.getElementById("page-height-extend");
 		if (heightExtend) {
@@ -77,18 +132,20 @@ export function setupSwupIntentSource(
 	});
 
 	swup.hooks.on("page:view", () => {
-		deps.controller.dispatch({
-			type: "ROUTE_CHANGED",
-			path: window.location.pathname,
-			scrollTop: document.documentElement.scrollTop,
-			viewportWidth: window.innerWidth,
-			reason: "route-change",
-		});
-
+		resetScrollCollapseState();
+		deps.updateBannerCarouselState();
 		const isHomePage = deps.pathsEqual(
 			window.location.pathname,
 			deps.url("/"),
 		);
+		const bodyElement = document.querySelector("body");
+		if (bodyElement) {
+			if (isHomePage) {
+				bodyElement.classList.add("lg:is-home");
+			} else {
+				bodyElement.classList.remove("lg:is-home");
+			}
+		}
 
 		const bannerTextOverlay = document.querySelector(
 			".banner-text-overlay",
@@ -98,6 +155,22 @@ export function setupSwupIntentSource(
 				bannerTextOverlay.classList.remove("hidden");
 			} else {
 				bannerTextOverlay.classList.add("hidden");
+			}
+		}
+
+		const navbar = document.getElementById("navbar");
+		if (navbar) {
+			navbar.setAttribute("data-is-home", isHomePage.toString());
+			const transparentMode = navbar.getAttribute(
+				"data-transparent-mode",
+			);
+			if (transparentMode === "semifull") {
+				if (
+					typeof runtimeWindow.initSemifullScrollDetection ===
+					"function"
+				) {
+					runtimeWindow.initSemifullScrollDetection?.();
+				}
 			}
 		}
 

@@ -69,13 +69,13 @@ function photoUrl(photo: { file_id: string | null; image_url: string | null }): 
 
 <MainGridLayout title={album?.title || "相册不存在"} description={album?.description || ""}>
 	{!album ? (
-		<div class="card-base p-8 rounded-[var(--radius-large)]">
+		<div class="card-base p-8 rounded-[var(--radius-large)] text-90">
 			<h1 class="text-2xl font-bold mb-2">相册不存在</h1>
 			<p class="text-70">该相册可能未公开或已删除。</p>
 		</div>
 	) : (
 		<>
-			<section class="card-base p-6 rounded-[var(--radius-large)] mb-4 space-y-3">
+			<section class="card-base p-6 rounded-[var(--radius-large)] mb-4 space-y-3 text-90">
 				<a href={backHref} class="text-sm text-[var(--primary)] hover:underline">返回相册列表</a>
 				<h1 class="text-3xl font-bold">{album.title}</h1>
 				<div class="text-xs text-60 flex flex-wrap items-center gap-2">
@@ -108,7 +108,7 @@ function photoUrl(photo: { file_id: string | null; image_url: string | null }): 
 								<img src={photoUrl(photo) || ""} alt={photo.title || "album photo"} class="w-full h-auto object-cover" loading="lazy" />
 							)}
 							{(photo.title || photo.description) && (
-								<figcaption class="p-3 space-y-1">
+								<figcaption class="p-3 space-y-1 text-90">
 									{photo.title && <div class="text-sm font-medium">{photo.title}</div>}
 									{photo.description && <div class="text-xs text-60">{photo.description}</div>}
 								</figcaption>

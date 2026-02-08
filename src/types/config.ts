@@ -82,6 +82,11 @@ export type SiteConfig = {
 		targetWidth?: number; // 目标宽度，低于此宽度时开始缩放
 	};
 
+	// 实验功能开关
+	experimental?: {
+		layoutStateMachineV2?: boolean; // 启用统一布局状态机实现
+	};
+
 	// 添加字体配置
 	font: {
 		asciiFont: {

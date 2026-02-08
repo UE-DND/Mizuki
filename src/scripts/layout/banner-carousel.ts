@@ -12,9 +12,9 @@ type BannerWindow = Window &
 
 const BANNER_CAROUSEL_ID = "banner-carousel";
 
-function isBannerHiddenByPage(): boolean {
-	const path = window.location.pathname;
-	return path !== "/" && path !== "";
+function isBannerVisibleByState(): boolean {
+	const mode = document.body.dataset.layoutMode;
+	return mode === "banner";
 }
 
 function getRuntimeWindow(): BannerWindow {
@@ -30,7 +30,7 @@ export function updateBannerCarouselState(): void {
 	const bannerWrapper = document.getElementById("banner-wrapper");
 	const isBannerHidden =
 		bannerWrapper?.classList.contains("wallpaper-layer-hidden") === true;
-	controller.setPaused(isBannerHiddenByPage() || isBannerHidden);
+	controller.setPaused(!isBannerVisibleByState() || isBannerHidden);
 }
 
 export function initBannerCarousel(): void {

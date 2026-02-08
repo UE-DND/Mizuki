@@ -36,6 +36,8 @@ const stickyComponents = filterCalendar(
 	widgetManager.getComponentsByPosition("sticky", "right"),
 );
 
+const stickyContainerClass = "transition-all duration-700 flex flex-col w-full gap-4 sticky top-4";
+
 // 组件映射表
 const componentMap = {
 	profile: Profile,
@@ -129,7 +131,7 @@ function renderComponent(
     stickyComponents.length > 0 && (
       <div
         id="right-sidebar-sticky"
-        class="transition-all duration-700 flex flex-col w-full gap-4 sticky top-4"
+        class={stickyContainerClass}
       >
         {stickyComponents.map((component, index) => {
           const renderData = renderComponent(component, index);
