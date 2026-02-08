@@ -2,6 +2,13 @@ import "overlayscrollbars/overlayscrollbars.css";
 
 import { siteConfig, widgetConfigs } from "@/config";
 import { DARK_MODE, DEFAULT_THEME } from "@/constants/constants";
+import { setupCodeCopyDelegation } from "@/scripts/code-copy";
+import {
+	encodeHashId,
+	resolveSamePageHashLink,
+	scrollElementBelowTocBaseline,
+	scrollToHashBelowTocBaseline,
+} from "@/utils/hash-scroll";
 import { initKatexScrollbars } from "@/utils/katex-scrollbar";
 import { setupPanelOutsideHandler } from "@/utils/panel-outside-handler";
 import { panelManager } from "@/utils/panel-manager.js";
@@ -29,6 +36,7 @@ type LayoutRuntimeWindow = Window &
 		sakuraInitialized?: boolean;
 		__layoutRuntimeInitialized?: boolean;
 		__layoutSwupHooksAttached?: boolean;
+		__layoutHashOffsetBound?: boolean;
 		swup?: {
 			hooks?: {
 				on: (
@@ -54,7 +62,9 @@ export function initLayoutRuntime(): void {
 		siteConfig.banner?.navbar?.transparentMode || "semi";
 
 	setupPanelOutsideHandler(panelManager);
+	setupCodeCopyDelegation();
 	setupBannerRuntime();
+	setupHashOffsetNavigation(runtimeWindow);
 
 	const setupSakura = () => {
 		const sakuraConfig = widgetConfigs.sakura;
@@ -201,6 +211,81 @@ export function initLayoutRuntime(): void {
 	} else {
 		void initBannerAndPanels();
 	}
+}
+
+function setupHashOffsetNavigation(runtimeWindow: LayoutRuntimeWindow): void {
+	if (runtimeWindow.__layoutHashOffsetBound) {
+		return;
+	}
+
+	const handleHashAnchorClick = (event: MouseEvent): void => {
+		if (
+			event.defaultPrevented ||
+			event.button !== 0 ||
+			event.metaKey ||
+			event.ctrlKey ||
+			event.shiftKey ||
+			event.altKey
+		) {
+			return;
+		}
+
+		const target = event.target;
+		if (!(target instanceof Element)) {
+			return;
+		}
+
+		const anchor = target.closest<HTMLAnchorElement>("a[href]");
+		if (!anchor || anchor.hasAttribute("download")) {
+			return;
+		}
+
+		const resolvedLink = resolveSamePageHashLink(anchor);
+		if (!resolvedLink) {
+			return;
+		}
+
+		event.preventDefault();
+
+		const nextHash = encodeHashId(resolvedLink.id);
+		if (window.location.hash !== nextHash) {
+			history.pushState(null, "", nextHash);
+		}
+
+		scrollElementBelowTocBaseline(resolvedLink.target, {
+			behavior: "smooth",
+		});
+	};
+
+	const handleHashChange = (): void => {
+		if (!window.location.hash) {
+			return;
+		}
+
+		requestAnimationFrame(() => {
+			scrollToHashBelowTocBaseline(window.location.hash, {
+				behavior: "instant",
+			});
+		});
+	};
+
+	document.addEventListener("click", handleHashAnchorClick);
+	window.addEventListener("hashchange", handleHashChange);
+
+	if (window.location.hash) {
+		requestAnimationFrame(() => {
+			scrollToHashBelowTocBaseline(window.location.hash, {
+				behavior: "instant",
+			});
+			window.setTimeout(() => {
+				scrollToHashBelowTocBaseline(window.location.hash, {
+					behavior: "instant",
+				});
+			}, 120);
+		});
+	}
+
+	runtimeWindow.__layoutHashOffsetBound = true;
 }
 
 initLayoutRuntime();

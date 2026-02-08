@@ -1,6 +1,6 @@
 ---
 import Markdown from "@components/misc/Markdown.astro";
-import { renderMarkdownHtml } from "@/server/markdown/render";
+import { renderMarkdown } from "@/server/markdown/render";
 import { loadPublicArticleBySlug } from "@/server/api/v1/shared";
 import I18nKey from "../i18n/i18nKey";
 import { i18n } from "../i18n/translation";
@@ -15,7 +15,9 @@ let html = "";
 try {
 	const article = await loadPublicArticleBySlug("about");
 	if (article?.body_markdown) {
-		html = await renderMarkdownHtml(String(article.body_markdown));
+		html = await renderMarkdown(String(article.body_markdown), {
+			target: "page",
+		});
 	}
 } catch (error) {
 	console.error("[about] failed to load content:", error);
@@ -31,7 +33,7 @@ if (!html) {
 		import("../scripts/right-sidebar-layout.js");
 	</script>
 	<div class="flex w-full rounded-[var(--radius-large)] overflow-hidden relative min-h-32">
-		<div class="card-base z-10 px-9 py-6 relative w-full">
+		<div id="post-container" class="card-base z-10 px-9 py-6 relative w-full">
 			<div class="flex flex-col items-start justify-center mb-8">
 				<h1 class="text-4xl font-bold text-black/90 dark:text-white/90 mb-2 relative
                           before:w-1 before:h-8 before:rounded-md before:bg-[var(--primary)]

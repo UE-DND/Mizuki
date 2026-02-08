@@ -243,102 +243,324 @@ const useJapaneseBadge = siteConfig.toc.useJapaneseBadge;
 </style>
 
 <script>
-	class FloatingTOC {
-		private btn: HTMLElement | null;
-		private panel: HTMLElement | null;
-		private content: HTMLElement | null;
-		private wrapper: HTMLElement | null;
+	import {
+		collectMarkdownHeadings,
+		resolveMarkdownRoot,
+	} from "@/utils/markdown-toc";
+	import { scrollElementBelowTocBaseline } from "@/utils/hash-scroll";
+	import { getTocBaselineOffset } from "@/utils/toc-offset";
+
+	type RuntimeWindow = Window &
+		typeof globalThis & {
+			__floatingTocController?: FloatingTOCController;
+			__floatingTocLifecycleBound?: boolean;
+			floatingTOCInit?: () => void;
+		};
+
+	type FloatingHeading = {
+		id: string;
+		text: string;
+		level: number;
+		element: HTMLElement;
+	};
+
+	const JAPANESE_KATAKANA_BADGES = [
+		"ア",
+		"イ",
+		"ウ",
+		"エ",
+		"オ",
+		"カ",
+		"キ",
+		"ク",
+		"ケ",
+		"コ",
+		"サ",
+		"シ",
+		"ス",
+		"セ",
+		"ソ",
+		"タ",
+		"チ",
+		"ツ",
+		"テ",
+		"ト",
+		"ナ",
+		"ニ",
+		"ヌ",
+		"ネ",
+		"ノ",
+		"ハ",
+		"ヒ",
+		"フ",
+		"ヘ",
+		"ホ",
+	];
+
+	function escapeHtml(raw: string): string {
+		return raw
+			.replaceAll("&", "&amp;")
+			.replaceAll("<", "&lt;")
+			.replaceAll(">", "&gt;")
+			.replaceAll('"', "&quot;")
+			.replaceAll("'", "&#39;");
+	}
+
+	class FloatingTOCController {
+		private btn: HTMLElement | null = null;
+		private panel: HTMLElement | null = null;
+		private content: HTMLElement | null = null;
+		private wrapper: HTMLElement | null = null;
+		private observedRoot: HTMLElement | null = null;
+		private mutationObserver: MutationObserver | null = null;
+		private headings: FloatingHeading[] = [];
 		private isOpen = false;
-		private observer: MutationObserver | null = null;
-		private headings: HTMLElement[] = [];
+
+		private readonly onScroll = () => {
+			this.updateProgress();
+			this.updateActiveHeading();
+		};
+
+		private readonly onResize = () => {
+			this.updateActiveHeading();
+			this.updateProgress();
+		};
+
+		private readonly onButtonClick = (event: Event) => {
+			event.stopPropagation();
+			this.toggle();
+		};
+
+		private readonly onDocumentClick = (event: Event) => {
+			if (!this.isOpen) {
+				return;
+			}
+			if (!this.wrapper?.contains(event.target as Node)) {
+				this.close();
+			}
+		};
+
+		private readonly onContentClick = (event: Event) => {
+			const target = event.target;
+			if (!(target instanceof HTMLElement)) {
+				return;
+			}
+
+			const link = target.closest<HTMLAnchorElement>(
+				".floating-toc-item[href^='#']",
+			);
+			if (!link) {
+				return;
+			}
+
+			event.preventDefault();
+			const id = decodeURIComponent(link.hash.slice(1));
+			const heading = document.getElementById(id);
+			if (!heading) {
+				return;
+			}
+
+			scrollElementBelowTocBaseline(heading, { behavior: "smooth" });
+			this.close();
+		};
+
+		private readonly onKeyDown = (event: KeyboardEvent) => {
+			if (event.key === "Escape" && this.isOpen) {
+				this.close();
+			}
+		};
 
 		constructor() {
-			this.btn = document.getElementById("floating-toc-btn");
-			this.panel = document.getElementById("floating-toc-panel");
-			this.content = document.getElementById("floating-toc-content");
-			this.wrapper = document.querySelector(".floating-toc-wrapper");
-
-			this.init();
-		}
-
-		private init() {
-			window.addEventListener(
-				"scroll",
-				() => {
-					this.updateProgress();
-					this.updateActiveHeading();
-				},
-				{ passive: true },
-			);
-
-			window.addEventListener(
-				"resize",
-				() => {
-					this.updateActiveHeading();
-					this.updateProgress();
-				},
-				{ passive: true },
-			);
-
+			if (!this.bindElements()) {
+				return;
+			}
 			this.bindEvents();
-			this.generateTOC();
+			this.regenerate();
 			this.observeContent();
 			this.updateProgress();
 		}
 
-		private observeContent() {
-			const contentWrapper = document.getElementById("post-container");
-			if (contentWrapper) {
-				this.observer = new MutationObserver(() => {
-					this.generateTOC();
-					this.updateProgress();
-				});
-				this.observer.observe(contentWrapper, {
-					childList: true,
-					subtree: true,
-				});
+		private bindElements(): boolean {
+			this.wrapper = document.querySelector<HTMLElement>(
+				".floating-toc-wrapper",
+			);
+			if (!this.wrapper) {
+				return false;
+			}
+
+			this.btn = this.wrapper.querySelector<HTMLElement>("#floating-toc-btn");
+			this.panel =
+				this.wrapper.querySelector<HTMLElement>("#floating-toc-panel");
+			this.content = this.wrapper.querySelector<HTMLElement>(
+				"#floating-toc-content",
+			);
+
+			return Boolean(this.btn && this.panel && this.content);
+		}
+
+		private bindEvents(): void {
+			window.addEventListener("scroll", this.onScroll, { passive: true });
+			window.addEventListener("resize", this.onResize, { passive: true });
+			this.btn?.addEventListener("click", this.onButtonClick);
+			document.addEventListener("click", this.onDocumentClick);
+			document.addEventListener("keydown", this.onKeyDown);
+			this.content?.addEventListener("click", this.onContentClick);
+		}
+
+		private unbindEvents(): void {
+			window.removeEventListener("scroll", this.onScroll);
+			window.removeEventListener("resize", this.onResize);
+			this.btn?.removeEventListener("click", this.onButtonClick);
+			document.removeEventListener("click", this.onDocumentClick);
+			document.removeEventListener("keydown", this.onKeyDown);
+			this.content?.removeEventListener("click", this.onContentClick);
+		}
+
+		private observeContent(): void {
+			const markdownRoot = resolveMarkdownRoot();
+			if (this.observedRoot === markdownRoot) {
+				return;
+			}
+
+			if (this.mutationObserver) {
+				this.mutationObserver.disconnect();
+				this.mutationObserver = null;
+			}
+			this.observedRoot = markdownRoot;
+
+			if (!markdownRoot) {
+				return;
+			}
+
+			this.mutationObserver = new MutationObserver(() => {
+				this.regenerate();
+				this.updateProgress();
+			});
+			this.mutationObserver.observe(markdownRoot, {
+				childList: true,
+				subtree: true,
+			});
+		}
+
+		private getCollectedHeadings(): FloatingHeading[] {
+			const maxDepth = Math.max(
+				1,
+				Number.parseInt(this.wrapper?.dataset.depth || "3", 10) || 3,
+			);
+			const collected = collectMarkdownHeadings({ maxDepth });
+			return collected.map((item) => ({
+				id: item.id,
+				text: item.text,
+				level: item.level,
+				element: item.element,
+			}));
+		}
+
+		private hideWhenNoHeading(): void {
+			this.headings = [];
+			this.close();
+			this.wrapper?.classList.remove("active-toc");
+			this.wrapper?.classList.add("no-toc");
+			if (this.content) {
+				this.content.innerHTML = "";
 			}
 		}
 
-		private updateProgress() {
-			if (!this.btn) {return;}
+		private buildHeadingBadge(level: number, topLevelCount: number): string {
+			if (level === 1) {
+				const useJapaneseBadge =
+					this.wrapper?.dataset.japaneseBadge === "true";
+				const badgeText =
+					useJapaneseBadge &&
+					topLevelCount - 1 < JAPANESE_KATAKANA_BADGES.length
+						? JAPANESE_KATAKANA_BADGES[topLevelCount - 1]
+						: String(topLevelCount);
+				return `<span class="floating-toc-badge">${badgeText}</span>`;
+			}
 
-			const scrollTop =
-				window.scrollY || document.documentElement.scrollTop;
+			if (level === 2) {
+				return '<span class="floating-toc-dot"></span>';
+			}
+
+			return '<span class="floating-toc-dot-small"></span>';
+		}
+
+		regenerate(): void {
+			if (!this.wrapper || !this.content) {
+				return;
+			}
+
+			this.headings = this.getCollectedHeadings();
+			if (this.headings.length === 0) {
+				this.hideWhenNoHeading();
+				return;
+			}
+
+			this.wrapper.classList.remove("no-toc");
+			this.wrapper.classList.add("active-toc");
+
+			let levelOneCount = 0;
+			const html = this.headings
+				.map((heading) => {
+					if (heading.level === 1) {
+						levelOneCount += 1;
+					}
+					const indent = (heading.level - 1) * 1;
+					const badge = this.buildHeadingBadge(heading.level, levelOneCount);
+					const safeText = escapeHtml(heading.text);
+					const safeId = encodeURIComponent(heading.id);
+					return `<a href="#${safeId}" data-no-swup class="floating-toc-item" style="padding-left: ${0.5 + indent}rem" data-level="${heading.level - 1}">${badge}<span class="floating-toc-text">${safeText}</span></a>`;
+				})
+				.join("");
+
+			this.content.innerHTML = html;
+			this.updateActiveHeading();
+		}
+
+		private updateProgress(): void {
+			if (!this.btn) {
+				return;
+			}
+
+			const scrollTop = window.scrollY || document.documentElement.scrollTop;
 			const docHeight =
 				document.documentElement.scrollHeight -
 				document.documentElement.clientHeight;
 			const scrollPercent = docHeight > 0 ? scrollTop / docHeight : 0;
 
-			const circle = this.btn.querySelector(
+			const circle = this.btn.querySelector<SVGCircleElement>(
 				".progress-ring-circle",
-			) as SVGCircleElement;
-			if (circle) {
-				const radius = circle.r.baseVal.value;
-				const circumference = radius * 2 * Math.PI;
-				const offset = Math.max(
-					0,
-					Math.min(
-						circumference,
-						circumference - scrollPercent * circumference,
-					),
-				);
-				circle.style.strokeDashoffset = offset.toString();
+			);
+			if (!circle) {
+				return;
 			}
+
+			const radius = circle.r.baseVal.value;
+			const circumference = radius * 2 * Math.PI;
+			const offset = Math.max(
+				0,
+				Math.min(
+					circumference,
+					circumference - scrollPercent * circumference,
+				),
+			);
+			circle.style.strokeDashoffset = offset.toString();
 		}
 
-		private updateActiveHeading() {
-			if (!this.content || this.headings.length === 0) {return;}
+		private updateActiveHeading(): void {
+			if (!this.content || this.headings.length === 0) {
+				return;
+			}
+
 			const scrollY = window.scrollY;
-			const offsetTop = 150;
+			const baselineY = scrollY + getTocBaselineOffset();
 
 			let activeIndex = -1;
-			for (let i = 0; i < this.headings.length; i++) {
+			for (let i = 0; i < this.headings.length; i += 1) {
 				const heading = this.headings[i];
-				if (
-					heading.getBoundingClientRect().top + scrollY <
-					scrollY + offsetTop
-				) {
+				const headingTop =
+					heading.element.getBoundingClientRect().top + scrollY;
+				if (headingTop <= baselineY) {
 					activeIndex = i;
 				} else {
 					break;
@@ -346,203 +568,109 @@ const useJapaneseBadge = siteConfig.toc.useJapaneseBadge;
 			}
 
 			const links = Array.from(
-				this.content.querySelectorAll(".floating-toc-item"),
+				this.content.querySelectorAll<HTMLElement>(".floating-toc-item"),
 			);
 			links.forEach((link, index) => {
-				if (index === activeIndex) {
-					link.classList.add("active");
-					if (this.isOpen) {
-						const panelContent = this.content;
-						if (panelContent) {
-							const linkEl = link as HTMLElement;
-							const panelRect =
-								panelContent.getBoundingClientRect();
-							const linkRect = linkEl.getBoundingClientRect();
-							if (
-								linkRect.top < panelRect.top ||
-								linkRect.bottom > panelRect.bottom
-							) {
-								linkEl.scrollIntoView({ block: "nearest" });
-							}
-						}
-					}
-				} else {
-					link.classList.remove("active");
+				const isActive = index === activeIndex;
+				link.classList.toggle("active", isActive);
+				if (!isActive || !this.isOpen) {
+					return;
+				}
+
+				const panelRect = this.content?.getBoundingClientRect();
+				const linkRect = link.getBoundingClientRect();
+				if (!panelRect) {
+					return;
+				}
+				if (linkRect.top < panelRect.top || linkRect.bottom > panelRect.bottom) {
+					link.scrollIntoView({ block: "nearest" });
 				}
 			});
 		}
 
-		private generateTOC() {
-			const container = document.getElementById("post-container");
-
-			if (!container) {
-				this.wrapper?.classList.remove("active-toc");
-				this.wrapper?.classList.add("no-toc");
+		private toggle(): void {
+			if (this.isOpen) {
+				this.close();
 				return;
 			}
-
-			const allHeadings = container.querySelectorAll(
-				"h1[id], h2[id], h3[id], h4[id], h5[id], h6[id]",
-			);
-
-			if (allHeadings.length === 0) {
-				this.wrapper?.classList.remove("active-toc");
-				this.wrapper?.classList.add("no-toc");
-				this.headings = [];
-				return;
-			}
-
-			this.wrapper?.classList.remove("no-toc");
-			this.wrapper?.classList.add("active-toc");
-			this.headings = [];
-
-			const maxLevel = parseInt(this.wrapper?.dataset.depth || "3");
-			const useJapaneseBadge =
-				this.wrapper?.dataset.japaneseBadge === "true";
-
-			const japaneseKatakana = [
-				"ア",
-				"イ",
-				"ウ",
-				"エ",
-				"オ",
-				"カ",
-				"キ",
-				"ク",
-				"ケ",
-				"コ",
-				"サ",
-				"シ",
-				"ス",
-				"セ",
-				"ソ",
-				"タ",
-				"チ",
-				"ツ",
-				"テ",
-				"ト",
-				"ナ",
-				"ニ",
-				"ヌ",
-				"ネ",
-				"ノ",
-				"ハ",
-				"ヒ",
-				"フ",
-				"ヘ",
-				"ホ",
-			];
-
-			let minLevel = 6;
-			allHeadings.forEach((h) => {
-				const level = parseInt(h.tagName[1]);
-				if (level < minLevel) {minLevel = level;}
-			});
-
-			let html = "";
-			let h1Count = 0;
-			allHeadings.forEach((heading) => {
-				const level = parseInt(heading.tagName[1]);
-
-				if (level >= minLevel + maxLevel) {return;}
-
-				this.headings.push(heading as HTMLElement);
-
-				const indent = (level - minLevel) * 1;
-				let badge = "";
-
-				if (level === minLevel) {
-					h1Count++;
-					const badgeText =
-						useJapaneseBadge &&
-						h1Count - 1 < japaneseKatakana.length
-							? japaneseKatakana[h1Count - 1]
-							: h1Count.toString();
-					badge = `<span class="floating-toc-badge">${badgeText}</span>`;
-				} else if (level === minLevel + 1) {
-					badge = '<span class="floating-toc-dot"></span>';
-				} else {
-					badge = '<span class="floating-toc-dot-small"></span>';
-				}
-
-				const text = (heading.textContent || "").replace(/#+\s*$/, "");
-				html += `<a href="#${heading.id}" class="floating-toc-item" style="padding-left: ${0.5 + indent}rem" data-level="${level - minLevel}">${badge}<span class="floating-toc-text">${text}</span></a>`;
-			});
-
-			if (this.content) {
-				this.content.innerHTML = html;
-			}
-
-			this.updateActiveHeading();
+			this.open();
 		}
 
-		private bindEvents() {
-			this.btn?.addEventListener("click", (e) => {
-				e.stopPropagation();
-				this.toggle();
-			});
-			document.addEventListener("click", (e) => {
-				if (this.isOpen && !this.wrapper?.contains(e.target as Node)) {
-					this.close();
-				}
-			});
-			this.content?.addEventListener("click", (e) => {
-				const link = (e.target as HTMLElement).closest("a");
-				if (link) {
-					e.preventDefault();
-					const id = link.getAttribute("href")?.slice(1);
-					if (id) {
-						const element = document.getElementById(id);
-						if (element) {
-							const top =
-								element.getBoundingClientRect().top +
-								window.scrollY -
-								80;
-							window.scrollTo({ top, behavior: "smooth" });
-							this.close();
-						}
-					}
-				}
-			});
-			document.addEventListener("keydown", (e) => {
-				if (e.key === "Escape" && this.isOpen) {this.close();}
-			});
-			if (window.swup?.hooks) {
-				window.swup.hooks.on("page:view", () => {
-					setTimeout(() => this.reinit(), 200);
-				});
-			}
-		}
-
-		private toggle() {
-			this.isOpen ? this.close() : this.open();
-		}
-
-		private open() {
+		private open(): void {
 			this.isOpen = true;
 			this.panel?.classList.add("show");
 			this.btn?.classList.add("active");
 			this.wrapper?.classList.add("active");
 		}
 
-		private close() {
+		private close(): void {
 			this.isOpen = false;
 			this.panel?.classList.remove("show");
 			this.btn?.classList.remove("active");
 			this.wrapper?.classList.remove("active");
 		}
 
-		private reinit() {
-			if (this.observer) {
-				this.observer.disconnect();
+		reinit(): void {
+			if (!this.wrapper?.isConnected || !this.content?.isConnected) {
+				this.destroy();
+				if (!this.bindElements()) {
+					return;
+				}
+				this.bindEvents();
 			}
-			this.close();
-			this.generateTOC();
+
 			this.observeContent();
+			this.regenerate();
 			this.updateProgress();
+		}
+
+		destroy(): void {
+			this.close();
+			this.unbindEvents();
+			if (this.mutationObserver) {
+				this.mutationObserver.disconnect();
+				this.mutationObserver = null;
+			}
+			this.observedRoot = null;
+			this.headings = [];
 		}
 	}
 
-	document.addEventListener("DOMContentLoaded", () => new FloatingTOC());
-	document.addEventListener("swup:page:view", () => new FloatingTOC());
+	const runtimeWindow = window as RuntimeWindow;
+
+	function ensureFloatingTOC(): void {
+		const wrapper = document.querySelector<HTMLElement>(".floating-toc-wrapper");
+		if (!wrapper) {
+			runtimeWindow.__floatingTocController?.destroy();
+			delete runtimeWindow.__floatingTocController;
+			return;
+		}
+
+		if (!runtimeWindow.__floatingTocController) {
+			runtimeWindow.__floatingTocController = new FloatingTOCController();
+			return;
+		}
+
+		runtimeWindow.__floatingTocController.reinit();
+	}
+
+	runtimeWindow.floatingTOCInit = ensureFloatingTOC;
+
+	if (!runtimeWindow.__floatingTocLifecycleBound) {
+		document.addEventListener("swup:page:view", () => {
+			window.setTimeout(() => ensureFloatingTOC(), 120);
+		});
+		document.addEventListener("astro:after-swap", () => {
+			window.setTimeout(() => ensureFloatingTOC(), 120);
+		});
+		runtimeWindow.__floatingTocLifecycleBound = true;
+	}
+
+	if (document.readyState === "loading") {
+		document.addEventListener("DOMContentLoaded", ensureFloatingTOC, {
+			once: true,
+		});
+	} else {
+		ensureFloatingTOC();
+	}
 </script>

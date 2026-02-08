@@ -3,7 +3,7 @@ import rss from "@astrojs/rss";
 import type { APIContext } from "astro";
 
 import { siteConfig } from "@/config";
-import { renderMarkdownForFeed } from "@/server/markdown/render";
+import { renderMarkdown } from "@/server/markdown/render";
 import { getSortedPosts } from "@/utils/content-utils";
 import { getPostUrl } from "@/utils/url-utils";
 
@@ -23,10 +23,10 @@ export async function GET(context: APIContext): Promise<Response> {
 			description: post.data.description,
 			pubDate: post.data.published,
 			link: getPostUrl(post),
-			content: await renderMarkdownForFeed(
-				String(post.body || ""),
-				context.site as URL,
-			),
+			content: await renderMarkdown(String(post.body || ""), {
+				target: "feed",
+				site: context.site as URL,
+			}),
 		})),
 	);
 

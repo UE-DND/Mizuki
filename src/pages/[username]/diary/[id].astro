@@ -2,7 +2,7 @@
 import Comment from "@components/comment/index.astro";
 import Markdown from "@components/misc/Markdown.astro";
 import MainGridLayout from "@layouts/MainGridLayout.astro";
-import { renderMarkdownHtml } from "@/server/markdown/render";
+import { renderMarkdown } from "@/server/markdown/render";
 import { buildDirectusAssetUrl } from "@/server/directus-auth";
 import { loadUserDiaryDetail } from "@/server/api/v1/public-data";
 
@@ -35,7 +35,9 @@ if (!username || !id) {
 		const result = await loadUserDiaryDetail(username, id);
 		if (result) {
 			diary = result;
-			html = await renderMarkdownHtml(String(result.content || ""));
+			html = await renderMarkdown(String(result.content || ""), {
+				target: "page",
+			});
 		} else {
 			Astro.response.status = 404;
 		}
@@ -54,7 +56,10 @@ if (!username || !id) {
 		</div>
 	) : (
 		<>
-			<article class="card-base p-6 md:p-8 rounded-[var(--radius-large)] mb-4 text-90">
+			<article
+				id="post-container"
+				class="card-base p-6 md:p-8 rounded-[var(--radius-large)] mb-4 text-90"
+			>
 				<a href={`/${username}/diary/`} class="inline-block text-sm text-[var(--primary)] hover:underline mb-4">返回日记列表</a>
 				<div
 					id="diary-manage-root"

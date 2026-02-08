@@ -1,6 +1,6 @@
 ---
 import Markdown from "@components/misc/Markdown.astro";
-import { renderMarkdownHtml } from "@/server/markdown/render";
+import { renderMarkdown } from "@/server/markdown/render";
 import { loadPublicArticleBySlug } from "@/server/api/v1/shared";
 // import Icon from "../components/misc/Icon.astro";
 import { siteConfig } from "../config";
@@ -20,7 +20,9 @@ let friendsDocHtml = "";
 try {
 	const article = await loadPublicArticleBySlug("friends");
 	if (article?.body_markdown) {
-		friendsDocHtml = await renderMarkdownHtml(String(article.body_markdown));
+		friendsDocHtml = await renderMarkdown(String(article.body_markdown), {
+			target: "page",
+		});
 	}
 } catch (error) {
 	console.error("[friends] failed to load intro content:", error);
@@ -45,7 +47,7 @@ const allTags = Array.from(new Set(friendsList.flatMap((item) => item.tags)));
     import('../scripts/right-sidebar-layout.js');
   </script>
 	<div class="flex w-full rounded-[var(--radius-large)] overflow-hidden relative min-h-32">
-		<div class="card-base z-10 px-9 py-6 relative w-full">
+		<div id="post-container" class="card-base z-10 px-9 py-6 relative w-full">
       <!-- 页面标题 -->
       <div class="flex flex-col items-start justify-center mb-8">
         <h1 class="text-4xl font-bold text-black/90 dark:text-white/90 mb-2 relative

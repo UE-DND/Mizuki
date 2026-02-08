@@ -31,6 +31,7 @@ declare global {
 	interface HTMLElementTagNameMap {
 		"table-of-contents": HTMLElement & {
 			init?: () => void;
+			regenerateTOC?: (retryCount?: number) => void;
 		};
 	}
 
@@ -72,6 +73,7 @@ declare global {
 		clearUmamiShareCache?: () => void;
 
 		mobileTOCInit?: () => void;
+		floatingTOCInit?: () => void;
 		iconifyLoaded?: boolean;
 		__iconifyLoader?: {
 			load: () => Promise<void>;

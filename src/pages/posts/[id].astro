@@ -2,7 +2,7 @@
 import Comment from "@components/comment/index.astro";
 import Markdown from "@components/misc/Markdown.astro";
 import MainGridLayout from "@layouts/MainGridLayout.astro";
-import { renderMarkdownHtml } from "@/server/markdown/render";
+import { renderMarkdown } from "@/server/markdown/render";
 import { buildDirectusAssetUrl } from "@/server/directus-auth";
 import {
 	isSpecialArticleSlug,
@@ -47,8 +47,11 @@ if (articleId) {
 				tags: safeCsv(rawArticle.tags),
 				author: readAuthor(authorMap, rawArticle.author_id),
 			};
-			articleHtml = await renderMarkdownHtml(
+			articleHtml = await renderMarkdown(
 				String(rawArticle.body_markdown || ""),
+				{
+					target: "page",
+				},
 			);
 		} else {
 			Astro.response.status = 404;
@@ -84,7 +87,10 @@ const coverUrl = article?.cover_url
 		</div>
 	) : (
 		<>
-			<article class="card-base p-6 md:p-8 rounded-[var(--radius-large)] mb-4">
+			<article
+				id="post-container"
+				class="card-base p-6 md:p-8 rounded-[var(--radius-large)] mb-4"
+			>
 				<div
 					id="article-manage-root"
 					class="hidden mb-4 flex items-center justify-end"

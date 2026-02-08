@@ -8,6 +8,8 @@ const ALLOWED_TAGS = sanitizeHtml.defaults.allowedTags.concat([
 	"section",
 	"details",
 	"summary",
+	"del",
+	"spoiler",
 	"kbd",
 	"sup",
 	"sub",

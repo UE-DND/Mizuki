@@ -16,6 +16,13 @@ import { pluginLanguageBadge } from "../../plugins/expressive-code/language-badg
 import { rehypePlugins, remarkPlugins } from "./pipeline";
 import { sanitizeMarkdownHtml } from "./sanitize";
 
+export type MarkdownRenderTarget = "page" | "feed" | "encrypted";
+
+export type RenderMarkdownOptions = {
+	target?: MarkdownRenderTarget;
+	site?: URL;
+};
+
 const markdownProcessor = unified()
 	.use(remarkParse)
 	.use(remarkPlugins)
@@ -94,7 +101,28 @@ function toAbsoluteSrc(src: string, site: URL): string {
 	return new URL(`/${normalized}`, site).href;
 }
 
-export async function renderMarkdownHtml(markdown: string): Promise<string> {
+function normalizeFeedHtml(html: string, site?: URL): string {
+	if (!html) {
+		return "";
+	}
+	const root = htmlParser.parse(html);
+	if (site) {
+		for (const image of root.querySelectorAll("img")) {
+			const src = image.getAttribute("src");
+			if (!src) {
+				continue;
+			}
+			image.setAttribute("src", toAbsoluteSrc(src, site));
+		}
+	}
+	return sanitizeMarkdownHtml(root.toString());
+}
+
+export async function renderMarkdown(
+	markdown: string,
+	options: RenderMarkdownOptions = {},
+): Promise<string> {
+	const { target = "page", site } = options;
 	const source = String(markdown || "");
 	if (!source.trim()) {
 		return "";
@@ -102,6 +130,14 @@ export async function renderMarkdownHtml(markdown: string): Promise<string> {
 
 	const rendered = await markdownProcessor.process(source);
 	const sanitizedHtml = sanitizeMarkdownHtml(String(rendered.value || ""));
+	if (!sanitizedHtml) {
+		return "";
+	}
+
+	if (target === "feed") {
+		// Feed 仅保留纯净 HTML 代码块，不注入 Expressive Code UI 包装。
+		return normalizeFeedHtml(sanitizedHtml, site);
+	}
 
 	if (!sanitizedHtml.includes("<pre><code")) {
 		return sanitizedHtml;
@@ -117,23 +153,13 @@ export async function renderMarkdownHtml(markdown: string): Promise<string> {
 	}
 }
 
+export async function renderMarkdownHtml(markdown: string): Promise<string> {
+	return renderMarkdown(markdown, { target: "page" });
+}
+
 export async function renderMarkdownForFeed(
 	markdown: string,
 	site: URL,
 ): Promise<string> {
-	const html = await renderMarkdownHtml(markdown);
-	if (!html) {
-		return "";
-	}
-
-	const root = htmlParser.parse(html);
-	for (const image of root.querySelectorAll("img")) {
-		const src = image.getAttribute("src");
-		if (!src) {
-			continue;
-		}
-		image.setAttribute("src", toAbsoluteSrc(src, site));
-	}
-
-	return sanitizeMarkdownHtml(root.toString());
+	return renderMarkdown(markdown, { target: "feed", site });
 }

@@ -1,3 +1,5 @@
+import { scrollToHashBelowTocBaseline } from "@/utils/hash-scroll";
+
 /**
  * 导航工具函数
  * 提供统一的页面导航功能，支持 Swup 无刷新跳转
@@ -33,10 +35,7 @@ export function navigateToPage(
 
 	// 如果是锚点链接，滚动到对应位置
 	if (url.startsWith("#")) {
-		const element = document.getElementById(url.slice(1));
-		if (element) {
-			element.scrollIntoView({ behavior: "smooth" });
-		}
+		scrollToHashBelowTocBaseline(url, { behavior: "smooth" });
 		return;
 	}
 

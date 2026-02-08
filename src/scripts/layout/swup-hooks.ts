@@ -1,4 +1,5 @@
 import type { LayoutController } from "./layout-controller";
+import { scrollToHashBelowTocBaseline } from "@/utils/hash-scroll";
 
 type SwupIntentSourceDependencies = {
 	controller: LayoutController;
@@ -26,6 +27,7 @@ export function setupSwupIntentSource(
 				};
 			};
 			mobileTOCInit?: () => void;
+			floatingTOCInit?: () => void;
 		};
 
 	const swup = runtimeWindow.swup;
@@ -42,23 +44,20 @@ export function setupSwupIntentSource(
 		deps.checkKatex();
 		deps.initKatexScrollbars();
 
-		const tocWrapper = document.getElementById("toc-wrapper");
-		const isArticlePage = tocWrapper !== null;
+		const tocElement = document.querySelector("table-of-contents") as
+			| (HTMLElement & { init?: () => void })
+			| null;
+		const hasAnyTOCRuntime =
+			typeof tocElement?.init === "function" ||
+			typeof runtimeWindow.mobileTOCInit === "function" ||
+			typeof runtimeWindow.floatingTOCInit === "function";
 
-		if (isArticlePage) {
-			const tocElement = document.querySelector("table-of-contents") as
-				| (HTMLElement & { init?: () => void })
-				| null;
-			if (typeof tocElement?.init === "function") {
-				window.setTimeout(() => {
-					tocElement.init?.();
-				}, 100);
-			}
-			if (typeof runtimeWindow.mobileTOCInit === "function") {
-				window.setTimeout(() => {
-					runtimeWindow.mobileTOCInit?.();
-				}, 100);
-			}
+		if (hasAnyTOCRuntime) {
+			window.setTimeout(() => {
+				tocElement?.init?.();
+				runtimeWindow.mobileTOCInit?.();
+				runtimeWindow.floatingTOCInit?.();
+			}, 100);
 		}
 	});
 
@@ -109,9 +108,9 @@ export function setupSwupIntentSource(
 		const hash = window.location.hash?.slice(1);
 		if (hash) {
 			requestAnimationFrame(() => {
-				document
-					.getElementById(hash)
-					?.scrollIntoView({ behavior: "instant" });
+				scrollToHashBelowTocBaseline(hash, {
+					behavior: "instant",
+				});
 			});
 		} else {
 			window.scrollTo({ top: 0, behavior: "instant" as ScrollBehavior });

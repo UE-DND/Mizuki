@@ -1,6 +1,9 @@
 <script lang="ts">
 import Icon from "@iconify/svelte";
 import { onMount } from "svelte";
+import { scrollElementBelowTocBaseline } from "@/utils/hash-scroll";
+import { collectMarkdownHeadings } from "@/utils/markdown-toc";
+import { getTocBaselineOffset } from "@/utils/toc-offset";
 import I18nKey from "../i18n/i18nKey";
 import { i18n } from "../i18n/translation";
 import { navigateToPage } from "../utils/navigation-utils";
@@ -24,6 +27,7 @@ let isHomePage = false;
 let swupReady = false;
 let useJapaneseBadge = false;
 let tocDepth = 3;
+let headingElements: HTMLElement[] = [];
 
 const togglePanel = async () => {
 	await panelManager.togglePanel("mobile-toc-panel");
@@ -37,14 +41,8 @@ const generateTOC = () => {
 	// 获取配置
 	useJapaneseBadge = window.siteConfig?.toc?.useJapaneseBadge ?? false;
 	tocDepth = window.siteConfig?.toc?.depth ?? 3;
-
-	const headings = document.querySelectorAll("h1, h2, h3, h4, h5, h6");
-	const items: Array<{
-		id: string;
-		text: string;
-		level: number;
-		badge?: string;
-	}> = [];
+	const collected = collectMarkdownHeadings({ maxDepth: tocDepth });
+	headingElements = collected.map((item) => item.element);
 	const japaneseHiragana = [
 		"ア",
 		"イ",
@@ -68,34 +66,23 @@ const generateTOC = () => {
 		"ト",
 	];
 	let h1Count = 0;
-
-	headings.forEach((heading) => {
-		if (heading.id) {
-			const level = Number.parseInt(heading.tagName.charAt(1), 10);
-
-			// 根据depth配置过滤标题
-			if (level > tocDepth) {
-				return;
+	tocItems = collected.map((heading) => {
+		let badge = "";
+		if (heading.level === 1) {
+			h1Count++;
+			if (useJapaneseBadge && h1Count - 1 < japaneseHiragana.length) {
+				badge = japaneseHiragana[h1Count - 1];
+			} else {
+				badge = h1Count.toString();
 			}
-
-			const text = (heading.textContent || "").replace(/#+\s*$/, "");
-			let badge = "";
-
-			// 只为H1标题生成badge
-			if (level === 1) {
-				h1Count++;
-				if (useJapaneseBadge && h1Count - 1 < japaneseHiragana.length) {
-					badge = japaneseHiragana[h1Count - 1];
-				} else {
-					badge = h1Count.toString();
-				}
-			}
-
-			items.push({ id: heading.id, text, level, badge });
 		}
+		return {
+			id: heading.id,
+			text: heading.text,
+			level: heading.level,
+			badge,
+		};
 	});
-
-	tocItems = items;
 };
 
 const generatePostList = () => {
@@ -145,14 +132,8 @@ const scrollToHeading = (id: string) => {
 		// 关闭面板
 		setPanelVisibility(false);
 
-		// 滚动到目标位置，考虑导航栏高度
-		const offset = 80;
-		const elementPosition = element.offsetTop - offset;
-
-		window.scrollTo({
-			top: elementPosition,
-			behavior: "smooth",
-		});
+		// 滚动到目标位置，以导航栏下沿为基线
+		scrollElementBelowTocBaseline(element, { behavior: "smooth" });
 	}
 };
 
@@ -165,15 +146,14 @@ const navigateToPost = (url: string) => {
 };
 
 const updateActiveHeading = () => {
-	const headings = document.querySelectorAll("h1, h2, h3, h4, h5, h6");
-	const scrollTop = window.scrollY;
-	const offset = 100;
+	const baselineY = window.scrollY + getTocBaselineOffset();
 
 	let currentActiveId = "";
-	headings.forEach((heading) => {
+	headingElements.forEach((heading) => {
 		if (heading.id) {
-			const elementTop = (heading as HTMLElement).offsetTop - offset;
-			if (scrollTop >= elementTop) {
+			const elementTop =
+				heading.getBoundingClientRect().top + window.scrollY;
+			if (baselineY >= elementTop) {
 				currentActiveId = heading.id;
 			}
 		}
@@ -183,8 +163,6 @@ const updateActiveHeading = () => {
 };
 
 const setupIntersectionObserver = () => {
-	const headings = document.querySelectorAll("h1, h2, h3, h4, h5, h6");
-
 	if (observer) {
 		observer.disconnect();
 	}
@@ -198,12 +176,12 @@ const setupIntersectionObserver = () => {
 			});
 		},
 		{
-			rootMargin: "-80px 0px -80% 0px",
+			rootMargin: `-${getTocBaselineOffset()}px 0px -80% 0px`,
 			threshold: 0,
 		},
 	);
 
-	headings.forEach((heading) => {
+	headingElements.forEach((heading) => {
 		if (heading.id) {
 			observer.observe(heading);
 		}
@@ -211,6 +189,8 @@ const setupIntersectionObserver = () => {
 };
 
 let swupListenersRegistered = false;
+let swupPageViewHandler: (() => void) | null = null;
+let popStateHandler: (() => void) | null = null;
 
 const setupSwupListeners = () => {
 	if (
@@ -221,22 +201,22 @@ const setupSwupListeners = () => {
 		const swup = window.swup;
 
 		// 只监听页面视图事件，避免重复触发
-		swup.hooks.on("page:view", () => {
+		swupPageViewHandler = () => {
 			// 延迟执行，确保页面已完全加载
 			setTimeout(() => {
 				init();
 			}, 200);
-		});
+		};
+		swup.hooks.on("page:view", swupPageViewHandler);
 
 		swupListenersRegistered = true;
-		console.log("MobileTOC Swup listener registered");
 	} else if (!swupListenersRegistered) {
 		// 降级处理：监听普通页面切换事件
-		window.addEventListener("popstate", () => {
+		popStateHandler = () => {
 			setTimeout(init, 200);
-		});
+		};
+		window.addEventListener("popstate", popStateHandler);
 		swupListenersRegistered = true;
-		console.log("MobileTOC fallback listener registered");
 	}
 };
 
@@ -301,12 +281,16 @@ onMount(() => {
 		window.removeEventListener("scroll", updateActiveHeading);
 
 		// 清理Swup事件监听器
-		if (window.swup) {
-			window.swup.hooks.off("page:view");
+		if (window.swup && swupPageViewHandler) {
+			window.swup.hooks.off("page:view", swupPageViewHandler);
+			swupPageViewHandler = null;
 		}
 
 		// 清理popstate事件监听器
-		window.removeEventListener("popstate", init);
+		if (popStateHandler) {
+			window.removeEventListener("popstate", popStateHandler);
+			popStateHandler = null;
+		}
 		swupListenersRegistered = false;
 	};
 });
