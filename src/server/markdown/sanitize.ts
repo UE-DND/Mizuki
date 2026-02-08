@@ -24,6 +24,8 @@ const ALLOWED_ATTRIBUTES: sanitizeHtml.IOptions["allowedAttributes"] = {
 		"aria-hidden",
 		"data-*",
 	],
+	th: ["align"],
+	td: ["align"],
 	a: [
 		...(sanitizeHtml.defaults.allowedAttributes?.a || []),
 		"target",

@@ -33,17 +33,23 @@
     }
   }
 
-  /* --- 代码块 --- */
+  /* --- 代码 --- */
   code {
-    @apply bg-[var(--inline-code-bg)] text-[var(--inline-code-color)] px-1 py-0.5 rounded-md overflow-hidden;
-
     font-family: "JetBrains Mono Variable", "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
 
     &:before,
     &:after {
       content: none;
     }
+  }
 
+  /* --- 行内代码 --- */
+  :not(pre) > code {
+    @apply bg-[var(--inline-code-bg)] text-[var(--inline-code-color)] px-1 py-0.5 rounded-md overflow-hidden;
+  }
+
+  /* --- 行间代码块 --- */
+  pre > code {
     counter-reset: line;
     span.line {
       &:before {
@@ -130,7 +136,22 @@
     background-color: var(--btn-regular-bg);
     color: var(--btn-content);
     font-weight: 600;
+  }
+
+  th:not([align]) {
     text-align: left;
+  }
+
+  :is(th, td)[align="left"] {
+    text-align: left;
+  }
+
+  :is(th, td)[align="center"] {
+    text-align: center;
+  }
+
+  :is(th, td)[align="right"] {
+    text-align: right;
   }
 
   tr:last-child td {
