@@ -39,6 +39,10 @@
   margin-bottom: 1.75rem;
 }
 
+:root.dark .login-overlay-message {
+  color: oklch(0.9 0.02 var(--hue));
+}
+
 .login-overlay-actions {
   display: flex;
   gap: 0.75rem;
@@ -70,6 +74,10 @@
 .login-overlay-cancel {
   background: var(--btn-regular-bg);
   color: var(--deep-text);
+}
+
+:root.dark .login-overlay-cancel {
+  color: oklch(0.9 0.02 var(--hue));
 }
 
 .login-overlay-cancel:hover {

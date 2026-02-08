@@ -112,6 +112,18 @@ export default defineConfig({
 			assetsInlineLimit: 4096,
 
 			rollupOptions: {
+				output: {
+					manualChunks(id) {
+						if (
+							id.includes("astro/dist/core/middleware/index.js") ||
+							id.includes("astro/dist/core/middleware/sequence.js")
+						) {
+							return "astro-middleware-core";
+						}
+
+						return undefined;
+					},
+				},
 				onwarn(warning, warn) {
 					if (
 						warning.message.includes(
