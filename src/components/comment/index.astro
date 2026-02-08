@@ -75,7 +75,7 @@ const hasDirectusTarget = Boolean(moduleName && contentId);
 <script>
 	import { getAuthState, subscribeAuthState } from "@/scripts/auth-state";
 	import type { AuthState } from "@/scripts/auth-state";
-	import { showLoginOverlay } from "@/scripts/login-overlay";
+	import { showAuthRequiredDialog } from "@/scripts/dialogs";
 
 	type CommentAuthor = {
 		name?: string | null;
@@ -290,7 +290,7 @@ const hasDirectusTarget = Boolean(moduleName && contentId);
 			if (!bodyEl || !submitEl || !parentIdEl) return;
 
 			if (!currentUserId) {
-				showLoginOverlay("请先登录后再发表评论。");
+				showAuthRequiredDialog("请先登录后再发表评论。");
 				return;
 			}
 

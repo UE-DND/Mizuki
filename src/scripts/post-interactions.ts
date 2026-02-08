@@ -3,7 +3,12 @@ import {
 	subscribeAuthState,
 	type AuthState,
 } from "@/scripts/auth-state";
-import { showLoginOverlay } from "@/scripts/login-overlay";
+import {
+	showAuthRequiredDialog,
+	showConfirmDialog,
+	showFormDialog,
+	showNoticeDialog,
+} from "@/scripts/dialogs";
 
 type CalendarFilterDetail = {
 	type: "day" | "month" | "year";
@@ -123,8 +128,11 @@ function updateCardActionVisibility(state: AuthState) {
 	const cards = document.querySelectorAll<HTMLElement>("[data-post-card]");
 	cards.forEach((card) => {
 		const authorId = String(card.dataset.authorId || "");
-		const deleteBtn = card.querySelector<HTMLButtonElement>(
-			'button[data-action="delete-article"]',
+		const deleteOwnBtn = card.querySelector<HTMLButtonElement>(
+			'button[data-action="delete-own-article"]',
+		);
+		const deleteAdminBtn = card.querySelector<HTMLButtonElement>(
+			'button[data-action="delete-admin-article"]',
 		);
 		const blockBtn = card.querySelector<HTMLButtonElement>(
 			'button[data-action="block-user"]',
@@ -136,13 +144,14 @@ function updateCardActionVisibility(state: AuthState) {
 			'button[data-action="toggle-like"]',
 		);
 
-		if (deleteBtn) {
-			const canDelete =
-				state.isLoggedIn &&
-				Boolean(state.userId) &&
-				(state.isAdmin || state.userId === authorId);
-			deleteBtn.classList.toggle("hidden", !canDelete);
-		}
+		const isOwner =
+			state.isLoggedIn &&
+			Boolean(state.userId) &&
+			state.userId === authorId;
+		const isAdminOnly = state.isLoggedIn && state.isAdmin && !isOwner;
+
+		deleteOwnBtn?.classList.toggle("hidden", !isOwner);
+		deleteAdminBtn?.classList.toggle("hidden", !isAdminOnly);
 
 		if (blockBtn) {
 			const canBlock =
@@ -331,7 +340,7 @@ function setupPostCardActions() {
 		);
 		if (summary && !currentAuthState.isLoggedIn) {
 			event.preventDefault();
-			showLoginOverlay();
+			showAuthRequiredDialog();
 		}
 	});
 
@@ -358,7 +367,7 @@ function setupPostCardActions() {
 		}
 
 		if (!currentAuthState.isLoggedIn) {
-			showLoginOverlay();
+			showAuthRequiredDialog();
 			return;
 		}
 
@@ -366,19 +375,47 @@ function setupPostCardActions() {
 		details?.removeAttribute("open");
 
 		try {
-			if (action === "delete-article") {
+			if (
+				action === "delete-own-article" ||
+				action === "delete-admin-article"
+			) {
 				const canDelete =
 					currentAuthState.isAdmin ||
 					currentAuthState.userId === authorId;
 				if (!canDelete) {
-					alert("无权限删除该文章。");
+					await showNoticeDialog({
+						ariaLabel: "权限提示",
+						message: "无权限删除该文章。",
+					});
 					return;
 				}
-				if (!window.confirm("确认删除这篇文章？删除后不可恢复。")) {
+				const confirmText =
+					action === "delete-admin-article"
+						? "确认以管理员身份删除此文章？删除后不可恢复。"
+						: "确认删除这篇文章？删除后不可恢复。";
+				const confirmed = await showConfirmDialog({
+					ariaLabel: "删除确认",
+					message: confirmText,
+					confirmText: "确认删除",
+					cancelText: "取消",
+					confirmVariant: "danger",
+				});
+				if (!confirmed) {
 					return;
 				}
-				await requestDeleteArticle(articleId);
-				removeCardByArticleId(articleId);
+				try {
+					await requestDeleteArticle(articleId);
+					removeCardByArticleId(articleId);
+				} catch (error) {
+					const message =
+						error instanceof Error
+							? error.message
+							: "删除失败，请稍后重试。";
+					await showNoticeDialog({
+						ariaLabel: "删除失败",
+						message,
+					});
+				}
 				return;
 			}
 
@@ -391,25 +428,85 @@ function setupPostCardActions() {
 
 			if (action === "block-user") {
 				if (!authorId || currentAuthState.userId === authorId) {
-					alert("不能屏蔽该用户。");
+					await showNoticeDialog({
+						ariaLabel: "操作提示",
+						message: "不能屏蔽该用户。",
+					});
 					return;
 				}
-				const reason = window.prompt("屏蔽原因（可选）：", "") || "";
+				const formValues = await showFormDialog({
+					ariaLabel: "屏蔽用户",
+					message: "可选填写屏蔽原因，确认后将隐藏该用户的文章。",
+					confirmText: "确认屏蔽",
+					cancelText: "取消",
+					confirmVariant: "danger",
+					fields: [
+						{
+							name: "reason",
+							label: "屏蔽原因（可选）",
+							type: "textarea",
+							placeholder: "例如：恶意刷屏、骚扰等",
+							rows: 3,
+						},
+					],
+				});
+				if (!formValues) {
+					return;
+				}
+				const reason = String(formValues.reason || "").trim();
 				await requestBlockUser(authorId, reason);
 				removeCardsByAuthorId(authorId);
+				await showNoticeDialog({
+					ariaLabel: "操作成功",
+					message: "已屏蔽该用户。",
+				});
 				return;
 			}
 
 			if (action === "report-content") {
-				const rawReason =
-					window.prompt(
-						"举报原因（spam/abuse/hate/violence/copyright/other）：",
-						"other",
-					) || "";
-				if (!rawReason.trim()) {
+				const formValues = await showFormDialog({
+					ariaLabel: "举报内容",
+					message: "请选择举报原因，可选填写补充说明。",
+					confirmText: "提交举报",
+					cancelText: "取消",
+					confirmVariant: "danger",
+					fields: [
+						{
+							name: "reason",
+							label: "举报原因",
+							type: "select",
+							required: true,
+							value: "other",
+							options: [
+								{ label: "垃圾信息（spam）", value: "spam" },
+								{ label: "辱骂骚扰（abuse）", value: "abuse" },
+								{ label: "仇恨内容（hate）", value: "hate" },
+								{
+									label: "暴力内容（violence）",
+									value: "violence",
+								},
+								{
+									label: "版权问题（copyright）",
+									value: "copyright",
+								},
+								{ label: "其他（other）", value: "other" },
+							],
+						},
+						{
+							name: "detail",
+							label: "补充说明（可选）",
+							type: "textarea",
+							placeholder: "可填写更多背景信息",
+							rows: 4,
+						},
+					],
+				});
+				if (!formValues) {
 					return;
 				}
-				const reason = rawReason.trim().toLowerCase();
+				const reason = String(formValues.reason || "")
+					.trim()
+					.toLowerCase();
 				const normalizedReason = [
 					"spam",
 					"abuse",
@@ -420,21 +517,27 @@ function setupPostCardActions() {
 				].includes(reason)
 					? reason
 					: "other";
-				const detail = window.prompt("补充说明（可选）：", "") || "";
+				const detail = String(formValues.detail || "").trim();
 				await requestReportArticle({
 					targetId: articleId,
 					targetUserId: authorId,
 					reason: normalizedReason,
 					detail,
 				});
-				alert("已提交举报，我们会尽快处理。");
+				await showNoticeDialog({
+					ariaLabel: "举报成功",
+					message: "已提交举报，我们会尽快处理。",
+				});
 			}
 		} catch (error) {
 			const message =
 				error instanceof Error
 					? error.message
 					: "操作失败，请稍后重试。";
-			alert(message);
+			await showNoticeDialog({
+				ariaLabel: "操作失败",
+				message,
+			});
 		}
 	});
 

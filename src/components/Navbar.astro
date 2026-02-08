@@ -104,7 +104,7 @@ const links: NavBarLink[] = navBarConfig.links
         subscribeAuthState,
         type AuthState,
     } from "@/scripts/auth-state";
-    import { showLoginOverlay } from "@/scripts/login-overlay";
+    import { showAuthRequiredDialog } from "@/scripts/dialogs";
 
 	const searchContainer = document.getElementById("search-container");
 	const navbarLinksContainer = document.getElementById("navbar-links-container");
@@ -227,7 +227,7 @@ const links: NavBarLink[] = navBarConfig.links
         const anchor = (e.target as Element).closest?.("a[data-needs-login]");
         if (anchor) {
             e.preventDefault();
-            showLoginOverlay();
+            showAuthRequiredDialog();
         }
     });
 
