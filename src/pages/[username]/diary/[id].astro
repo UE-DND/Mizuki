@@ -173,7 +173,7 @@ if (!username || !id) {
 						window.location.href = `/${authState.username}/diary/`;
 						return;
 					}
-					window.location.href = "/login/";
+					window.location.href = "/me/";
 				} catch (error) {
 					console.error("[diary] delete failed:", error);
 					window.alert("删除失败，请稍后重试");

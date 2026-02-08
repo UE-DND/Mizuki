@@ -138,3 +138,27 @@ export function initLayoutRuntime(): void {
 }
 
 initLayoutRuntime();
+
+// ---------------------------------------------------------------------------
+// Dynamic page-specific initialization
+//
+// Some pages (e.g. /me/) have page-specific modules that must re-initialise
+// after every Swup navigation.  We cannot rely on SwupHeadPlugin to inject
+// and execute a new <script type="module"> during Swup transitions — ES
+// modules only execute once per URL per document.
+//
+// Instead, we register a global listener here (guaranteed to be loaded on
+// the very first full page load) and dynamically import the page module on
+// demand.
+// ---------------------------------------------------------------------------
+
+const runDynamicPageInit = async (): Promise<void> => {
+	const path = window.location.pathname.replace(/\/+$/, "") || "/";
+	if (path === "/me") {
+		const { initMePage } = await import("@/scripts/me-page");
+		initMePage();
+	}
+};
+
+void runDynamicPageInit();
+document.addEventListener("astro:after-swap", () => void runDynamicPageInit());

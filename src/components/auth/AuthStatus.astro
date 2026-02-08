@@ -49,6 +49,7 @@ import { url } from "../../utils/url-utils";
 
 <script>
 import { emitAuthState } from "@/scripts/auth-state";
+import { buildLoginUrl } from "@utils/login-url";
 
 const API_ME = "/api/auth/me/";
 const API_LOGOUT = "/api/auth/logout/";
@@ -67,25 +68,6 @@ type AuthPayload = {
 };
 
 let initTask: Promise<void> | null = null;
-
-	function buildLoginHref() {
-		try {
-			const pathname = String(window.location.pathname || "/");
-			const search = String(window.location.search || "");
-			const hash = String(window.location.hash || "");
-			const redirect = `${pathname}${search}${hash}` || "/";
-			if (!redirect.startsWith("/") || redirect.startsWith("//")) {
-				return "/login/";
-			}
-			if (pathname === "/login/" || pathname === "/login") {
-				return "/login/";
-			}
-			const params = new URLSearchParams({ redirect });
-			return `/login/?${params.toString()}`;
-		} catch {
-			return "/login/";
-		}
-	}
 
 		function publishAuthState(
 			isLoggedIn: boolean,
@@ -123,7 +105,7 @@ let initTask: Promise<void> | null = null;
 			publishAuthState(isLoggedIn, isAdmin, userId, username);
 			return;
 		}
-		loginEl.setAttribute("href", buildLoginHref());
+		loginEl.setAttribute("href", buildLoginUrl());
 
 			if (isLoggedIn && user) {
 				loginEl.classList.add("hidden");

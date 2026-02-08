@@ -104,13 +104,13 @@ const links: NavBarLink[] = navBarConfig.links
         subscribeAuthState,
         type AuthState,
     } from "@/scripts/auth-state";
+    import { showLoginOverlay } from "@/scripts/login-overlay";
 
 	const searchContainer = document.getElementById("search-container");
 	const navbarLinksContainer = document.getElementById("navbar-links-container");
 
     const updateUserRouteLinks = (username: string, isLoggedIn: boolean): void => {
         const cleanUsername = String(username || "").trim();
-        const fallbackHref = isLoggedIn ? "/me/" : "/login/";
         const anchors = Array.from(
             document.querySelectorAll<HTMLAnchorElement>("a[href]"),
         );
@@ -118,12 +118,19 @@ const links: NavBarLink[] = navBarConfig.links
             const rawHref = anchor.getAttribute("href") || "";
             if (!rawHref.startsWith("/")) return;
             if (rawHref.includes("/__user__/")) {
-                anchor.setAttribute(
-                    "href",
-                    cleanUsername
-                        ? rawHref.replace("/__user__/", `/${cleanUsername}/`)
-                        : fallbackHref,
-                );
+                if (cleanUsername) {
+                    anchor.setAttribute(
+                        "href",
+                        rawHref.replace("/__user__/", `/${cleanUsername}/`),
+                    );
+                    anchor.removeAttribute("data-needs-login");
+                } else if (!isLoggedIn) {
+                    anchor.setAttribute("href", "#");
+                    anchor.setAttribute("data-needs-login", "");
+                } else {
+                    anchor.setAttribute("href", "/me/");
+                    anchor.removeAttribute("data-needs-login");
+                }
                 return;
             }
             let pathname = rawHref;
@@ -137,22 +144,29 @@ const links: NavBarLink[] = navBarConfig.links
             }
             if (pathname === "/me" || pathname === "/me/") {
                 if (hash === "anime" || hash === "diary" || hash === "albums") {
-                    anchor.setAttribute(
-                        "href",
-                        cleanUsername
-                            ? `/${cleanUsername}/${hash}/`
-                            : fallbackHref,
-                    );
+                    if (cleanUsername) {
+                        anchor.setAttribute("href", `/${cleanUsername}/${hash}/`);
+                        anchor.removeAttribute("data-needs-login");
+                    } else if (!isLoggedIn) {
+                        anchor.setAttribute("href", "#");
+                        anchor.setAttribute("data-needs-login", "");
+                    }
                 }
                 return;
             }
             const legacyTarget = ["/anime", "/anime/", "/diary", "/diary/", "/albums", "/albums/"];
             if (!legacyTarget.includes(pathname)) return;
             const target = pathname.replace(/^\//, "").replace(/\/$/, "");
-            anchor.setAttribute(
-                "href",
-                cleanUsername ? `/${cleanUsername}/${target}/` : fallbackHref,
-            );
+            if (cleanUsername) {
+                anchor.setAttribute("href", `/${cleanUsername}/${target}/`);
+                anchor.removeAttribute("data-needs-login");
+            } else if (!isLoggedIn) {
+                anchor.setAttribute("href", "#");
+                anchor.setAttribute("data-needs-login", "");
+            } else {
+                anchor.setAttribute("href", "/me/");
+                anchor.removeAttribute("data-needs-login");
+            }
         });
     };
 
@@ -203,6 +217,18 @@ const links: NavBarLink[] = navBarConfig.links
     applyAuthRouting(initialAuth);
     subscribeAuthState((state) => {
         applyAuthRouting(state);
+    });
+
+    document.addEventListener("astro:after-swap", () => {
+        applyAuthRouting(getAuthState());
+    });
+
+    document.addEventListener("click", (e) => {
+        const anchor = (e.target as Element).closest?.("a[data-needs-login]");
+        if (anchor) {
+            e.preventDefault();
+            showLoginOverlay();
+        }
     });
 
 	if (searchContainer && navbarLinksContainer) {

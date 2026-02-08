@@ -75,45 +75,52 @@ const hasDirectusTarget = Boolean(moduleName && contentId);
 <script>
 	import { getAuthState, subscribeAuthState } from "@/scripts/auth-state";
 	import type { AuthState } from "@/scripts/auth-state";
+	import { showLoginOverlay } from "@/scripts/login-overlay";
 
-	const root = document.getElementById("directus-comment-root");
-	if (!root) {
-		// no-op
-	} else {
+	type CommentAuthor = {
+		name?: string | null;
+		avatar_url?: string | null;
+	};
+	type CommentItem = {
+		id: string;
+		author_id?: string | null;
+		author?: CommentAuthor | null;
+		date_created?: string | null;
+		body?: string | null;
+		replies?: CommentItem[] | null;
+	};
+
+	const runtimeWindow = window as Window &
+		typeof globalThis & {
+			_directusCommentAuthSubscribed?: boolean;
+			_directusCommentApplyAuth?: (state: AuthState) => void;
+		};
+
+	function initComments() {
+		const root = document.getElementById("directus-comment-root");
+		if (!root) return;
+
 		const moduleName = String(root.dataset.module || "").trim();
 		const contentId = String(root.dataset.contentId || "").trim();
 		const directusEnabled = root.dataset.directusEnabled === "1";
 
-			const commentListEl = document.getElementById("comment-list");
-			const commentEmptyEl = document.getElementById("comment-empty");
-			const formEl = document.getElementById(
-				"comment-create-form",
-			) as HTMLFormElement | null;
-			const bodyEl = document.getElementById(
-				"comment-body",
-			) as HTMLTextAreaElement | null;
-			const parentIdEl = document.getElementById(
-				"comment-parent-id",
-			) as HTMLInputElement | null;
-			const submitEl = document.getElementById(
-				"comment-submit",
-			) as HTMLButtonElement | null;
+		const commentListEl = document.getElementById("comment-list");
+		const commentEmptyEl = document.getElementById("comment-empty");
+		const formEl = document.getElementById(
+			"comment-create-form",
+		) as HTMLFormElement | null;
+		const bodyEl = document.getElementById(
+			"comment-body",
+		) as HTMLTextAreaElement | null;
+		const parentIdEl = document.getElementById(
+			"comment-parent-id",
+		) as HTMLInputElement | null;
+		const submitEl = document.getElementById(
+			"comment-submit",
+		) as HTMLButtonElement | null;
 		const formErrorEl = document.getElementById("comment-form-error");
 		const replyHintEl = document.getElementById("comment-reply-hint");
 		const replyCancelEl = document.getElementById("comment-reply-cancel");
-
-		type CommentAuthor = {
-			name?: string | null;
-			avatar_url?: string | null;
-		};
-		type CommentItem = {
-			id: string;
-			author_id?: string | null;
-			author?: CommentAuthor | null;
-			date_created?: string | null;
-			body?: string | null;
-			replies?: CommentItem[] | null;
-		};
 
 		let currentUserId = "";
 		let isAdmin = false;
@@ -184,7 +191,7 @@ const hasDirectusTarget = Boolean(moduleName && contentId);
 			const canDelete = canDeleteComment(item);
 			if (!canReply && !canDelete) return "";
 
-				const menuActions: string[] = [];
+			const menuActions: string[] = [];
 			if (canReply) {
 				menuActions.push(
 					`<button type="button" class="comment-action w-full text-left px-3 py-2 rounded-lg text-sm hover:bg-black/5 dark:hover:bg-white/10" data-action="reply" data-id="${escapeHtml(item.id)}" data-author="${escapeHtml(item.author?.name || "用户")}">回复</button>`,
@@ -242,7 +249,9 @@ const hasDirectusTarget = Boolean(moduleName && contentId);
 				return;
 			}
 			commentEmptyEl.classList.add("hidden");
-			commentListEl.innerHTML = comments.map((item) => renderCommentNode(item, 0)).join("");
+			commentListEl.innerHTML = comments
+				.map((item) => renderCommentNode(item, 0))
+				.join("");
 		};
 
 		const applyAuthState = (state: AuthState): void => {
@@ -250,6 +259,9 @@ const hasDirectusTarget = Boolean(moduleName && contentId);
 			isAdmin = state.isLoggedIn && state.isAdmin;
 			renderComments();
 		};
+
+		// Expose latest applyAuthState for global auth subscription
+		runtimeWindow._directusCommentApplyAuth = applyAuthState;
 
 		const loadComments = async () => {
 			if (!directusEnabled) return;
@@ -264,7 +276,9 @@ const hasDirectusTarget = Boolean(moduleName && contentId);
 					renderComments();
 					return;
 				}
-				comments = Array.isArray(data.items) ? (data.items as CommentItem[]) : [];
+				comments = Array.isArray(data.items)
+					? (data.items as CommentItem[])
+					: [];
 				renderComments();
 			} catch {
 				comments = [];
@@ -274,6 +288,12 @@ const hasDirectusTarget = Boolean(moduleName && contentId);
 
 		const submitComment = async () => {
 			if (!bodyEl || !submitEl || !parentIdEl) return;
+
+			if (!currentUserId) {
+				showLoginOverlay("请先登录后再发表评论。");
+				return;
+			}
+
 			const body = String(bodyEl.value || "").trim();
 			if (!body) {
 				setFormError("评论内容不能为空");
@@ -346,7 +366,8 @@ const hasDirectusTarget = Boolean(moduleName && contentId);
 		if (commentListEl && !commentListEl.dataset.bound) {
 			commentListEl.dataset.bound = "1";
 			commentListEl.addEventListener("click", async (event) => {
-				const target = event.target instanceof HTMLElement ? event.target : null;
+				const target =
+					event.target instanceof HTMLElement ? event.target : null;
 				if (!target) return;
 				const actionEl = target.closest(".comment-action");
 				if (!(actionEl instanceof HTMLElement)) return;
@@ -365,23 +386,18 @@ const hasDirectusTarget = Boolean(moduleName && contentId);
 			});
 		}
 
-		const init = async () => {
-			if (!directusEnabled) return;
-			applyAuthState(getAuthState());
-			await loadComments();
-		};
-
-		const runtimeWindow = window as Window & typeof globalThis & {
-			_directusCommentAuthSubscribed?: boolean;
-		};
 		if (!runtimeWindow._directusCommentAuthSubscribed) {
 			runtimeWindow._directusCommentAuthSubscribed = true;
 			subscribeAuthState((state) => {
-				applyAuthState(state);
+				runtimeWindow._directusCommentApplyAuth?.(state);
 			});
 		}
 
-		init();
-		document.addEventListener("astro:after-swap", init);
+		if (!directusEnabled) return;
+		applyAuthState(getAuthState());
+		loadComments();
 	}
+
+	initComments();
+	document.addEventListener("astro:after-swap", initComments);
 </script>

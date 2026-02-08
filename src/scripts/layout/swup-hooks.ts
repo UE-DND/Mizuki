@@ -170,7 +170,16 @@ export function setupSwupHooks(deps: SwupHookDependencies): void {
 			heightExtend.classList.remove("hidden");
 		}
 
-		window.scrollTo({ top: 0, behavior: "instant" as ScrollBehavior });
+		const hash = window.location.hash?.slice(1);
+		if (hash) {
+			requestAnimationFrame(() => {
+				document
+					.getElementById(hash)
+					?.scrollIntoView({ behavior: "instant" });
+			});
+		} else {
+			window.scrollTo({ top: 0, behavior: "instant" as ScrollBehavior });
+		}
 
 		const storedTheme = localStorage.getItem("theme") || deps.defaultTheme;
 		const isDark = storedTheme === deps.darkMode;

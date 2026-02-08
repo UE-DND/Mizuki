@@ -1,0 +1,123 @@
+/* Login overlay — 全屏覆盖层 */
+
+.login-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0, 0, 0, 0.45);
+  opacity: 0;
+  animation: login-overlay-fade-in 150ms cubic-bezier(0, 0, 0, 1) forwards;
+}
+
+.login-overlay.is-closing {
+  animation: login-overlay-fade-out 100ms cubic-bezier(0.3, 0, 1, 1) forwards;
+}
+
+.login-overlay-card {
+  width: 90%;
+  max-width: 360px;
+  padding: 2rem 1.75rem;
+  border-radius: var(--radius-large);
+  background: var(--card-bg);
+  text-align: center;
+  transform: scale(0.92) translateY(12px);
+  opacity: 0;
+  animation: login-overlay-card-in 200ms cubic-bezier(0, 0, 0, 1) 50ms forwards;
+}
+
+.login-overlay.is-closing .login-overlay-card {
+  animation: login-overlay-card-out 100ms cubic-bezier(0.3, 0, 1, 1) forwards;
+}
+
+.login-overlay-message {
+  font-size: 1rem;
+  line-height: 1.6;
+  color: var(--deep-text);
+  margin-bottom: 1.5rem;
+}
+
+.login-overlay-actions {
+  display: flex;
+  gap: 0.75rem;
+  justify-content: center;
+}
+
+.login-overlay-actions a,
+.login-overlay-actions button {
+  flex: 1;
+  max-width: 140px;
+  padding: 0.5rem 1rem;
+  border-radius: 0.5rem;
+  font-size: 0.875rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background-color 150ms;
+  border: none;
+}
+
+.login-overlay-login {
+  background: var(--primary);
+  color: white;
+}
+
+.login-overlay-login:hover {
+  filter: brightness(1.1);
+}
+
+.login-overlay-cancel {
+  background: var(--btn-regular-bg);
+  color: var(--deep-text);
+}
+
+.login-overlay-cancel:hover {
+  background: var(--btn-regular-bg-hover);
+}
+
+/* Animations */
+
+@keyframes login-overlay-fade-in {
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes login-overlay-fade-out {
+  from {
+    opacity: 1;
+  }
+  to {
+    opacity: 0;
+  }
+}
+
+@keyframes login-overlay-card-in {
+  to {
+    transform: scale(1) translateY(0);
+    opacity: 1;
+  }
+}
+
+@keyframes login-overlay-card-out {
+  from {
+    transform: scale(1) translateY(0);
+    opacity: 1;
+  }
+  to {
+    transform: scale(0.95) translateY(8px);
+    opacity: 0;
+  }
+}
+
+/* 减弱动画偏好 */
+
+@media (prefers-reduced-motion: reduce) {
+  .login-overlay,
+  .login-overlay-card,
+  .login-overlay.is-closing,
+  .login-overlay.is-closing .login-overlay-card {
+    animation-duration: 1ms !important;
+  }
+}

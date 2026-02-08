@@ -119,13 +119,13 @@ const publishedDate =
 					/>
 					<span data-like-count>{like_count}</span>
 				</button>
-				<span class="inline-flex h-6 items-center gap-1.5 text-50 text-sm md:text-base font-medium">
+				<a href={`${url}#directus-comment-root`} class="inline-flex h-6 items-center gap-1.5 text-50 text-sm md:text-base font-medium hover:text-[var(--primary)] transition-colors">
 					<Icon
 						name="material-symbols:comment-rounded"
 						class="text-lg md:text-xl"
 					/>
 					<span>{comment_count}</span>
-				</span>
+				</a>
 				<details class="relative post-card-menu">
 					<summary
 						class="list-none cursor-pointer inline-flex items-center justify-center w-8 h-8 rounded-lg text-50 hover:text-[var(--primary)] hover:bg-black/5 dark:hover:bg-white/10"

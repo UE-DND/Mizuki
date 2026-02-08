@@ -3,6 +3,7 @@ import {
 	subscribeAuthState,
 	type AuthState,
 } from "@/scripts/auth-state";
+import { showLoginOverlay } from "@/scripts/login-overlay";
 
 type CalendarFilterDetail = {
 	type: "day" | "month" | "year";
@@ -343,7 +344,7 @@ function setupPostCardActions() {
 		}
 
 		if (!currentAuthState.isLoggedIn) {
-			alert("请先登录后再操作。");
+			showLoginOverlay();
 			return;
 		}
 
