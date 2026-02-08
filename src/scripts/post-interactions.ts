@@ -321,6 +321,20 @@ function setupPostCardActions() {
 		return;
 	}
 
+	document.addEventListener("click", (event) => {
+		const target = event.target as HTMLElement | null;
+		if (!target) {
+			return;
+		}
+		const summary = target.closest<HTMLElement>(
+			".post-card-menu > summary",
+		);
+		if (summary && !currentAuthState.isLoggedIn) {
+			event.preventDefault();
+			showLoginOverlay();
+		}
+	});
+
 	document.addEventListener("click", async (event) => {
 		const target = event.target as HTMLElement | null;
 		if (!target) {

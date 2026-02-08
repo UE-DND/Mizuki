@@ -22,7 +22,7 @@ function ensureDOM(): void {
 
 	messageEl = document.createElement("p");
 	messageEl.className = "login-overlay-message";
-	messageEl.textContent = "请先登录后再操作。";
+	messageEl.textContent = "登录后才能使用相关功能哦～";
 
 	const actions = document.createElement("div");
 	actions.className = "login-overlay-actions";
@@ -98,7 +98,7 @@ export function showLoginOverlay(message?: string): void {
 		return;
 	}
 
-	messageEl.textContent = message || "请先登录后再操作。";
+	messageEl.textContent = message || "登录后才能使用相关功能哦～";
 	linkEl.href = buildLoginUrl();
 
 	savedOverflow = document.body.style.overflow;

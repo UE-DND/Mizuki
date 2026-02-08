@@ -18,8 +18,8 @@
 
 .login-overlay-card {
   width: 90%;
-  max-width: 360px;
-  padding: 2rem 1.75rem;
+  max-width: 420px;
+  padding: 2.5rem 2.25rem;
   border-radius: var(--radius-large);
   background: var(--card-bg);
   text-align: center;
@@ -33,10 +33,10 @@
 }
 
 .login-overlay-message {
-  font-size: 1rem;
+  font-size: 1.075rem;
   line-height: 1.6;
   color: var(--deep-text);
-  margin-bottom: 1.5rem;
+  margin-bottom: 1.75rem;
 }
 
 .login-overlay-actions {
@@ -48,10 +48,10 @@
 .login-overlay-actions a,
 .login-overlay-actions button {
   flex: 1;
-  max-width: 140px;
-  padding: 0.5rem 1rem;
+  max-width: 160px;
+  padding: 0.625rem 1.25rem;
   border-radius: 0.5rem;
-  font-size: 0.875rem;
+  font-size: 0.9375rem;
   font-weight: 500;
   cursor: pointer;
   transition: background-color 150ms;
