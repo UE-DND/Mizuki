@@ -161,6 +161,8 @@ const shouldRenderDedicatedPostToc =
 	shouldShowPostTocSidebar && !hasRightSidebarTocWidget;
 const hasRightSidebarContent =
 	hasRightSidebarComponents || shouldRenderDedicatedPostToc;
+const shouldFixRightSidebarSlot =
+	shouldRenderDedicatedPostToc || hasCustomRightSidebar;
 
 // 检查手机端 drawer 是否有组件
 const hasMobileDrawerComponents =
@@ -525,7 +527,7 @@ const mainContentClass = `
 
 	            <div
 	                id="right-sidebar-slot"
-	                class={`right-sidebar-container lg:self-start ${shouldRenderDedicatedPostToc ? "right-sidebar-toc-fixed" : ""} ${rightSidebarClass}`}
+	                class={`right-sidebar-container lg:self-start ${shouldFixRightSidebarSlot ? "right-sidebar-toc-fixed" : ""} ${rightSidebarClass}`}
 	            >
 	                {hasCustomRightSidebar ? (
 	                    <slot name="sidebar-right" />

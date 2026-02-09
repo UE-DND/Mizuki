@@ -139,7 +139,7 @@ export async function loadUserHomeData(
 		return { status: "not_found" };
 	}
 	const isOwnerViewing =
-		Boolean(options?.viewerId) && options.viewerId === profile.user_id;
+		options?.viewerId === profile.user_id;
 	if (!isOwnerViewing && !profile.profile_public) {
 		return { status: "permission_denied", reason: "profile_not_public" };
 	}
@@ -446,7 +446,7 @@ export async function loadUserDiaryDetail(
 		return { status: "not_found" };
 	}
 	const isOwnerViewing =
-		Boolean(options?.viewerId) && options.viewerId === profile.user_id;
+		options?.viewerId === profile.user_id;
 	if (!isOwnerViewing && !profile.profile_public) {
 		return { status: "permission_denied", reason: "profile_not_public" };
 	}
@@ -578,7 +578,7 @@ export async function loadUserAlbumDetail(
 		return { status: "not_found" };
 	}
 	const isOwnerViewing =
-		Boolean(options?.viewerId) && options.viewerId === profile.user_id;
+		options?.viewerId === profile.user_id;
 	if (!isOwnerViewing && !profile.profile_public) {
 		return { status: "permission_denied", reason: "profile_not_public" };
 	}

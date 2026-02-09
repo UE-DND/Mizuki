@@ -41,7 +41,7 @@ const uncategorizedLabel = i18n(I18nKey.uncategorized);
 	</div>
 
 	<!-- 右侧栏 slot: 筛选面板 -->
-	<div slot="sidebar-right" class="archive-filter-panel sticky top-[5.5rem] max-h-[calc(100vh-6.5rem)] overflow-y-auto flex flex-col gap-4 self-start">
+	<div slot="sidebar-right" class="archive-filter-panel max-h-[calc(100vh-6.5rem)] overflow-y-auto flex flex-col gap-4 self-start">
 		<!-- 日历 -->
 		<Calendar />
 
@@ -121,10 +121,9 @@ const uncategorizedLabel = i18n(I18nKey.uncategorized);
 		border-radius: 2px;
 	}
 
-	/* 移动端/平板端：筛选面板不 sticky */
+	/* 移动端/平板端：筛选面板回归自然高度 */
 	@media (max-width: 1279px) {
 		.archive-filter-panel {
-			position: static !important;
 			max-height: none !important;
 			overflow-y: visible !important;
 		}
@@ -162,4 +161,3 @@ const uncategorizedLabel = i18n(I18nKey.uncategorized);
 		@apply bg-[var(--primary)] text-white dark:text-black/70 cursor-default;
 	}
 </style>
-
