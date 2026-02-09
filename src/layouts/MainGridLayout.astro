@@ -1453,20 +1453,27 @@ body[data-layout-mode="collapsed"] .waves > .parallax use {
     }
 }
 
-/* 无 banner 模式下侧边栏固定 — 仅桌面端 */
+/* 无 banner 模式下侧边栏固定【桌面端】 */
 @media (min-width: 1280px) {
-    :global(body[data-layout-mode="none"] #sidebar[data-scrollable="true"]),
+    :global(body[data-layout-mode="none"] #sidebar),
     :global(body[data-layout-mode="none"] #right-sidebar),
-    :global(body[data-layout-mode="collapsed"] #sidebar[data-scrollable="true"]),
+    :global(body[data-layout-mode="collapsed"] #sidebar),
     :global(body[data-layout-mode="collapsed"] #right-sidebar) {
         position: sticky;
         top: 5.5rem;
         align-self: start;
+    }
+
+    :global(body[data-layout-mode="none"] #sidebar[data-scrollable="true"]),
+    :global(body[data-layout-mode="none"] #right-sidebar),
+    :global(body[data-layout-mode="collapsed"] #sidebar[data-scrollable="true"]),
+    :global(body[data-layout-mode="collapsed"] #right-sidebar) {
         max-height: calc(100vh - 6.5rem);
         overflow-y: auto;
         scrollbar-width: thin;
     }
 
+    /* 不可滚动时禁止溢出 */
     :global(body[data-layout-mode="none"] #sidebar[data-scrollable="false"]),
     :global(body[data-layout-mode="collapsed"] #sidebar[data-scrollable="false"]) {
         overflow-y: hidden;
@@ -1481,4 +1488,3 @@ body[data-layout-mode="collapsed"] .waves > .parallax use {
         top: auto;
     }
 }
- 
