@@ -25,6 +25,9 @@ import Layout from "./Layout.astro";
 const tocMode = siteConfig.toc.mode || "float";
 const isFloatTOC = tocMode === "float";
 const isSidebarTOC = tocMode === "sidebar";
+const isPostDetailPage = /^\/posts\/[^/]+\/?$/.test(Astro.url.pathname);
+const shouldShowPostTocSidebar =
+	siteConfig.toc.enable && isSidebarTOC && isPostDetailPage;
 
 interface Props {
 	title?: string;
@@ -138,9 +141,26 @@ const hasLeftSidebarComponents =
 	widgetManager.getComponentsByPosition("sticky", "left", "desktop").length > 0;
 
 // 检查右侧边栏是否有组件
+const rightTopComponents = widgetManager.getComponentsByPosition(
+	"top",
+	"right",
+	"desktop",
+);
+const rightStickyComponents = widgetManager.getComponentsByPosition(
+	"sticky",
+	"right",
+	"desktop",
+);
 const hasRightSidebarComponents =
-	widgetManager.getComponentsByPosition("top", "right", "desktop").length > 0 ||
-	widgetManager.getComponentsByPosition("sticky", "right", "desktop").length > 0;
+	rightTopComponents.length > 0 || rightStickyComponents.length > 0;
+const hasRightSidebarTocWidget = [
+	...rightTopComponents,
+	...rightStickyComponents,
+].some((component) => component.type === "toc");
+const shouldRenderDedicatedPostToc =
+	shouldShowPostTocSidebar && !hasRightSidebarTocWidget;
+const hasRightSidebarContent =
+	hasRightSidebarComponents || shouldRenderDedicatedPostToc;
 
 // 检查手机端 drawer 是否有组件
 const hasMobileDrawerComponents =
@@ -154,10 +174,10 @@ const hasTabletLeftSidebarComponents =
 
 // 桌面端侧边栏最终显示状态（考虑是否有组件）
 const desktopShowLeftSidebar = hasLeftSidebarComponents;
-const desktopShowRightSidebar = hasRightSidebarComponents;
+const desktopShowRightSidebar = hasRightSidebarContent;
 
 // 右侧栏有效显示：有 widget 组件 或 有自定义插槽（如归档页筛选面板）
-const effectiveShowRightSidebar = hasRightSidebarComponents || hasCustomRightSidebar;
+const effectiveShowRightSidebar = hasRightSidebarContent || hasCustomRightSidebar;
 
 // 检查侧边栏是否启用，动态调整网格布局
 const mobileShowSidebar = hasMobileDrawerComponents;
@@ -216,6 +236,16 @@ if (hasCustomRightSidebar) {
 	onload-animation
 	hidden
 	${tabletShowRightSidebar ? "md:block md:mb-4 md:max-w-[17.5rem]" : "md:hidden"}
+	${desktopShowRightSidebar ? `lg:block lg:mb-4 lg:row-start-1 lg:row-end-2 lg:max-w-[17.5rem] ${desktopShowLeftSidebar ? "lg:col-start-3 lg:col-end-4" : "lg:col-start-2 lg:col-end-3"} lg:col-span-1` : "lg:hidden"}
+`
+		.trim()
+		.replace(/\s+/g, " ");
+} else if (shouldRenderDedicatedPostToc) {
+	// 文章页侧栏 TOC：跟随主网格右列，避免浏览器对外侧绝对定位区域的可用宽度差异导致不显示
+	rightSidebarClass = `
+	onload-animation
+	hidden
+	md:hidden
 	${desktopShowRightSidebar ? `lg:block lg:mb-4 lg:row-start-1 lg:row-end-2 lg:max-w-[17.5rem] ${desktopShowLeftSidebar ? "lg:col-start-3 lg:col-end-4" : "lg:col-start-2 lg:col-end-3"} lg:col-span-1` : "lg:hidden"}
 `
 		.trim()
@@ -488,20 +518,46 @@ const mainContentClass = `
             </a>}
 
 
-            {/* 侧边栏和主内容区域容器 */}
-            <div class="contents">
-                {(mobileShowSidebar || tabletShowSidebar || desktopShowSidebar) && (
-                    <SideBar class={sidebarClass} headings={headings}></SideBar>
-                )}
+	            {/* 侧边栏和主内容区域 */}
+	            {(mobileShowSidebar || tabletShowSidebar || desktopShowSidebar) && (
+	                <SideBar class={sidebarClass} headings={headings}></SideBar>
+	            )}
 
-                <div id="right-sidebar-slot" class={`right-sidebar-container ${rightSidebarClass}`}>
-                    {hasCustomRightSidebar ? (
-                        <slot name="sidebar-right" />
-                    ) : hasRightSidebarComponents ? (
-                        <RightSideBar headings={headings}></RightSideBar>
-                    ) : null}
-                </div>
-            </div>
+	            <div
+	                id="right-sidebar-slot"
+	                class={`right-sidebar-container lg:self-start ${shouldRenderDedicatedPostToc ? "right-sidebar-toc-fixed" : ""} ${rightSidebarClass}`}
+	            >
+	                {hasCustomRightSidebar ? (
+	                    <slot name="sidebar-right" />
+	                ) : hasRightSidebarComponents ? (
+	                    <>
+	                        <RightSideBar headings={headings}></RightSideBar>
+	                        {shouldRenderDedicatedPostToc && (
+	                            <div id="toc-wrapper" class="w-full transition-swup-fade">
+	                                <div
+	                                    id="toc-inner-wrapper"
+	                                    class="w-full max-h-[calc(100vh_-_10rem)] overflow-hidden"
+	                                >
+	                                    <div id="toc-container" class="w-full transition-swup-fade">
+	                                        <TOC headings={headings}></TOC>
+	                                    </div>
+	                                </div>
+	                            </div>
+	                        )}
+	                    </>
+	                ) : shouldRenderDedicatedPostToc ? (
+	                    <div id="toc-wrapper" class="w-full transition-swup-fade">
+	                        <div
+	                            id="toc-inner-wrapper"
+	                            class="w-full max-h-[calc(100vh_-_10rem)] overflow-hidden"
+	                        >
+	                            <div id="toc-container" class="w-full transition-swup-fade">
+	                                <TOC headings={headings}></TOC>
+	                            </div>
+	                        </div>
+	                    </div>
+	                ) : null}
+	            </div>
 
             <main id="swup-container" class={`${mainContentClass} transition-main`}>
                 <div id="content-wrapper" class="onload-animation transition-leaving">
@@ -524,26 +580,8 @@ const mainContentClass = `
     </div>
 </div>
 
-<!-- 侧边栏TOC模式 -->
-{siteConfig.toc.enable && isSidebarTOC && (
-    <div class="absolute w-full z-0 hidden 2xl:block">
-        <div class="relative max-w-[var(--page-width)] mx-auto">
-            <div id="toc-wrapper" class:list={["hidden lg:block transition absolute top-0 w-[var(--toc-width)] items-center",
-                "-right-[var(--toc-width)]",
-                {"toc-hide": initialWallpaperMode === "banner"}]}
-            >
-                <div id="toc-inner-wrapper" class="fixed top-14 w-[var(--toc-width)] max-h-[calc(100vh_-_10rem)] overflow-hidden">
-                    <div id="toc-container" class="w-full transition-swup-fade">
-                        <TOC headings={headings}></TOC>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-)}
-
 <!-- 保留此元素以确保Swup正常工作 -->
-{(!siteConfig.toc.enable || isFloatTOC) && <div id="toc-container" class="hidden"></div>}
+{(!siteConfig.toc.enable || isFloatTOC || !shouldRenderDedicatedPostToc) && <div id="toc-container" class="hidden"></div>}
 
 <!-- 全屏模态框插槽 -->
 <slot name="modal" />
@@ -588,10 +626,25 @@ const mainContentClass = `
     font-weight: bold;
 }
 
-/* Prevent horizontal overflow during sidebar enter animations */
-:global(#sidebar),
-:global(#right-sidebar-slot) {
+/* Prevent horizontal overflow during left sidebar enter animations */
+:global(#sidebar) {
     overflow-x: hidden;
+}
+
+/*
+ * Keep right sidebar overflow visible so sticky TOC can stick to the viewport.
+ * If overflow-x is hidden here, browsers compute overflow-y as auto and sticky breaks.
+ */
+:global(#right-sidebar-slot) {
+    overflow: visible;
+}
+
+@media (min-width: 1280px) {
+    :global(#right-sidebar-slot.right-sidebar-toc-fixed) {
+        position: sticky;
+        top: 5.5rem;
+        align-self: start;
+    }
 }
 
 .banner-subtitle {
