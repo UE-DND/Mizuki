@@ -172,7 +172,6 @@ export function initMePage(): void {
 		"me-displayname-counter",
 	);
 	const socialLinksList = document.getElementById("me-social-links-list");
-	const socialAddBtn = document.getElementById("me-social-add-btn");
 	const socialSaveBtn = document.getElementById("me-social-save-btn");
 	const socialMsg = document.getElementById("me-social-msg");
 	const avatarPreviewEl = document.getElementById(
@@ -410,10 +409,19 @@ export function initMePage(): void {
 	const createSocialLinkRow = (
 		platform = "",
 		linkUrl = "",
-		enabled = true,
+		enabled = false,
 	): HTMLElement => {
 		const row = document.createElement("div");
 		row.className = "flex flex-wrap items-center gap-2";
+		row.draggable = true;
+
+		// 拖拽手柄
+		const dragHandle = document.createElement("span");
+		dragHandle.className =
+			"cursor-grab active:cursor-grabbing text-30 hover:text-60 transition-colors select-none text-base leading-none";
+		dragHandle.textContent = "≡";
+		dragHandle.title = "拖拽排序";
+		row.appendChild(dragHandle);
 
 		const select = document.createElement("select");
 		select.className =
@@ -443,27 +451,149 @@ export function initMePage(): void {
 		urlInput.dataset.socialField = "url";
 		row.appendChild(urlInput);
 
-		const checkLabel = document.createElement("label");
-		checkLabel.className = "flex items-center gap-1 text-xs text-60";
-		const checkInput = document.createElement("input");
-		checkInput.type = "checkbox";
-		checkInput.checked = enabled;
-		checkInput.dataset.socialField = "enabled";
-		checkLabel.appendChild(checkInput);
-		checkLabel.appendChild(document.createTextNode("启用"));
-		row.appendChild(checkLabel);
-
 		const removeBtn = document.createElement("button");
 		removeBtn.type = "button";
 		removeBtn.textContent = "删除";
 		removeBtn.className =
-			"px-2 py-1 rounded-lg border border-[var(--line-divider)] text-xs text-75";
+			"px-2 py-1 rounded-lg border border-[var(--line-divider)] text-xs text-75 hover:text-red-500 hover:border-red-300 transition-colors";
 		removeBtn.addEventListener("click", () => {
 			row.remove();
 		});
 		row.appendChild(removeBtn);
 
+		// toggle 启用开关
+		const toggleWrap = document.createElement("label");
+		toggleWrap.className =
+			"flex items-center gap-1.5 text-xs text-60 cursor-pointer select-none";
+		const checkInput = document.createElement("input");
+		checkInput.type = "checkbox";
+		checkInput.checked = enabled;
+		checkInput.dataset.socialField = "enabled";
+		checkInput.className = "toggle-checkbox";
+		const track = document.createElement("span");
+		track.className = "toggle-track";
+		const knob = document.createElement("span");
+		knob.className = "toggle-knob";
+		track.appendChild(knob);
+		toggleWrap.appendChild(checkInput);
+		toggleWrap.appendChild(track);
+		toggleWrap.appendChild(document.createTextNode("启用"));
+		row.appendChild(toggleWrap);
+
+		// 校验：URL 为空时不能启用
+		const syncToggleState = (): void => {
+			const canEnable =
+				select.value.trim() !== "" && urlInput.value.trim() !== "";
+			if (!canEnable && checkInput.checked) {
+				checkInput.checked = false;
+			}
+			toggleWrap.classList.toggle("opacity-40", !canEnable);
+			toggleWrap.classList.toggle("pointer-events-none", !canEnable);
+		};
+		select.addEventListener("change", syncToggleState);
+		urlInput.addEventListener("input", syncToggleState);
+		// 初始化状态
+		syncToggleState();
+
+		// drag & drop 事件
+		row.addEventListener("dragstart", (e) => {
+			row.classList.add("opacity-40");
+			e.dataTransfer?.setData("text/plain", "");
+			socialDragSource = row;
+		});
+		row.addEventListener("dragend", () => {
+			row.classList.remove("opacity-40");
+			socialDragSource = null;
+			// 清除所有行的高亮
+			socialLinksList
+				?.querySelectorAll(":scope > div")
+				.forEach((el) => ((el as HTMLElement).style.borderTop = ""));
+		});
+		row.addEventListener("dragover", (e) => {
+			e.preventDefault();
+			if (socialDragSource && socialDragSource !== row) {
+				row.style.borderTop = "2px solid var(--primary)";
+			}
+		});
+		row.addEventListener("dragleave", () => {
+			row.style.borderTop = "";
+		});
+		row.addEventListener("drop", (e) => {
+			e.preventDefault();
+			row.style.borderTop = "";
+			if (!socialDragSource || socialDragSource === row || !socialLinksList) {
+				return;
+			}
+			// 在目标位置前插入被拖拽行
+			const rows = [...socialLinksList.children];
+			const fromIdx = rows.indexOf(socialDragSource);
+			const toIdx = rows.indexOf(row);
+			if (fromIdx < toIdx) {
+				row.after(socialDragSource);
+			} else {
+				row.before(socialDragSource);
+			}
+		});
+
 		return row;
+	};
+
+	let socialDragSource: HTMLElement | null = null;
+
+	const createSocialAddDivider = (): HTMLElement => {
+		const wrap = document.createElement("button");
+		wrap.type = "button";
+		wrap.className =
+			"flex items-center gap-2 w-full py-1.5 group/add cursor-pointer";
+		const lineL = document.createElement("span");
+		lineL.className =
+			"flex-1 border-t border-dashed border-[var(--line-divider)] group-hover/add:border-[var(--primary)] transition-colors";
+		const label = document.createElement("span");
+		label.className =
+			"text-sm text-50 group-hover/add:text-[var(--primary)] transition-colors whitespace-nowrap select-none";
+		label.textContent = "+  添加新链接";
+		const lineR = document.createElement("span");
+		lineR.className =
+			"flex-1 border-t border-dashed border-[var(--line-divider)] group-hover/add:border-[var(--primary)] transition-colors";
+		wrap.appendChild(lineL);
+		wrap.appendChild(label);
+		wrap.appendChild(lineR);
+		wrap.addEventListener("click", () => {
+			if (!socialLinksList) {
+				return;
+			}
+			// 已有空白行时不再添加
+			const rows = socialLinksList.querySelectorAll(":scope > div");
+			for (const r of rows) {
+				const p = (
+					r.querySelector(
+						'[data-social-field="platform"]',
+					) as HTMLSelectElement | null
+				)?.value;
+				const u = (
+					r.querySelector(
+						'[data-social-field="url"]',
+					) as HTMLInputElement | null
+				)?.value;
+				if (!p && !u) {
+					// 聚焦到已有的空白行
+					(
+						r.querySelector(
+							'[data-social-field="platform"]',
+						) as HTMLElement | null
+					)?.focus();
+					return;
+				}
+			}
+			const newRow = createSocialLinkRow();
+			socialLinksList.insertBefore(newRow, wrap);
+			(
+				newRow.querySelector(
+					'[data-social-field="platform"]',
+				) as HTMLElement | null
+			)?.focus();
+		});
+		return wrap;
 	};
 
 	const fillSocialLinks = (
@@ -477,14 +607,14 @@ export function initMePage(): void {
 			return;
 		}
 		socialLinksList.innerHTML = "";
-		if (!links || links.length === 0) {
-			return;
+		if (links && links.length > 0) {
+			for (const link of links) {
+				socialLinksList.appendChild(
+					createSocialLinkRow(link.platform, link.url, link.enabled),
+				);
+			}
 		}
-		for (const link of links) {
-			socialLinksList.appendChild(
-				createSocialLinkRow(link.platform, link.url, link.enabled),
-			);
-		}
+		socialLinksList.appendChild(createSocialAddDivider());
 	};
 
 	const collectSocialLinks = (): Array<{
@@ -1200,15 +1330,6 @@ export function initMePage(): void {
 			}
 			updateAvatarPreview();
 			setProfileMessage("已清空头像，点击\u201C保存资料\u201D生效");
-		});
-	}
-
-	if (socialAddBtn && !socialAddBtn.hasAttribute(DATA_BOUND)) {
-		socialAddBtn.setAttribute(DATA_BOUND, "");
-		socialAddBtn.addEventListener("click", () => {
-			if (socialLinksList) {
-				socialLinksList.appendChild(createSocialLinkRow());
-			}
 		});
 	}
 

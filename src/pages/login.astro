@@ -75,10 +75,10 @@ export const prerender = true;
 						id="login-remember"
 						type="checkbox"
 						checked
-						class="login-toggle-checkbox"
+						class="toggle-checkbox"
 					/>
-					<label for="login-remember" class="login-toggle-track">
-						<span class="login-toggle-knob"></span>
+					<label for="login-remember" class="toggle-track">
+						<span class="toggle-knob"></span>
 					</label>
 					<label for="login-remember" class="login-remember-label text-75">
 						保持登录状态
@@ -279,59 +279,7 @@ export const prerender = true;
 		.login-remember-row {
 			display: flex;
 			align-items: center;
-			gap: 0.625rem;
-		}
-		.login-toggle-checkbox {
-			position: absolute;
-			opacity: 0;
-			width: 0;
-			height: 0;
-			pointer-events: none;
-		}
-		.login-toggle-track {
-			position: relative;
-			display: inline-flex;
-			align-items: center;
-			width: 2.5rem;
-			height: 1.375rem;
-			border-radius: 999px;
-			background: oklch(0.75 0.01 0);
-			cursor: pointer;
-			flex-shrink: 0;
-			transition:
-				background 0.25s cubic-bezier(0.22, 1, 0.36, 1),
-				box-shadow 0.25s;
-		}
-		:root.dark .login-toggle-track {
-			background: oklch(0.38 0.01 0);
-		}
-		.login-toggle-knob {
-			position: absolute;
-			left: 0.1875rem;
-			width: 1rem;
-			height: 1rem;
-			border-radius: 50%;
-			background: white;
-			box-shadow: 0 1px 3px rgba(0, 0, 0, 0.18);
-			transition:
-				transform 0.25s cubic-bezier(0.22, 1, 0.36, 1),
-				box-shadow 0.25s;
-		}
-		/* checked 状态 */
-		.login-toggle-checkbox:checked + .login-toggle-track {
-			background: var(--btn-regular-bg);
-		}
-		.login-toggle-checkbox:checked + .login-toggle-track .login-toggle-knob {
-			transform: translateX(1.125rem);
-			background: var(--btn-content);
-		}
-		/* focus 可访问性 */
-		.login-toggle-checkbox:focus-visible + .login-toggle-track {
-			box-shadow: 0 0 0 3px oklch(from var(--primary) l c h / 0.2);
-		}
-		/* hover 反馈 */
-		.login-toggle-track:hover .login-toggle-knob {
-			box-shadow: 0 1px 5px rgba(0, 0, 0, 0.24);
+			gap: 0.5rem;
 		}
 		.login-remember-label {
 			font-size: 0.8125rem;

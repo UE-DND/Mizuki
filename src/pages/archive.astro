@@ -167,6 +167,7 @@ const uncategorizedLabel = i18n(I18nKey.uncategorized);
 	type FilterState = {
 		type: "none" | "tag" | "category" | "calendar";
 		value: string;
+		values?: string[];
 		calendarType?: "day" | "month" | "year";
 		calendarKey?: string;
 	};
@@ -189,6 +190,7 @@ const uncategorizedLabel = i18n(I18nKey.uncategorized);
 
 	const postList = document.getElementById("post-list-container");
 	const noResults = document.getElementById("archive-no-results");
+	const originalOrder = new Map<HTMLElement, number>();
 
 	function getFilterElements() {
 		return {
@@ -198,18 +200,83 @@ const uncategorizedLabel = i18n(I18nKey.uncategorized);
 		};
 	}
 
-	function getMatchingItems(filter: FilterState): HTMLElement[] {
+	function getAllPostItems(): HTMLElement[] {
 		if (!postList) return [];
 		const allItems = Array.from(
 			postList.querySelectorAll<HTMLElement>(".post-list-item"),
 		);
+		if (originalOrder.size === 0) {
+			allItems.forEach((item, index) => {
+				originalOrder.set(item, index);
+			});
+		}
+		return allItems;
+	}
+
+	function normalizeTagList(tags: string[]): string[] {
+		const normalized = tags
+			.map((tag) => tag.trim())
+			.filter(Boolean);
+		return Array.from(new Set(normalized));
+	}
+
+	function getSelectedTags(filter: FilterState): string[] {
+		if (filter.type !== "tag") return [];
+		const raw =
+			filter.values && filter.values.length > 0
+				? filter.values
+				: filter.value
+					? [filter.value]
+					: [];
+		return normalizeTagList(raw);
+	}
+
+	function parseItemTags(item: HTMLElement): string[] {
+		try {
+			const parsed = JSON.parse(item.dataset.tags || "[]") as unknown;
+			return Array.isArray(parsed)
+				? parsed.map((tag) => String(tag))
+				: [];
+		} catch (error) {
+			console.warn("[archive] failed to parse item tags:", error);
+			return [];
+		}
+	}
+
+	function getTagMatchCount(item: HTMLElement, tags: string[]): number {
+		if (tags.length === 0) return 0;
+		const itemTags = parseItemTags(item);
+		return tags.reduce(
+			(count, tag) => (itemTags.includes(tag) ? count + 1 : count),
+			0,
+		);
+	}
+
+	function getMatchingItems(filter: FilterState): HTMLElement[] {
+		const allItems = getAllPostItems();
 		if (filter.type === "none") return allItems;
 
+		if (filter.type === "tag") {
+			const selectedTags = getSelectedTags(filter);
+			const withScores = allItems
+				.map((item) => ({
+					item,
+					score: getTagMatchCount(item, selectedTags),
+				}))
+				.filter(({ score }) => score > 0);
+
+			return withScores
+				.sort((a, b) => {
+					if (b.score !== a.score) return b.score - a.score;
+					return (
+						(originalOrder.get(a.item) ?? 0) -
+						(originalOrder.get(b.item) ?? 0)
+					);
+				})
+				.map(({ item }) => item);
+		}
+
 		return allItems.filter((item) => {
-			if (filter.type === "tag") {
-				const tags: string[] = JSON.parse(item.dataset.tags || "[]");
-				return tags.includes(filter.value);
-			}
 			if (filter.type === "category") {
 				return isUncategorizedValue(filter.value)
 					? !item.dataset.category
@@ -229,9 +296,7 @@ const uncategorizedLabel = i18n(I18nKey.uncategorized);
 	function renderPosts() {
 		if (!postList) return;
 
-		const allItems = Array.from(
-			postList.querySelectorAll<HTMLElement>(".post-list-item"),
-		);
+		const allItems = getAllPostItems();
 		const matching = getMatchingItems(currentFilter);
 		const totalPages = Math.max(
 			1,
@@ -244,6 +309,19 @@ const uncategorizedLabel = i18n(I18nKey.uncategorized);
 		const pageItems = new Set(
 			matching.slice(start, start + POSTS_PER_PAGE),
 		);
+		const matchingSet = new Set(matching);
+		const orderedItems =
+			currentFilter.type === "tag"
+				? [
+					...matching,
+					...allItems.filter((item) => !matchingSet.has(item)),
+				]
+				: allItems;
+		const fragment = document.createDocumentFragment();
+		orderedItems.forEach((item) => {
+			fragment.appendChild(item);
+		});
+		postList.appendChild(fragment);
 
 		allItems.forEach((item) => {
 			item.classList.toggle("hidden", !pageItems.has(item));
@@ -333,7 +411,8 @@ const uncategorizedLabel = i18n(I18nKey.uncategorized);
 
 		filterStatus.classList.remove("hidden");
 		if (filter.type === "tag") {
-			filterLabel.textContent = `标签：${filter.value}`;
+			const selectedTags = getSelectedTags(filter);
+			filterLabel.textContent = `标签：${selectedTags.join("、")}`;
 		} else if (filter.type === "category") {
 			filterLabel.textContent = isUncategorizedValue(filter.value)
 				? UNCATEGORIZED_LABEL || "未分类"
@@ -350,8 +429,18 @@ const uncategorizedLabel = i18n(I18nKey.uncategorized);
 
 		if (filter.type === "none") return;
 
-		if (filter.type === "tag" || filter.type === "category") {
-			const selector = `.archive-filter-btn[data-filter="${filter.type}"][data-value="${CSS.escape(filter.value)}"]`;
+		if (filter.type === "tag") {
+			const selectedTags = getSelectedTags(filter);
+			selectedTags.forEach((tag) => {
+				const selector = `.archive-filter-btn[data-filter="tag"][data-value="${CSS.escape(tag)}"]`;
+				document
+					.querySelector<HTMLElement>(selector)
+					?.classList.add("active");
+			});
+		}
+
+		if (filter.type === "category") {
+			const selector = `.archive-filter-btn[data-filter="category"][data-value="${CSS.escape(filter.value)}"]`;
 			document.querySelector<HTMLElement>(selector)?.classList.add("active");
 		}
 	}
@@ -386,16 +475,38 @@ const uncategorizedLabel = i18n(I18nKey.uncategorized);
 			const filterValue = btn.dataset.value || "";
 			if (!filterType || !filterValue) return;
 
+			window.dispatchEvent(new CustomEvent("calendarFilterClear"));
+			if (filterType === "tag") {
+				const selectedTags =
+					currentFilter.type === "tag"
+						? getSelectedTags(currentFilter)
+						: [];
+				const nextSelected = selectedTags.includes(filterValue)
+					? selectedTags.filter((tag) => tag !== filterValue)
+					: normalizeTagList([...selectedTags, filterValue]);
+
+				if (nextSelected.length === 0) {
+					clearAllFilters();
+					return;
+				}
+
+				applyFilter({
+					type: "tag",
+					value: nextSelected.join("、"),
+					values: nextSelected,
+				});
+				return;
+			}
+
 			if (
-				currentFilter.type === filterType &&
+				currentFilter.type === "category" &&
 				currentFilter.value === filterValue
 			) {
 				clearAllFilters();
 				return;
 			}
 
-			window.dispatchEvent(new CustomEvent("calendarFilterClear"));
-			applyFilter({ type: filterType, value: filterValue });
+			applyFilter({ type: "category", value: filterValue });
 		});
 
 		// 清除按钮
@@ -491,8 +602,21 @@ const uncategorizedLabel = i18n(I18nKey.uncategorized);
 		const category = params.get("category");
 		const uncategorized = params.get("uncategorized");
 
-		if (tag) {
-			applyFilter({ type: "tag", value: tag });
+		const tagParams = params
+			.getAll("tag")
+			.flatMap((value) => value.split(","))
+			.map((value) => value.trim())
+			.filter(Boolean);
+
+		if (tagParams.length > 0) {
+			const selectedTags = normalizeTagList(tagParams);
+			applyFilter({
+				type: "tag",
+				value: selectedTags.join("、"),
+				values: selectedTags,
+			});
+		} else if (tag) {
+			applyFilter({ type: "tag", value: tag, values: [tag] });
 		} else if (category) {
 			applyFilter({ type: "category", value: category });
 		} else if (uncategorized) {

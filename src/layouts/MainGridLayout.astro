@@ -544,6 +544,9 @@ const mainContentClass = `
 
 <!-- 保留此元素以确保Swup正常工作 -->
 {(!siteConfig.toc.enable || isFloatTOC) && <div id="toc-container" class="hidden"></div>}
+
+<!-- 全屏模态框插槽 -->
+<slot name="modal" />
 </Layout>
 
 <style>
