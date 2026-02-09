@@ -47,18 +47,27 @@ export function setupSwupIntentSource(
 	}
 
 	swup.hooks.before("content:replace", (visit: SwupVisit) => {
+		// Sidebar UID 比较：相同 sidebar 跳过替换
 		const currentSidebar = document.querySelector<HTMLElement>("#sidebar");
 		const newSidebar = visit.to.document?.querySelector("#sidebar");
-		if (!currentSidebar || !newSidebar) {
-			return;
+		if (currentSidebar && newSidebar) {
+			const currentUid = currentSidebar.getAttribute("data-sidebar-uid");
+			const newUid = newSidebar.getAttribute("data-sidebar-uid");
+			if (currentUid && newUid && currentUid === newUid) {
+				visit.containers = visit.containers.filter(
+					(c) => c !== "#sidebar",
+				);
+				currentSidebar.dataset.sidebarPreserved = "";
+			}
 		}
 
-		const currentUid = currentSidebar.getAttribute("data-sidebar-uid");
-		const newUid = newSidebar.getAttribute("data-sidebar-uid");
-
-		if (currentUid && newUid && currentUid === newUid) {
-			visit.containers = visit.containers.filter((c) => c !== "#sidebar");
-			currentSidebar.dataset.sidebarPreserved = "";
+		// 同步 #main-grid 类名
+		// #main-grid 不是 Swup 容器，但其 CSS 类（grid 列定义、mobile-both-sidebar 等）
+		// 随页面侧边栏配置变化，需在内容替换前同步以避免布局错乱。
+		const newMainGrid = visit.to.document?.querySelector("#main-grid");
+		const currentMainGrid = document.getElementById("main-grid");
+		if (newMainGrid instanceof HTMLElement && currentMainGrid) {
+			currentMainGrid.className = newMainGrid.className;
 		}
 	});
 

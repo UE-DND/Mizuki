@@ -83,43 +83,66 @@ if (!invalidPath) {
 </style>
 
 <script>
+	type HomeRuntimeWindow = Window & typeof globalThis & {
+		__homeScrollCleanup?: () => void;
+	};
+
 	const INITIAL_COUNT = 5;
 	const BATCH_SIZE = 5;
 
-	const items = document.querySelectorAll<HTMLElement>('.post-list-item');
-	items.forEach((item, i) => {
-		if (i >= INITIAL_COUNT) item.classList.add('hidden');
-	});
-	let revealedCount = Math.min(INITIAL_COUNT, items.length);
+	function initHomeInfiniteScroll(): void {
+		const rw = window as HomeRuntimeWindow;
+		rw.__homeScrollCleanup?.();
 
-	const sentinel = document.getElementById('infinite-scroll-sentinel');
-	const loadingEl = document.getElementById('scroll-loading');
+		const container = document.querySelector('.home-layout');
+		if (!container) return;
 
-	const observer = new IntersectionObserver((entries) => {
-		if (!entries[0].isIntersecting || revealedCount >= items.length) return;
+		const items = document.querySelectorAll<HTMLElement>('.post-list-item');
+		const sentinel = document.getElementById('infinite-scroll-sentinel');
+		const loadingEl = document.getElementById('scroll-loading');
 
-		loadingEl?.classList.remove('hidden');
-
-		const end = Math.min(revealedCount + BATCH_SIZE, items.length);
-		for (let i = revealedCount; i < end; i++) {
-			const item = items[i] as HTMLElement;
-			item.style.setProperty('--i', String(i - revealedCount));
-			item.classList.remove('hidden');
-		}
-		revealedCount = end;
-
-		if (revealedCount >= items.length) {
-			observer.disconnect();
+		if (!items.length || !sentinel) {
 			sentinel?.classList.add('hidden');
-			loadingEl?.classList.add('hidden');
-		} else {
-			setTimeout(() => loadingEl?.classList.add('hidden'), 300);
+			return;
 		}
-	}, { rootMargin: '200px' });
 
-	if (sentinel && revealedCount < items.length) {
-		observer.observe(sentinel);
-	} else {
-		sentinel?.classList.add('hidden');
+		items.forEach((item, i) => {
+			if (i >= INITIAL_COUNT) item.classList.add('hidden');
+			else item.classList.remove('hidden');
+		});
+		let revealedCount = Math.min(INITIAL_COUNT, items.length);
+
+		const observer = new IntersectionObserver((entries) => {
+			if (!entries[0].isIntersecting || revealedCount >= items.length) return;
+			loadingEl?.classList.remove('hidden');
+			const end = Math.min(revealedCount + BATCH_SIZE, items.length);
+			for (let i = revealedCount; i < end; i++) {
+				const item = items[i] as HTMLElement;
+				item.style.setProperty('--i', String(i - revealedCount));
+				item.classList.remove('hidden');
+			}
+			revealedCount = end;
+			if (revealedCount >= items.length) {
+				observer.disconnect();
+				sentinel.classList.add('hidden');
+				loadingEl?.classList.add('hidden');
+			} else {
+				setTimeout(() => loadingEl?.classList.add('hidden'), 300);
+			}
+		}, { rootMargin: '200px' });
+
+		if (revealedCount < items.length) {
+			observer.observe(sentinel);
+		} else {
+			sentinel.classList.add('hidden');
+		}
+
+		rw.__homeScrollCleanup = () => {
+			observer.disconnect();
+			rw.__homeScrollCleanup = undefined;
+		};
 	}
+
+	initHomeInfiniteScroll();
+	document.addEventListener('astro:after-swap', initHomeInfiniteScroll);
 </script>
