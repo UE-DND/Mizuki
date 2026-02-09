@@ -664,8 +664,8 @@ export function initMePage(): void {
 			"flex-1 border-t border-dashed border-[var(--line-divider)] group-hover/add:border-[var(--primary)] transition-colors";
 		const label = document.createElement("span");
 		label.className =
-			"text-base text-50 group-hover/add:text-[var(--primary)] transition-colors whitespace-nowrap select-none";
-		label.textContent = "+  添加新链接";
+			"px-4 py-1.5 rounded-lg border border-[var(--line-divider)] text-sm text-60 group-hover/add:border-[var(--primary)] group-hover/add:text-[var(--primary)] transition-colors whitespace-nowrap select-none";
+		label.textContent = "添加新链接";
 		const lineR = document.createElement("span");
 		lineR.className =
 			"flex-1 border-t border-dashed border-[var(--line-divider)] group-hover/add:border-[var(--primary)] transition-colors";

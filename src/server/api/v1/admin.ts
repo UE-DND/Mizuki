@@ -2,6 +2,10 @@ import type { APIContext } from "astro";
 
 import type { AppPermissions, AppProfile } from "@/types/app";
 import type { JsonObject } from "@/types/json";
+import type {
+	EditableSiteSettings,
+	SiteSettingsPayload,
+} from "@/types/site-settings";
 import { createUniqueUsername } from "@/server/auth/acl";
 import {
 	normalizeRequestedUsername,
@@ -24,6 +28,11 @@ import {
 	toOptionalString,
 	toStringValue,
 } from "@/server/api/utils";
+import {
+	getResolvedSiteSettings,
+	invalidateSiteSettingsCache,
+	mergeSiteSettingsPatch,
+} from "@/server/site-settings/service";
 
 import {
 	ADMIN_MODULE_COLLECTION,
@@ -122,6 +131,50 @@ async function ensureUserPermissions(userId: string): Promise<AppPermissions> {
 		can_upload_files: true,
 		is_suspended: false,
 	});
+}
+
+async function readSiteSettingsRowMeta(): Promise<{
+	id: string;
+	updatedAt: string | null;
+} | null> {
+	const rows = await readMany("app_site_settings", {
+		filter: { key: { _eq: "default" } } as JsonObject,
+		limit: 1,
+		fields: ["id", "date_updated", "date_created"],
+	});
+	const row = rows[0];
+	if (!row) {
+		return null;
+	}
+	return {
+		id: row.id,
+		updatedAt: row.date_updated || row.date_created || null,
+	};
+}
+
+async function upsertSiteSettings(
+	settings: SiteSettingsPayload,
+): Promise<{ updatedAt: string | null }> {
+	const existing = await readSiteSettingsRowMeta();
+	if (!existing) {
+		const created = await createOne("app_site_settings", {
+			key: "default",
+			status: "published",
+			settings,
+		});
+		return {
+			updatedAt: created.date_updated || created.date_created || null,
+		};
+	}
+
+	const updated = await updateOne("app_site_settings", existing.id, {
+		key: "default",
+		status: "published",
+		settings,
+	});
+	return {
+		updatedAt: updated.date_updated || updated.date_created || null,
+	};
 }
 
 export async function handleAdminUsers(
@@ -536,4 +589,43 @@ export async function handleAdminContent(
 	}
 
 	return fail("未找到接口", 404);
+}
+
+export async function handleAdminSettings(
+	context: APIContext,
+	segments: string[],
+): Promise<Response> {
+	const required = await requireAdmin(context);
+	if ("response" in required) {
+		return required.response;
+	}
+
+	if (segments.length !== 2 || segments[1] !== "site") {
+		return fail("未找到接口", 404);
+	}
+
+	if (context.request.method === "GET") {
+		const [resolved, rowMeta] = await Promise.all([
+			getResolvedSiteSettings(),
+			readSiteSettingsRowMeta(),
+		]);
+		return ok({
+			settings: resolved.settings,
+			updated_at: rowMeta?.updatedAt || null,
+		});
+	}
+
+	if (context.request.method === "PATCH") {
+		const body = await parseJsonBody(context.request);
+		const patch = body as Partial<EditableSiteSettings>;
+		const settings = await mergeSiteSettingsPatch(patch);
+		const { updatedAt } = await upsertSiteSettings(settings);
+		invalidateSiteSettingsCache();
+		return ok({
+			settings,
+			updated_at: updatedAt,
+		});
+	}
+
+	return fail("方法不允许", 405);
 }

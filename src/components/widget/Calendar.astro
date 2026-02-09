@@ -1,5 +1,5 @@
 ---
-import { siteConfig } from "../../config";
+import { systemSiteConfig } from "../../config";
 import I18nKey from "../../i18n/i18nKey";
 import { i18n } from "../../i18n/translation";
 import WidgetLayout from "./WidgetLayout.astro";
@@ -37,7 +37,7 @@ const weekDays = [
 	i18n(I18nKey.calendarSunday),
 ];
 
-const isChinese = siteConfig.lang.startsWith("zh");
+const isChinese = systemSiteConfig.lang.startsWith("zh");
 const yearSuffix = isChinese ? "年" : " ";
 ---
 

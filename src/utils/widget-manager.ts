@@ -1,4 +1,4 @@
-import { sidebarLayoutConfig } from "../config";
+import { defaultSiteSettings } from "../config";
 import type {
 	SidebarLayoutConfig,
 	WidgetComponentConfig,
@@ -27,7 +27,9 @@ export const WIDGET_COMPONENT_MAP = {
 export class WidgetManager {
 	private config: SidebarLayoutConfig;
 
-	constructor(config: SidebarLayoutConfig = sidebarLayoutConfig) {
+	constructor(
+		config: SidebarLayoutConfig = defaultSiteSettings.sidebarLayout,
+	) {
 		this.config = config;
 	}
 

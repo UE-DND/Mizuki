@@ -69,11 +69,11 @@
 
 2. **配置环境变量（可选）**:
    - 在部署设置页面，找到 `Environment Variables` 部分
-   - 添加或修改必要的环境变量，部署前，请在 `src/config.ts` 中更新 `siteURL`
+   - 添加或修改必要的环境变量；`siteURL`/`lang` 等系统级参数在 `src/config.ts` 的 `systemSiteConfig` 中维护
 
     ```bash
     # Umami API 密钥，用于访问 Umami 统计数据
-    # 如果在 config.ts 中启用了 Umami，建议在此配置 API 密钥
+    # 站点设置中启用 Umami 时，建议配置 API 密钥
     UMAMI_API_KEY=your_umami_api_key_here
     # bcrypt 盐值轮数（10-14 推荐，默认 12）
     BCRYPT_SALT_ROUNDS=12
@@ -95,7 +95,7 @@ tags: [标签1, 标签2]
 category: 前端
 draft: false
 pinned: false
-lang: zh-CN      # 仅当文章语言与 config.ts 中的站点语言不同时设置
+lang: zh-CN      # 仅当文章语言与系统默认语言（systemSiteConfig.lang）不同时设置
 ---
 ```
 
@@ -154,33 +154,22 @@ Mizuki 支持超越标准 GitHub Flavored Markdown 的增强功能：
 
 ### 基础配置
 
-编辑 `src/config.ts` 自定义您的博客：
+系统级配置（如 `siteURL`、`lang`、主题与字体）在 `src/config.ts` 维护。  
+运营配置（站点标题、导航、Banner、TOC、页脚、统计等）在管理台维护：`/admin/settings/site`。
 
 ```typescript
-export const siteConfig: SiteConfig = {
-  title: "您的博客名称",
-  subtitle: "您的博客描述",
-  lang: "zh-CN", // 或 "en"、"ja" 等
-  themeColor: {
-    hue: 210, // 0-360，主题色调
-    fixed: false, // 隐藏主题色选择器
-  },
-  banner: {
-    enable: true,
-    src: ["assets/banner/1.webp"], // 横幅图片
-    carousel: {
-      enable: true,
-      interval: 0.8, // 秒
-    },
-  },
+export const systemSiteConfig = {
+  siteURL: "https://example.com/",
+  lang: "zh_CN",
+  themeColor: { hue: 285, fixed: true },
+  experimental: { layoutStateMachineV2: true },
 };
 ```
 
 ### 特色页面配置
 
-- **追番页面：** 在 `src/pages/anime.astro` 中调整展示逻辑
-- **友链页面：** 在 `src/data/friends.ts` 中编辑朋友数据
-- **日记页面：** 在 `src/pages/diary.astro` 中调整展示逻辑
+- **开关配置：** 在管理台 `站点设置 -> 功能开关` 中启用/关闭 `friends/projects/skills/timeline`
+- **友链页面内容：** 在 `src/data/friends.ts` 中编辑朋友数据
 - **关于页面：** 在 Directus 的 `app_articles` 中维护 `slug=about` 内容
 
 ### 数据源说明

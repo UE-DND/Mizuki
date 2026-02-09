@@ -1,5 +1,3 @@
-import { siteConfig } from "@/config";
-
 type CarouselController = {
 	setPaused: (paused: boolean) => void;
 };
@@ -53,13 +51,15 @@ export function initBannerCarousel(): void {
 		}
 		return item.querySelector(".hidden.md\\:block");
 	});
+	const carouselConfig =
+		runtimeWindow.__MIZUKI_RUNTIME_SETTINGS__?.settings.banner.carousel;
 
-	if (validItems.length <= 1 || !siteConfig.banner.carousel?.enable) {
+	if (validItems.length <= 1 || !carouselConfig?.enable) {
 		return;
 	}
 
 	let currentIndex = 0;
-	const interval = siteConfig.banner.carousel?.interval || 6;
+	const interval = carouselConfig.interval || 6;
 	let carouselInterval: number | undefined;
 	let isPaused = false;
 

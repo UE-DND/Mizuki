@@ -1,6 +1,5 @@
 import "overlayscrollbars/overlayscrollbars.css";
 
-import { siteConfig, widgetConfigs } from "@/config";
 import { DARK_MODE, DEFAULT_THEME } from "@/constants/constants";
 import { setupCodeCopyDelegation } from "@/scripts/code-copy";
 import {
@@ -54,12 +53,13 @@ export function initLayoutRuntime(): void {
 	}
 
 	runtimeWindow.__layoutRuntimeInitialized = true;
+	const runtimeSettings = runtimeWindow.__MIZUKI_RUNTIME_SETTINGS__;
 	const bannerEnabled = Boolean(document.getElementById("banner-wrapper"));
 	const fancyboxController = createFancyboxController();
 	const useLayoutStateMachineV2 =
-		siteConfig.experimental?.layoutStateMachineV2 ?? true;
+		runtimeSettings?.system.experimental.layoutStateMachineV2 ?? true;
 	const navbarTransparentMode =
-		siteConfig.banner?.navbar?.transparentMode || "semi";
+		runtimeSettings?.settings.banner?.navbar?.transparentMode || "semi";
 
 	setupPanelOutsideHandler(panelManager);
 	setupCodeCopyDelegation();
@@ -67,7 +67,7 @@ export function initLayoutRuntime(): void {
 	setupHashOffsetNavigation(runtimeWindow);
 
 	const setupSakura = () => {
-		const sakuraConfig = widgetConfigs.sakura;
+		const sakuraConfig = runtimeSettings?.settings.sakura;
 		if (!sakuraConfig || !sakuraConfig.enable) {
 			return;
 		}
@@ -89,7 +89,8 @@ export function initLayoutRuntime(): void {
 	if (useLayoutStateMachineV2) {
 		const layoutController = initLayoutController({
 			bannerEnabled,
-			defaultWallpaperMode: siteConfig.wallpaperMode.defaultMode,
+			defaultWallpaperMode:
+				runtimeSettings?.settings.wallpaperMode.defaultMode || "banner",
 			navbarTransparentMode,
 			bannerHeight: BANNER_HEIGHT,
 			bannerHeightHome: BANNER_HEIGHT_HOME,
@@ -311,6 +312,10 @@ const runDynamicPageInit = async (): Promise<void> => {
 	} else if (path === "/archive") {
 		const { initArchiveFilter } = await import("@/scripts/archive-filter");
 		initArchiveFilter();
+	} else if (path === "/admin/settings/site") {
+		const { initSiteSettingsPage } =
+			await import("@/scripts/site-settings-page");
+		initSiteSettingsPage();
 	}
 };
 

@@ -1,14 +1,14 @@
 ---
-import MainGridLayout from "@layouts/MainGridLayout.astro";
+import AdminLayout from "@layouts/AdminLayout.astro";
 
 export const prerender = false;
 ---
 
-<MainGridLayout title="用户管理" description="管理员管理用户账号与权限">
+<AdminLayout title="用户管理" description="管理员管理用户账号与权限">
 	<section class="card-base p-6 rounded-[var(--radius-large)] mb-4 space-y-2">
 		<h1 class="text-2xl font-bold">用户管理</h1>
 		<p class="text-sm text-70">管理员可创建用户、设置应用角色与功能开关。</p>
-		<div id="admin-users-auth" class="text-sm text-70"></div>
+
 	</section>
 
 	<section class="card-base p-6 rounded-[var(--radius-large)] mb-4 space-y-3">
@@ -51,7 +51,7 @@ export const prerender = false;
 			</table>
 		</div>
 	</section>
-</MainGridLayout>
+</AdminLayout>
 
 <script is:inline>
 	const normalizeApiUrl = (input) => {
@@ -74,7 +74,6 @@ export const prerender = false;
 		return { response, data };
 	};
 
-	const authMessage = document.getElementById("admin-users-auth");
 	const createMessage = document.getElementById("admin-user-create-msg");
 	const tableBody = document.getElementById("admin-users-table");
 
@@ -126,11 +125,9 @@ export const prerender = false;
 	const loadUsers = async () => {
 		const { response, data } = await api("/api/v1/admin/users?limit=200");
 		if (!response.ok || !data?.ok) {
-			authMessage.textContent = data?.message || "无权限或加载失败";
 			renderRows([]);
 			return;
 		}
-		authMessage.textContent = "管理员权限已验证";
 		renderRows(data.items || []);
 	};
 

@@ -5,9 +5,8 @@ import satori from "satori";
 import sharp from "sharp";
 
 import { readMany } from "@/server/directus/client";
+import { getResolvedSiteSettings } from "@/server/site-settings/service";
 import type { JsonObject } from "@/types/json";
-
-import { profileConfig, siteConfig } from "../../config";
 
 type Weight = 100 | 200 | 300 | 400 | 500 | 600 | 700 | 800 | 900;
 type FontStyle = "normal" | "italic";
@@ -31,10 +30,6 @@ type OgPost = {
 export const prerender = true;
 
 export const getStaticPaths: GetStaticPaths = async () => {
-	if (!siteConfig.generateOgImages) {
-		return [];
-	}
-
 	const rows = await readMany("app_articles", {
 		filter: {
 			_and: [
@@ -149,24 +144,52 @@ function resolvePublishedDate(post: OgPost): string {
 	});
 }
 
+function resolveLocalAssetPath(
+	source: string | null | undefined,
+	fallbackPath: string,
+): string {
+	const input = String(source || "").trim();
+	if (!input) {
+		return fallbackPath;
+	}
+	if (input.startsWith("assets/")) {
+		return `./src/${input}`;
+	}
+	if (
+		input.startsWith("/assets/") ||
+		input.startsWith("/favicon/") ||
+		input.startsWith("/images/")
+	) {
+		return `./public${input}`;
+	}
+	return fallbackPath;
+}
+
 export async function GET({
 	props,
 }: APIContext<{ post: OgPost }>): Promise<Response> {
 	const { post } = props;
+	const resolvedSiteSettings = await getResolvedSiteSettings();
+	const settings = resolvedSiteSettings.settings;
+	const system = resolvedSiteSettings.system;
 	const { regular: fontRegular, bold: fontBold } =
 		await fetchNotoSansSCFonts();
 
-	const avatarBuffer = fs.readFileSync(`./src/${profileConfig.avatar}`);
+	const avatarPath = resolveLocalAssetPath(
+		settings.profile.avatar,
+		"./src/assets/images/avatar.webp",
+	);
+	const avatarBuffer = fs.readFileSync(avatarPath);
 	const avatarBase64 = `data:image/png;base64,${avatarBuffer.toString("base64")}`;
 
-	let iconPath = "./public/favicon/favicon.ico";
-	if (siteConfig.favicon.length > 0) {
-		iconPath = `./public${siteConfig.favicon[0].src}`;
-	}
+	const iconPath = resolveLocalAssetPath(
+		settings.site.favicon[0]?.src,
+		"./public/favicon/favicon.ico",
+	);
 	const iconBuffer = fs.readFileSync(iconPath);
 	const iconBase64 = `data:image/png;base64,${iconBuffer.toString("base64")}`;
 
-	const hue = siteConfig.themeColor.hue;
+	const hue = system.themeColor.hue;
 	const primaryColor = `hsl(${hue}, 90%, 65%)`;
 	const textColor = "hsl(0, 0%, 95%)";
 
@@ -217,7 +240,7 @@ export async function GET({
 										fontWeight: 600,
 										color: subtleTextColor,
 									},
-									children: siteConfig.title,
+									children: settings.site.title,
 								},
 							},
 						],
@@ -336,7 +359,7 @@ export async function GET({
 													fontWeight: 600,
 													color: textColor,
 												},
-												children: profileConfig.name,
+												children: settings.profile.name,
 											},
 										},
 									],

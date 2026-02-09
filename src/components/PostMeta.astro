@@ -1,9 +1,18 @@
 ---
-import { umamiConfig } from "../config";
+import { getResolvedSiteSettings } from "@/server/site-settings/service";
 import I18nKey from "../i18n/i18nKey";
 import { i18n } from "../i18n/translation";
 import { formatDateToYYYYMMDD } from "../utils/date-utils";
 import { getCategoryUrl, getTagUrl } from "../utils/url-utils";
+
+const resolvedSiteSettings =
+	Astro.locals.siteSettings ?? (await getResolvedSiteSettings());
+const umamiConfig = {
+	enabled: resolvedSiteSettings.settings.umami.enabled,
+	apiKey: import.meta.env.UMAMI_API_KEY || "api_xxxxxxxx",
+	baseUrl: resolvedSiteSettings.settings.umami.baseUrl,
+	scripts: resolvedSiteSettings.settings.umami.scripts,
+};
 
 // 解析 umami
 const umamiEnabled = umamiConfig.enabled || false;

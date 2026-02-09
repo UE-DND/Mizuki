@@ -1,9 +1,11 @@
 ---
 import { Icon } from "astro-icon/components";
-import { siteConfig } from "../../config";
+import { getResolvedSiteSettings } from "@/server/site-settings/service";
 
-const tocDepth = siteConfig.toc.depth;
-const useJapaneseBadge = siteConfig.toc.useJapaneseBadge;
+const resolvedSiteSettings =
+	Astro.locals.siteSettings ?? (await getResolvedSiteSettings());
+const tocDepth = resolvedSiteSettings.settings.toc.depth;
+const useJapaneseBadge = resolvedSiteSettings.settings.toc.useJapaneseBadge;
 ---
 
 <div

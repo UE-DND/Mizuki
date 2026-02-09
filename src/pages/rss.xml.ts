@@ -2,8 +2,8 @@ import type { RSSFeedItem } from "@astrojs/rss";
 import rss from "@astrojs/rss";
 import type { APIContext } from "astro";
 
-import { siteConfig } from "@/config";
 import { renderMarkdown } from "@/server/markdown/render";
+import { getResolvedSiteSettings } from "@/server/site-settings/service";
 import { getSortedPosts } from "@/utils/content-utils";
 import { getPostUrl } from "@/utils/url-utils";
 
@@ -13,6 +13,10 @@ export async function GET(context: APIContext): Promise<Response> {
 	if (!context.site) {
 		throw new Error("site not set");
 	}
+	const resolvedSiteSettings =
+		context.locals.siteSettings ?? (await getResolvedSiteSettings());
+	const settings = resolvedSiteSettings.settings;
+	const system = resolvedSiteSettings.system;
 
 	const posts = (await getSortedPosts()).filter(
 		(post) => !post.data.encrypted,
@@ -31,10 +35,10 @@ export async function GET(context: APIContext): Promise<Response> {
 	);
 
 	return rss({
-		title: siteConfig.title,
-		description: siteConfig.subtitle || "No description",
+		title: settings.site.title,
+		description: settings.site.subtitle || "No description",
 		site: context.site,
 		items: feed,
-		customData: `<language>${siteConfig.lang}</language>`,
+		customData: `<language>${system.lang}</language>`,
 	});
 }

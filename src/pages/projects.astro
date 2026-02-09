@@ -1,5 +1,4 @@
 ---
-import { siteConfig } from "../config";
 import { UNCATEGORIZED } from "../constants/constants";
 import {
 	getAllTechStack,
@@ -12,14 +11,9 @@ import I18nKey from "../i18n/i18nKey";
 import { i18n } from "../i18n/translation";
 import MainGridLayout from "../layouts/MainGridLayout.astro";
 
-export const prerender = true;
+export const prerender = false;
 
 // import { loadIconify } from "../utils/icon-loader";
-
-// 检查项目页面是否启用
-if (!siteConfig.featurePages.projects) {
-	return Astro.redirect("/404");
-}
 
 // const { lang } = Astro.props;
 

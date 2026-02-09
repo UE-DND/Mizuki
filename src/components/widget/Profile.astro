@@ -1,6 +1,6 @@
 ---
 import { Icon } from "astro-icon/components";
-import { profileConfig, umamiConfig } from "../../config";
+import { getResolvedSiteSettings } from "@/server/site-settings/service";
 import { url } from "../../utils/url-utils";
 import ImageWrapper from "../misc/ImageWrapper.astro";
 import TypewriterText from "../TypewriterText.astro";
@@ -10,6 +10,16 @@ import { SOCIAL_PLATFORM_META } from "../../constants/social-platforms";
 import { loadOfficialSidebarProfile } from "../../server/api/v1/public-data";
 
 import type { SidebarProfileData, SocialLink } from "../../types/app";
+
+const resolvedSiteSettings =
+	Astro.locals.siteSettings ?? (await getResolvedSiteSettings());
+const profileConfig = resolvedSiteSettings.settings.profile;
+const umamiConfig = {
+	enabled: resolvedSiteSettings.settings.umami.enabled,
+	apiKey: import.meta.env.UMAMI_API_KEY || "api_xxxxxxxx",
+	baseUrl: resolvedSiteSettings.settings.umami.baseUrl,
+	scripts: resolvedSiteSettings.settings.umami.scripts,
+};
 
 // 解析 umami
 const umamiEnabled = umamiConfig.enabled || false;

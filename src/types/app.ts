@@ -262,6 +262,8 @@ export type AppFile = {
 	filename_download: string | null;
 };
 
+export type AppSiteSettings = import("./site-settings").AppSiteSettings;
+
 export type CommentAuthor = {
 	id: string;
 	name: string;

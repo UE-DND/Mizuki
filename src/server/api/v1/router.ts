@@ -2,7 +2,11 @@ import type { APIContext } from "astro";
 
 import { fail, ok } from "@/server/api/response";
 
-import { handleAdminContent, handleAdminUsers } from "./admin";
+import {
+	handleAdminContent,
+	handleAdminSettings,
+	handleAdminUsers,
+} from "./admin";
 import { handleArticleComments, handleDiaryComments } from "./comments";
 import { handleMe } from "./me";
 import { handlePublic, handleUserHome } from "./public";
@@ -58,6 +62,9 @@ export async function handleV1(context: APIContext): Promise<Response> {
 			}
 			if (segments[1] === "content") {
 				return await handleAdminContent(context, segments.slice(1));
+			}
+			if (segments[1] === "settings") {
+				return await handleAdminSettings(context, segments.slice(1));
 			}
 		}
 
