@@ -434,14 +434,8 @@ if (siteConfig.font) {
 			body[data-layout-mode="banner"] #banner {
 				@apply h-[var(--banner-height-home)] translate-y-[var(--bannerOffset)];
 			}
-			body[data-layout-mode="banner"][data-route-home="true"] #main-grid {
-				@apply translate-y-[var(--banner-height-extend)];
-			}
 			body[data-layout-mode="banner"] #top-row {
 				@apply h-[calc(var(--banner-height-home)_-_4.5rem)] transition-all duration-500;
-			}
-			body[data-layout-mode="banner"][data-route-home="true"] #sidebar-sticky {
-				@apply top-[calc(1rem_-_var(--banner-height-extend))];
 			}
 			.navbar-hidden {
 			@apply opacity-0 -translate-y-16;

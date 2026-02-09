@@ -53,42 +53,33 @@ function collapseHomeBanner(
 	collapseCooldown = true;
 
 	const bannerWrapper = document.getElementById("banner-wrapper");
-	const mainPanelWrapper = document.querySelector(
-		".main-panel-wrapper",
-	) as HTMLElement | null;
-	const mainGrid = document.getElementById("main-grid") as HTMLElement | null;
-	const topRow = document.getElementById("top-row") as HTMLElement | null;
 
-	// 1. Disable transitions to prevent visual jump
-	const transitionTargets = [mainPanelWrapper, mainGrid, topRow].filter(
-		Boolean,
-	) as HTMLElement[];
-	for (const el of transitionTargets) {
-		el.style.transition = "none";
-	}
-
-	// 2. Toggle body classes
+	// 1. Toggle body classes
 	document.body.classList.remove("enable-banner");
 	document.body.classList.add("no-banner-mode", "scroll-collapsed-banner");
 	document.body.classList.add("waves-paused");
 
-	// 3. Hide banner
+	// 2. Hide banner
 	if (bannerWrapper) {
 		bannerWrapper.classList.add("wallpaper-layer-hidden");
 		bannerWrapper.setAttribute("aria-hidden", "true");
 		bannerWrapper.setAttribute("inert", "");
 	}
 
-	// 4. Compensate scroll position
+	// 3. Compensate scroll position to avoid visual "drop to bottom"
+	// when collapsing banner layout into navbar layout.
 	const bannerHeightExtendPx = Math.floor(
 		window.innerHeight * (options.bannerHeightExtend / 100),
 	);
 	const bannerHeightPx = window.innerHeight * (options.bannerHeight / 100);
 	const delta = bannerHeightPx + bannerHeightExtendPx - 88;
 	const currentScroll = document.documentElement.scrollTop;
-	window.scrollTo(0, Math.max(0, currentScroll - delta));
+	window.scrollTo({
+		top: Math.max(0, currentScroll - delta),
+		behavior: "instant",
+	});
 
-	// 5. Update navbar – force opaque, remove hidden
+	// 4. Update navbar – force opaque, remove hidden
 	if (navbar) {
 		const navbarInner = document.getElementById("navbar");
 		if (navbarInner) {
@@ -98,19 +89,12 @@ function collapseHomeBanner(
 		navbar.classList.remove("navbar-hidden");
 	}
 
-	// 6. Show TOC if present
+	// 5. Show TOC if present
 	if (toc) {
 		toc.classList.remove("toc-hide");
 	}
 
-	// 7. Restore transitions on next frame
-	requestAnimationFrame(() => {
-		for (const el of transitionTargets) {
-			el.style.removeProperty("transition");
-		}
-	});
-
-	// 8. Pause carousel
+	// 6. Pause carousel
 	updateBannerCarouselState();
 
 	// Cooldown to prevent rapid re-triggers

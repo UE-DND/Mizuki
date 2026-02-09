@@ -36,7 +36,8 @@ const stickyComponents = filterCalendar(
 	widgetManager.getComponentsByPosition("sticky", "right"),
 );
 
-const stickyContainerClass = "transition-all duration-700 flex flex-col w-full gap-4 sticky top-4";
+const stickyContainerClass =
+	"flex flex-col w-full gap-4 sticky top-4 transition-[top] duration-[var(--layout-mode-transition-duration)] ease-[var(--layout-mode-transition-easing)]";
 
 // 组件映射表
 const componentMap = {

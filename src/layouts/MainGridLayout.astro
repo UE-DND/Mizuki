@@ -13,9 +13,8 @@ import TypewriterText from "../components/TypewriterText.astro";
 import TOC from "../components/widget/TOC.astro";
 import { siteConfig } from "../config";
 import {
-	BANNER_HEIGHT,
 	BANNER_HEIGHT_EXTEND,
-	// BANNER_HEIGHT_HOME,
+	BANNER_HEIGHT_HOME,
 	// MAIN_PANEL_OVERLAPS_BANNER_HEIGHT,
 } from "../constants/constants";
 import { widgetManager } from "../utils/widget-manager";
@@ -123,11 +122,11 @@ const configuredWallpaperMode = siteConfig.wallpaperMode.defaultMode;
 const initialWallpaperMode = isHomePage ? configuredWallpaperMode : "none";
 
 // 计算主内容区域位置，考虑手机端非首页时banner被隐藏
-// 当默认模式为 banner 时，使用banner高度；否则使用顶栏高度
-// 让主内容区域紧贴波浪线下方，波浪线高度约为10-15vh，所以主内容从banner顶部开始
+// 当默认模式为 banner 时，使用完整 banner 高度（含 extend 段）；
+// 避免 main-panel 和 main-grid 同时位移导致折叠抽动。
 const mainPanelTop =
 	initialWallpaperMode === "banner"
-		? `${BANNER_HEIGHT}vh`
+		? `${BANNER_HEIGHT_HOME}vh`
 		: "5.5rem";
 // const mobileNonHomeMainTop = !isHomePage ? "5.5rem" : mainPanelTop;
 
@@ -591,8 +590,8 @@ const mainContentClass = `
 
 <style>
 :root {
-    --layout-mode-transition-duration: 0.5s;
-    --layout-mode-transition-easing: cubic-bezier(0.22, 1, 0.36, 1);
+    --layout-mode-transition-duration: 0.98s;
+    --layout-mode-transition-easing: cubic-bezier(0.16, 1, 0.4, 1);
 }
 
 /* 导航区顶部遮罩层 */
@@ -709,6 +708,22 @@ body[data-layout-mode="collapsed"] #top-row {
     z-index: 50;
 }
 
+/* 折叠时导航栏柔和切入：仅在 runtime 触发 class 时生效 */
+#navbar-wrapper.layout-navbar-entering {
+    animation: navbar-enter-collapse var(--layout-mode-transition-duration) var(--layout-mode-transition-easing) both;
+}
+
+@keyframes navbar-enter-collapse {
+    0% {
+        opacity: 0.08;
+        transform: translateY(-0.45rem) scale(0.992);
+    }
+    100% {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
+}
+
 /* 当没有 banner 时，主内容区域移到顶部 */
 body[data-layout-mode="none"] .absolute.w-full.z-30,
 body[data-layout-mode="collapsed"] .absolute.w-full.z-30 {
@@ -725,7 +740,7 @@ body[data-layout-mode="collapsed"] #toc-inner-wrapper {
 /* 桌面端 banner 模式下的主内容区域位置 */
 @media (min-width: 1280px) {
     body[data-layout-mode="banner"] .absolute.w-full.z-30 {
-        top: 35vh !important;
+        top: var(--banner-height-home) !important;
     }
 }
 
@@ -1508,38 +1523,26 @@ body[data-layout-mode="collapsed"] .waves > .parallax use {
     }
 }
 
-/* 无 banner 模式下侧边栏固定【桌面端】 */
+/* 无 banner/折叠模式下侧边栏对齐【桌面端】 */
 @media (min-width: 1280px) {
-    :global(body[data-layout-mode="none"] #sidebar),
-    :global(body[data-layout-mode="none"] #right-sidebar),
-    :global(body[data-layout-mode="collapsed"] #sidebar),
-    :global(body[data-layout-mode="collapsed"] #right-sidebar) {
-        position: sticky;
+    :global(body[data-layout-mode="none"] #sidebar #sidebar-sticky),
+    :global(body[data-layout-mode="none"] #right-sidebar #right-sidebar-sticky),
+    :global(body[data-layout-mode="collapsed"] #sidebar #sidebar-sticky),
+    :global(body[data-layout-mode="collapsed"] #right-sidebar #right-sidebar-sticky) {
         top: 5.5rem;
-        align-self: start;
     }
 
-    :global(body[data-layout-mode="none"] #sidebar[data-scrollable="true"]),
-    :global(body[data-layout-mode="none"] #right-sidebar),
-    :global(body[data-layout-mode="collapsed"] #sidebar[data-scrollable="true"]),
-    :global(body[data-layout-mode="collapsed"] #right-sidebar) {
+    :global(body[data-layout-mode="none"] #sidebar[data-scrollable="true"] #sidebar-sticky),
+    :global(body[data-layout-mode="none"] #right-sidebar #right-sidebar-sticky),
+    :global(body[data-layout-mode="collapsed"] #sidebar[data-scrollable="true"] #sidebar-sticky),
+    :global(body[data-layout-mode="collapsed"] #right-sidebar #right-sidebar-sticky) {
         max-height: calc(100vh - 6.5rem);
         overflow-y: auto;
         scrollbar-width: thin;
     }
 
-    /* 不可滚动时禁止溢出 */
-    :global(body[data-layout-mode="none"] #sidebar[data-scrollable="false"]),
-    :global(body[data-layout-mode="collapsed"] #sidebar[data-scrollable="false"]) {
-        overflow-y: hidden;
-    }
-
-    /* 内部 sticky 区域在外层已 sticky 时改为 relative */
-    :global(body[data-layout-mode="none"] #sidebar #sidebar-sticky),
-    :global(body[data-layout-mode="none"] #right-sidebar #right-sidebar-sticky),
-    :global(body[data-layout-mode="collapsed"] #sidebar #sidebar-sticky),
-    :global(body[data-layout-mode="collapsed"] #right-sidebar #right-sidebar-sticky) {
-        position: relative;
-        top: auto;
+    :global(body[data-layout-mode="none"] #sidebar[data-scrollable="false"] #sidebar-sticky),
+    :global(body[data-layout-mode="collapsed"] #sidebar[data-scrollable="false"] #sidebar-sticky) {
+        overflow-y: visible;
     }
 }
