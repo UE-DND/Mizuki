@@ -1,5 +1,6 @@
 import type { APIContext } from "astro";
 
+import type { AppAlbum, AppArticle, AppDiary } from "@/types/app";
 import type { JsonObject } from "@/types/json";
 import {
 	assertCan,
@@ -47,6 +48,7 @@ import {
 	hasOwn,
 } from "./shared";
 import { invalidateAuthorCache } from "./shared/author-cache";
+import { generateShortId } from "@/server/utils/short-id";
 
 async function handleMeProfile(
 	context: APIContext,
@@ -591,7 +593,7 @@ async function handleMeArticles(
 			const specialSlug = toSpecialArticleSlug(
 				toOptionalString(body.slug),
 			);
-			const created = await createOne("app_articles", {
+			const articlePayload = {
 				status,
 				author_id: access.user.id,
 				title,
@@ -609,8 +611,29 @@ async function handleMeArticles(
 					status === "published"
 						? toOptionalString(body.published_at) || nowIso()
 						: toOptionalString(body.published_at),
-			});
-			return ok({ item: { ...created, tags: safeCsv(created.tags) } });
+			};
+
+			let created: AppArticle | null = null;
+			const MAX_SHORT_ID_RETRIES = 3;
+			for (let attempt = 0; attempt < MAX_SHORT_ID_RETRIES; attempt++) {
+				try {
+					created = await createOne("app_articles", {
+						...articlePayload,
+						short_id: generateShortId(),
+					});
+					break;
+				} catch (error) {
+					const msg = String(error);
+					if (
+						(msg.includes("unique") || msg.includes("duplicate")) &&
+						attempt < MAX_SHORT_ID_RETRIES - 1
+					) {
+						continue;
+					}
+					throw error;
+				}
+			}
+			return ok({ item: { ...created, tags: safeCsv(created?.tags) } });
 		}
 	}
 
@@ -719,7 +742,7 @@ async function handleMeDiaries(
 			}
 
 			const status = parseBodyStatus(body, "status", "draft");
-			const created = await createOne("app_diaries", {
+			const diaryPayload = {
 				status,
 				author_id: access.user.id,
 				content,
@@ -729,7 +752,28 @@ async function handleMeDiaries(
 				allow_comments: toBooleanValue(body.allow_comments, true),
 				is_public: toBooleanValue(body.is_public, true),
 				show_on_profile: toBooleanValue(body.show_on_profile, true),
-			});
+			};
+
+			let created: AppDiary | null = null;
+			const MAX_DIARY_SID_RETRIES = 3;
+			for (let attempt = 0; attempt < MAX_DIARY_SID_RETRIES; attempt++) {
+				try {
+					created = await createOne("app_diaries", {
+						...diaryPayload,
+						short_id: generateShortId(),
+					});
+					break;
+				} catch (error) {
+					const msg = String(error);
+					if (
+						(msg.includes("unique") || msg.includes("duplicate")) &&
+						attempt < MAX_DIARY_SID_RETRIES - 1
+					) {
+						continue;
+					}
+					throw error;
+				}
+			}
 			return ok({ item: created });
 		}
 	}
@@ -957,7 +1001,7 @@ async function handleMeAlbums(
 				return fail("相册标题必填", 400);
 			}
 			const status = parseBodyStatus(body, "status", "draft");
-			const created = await createOne("app_albums", {
+			const albumPayload = {
 				status,
 				author_id: access.user.id,
 				title,
@@ -974,8 +1018,29 @@ async function handleMeAlbums(
 				columns: toNumberValue(body.columns, 3) || 3,
 				is_public: toBooleanValue(body.is_public, true),
 				show_on_profile: toBooleanValue(body.show_on_profile, true),
-			});
-			return ok({ item: { ...created, tags: safeCsv(created.tags) } });
+			};
+
+			let created: AppAlbum | null = null;
+			const MAX_ALBUM_SID_RETRIES = 3;
+			for (let attempt = 0; attempt < MAX_ALBUM_SID_RETRIES; attempt++) {
+				try {
+					created = await createOne("app_albums", {
+						...albumPayload,
+						short_id: generateShortId(),
+					});
+					break;
+				} catch (error) {
+					const msg = String(error);
+					if (
+						(msg.includes("unique") || msg.includes("duplicate")) &&
+						attempt < MAX_ALBUM_SID_RETRIES - 1
+					) {
+						continue;
+					}
+					throw error;
+				}
+			}
+			return ok({ item: { ...created, tags: safeCsv(created?.tags) } });
 		}
 	}
 

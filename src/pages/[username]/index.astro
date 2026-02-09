@@ -6,9 +6,10 @@ import {
 } from "@/server/api/v1/public-data";
 import {
 	isSpecialArticleSlug,
-	loadPublicArticleById,
+	loadPublicArticleByShortId,
 	loadPublicArticleBySlug,
 } from "@/server/api/v1/shared";
+import { isShortId } from "@/server/utils/short-id";
 
 export const prerender = false;
 
@@ -23,13 +24,13 @@ try {
 		payload = await loadUserHomeData(username);
 		if (!payload) {
 			// 用户不存在，尝试作为文章短链接解析
-			const article =
-				(await loadPublicArticleById(username)) ||
-				(isSpecialArticleSlug(username)
+			const article = isShortId(username)
+				? await loadPublicArticleByShortId(username)
+				: isSpecialArticleSlug(username)
 					? await loadPublicArticleBySlug(username)
-					: null);
-			if (article?.id) {
-				return Astro.redirect(`/posts/${article.id}`, 302);
+					: null;
+			if (article?.short_id) {
+				return Astro.redirect(`/posts/${article.short_id}`, 302);
 			}
 			Astro.response.status = 404;
 		} else {
@@ -79,7 +80,7 @@ function shortDiary(text: string): string {
 					<ul class="space-y-2">
 						{payload.articles.map((item) => (
 							<li>
-								<a href={`/posts/${item.id}`} class="hover:text-[var(--primary)] transition-colors">{item.title}</a>
+								<a href={`/posts/${item.short_id || item.id}`} class="hover:text-[var(--primary)] transition-colors">{item.title}</a>
 							</li>
 						))}
 					</ul>
@@ -92,7 +93,7 @@ function shortDiary(text: string): string {
 					<ul class="space-y-2 text-sm text-75">
 						{payload.diaries.map((item) => (
 							<li>
-								<a href={`/${payload.owner?.username || username}/diary/${item.id}`} class="hover:text-[var(--primary)] transition-colors">
+								<a href={`/${payload.owner?.username || username}/diary/${item.short_id || item.id}`} class="hover:text-[var(--primary)] transition-colors">
 									{shortDiary(item.content)}
 								</a>
 							</li>
@@ -118,7 +119,7 @@ function shortDiary(text: string): string {
 					<ul class="space-y-2">
 						{payload.albums.map((item) => (
 							<li>
-								<a href={`/${payload.owner?.username || username}/albums/${item.id}`} class="hover:text-[var(--primary)] transition-colors">{item.title}</a>
+								<a href={`/${payload.owner?.username || username}/albums/${item.short_id || item.id}`} class="hover:text-[var(--primary)] transition-colors">{item.title}</a>
 							</li>
 						))}
 					</ul>

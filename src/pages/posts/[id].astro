@@ -6,10 +6,11 @@ import { renderMarkdown } from "@/server/markdown/render";
 import { buildDirectusAssetUrl } from "@/server/directus-auth";
 import {
 	isSpecialArticleSlug,
-	loadPublicArticleById,
+	loadPublicArticleByShortId,
 	loadPublicArticleBySlug,
 	safeCsv,
 } from "@/server/api/v1/shared";
+import { isShortId } from "@/server/utils/short-id";
 import { getAuthorBundle } from "@/server/api/v1/shared/author-cache";
 import { readAuthor } from "@/server/api/v1/public-data";
 import {
@@ -19,7 +20,7 @@ import {
 
 export const prerender = false;
 
-const articleId = (Astro.params.id || "").replace(/^\/+|\/+$/g, "");
+const rawId = (Astro.params.id || "").replace(/^\/+|\/+$/g, "");
 
 let article: {
 	id: string;
@@ -37,13 +38,13 @@ let article: {
 } | null = null;
 let articleHtml = "";
 
-if (articleId) {
+if (rawId) {
 	try {
-		const rawArticle =
-			(await loadPublicArticleById(articleId)) ||
-			(isSpecialArticleSlug(articleId)
-				? await loadPublicArticleBySlug(articleId)
-				: null);
+		const rawArticle = isShortId(rawId)
+			? await loadPublicArticleByShortId(rawId)
+			: isSpecialArticleSlug(rawId)
+				? await loadPublicArticleBySlug(rawId)
+				: null;
 		if (rawArticle) {
 			const authorMap = await getAuthorBundle([rawArticle.author_id]);
 			article = {

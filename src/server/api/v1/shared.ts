@@ -584,12 +584,36 @@ export async function loadPublicArticleBySlug(
 	return rows[0] || null;
 }
 
+export async function loadPublicArticleByShortId(
+	shortId: string,
+): Promise<AppArticle | null> {
+	const rows = await readMany("app_articles", {
+		filter: {
+			_and: [{ short_id: { _eq: shortId } }, filterPublicStatus()],
+		} as JsonObject,
+		limit: 1,
+	});
+	return rows[0] || null;
+}
+
 export async function loadPublicDiaryById(
 	id: string,
 ): Promise<AppDiary | null> {
 	const rows = await readMany("app_diaries", {
 		filter: {
 			_and: [{ id: { _eq: id } }, filterPublicStatus()],
+		} as JsonObject,
+		limit: 1,
+	});
+	return rows[0] || null;
+}
+
+export async function loadPublicDiaryByShortId(
+	shortId: string,
+): Promise<AppDiary | null> {
+	const rows = await readMany("app_diaries", {
+		filter: {
+			_and: [{ short_id: { _eq: shortId } }, filterPublicStatus()],
 		} as JsonObject,
 		limit: 1,
 	});
@@ -611,6 +635,18 @@ export async function loadPublicAlbumById(
 	const rows = await readMany("app_albums", {
 		filter: {
 			_and: [{ id: { _eq: normalizedId } }, filterPublicStatus()],
+		} as JsonObject,
+		limit: 1,
+	});
+	return rows[0] || null;
+}
+
+export async function loadPublicAlbumByShortId(
+	shortId: string,
+): Promise<AppAlbum | null> {
+	const rows = await readMany("app_albums", {
+		filter: {
+			_and: [{ short_id: { _eq: shortId } }, filterPublicStatus()],
 		} as JsonObject,
 		limit: 1,
 	});

@@ -55,6 +55,7 @@ export type AppPermissions = {
 
 export type AppArticle = {
 	id: string;
+	short_id: string | null;
 	author_id: string;
 	status: AppStatus;
 	title: string;
@@ -75,6 +76,7 @@ export type AppArticle = {
 
 export type AppDiary = {
 	id: string;
+	short_id: string | null;
 	author_id: string;
 	status: AppStatus;
 	content: string;
@@ -126,6 +128,7 @@ export type AppAnimeEntry = {
 
 export type AppAlbum = {
 	id: string;
+	short_id: string | null;
 	author_id: string;
 	status: AppStatus;
 	title: string;

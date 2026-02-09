@@ -11,6 +11,7 @@ export const prerender = false;
 const username = (Astro.params.username || "").trim();
 let items: Array<{
 	id: string;
+	short_id: string | null;
 	content: string;
 	mood: string | null;
 	location: string | null;
@@ -60,7 +61,7 @@ function shortText(input: string): string {
 		<div class="space-y-4">
 			{items.map((item) => (
 				<article class="card-base p-5 rounded-[var(--radius-large)] border border-[var(--line-divider)] text-90">
-					<a href={`/${username}/diary/${item.id}`} class="block space-y-3">
+					<a href={`/${username}/diary/${item.short_id || item.id}`} class="block space-y-3">
 						<div class="flex flex-wrap items-center gap-3 text-xs text-60">
 							{item.author?.name && <span>作者：{item.author.name}</span>}
 							{item.happened_at && <time datetime={item.happened_at}>{new Date(item.happened_at).toLocaleString()}</time>}

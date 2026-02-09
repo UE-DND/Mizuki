@@ -96,8 +96,8 @@ function resolveUpdatedAt(post: AppArticle): Date {
 	return Number.isNaN(parsed.getTime()) ? new Date() : parsed;
 }
 
-function buildPostUrl(articleId: string): string {
-	return `/posts/${articleId}`;
+function buildPostUrl(shortId: string | null, articleId: string): string {
+	return `/posts/${shortId || articleId}`;
 }
 
 function resolveCoverImage(post: AppArticle): string | undefined {
@@ -325,12 +325,13 @@ async function loadDirectusPosts(): Promise<DirectusPostEntry[]> {
 			const category = post.category ? String(post.category).trim() : "";
 			const articleId = String(post.id || "").trim();
 			const authorId = String(post.author_id || "").trim();
-			const routeId = articleId || normalizedSlug;
+			const shortId = String(post.short_id || "").trim() || null;
+			const routeId = shortId || articleId || normalizedSlug;
 			return {
 				id: routeId,
 				slug,
 				body: String(post.body_markdown || ""),
-				url: buildPostUrl(routeId),
+				url: buildPostUrl(shortId, articleId),
 				data: {
 					article_id: articleId,
 					author_id: authorId,

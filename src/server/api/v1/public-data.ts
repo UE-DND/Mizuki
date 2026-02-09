@@ -13,14 +13,15 @@ import type {
 import type { JsonObject } from "@/types/json";
 import { countItems, readMany } from "@/server/directus/client";
 import { buildDirectusAssetUrl } from "@/server/directus-auth";
+import { isShortId } from "@/server/utils/short-id";
 
 import type { AuthorBundleItem } from "./shared/author-cache";
 import { getAuthorBundle } from "./shared/author-cache";
 import {
 	DEFAULT_LIST_LIMIT,
 	filterPublicStatus,
-	loadPublicAlbumById,
-	loadPublicDiaryById,
+	loadPublicAlbumByShortId,
+	loadPublicDiaryByShortId,
 	safeCsv,
 } from "./shared";
 
@@ -385,7 +386,10 @@ export async function loadUserDiaryDetail(
 	}
 	const userId = profile.user_id;
 
-	const diary = await loadPublicDiaryById(diaryId);
+	if (!isShortId(diaryId)) {
+		return null;
+	}
+	const diary = await loadPublicDiaryByShortId(diaryId);
 	if (!diary || diary.author_id !== userId || !diary.show_on_profile) {
 		return null;
 	}
@@ -487,7 +491,10 @@ export async function loadUserAlbumDetail(
 	}
 	const userId = profile.user_id;
 
-	const album = await loadPublicAlbumById(albumId);
+	if (!isShortId(albumId)) {
+		return null;
+	}
+	const album = await loadPublicAlbumByShortId(albumId);
 	if (!album || album.author_id !== userId || !album.show_on_profile) {
 		return null;
 	}
