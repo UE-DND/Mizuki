@@ -56,23 +56,23 @@ const links: NavBarLink[] = navBarConfig.links
 ---
 <div id="navbar" class="z-50 onload-animation group" data-transparent-mode={navbarTransparentMode} data-is-home={isHomePage}>
     <div class="absolute h-8 left-0 right-0 -top-8 bg-[var(--card-bg)] transition"></div> <!-- used for onload animation -->
-    <div class:list={[className, "!overflow-visible max-w-[var(--page-width)] h-[4.5rem] mx-auto flex items-center justify-between px-4"]}>
-        <a id="navbar-logo" href={url('/')} class="btn-plain scale-animation rounded-lg h-[3.25rem] [.enable-banner_&]:h-[2.5rem] [.enable-banner_&]:group-[.scrolled]:h-[3.25rem] px-5 font-bold active:scale-95 shrink-0 transition-all duration-[600ms]">
-            <div class="flex flex-row items-center text-md">
+    <div class:list={[className, "!overflow-visible w-full min-w-0 max-w-[var(--page-width)] h-[4.5rem] mx-auto flex items-center justify-between px-2 sm:px-4"]}>
+        <a id="navbar-logo" href={url('/')} class="btn-plain scale-animation rounded-lg h-[2.5rem] md:h-[3.25rem] md:[.enable-banner_&]:h-[2.5rem] md:[.enable-banner_&]:group-[.scrolled]:h-[3.25rem] px-3 sm:px-5 font-bold active:scale-95 min-w-0 max-w-[12rem] sm:max-w-[15rem] md:max-w-none transition-all duration-[600ms]">
+            <div class="flex flex-row items-center min-w-0 text-md">
 				{/* 使用navbarTitle配置或默认配置 */}
                 {siteConfig.navbarTitle ? (
                     siteConfig.navbarTitle.mode === "logo" ? (
-					<img src={url(siteConfig.navbarTitle.logo || "/assets/home/default-logo.png")} alt={siteConfig.navbarTitle.text} class="h-[3.25rem] [.enable-banner_&]:h-[2.5rem] [.enable-banner_&]:group-[.scrolled]:h-[3.25rem] max-w-full object-contain transition-all duration-[600ms]" loading="lazy" />
+					<img src={url(siteConfig.navbarTitle.logo || "/assets/home/default-logo.png")} alt={siteConfig.navbarTitle.text} class="h-[2.5rem] md:h-[3.25rem] md:[.enable-banner_&]:h-[2.5rem] md:[.enable-banner_&]:group-[.scrolled]:h-[3.25rem] max-w-full object-contain transition-all duration-[600ms]" loading="lazy" />
                     ) : (
                         <>
-						<img src={url(siteConfig.navbarTitle.icon || "/assets/home/home.png")} alt={siteConfig.navbarTitle.text} class="h-[1.75rem] w-[1.75rem] mr-2 object-contain" loading="lazy" />
-                            <span class="dark:text-white text-black">{siteConfig.navbarTitle.text}</span>
+							<img src={url(siteConfig.navbarTitle.icon || "/assets/home/home.png")} alt={siteConfig.navbarTitle.text} class="h-[1.75rem] w-[1.75rem] mr-2 object-contain" loading="lazy" />
+                            <span class="max-w-[8rem] sm:max-w-none truncate dark:text-white text-black">{siteConfig.navbarTitle.text}</span>
                         </>
                     )
                 ) : (
                     <>
-					<Icon name="material-symbols:home-pin-outline" class="text-[1.75rem] mr-2" />
-                        <span class="dark:text-white text-black">{siteConfig.title}</span>
+						<Icon name="material-symbols:home-pin-outline" class="text-[1.75rem] mr-2" />
+                        <span class="max-w-[8rem] sm:max-w-none truncate dark:text-white text-black">{siteConfig.title}</span>
                     </>
                 )}
             </div>
@@ -82,7 +82,7 @@ const links: NavBarLink[] = navBarConfig.links
                 return <DropdownMenu link={l} />;
             })}
         </div>
-        <div class="flex items-center gap-1">
+        <div class="flex shrink-0 items-center gap-0.5 sm:gap-1">
             <div id="search-container">
                 <Search client:only="svelte"></Search>
             </div>

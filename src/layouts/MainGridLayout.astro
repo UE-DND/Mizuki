@@ -708,6 +708,14 @@ body[data-layout-mode="collapsed"] #toc-inner-wrapper {
     }
 }
 
+/* 移动端首页：取消桌面专用的 main-grid 下移量，避免 banner 与正文之间出现空白 */
+@media (max-width: 1279px) {
+    body[data-layout-mode="banner"][data-route-home="true"] #main-grid {
+        transform: none !important;
+        -webkit-transform: none !important;
+    }
+}
+
 /* 移动端横幅优化 - 小屏手机 (320px - 479px) */
 @media (max-width: 479px) {
     /* Banner wrapper 高度优化 - 优先保持banner显示 */
@@ -716,12 +724,14 @@ body[data-layout-mode="collapsed"] #toc-inner-wrapper {
         min-height: 450px;
         max-height: none; /* 移除最大高度限制 */
         top: 0 !important; /* 移动端从顶部开始，避免被导航栏覆盖 */
+        transform: none !important;
+        -webkit-transform: none !important;
     }
     
     /* 主内容区域位置调整 - 确保在banner下面 */
     body[data-layout-mode="banner"] .absolute.w-full.z-30:not(.mobile-main-no-banner) {
-        top: 70vh !important; /* 与banner高度对应 */
-        min-height: calc(100vh - 70vh) !important;
+        top: calc(70vh + 0.75rem) !important; /* 与banner高度对应并保留轻微留白 */
+        min-height: calc(100vh - 70vh - 0.75rem) !important;
     }
     
     /* 横幅文本覆盖层优化 */
@@ -770,12 +780,14 @@ body[data-layout-mode="collapsed"] #toc-inner-wrapper {
         min-height: 500px;
         max-height: none; /* 移除最大高度限制 */
         top: 0 !important; /* 移动端从顶部开始，避免被导航栏覆盖 */
+        transform: none !important;
+        -webkit-transform: none !important;
     }
     
     /* 主内容区域位置调整 - 确保在banner下面 */
     body[data-layout-mode="banner"] .absolute.w-full.z-30:not(.mobile-main-no-banner) {
-        top: 75vh !important; /* 与banner高度对应 */
-        min-height: calc(100vh - 75vh) !important;
+        top: calc(75vh + 0.75rem) !important; /* 与banner高度对应并保留轻微留白 */
+        min-height: calc(100vh - 75vh - 0.75rem) !important;
     }
     
     /* 横幅文本覆盖层优化 */
@@ -823,12 +835,14 @@ body[data-layout-mode="collapsed"] #toc-inner-wrapper {
         height: 70vh !important;
         min-height: 500px;
         top: 0 !important; /* 移动端从顶部开始，避免被导航栏覆盖 */
+        transform: none !important;
+        -webkit-transform: none !important;
     }
     
     /* 主内容区域位置调整 - 确保在banner下面 */
     body[data-layout-mode="banner"] .absolute.w-full.z-30:not(.mobile-main-no-banner) {
-        top: 70vh !important; /* 与banner高度对应 */
-        min-height: calc(100vh - 70vh) !important;
+        top: calc(70vh + 0.75rem) !important; /* 与banner高度对应并保留轻微留白 */
+        min-height: calc(100vh - 70vh - 0.75rem) !important;
     }
     
     /* 横幅文本覆盖层优化 */
@@ -1166,12 +1180,14 @@ body[data-layout-mode="collapsed"] #toc-inner-wrapper {
     #banner-wrapper:not(.mobile-hide-banner) {
         top: 0 !important; /* 横屏模式从顶部开始，避免被导航栏覆盖 */
         height: 60vh !important;
+        transform: none !important;
+        -webkit-transform: none !important;
     }
     
     /* 主内容区域位置调整 - 确保在banner下面，但不影响非首页 */
     .absolute.w-full.z-30:not(.mobile-main-no-banner) {
-        top: 60vh !important; /* 与banner高度对应 */
-        min-height: calc(100vh - 60vh) !important;
+        top: calc(60vh + 0.5rem) !important; /* 横屏下保留更小留白 */
+        min-height: calc(100vh - 60vh - 0.5rem) !important;
     }
     
     .banner-container {
@@ -1198,8 +1214,8 @@ body[data-layout-mode="collapsed"] #toc-inner-wrapper {
 }
 
 /* 移动端暗色模式优化 */
-@media (max-width: 1279px) and (prefers-color-scheme: dark) {
-    .banner-text-overlay {
+@media (max-width: 1279px) {
+    :root.dark .banner-text-overlay {
         background: linear-gradient(
             to top,
             rgba(0, 0, 0, 0.8) 0%,
@@ -1208,12 +1224,21 @@ body[data-layout-mode="collapsed"] #toc-inner-wrapper {
         );
     }
 
-    .banner-title {
+    :root.dark .banner-title {
         text-shadow: 2px 2px 8px rgba(0, 0, 0, 0.8);
     }
 
-    .banner-subtitle {
+    :root.dark .banner-subtitle {
         text-shadow: 1px 1px 4px rgba(0, 0, 0, 0.7);
+    }
+
+    :root:not(.dark) .banner-text-overlay {
+        background: linear-gradient(
+            to top,
+            rgba(255, 255, 255, 0.26) 0%,
+            rgba(255, 255, 255, 0.12) 50%,
+            transparent 100%
+        );
     }
 }
 
