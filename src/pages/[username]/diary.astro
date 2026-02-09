@@ -1,15 +1,19 @@
 ---
+import ContentNotVisible from "@components/misc/ContentNotVisible.astro";
 import MainGridLayout from "@layouts/MainGridLayout.astro";
 import {
-	loadPublicProfileByUsername,
+	loadProfileForViewer,
 	loadUserDiaryList,
 	profileToSidebarData,
 } from "@/server/api/v1/public-data";
+import type { ContentLoadResult, PaginatedResult } from "@/server/api/v1/public-data";
+import { getSessionUser } from "@/server/auth/session";
 
 export const prerender = false;
 
 const username = (Astro.params.username || "").trim();
-let items: Array<{
+
+type DiaryListItem = {
 	id: string;
 	short_id: string | null;
 	content: string;
@@ -18,27 +22,34 @@ let items: Array<{
 	happened_at: string | null;
 	author?: { name?: string };
 	images?: Array<{ image_url: string | null }>;
-}> = [];
+};
+
+let result: ContentLoadResult<PaginatedResult<DiaryListItem>> = { status: "not_found" };
 
 try {
 	if (!username) {
 		Astro.response.status = 404;
 	} else {
-		const result = await loadUserDiaryList(username, { limit: 100 });
-		if (result) {
-			items = result.items;
-			const sidebarProfile = await loadPublicProfileByUsername(username);
+		const sessionUser = await getSessionUser(Astro);
+		const viewerId = sessionUser?.id ?? null;
+		result = await loadUserDiaryList(username, { limit: 100, viewerId }) as ContentLoadResult<PaginatedResult<DiaryListItem>>;
+		if (result.status === "not_found") {
+			Astro.response.status = 404;
+		} else if (result.status === "permission_denied") {
+			Astro.response.status = 403;
+		} else {
+			const sidebarProfile = await loadProfileForViewer(username, viewerId);
 			if (sidebarProfile) {
 				Astro.locals.sidebarProfile = profileToSidebarData(sidebarProfile);
 			}
-		} else {
-			Astro.response.status = 404;
 		}
 	}
 } catch (error) {
 	console.error("[diary] failed to load entries:", error);
 	Astro.response.status = 500;
 }
+
+const items = result.status === "ok" ? result.data.items : [];
 
 function shortText(input: string): string {
 	const text = String(input || "").replace(/\s+/g, " ").trim();
@@ -50,43 +61,65 @@ function shortText(input: string): string {
 ---
 
 <MainGridLayout title="日记" description="用户公开日记列表">
-	<section class="card-base p-6 rounded-[var(--radius-large)] mb-4 text-90">
-		<h1 class="text-2xl font-bold mb-2">日记</h1>
-		<p class="text-sm text-70">用户公开的日记内容。</p>
-	</section>
-
-	{items.length === 0 ? (
-		<div class="card-base p-8 rounded-[var(--radius-large)] text-70">暂无公开日记。</div>
+	{result.status === "permission_denied" ? (
+		<ContentNotVisible
+			mode="permission_denied"
+			title="日记不可见"
+			description="由于用户权限设置，该用户的日记内容不可见。"
+			backHref={`/${username}`}
+			backLabel="返回用户主页"
+		/>
+	) : result.status === "not_found" ? (
+		<ContentNotVisible
+			mode="not_found"
+			title="用户不存在"
+			description="该用户不存在或链接错误。"
+			backHref="/"
+			backLabel="返回首页"
+		/>
 	) : (
-		<div class="space-y-4">
-			{items.map((item) => (
-				<article class="card-base p-5 rounded-[var(--radius-large)] border border-[var(--line-divider)] text-90">
-					<a href={`/${username}/diary/${item.short_id || item.id}`} class="block space-y-3">
-						<div class="flex flex-wrap items-center gap-3 text-xs text-60">
-							{item.author?.name && <span>作者：{item.author.name}</span>}
-							{item.happened_at && <time datetime={item.happened_at}>{new Date(item.happened_at).toLocaleString()}</time>}
-							{item.location && <span>地点：{item.location}</span>}
-							{item.mood && <span>心情：{item.mood}</span>}
-						</div>
-						<p class="text-sm md:text-base text-85 leading-7">{shortText(item.content)}</p>
-						{Array.isArray(item.images) && item.images.length > 0 && (
-							<div class="grid grid-cols-3 md:grid-cols-4 gap-2">
-								{item.images
-									.filter((image) => image.image_url)
-									.slice(0, 4)
-									.map((image) => (
-										<img
-											src={image.image_url || ""}
-											alt="日记配图"
-											class="w-full h-20 md:h-24 object-cover rounded-lg border border-[var(--line-divider)]"
-											loading="lazy"
-										/>
-									))}
-							</div>
-						)}
-					</a>
-				</article>
-			))}
-		</div>
+		<>
+			<section class="card-base px-9 py-6 rounded-[var(--radius-large)] mb-4 text-90">
+				<h1 class="text-4xl font-bold text-black/90 dark:text-white/90 mb-2 relative
+					before:w-1 before:h-8 before:rounded-md before:bg-[var(--primary)]
+					before:absolute before:top-1/2 before:-translate-y-1/2 before:-left-4">日记</h1>
+				<p class="text-base text-70">用户公开的日记内容。</p>
+			</section>
+
+			{items.length === 0 ? (
+				<div class="card-base p-8 rounded-[var(--radius-large)] text-70">暂无公开日记。</div>
+			) : (
+				<div class="space-y-4">
+					{items.map((item) => (
+						<article class="card-base p-5 rounded-[var(--radius-large)] border border-[var(--line-divider)] text-90">
+							<a href={`/${username}/diary/${item.short_id || item.id}`} class="block space-y-3">
+								<div class="flex flex-wrap items-center gap-3 text-xs text-60">
+									{item.author?.name && <span>作者：{item.author.name}</span>}
+									{item.happened_at && <time datetime={item.happened_at}>{new Date(item.happened_at).toLocaleString()}</time>}
+									{item.location && <span>地点：{item.location}</span>}
+									{item.mood && <span>心情：{item.mood}</span>}
+								</div>
+								<p class="text-sm md:text-base text-85 leading-7">{shortText(item.content)}</p>
+								{Array.isArray(item.images) && item.images.length > 0 && (
+									<div class="grid grid-cols-3 md:grid-cols-4 gap-2">
+										{item.images
+											.filter((image) => image.image_url)
+											.slice(0, 4)
+											.map((image) => (
+												<img
+													src={image.image_url || ""}
+													alt="日记配图"
+													class="w-full h-20 md:h-24 object-cover rounded-lg border border-[var(--line-divider)]"
+													loading="lazy"
+												/>
+											))}
+									</div>
+								)}
+							</a>
+						</article>
+					))}
+				</div>
+			)}
+		</>
 	)}
 </MainGridLayout>

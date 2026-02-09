@@ -1,11 +1,14 @@
 ---
 import Comment from "@components/comment/index.astro";
+import ContentNotVisible from "@components/misc/ContentNotVisible.astro";
 import Markdown from "@components/misc/Markdown.astro";
 import MainGridLayout from "@layouts/MainGridLayout.astro";
 import { renderMarkdown } from "@/server/markdown/render";
 import { buildDirectusAssetUrl } from "@/server/directus-auth";
 import {
 	isSpecialArticleSlug,
+	loadArticleByShortIdLoose,
+	loadArticleBySlugLoose,
 	loadPublicArticleByShortId,
 	loadPublicArticleBySlug,
 	safeCsv,
@@ -14,9 +17,10 @@ import { isShortId } from "@/server/utils/short-id";
 import { getAuthorBundle } from "@/server/api/v1/shared/author-cache";
 import { readAuthor } from "@/server/api/v1/public-data";
 import {
-	loadPublicProfileByUserId,
+	loadProfileForViewerByUserId,
 	profileToSidebarData,
 } from "@/server/api/v1/public-data";
+import { getSessionUser } from "@/server/auth/session";
 
 export const prerender = false;
 
@@ -40,11 +44,27 @@ let articleHtml = "";
 
 if (rawId) {
 	try {
-		const rawArticle = isShortId(rawId)
+		const sessionUser = await getSessionUser(Astro);
+
+		// First try public query
+		let rawArticle = isShortId(rawId)
 			? await loadPublicArticleByShortId(rawId)
 			: isSpecialArticleSlug(rawId)
 				? await loadPublicArticleBySlug(rawId)
 				: null;
+
+		// Public query failed + user is logged in → try owner fallback
+		if (!rawArticle && sessionUser) {
+			const candidate = isShortId(rawId)
+				? await loadArticleByShortIdLoose(rawId)
+				: isSpecialArticleSlug(rawId)
+					? await loadArticleBySlugLoose(rawId)
+					: null;
+			if (candidate && candidate.author_id === sessionUser.id) {
+				rawArticle = candidate;
+			}
+		}
+
 		if (rawArticle) {
 			const authorMap = await getAuthorBundle([rawArticle.author_id]);
 			article = {
@@ -58,7 +78,10 @@ if (rawId) {
 					target: "page",
 				},
 			);
-			const authorProfile = await loadPublicProfileByUserId(rawArticle.author_id);
+			const authorProfile = await loadProfileForViewerByUserId(
+				rawArticle.author_id,
+				sessionUser?.id ?? null,
+			);
 			if (authorProfile) {
 				Astro.locals.sidebarProfile = profileToSidebarData(authorProfile);
 			}
@@ -90,10 +113,13 @@ const coverUrl = article?.cover_url
 	description={article?.summary || ""}
 >
 	{!article ? (
-		<div class="card-base p-8 rounded-[var(--radius-large)]">
-			<h1 class="text-2xl font-bold mb-2">文章不存在</h1>
-			<p class="text-70">该文章可能未发布、已删除，或链接错误。</p>
-		</div>
+		<ContentNotVisible
+			mode="not_found"
+			title="文章不存在"
+			description="该文章可能未发布、已删除，或链接错误。"
+			backHref="/"
+			backLabel="返回首页"
+		/>
 	) : (
 		<>
 			<article

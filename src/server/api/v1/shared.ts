@@ -584,6 +584,17 @@ export async function loadPublicArticleBySlug(
 	return rows[0] || null;
 }
 
+/** Loose variant: load article by slug without status/is_public filter (for owner fallback) */
+export async function loadArticleBySlugLoose(
+	slug: string,
+): Promise<AppArticle | null> {
+	const rows = await readMany("app_articles", {
+		filter: { slug: { _eq: slug } } as JsonObject,
+		limit: 1,
+	});
+	return rows[0] || null;
+}
+
 export async function loadPublicArticleByShortId(
 	shortId: string,
 ): Promise<AppArticle | null> {
@@ -591,6 +602,17 @@ export async function loadPublicArticleByShortId(
 		filter: {
 			_and: [{ short_id: { _eq: shortId } }, filterPublicStatus()],
 		} as JsonObject,
+		limit: 1,
+	});
+	return rows[0] || null;
+}
+
+/** Loose variant: load article by short_id without status/is_public filter (for owner fallback) */
+export async function loadArticleByShortIdLoose(
+	shortId: string,
+): Promise<AppArticle | null> {
+	const rows = await readMany("app_articles", {
+		filter: { short_id: { _eq: shortId } } as JsonObject,
 		limit: 1,
 	});
 	return rows[0] || null;

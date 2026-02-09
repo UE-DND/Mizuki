@@ -231,10 +231,10 @@ if (hasCustomRightSidebar) {
 		: "lg:col-start-2 lg:col-end-3";
 	rightSidebarClass = `onload-animation block ${tabletCol} ${desktopCol} lg:row-start-1 lg:row-end-2 lg:max-w-[17.5rem]`;
 } else if (hasRightSidebarComponents) {
-	// 原有 widget 侧边栏逻辑
 	rightSidebarClass = `
 	onload-animation
 	hidden
+	overflow-x-hidden
 	${tabletShowRightSidebar ? "md:block md:mb-4 md:max-w-[17.5rem]" : "md:hidden"}
 	${desktopShowRightSidebar ? `lg:block lg:mb-4 lg:row-start-1 lg:row-end-2 lg:max-w-[17.5rem] ${desktopShowLeftSidebar ? "lg:col-start-3 lg:col-end-4" : "lg:col-start-2 lg:col-end-3"} lg:col-span-1` : "lg:hidden"}
 `
@@ -626,7 +626,7 @@ const mainContentClass = `
     font-weight: bold;
 }
 
-/* Prevent horizontal overflow during left sidebar enter animations */
+/* Prevent horizontal overflow during sidebar enter animations */
 :global(#sidebar) {
     overflow-x: hidden;
 }

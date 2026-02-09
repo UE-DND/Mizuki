@@ -213,6 +213,115 @@ export function initMePage(): void {
 		return;
 	}
 
+	// ---- dirty-state tracking ----
+	interface ProfileSnapshot {
+		username: string;
+		display_name: string;
+		bio: string;
+		avatar_url: string;
+		avatar_file_id: string;
+	}
+
+	interface PrivacySnapshot {
+		profile_public: boolean;
+		show_articles: boolean;
+		show_diaries: boolean;
+		show_anime: boolean;
+		show_albums: boolean;
+		show_comments: boolean;
+	}
+
+	let profileSnapshot: ProfileSnapshot | null = null;
+	let privacySnapshot: PrivacySnapshot | null = null;
+
+	const PRIVACY_CHECKBOX_IDS: [string, keyof PrivacySnapshot][] = [
+		["pv-profile-public", "profile_public"],
+		["pv-show-articles", "show_articles"],
+		["pv-show-diaries", "show_diaries"],
+		["pv-show-anime", "show_anime"],
+		["pv-show-albums", "show_albums"],
+		["pv-show-comments", "show_comments"],
+	];
+
+	const PRIVACY_LABELS: Record<string, string> = {
+		profile_public: "公开主页",
+		show_articles: "公开文章",
+		show_diaries: "公开日记",
+		show_anime: "公开番剧",
+		show_albums: "公开相册",
+		show_comments: "公开评论",
+	};
+
+	const captureProfileSnapshot = (): ProfileSnapshot => ({
+		username: usernameInput ? String(usernameInput.value || "").trim() : "",
+		display_name: displaynameInput
+			? String(displaynameInput.value || "").trim()
+			: "",
+		bio: bioInput ? String(bioInput.value || "") : "",
+		avatar_url: avatarUrlInput
+			? String(avatarUrlInput.value || "").trim()
+			: "",
+		avatar_file_id: currentAvatarFileId,
+	});
+
+	const capturePrivacySnapshot = (): PrivacySnapshot => {
+		const snap: Record<string, boolean> = {};
+		for (const [elId, key] of PRIVACY_CHECKBOX_IDS) {
+			const el = document.getElementById(elId) as HTMLInputElement | null;
+			snap[key] = el?.checked ?? false;
+		}
+		return snap as unknown as PrivacySnapshot;
+	};
+
+	const checkProfileDirty = (): void => {
+		if (!profileSnapshot || !profileMsg) {
+			return;
+		}
+		const current = captureProfileSnapshot();
+		const changed: string[] = [];
+		if (current.username !== profileSnapshot.username) {
+			changed.push("用户名");
+		}
+		if (current.display_name !== profileSnapshot.display_name) {
+			changed.push("昵称");
+		}
+		if (current.bio !== profileSnapshot.bio) {
+			changed.push("简介");
+		}
+		if (
+			current.avatar_url !== profileSnapshot.avatar_url ||
+			current.avatar_file_id !== profileSnapshot.avatar_file_id
+		) {
+			changed.push("头像");
+		}
+		if (changed.length > 0) {
+			profileMsg.textContent = `已修改${changed.join("、")}，点击\u201C保存资料\u201D生效`;
+		} else {
+			profileMsg.textContent = "";
+		}
+	};
+
+	const checkPrivacyDirty = (): void => {
+		if (!privacySnapshot || !privacyMsg) {
+			return;
+		}
+		const current = capturePrivacySnapshot();
+		const changed: string[] = [];
+		for (const [, key] of PRIVACY_CHECKBOX_IDS) {
+			if (
+				current[key as keyof PrivacySnapshot] !==
+				privacySnapshot[key as keyof PrivacySnapshot]
+			) {
+				changed.push(PRIVACY_LABELS[key] || key);
+			}
+		}
+		if (changed.length > 0) {
+			privacyMsg.textContent = `已修改${changed.join("、")}，点击\u201C保存隐私设置\u201D生效`;
+		} else {
+			privacyMsg.textContent = "";
+		}
+	};
+
 	// ---- mutable state ----
 	let currentAvatarFileId = "";
 	let currentAvatarFallbackUrl = "";
@@ -425,9 +534,27 @@ export function initMePage(): void {
 		dragHandle.title = "拖拽排序";
 		row.appendChild(dragHandle);
 
+		// toggle 启用开关
+		const toggleWrap = document.createElement("label");
+		toggleWrap.className =
+			"flex items-center gap-1.5 text-sm text-60 cursor-pointer select-none";
+		const checkInput = document.createElement("input");
+		checkInput.type = "checkbox";
+		checkInput.checked = enabled;
+		checkInput.dataset.socialField = "enabled";
+		checkInput.className = "toggle-checkbox";
+		const track = document.createElement("span");
+		track.className = "toggle-track";
+		const knob = document.createElement("span");
+		knob.className = "toggle-knob";
+		track.appendChild(knob);
+		toggleWrap.appendChild(checkInput);
+		toggleWrap.appendChild(track);
+		row.appendChild(toggleWrap);
+
 		const select = document.createElement("select");
 		select.className =
-			"rounded-lg border border-[var(--line-divider)] px-2 py-1.5 text-sm text-75 bg-transparent";
+			"rounded-lg border border-[var(--line-divider)] px-3 py-2 text-sm text-75 bg-transparent";
 		select.dataset.socialField = "platform";
 		const defaultOption = document.createElement("option");
 		defaultOption.value = "";
@@ -449,7 +576,7 @@ export function initMePage(): void {
 		urlInput.placeholder = "链接 URL";
 		urlInput.value = linkUrl;
 		urlInput.className =
-			"flex-1 min-w-[120px] rounded-lg border border-[var(--line-divider)] px-2 py-1.5 text-sm text-75 bg-transparent placeholder:text-50";
+			"flex-1 min-w-[120px] rounded-lg border border-[var(--line-divider)] px-3 py-2 text-sm text-75 bg-transparent placeholder:text-50";
 		urlInput.dataset.socialField = "url";
 		row.appendChild(urlInput);
 
@@ -457,30 +584,11 @@ export function initMePage(): void {
 		removeBtn.type = "button";
 		removeBtn.textContent = "删除";
 		removeBtn.className =
-			"px-2 py-1 rounded-lg border border-[var(--line-divider)] text-xs text-75 hover:text-red-500 hover:border-red-300 transition-colors";
+			"px-3 py-1.5 rounded-lg border border-[var(--line-divider)] text-sm text-75 hover:text-red-500 hover:border-red-300 transition-colors";
 		removeBtn.addEventListener("click", () => {
 			row.remove();
 		});
 		row.appendChild(removeBtn);
-
-		// toggle 启用开关
-		const toggleWrap = document.createElement("label");
-		toggleWrap.className =
-			"flex items-center gap-1.5 text-xs text-60 cursor-pointer select-none";
-		const checkInput = document.createElement("input");
-		checkInput.type = "checkbox";
-		checkInput.checked = enabled;
-		checkInput.dataset.socialField = "enabled";
-		checkInput.className = "toggle-checkbox";
-		const track = document.createElement("span");
-		track.className = "toggle-track";
-		const knob = document.createElement("span");
-		knob.className = "toggle-knob";
-		track.appendChild(knob);
-		toggleWrap.appendChild(checkInput);
-		toggleWrap.appendChild(track);
-		toggleWrap.appendChild(document.createTextNode("启用"));
-		row.appendChild(toggleWrap);
 
 		// 校验：URL 为空时不能启用
 		const syncToggleState = (): void => {
@@ -556,7 +664,7 @@ export function initMePage(): void {
 			"flex-1 border-t border-dashed border-[var(--line-divider)] group-hover/add:border-[var(--primary)] transition-colors";
 		const label = document.createElement("span");
 		label.className =
-			"text-sm text-50 group-hover/add:text-[var(--primary)] transition-colors whitespace-nowrap select-none";
+			"text-base text-50 group-hover/add:text-[var(--primary)] transition-colors whitespace-nowrap select-none";
 		label.textContent = "+  添加新链接";
 		const lineR = document.createElement("span");
 		lineR.className =
@@ -967,7 +1075,7 @@ export function initMePage(): void {
 			}
 			updateAvatarPreview();
 			closeAvatarCropModal();
-			setProfileMessage("头像上传成功，请点击\u201C保存资料\u201D生效");
+			checkProfileDirty();
 		} finally {
 			avatarUploading = false;
 			updateAvatarCropApplyState();
@@ -1013,6 +1121,7 @@ export function initMePage(): void {
 					}>)
 				: null,
 		);
+		profileSnapshot = captureProfileSnapshot();
 	};
 
 	const fillPrivacy = (
@@ -1032,6 +1141,7 @@ export function initMePage(): void {
 				el.checked = Boolean(privacy?.[key]);
 			}
 		}
+		privacySnapshot = capturePrivacySnapshot();
 	};
 
 	const loadAuthMe = async (): Promise<ApiResult> => {
@@ -1113,7 +1223,10 @@ export function initMePage(): void {
 
 	if (avatarUrlInput && !avatarUrlInput.hasAttribute(DATA_BOUND)) {
 		avatarUrlInput.setAttribute(DATA_BOUND, "");
-		avatarUrlInput.addEventListener("input", () => updateAvatarPreview());
+		avatarUrlInput.addEventListener("input", () => {
+			updateAvatarPreview();
+			checkProfileDirty();
+		});
 	}
 
 	if (usernameInput && !usernameInput.hasAttribute(DATA_BOUND)) {
@@ -1121,6 +1234,7 @@ export function initMePage(): void {
 		usernameInput.addEventListener("input", () => {
 			updateUsernameCounter();
 			updateUsernameDisplay();
+			checkProfileDirty();
 		});
 	}
 
@@ -1129,6 +1243,7 @@ export function initMePage(): void {
 		bioInput.addEventListener("input", () => {
 			updateBioCounter();
 			updateBioDisplay();
+			checkProfileDirty();
 		});
 	}
 
@@ -1137,6 +1252,7 @@ export function initMePage(): void {
 		displaynameInput.addEventListener("input", () => {
 			updateDisplaynameCounter();
 			updateDisplaynameDisplay();
+			checkProfileDirty();
 		});
 	}
 
@@ -1335,7 +1451,7 @@ export function initMePage(): void {
 				avatarCropFileInput.value = "";
 			}
 			updateAvatarPreview();
-			setProfileMessage("已清空头像，点击\u201C保存资料\u201D生效");
+			checkProfileDirty();
 		});
 	}
 
@@ -1368,6 +1484,16 @@ export function initMePage(): void {
 	}
 
 	const privacyForm = document.getElementById("me-privacy-form");
+
+	// Bind dirty-check on privacy checkboxes
+	for (const [elId] of PRIVACY_CHECKBOX_IDS) {
+		const el = document.getElementById(elId) as HTMLInputElement | null;
+		if (el && !el.hasAttribute(DATA_BOUND)) {
+			el.setAttribute(DATA_BOUND, "");
+			el.addEventListener("change", checkPrivacyDirty);
+		}
+	}
+
 	if (privacyForm && !privacyForm.hasAttribute(DATA_BOUND)) {
 		privacyForm.setAttribute(DATA_BOUND, "");
 		privacyForm.addEventListener("submit", async (event: Event) => {
@@ -1392,10 +1518,13 @@ export function initMePage(): void {
 				body: JSON.stringify(payload),
 			});
 			if (privacyMsg) {
-				privacyMsg.textContent =
-					response.ok && data?.ok
-						? "已保存"
-						: (data?.message as string | undefined) || "保存失败";
+				if (response.ok && data?.ok) {
+					privacySnapshot = capturePrivacySnapshot();
+					privacyMsg.textContent = "已保存";
+				} else {
+					privacyMsg.textContent =
+						(data?.message as string | undefined) || "保存失败";
+				}
 			}
 		});
 	}
