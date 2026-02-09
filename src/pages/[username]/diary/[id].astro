@@ -1,51 +1,43 @@
 ---
 import Comment from "@components/comment/index.astro";
+import ContentNotVisible from "@components/misc/ContentNotVisible.astro";
 import Markdown from "@components/misc/Markdown.astro";
 import MainGridLayout from "@layouts/MainGridLayout.astro";
 import { renderMarkdown } from "@/server/markdown/render";
 import { buildDirectusAssetUrl } from "@/server/directus-auth";
 import {
-	loadPublicProfileByUsername,
+	loadProfileForViewer,
 	loadUserDiaryDetail,
 	profileToSidebarData,
 } from "@/server/api/v1/public-data";
+import type { ContentLoadResult, DiaryDetail } from "@/server/api/v1/public-data";
+import { getSessionUser } from "@/server/auth/session";
 
 export const prerender = false;
 
 const username = (Astro.params.username || "").trim();
 const id = (Astro.params.id || "").trim();
 
-let diary: {
-	id: string;
-	content: string;
-	mood: string | null;
-	location: string | null;
-	happened_at: string | null;
-	allow_comments: boolean;
-	author?: { id?: string; name?: string };
-	images?: Array<{
-		id: string;
-		image_url: string | null;
-		file_id?: string | null;
-		caption: string | null;
-	}>;
-} | null = null;
+let result: ContentLoadResult<DiaryDetail> = { status: "not_found" };
 let html = "";
 
 if (!username || !id) {
 	Astro.response.status = 404;
 } else {
 	try {
-		const result = await loadUserDiaryDetail(username, id);
-		if (result) {
-			diary = result;
-			html = await renderMarkdown(String(result.content || ""), {
+		const sessionUser = await getSessionUser(Astro);
+		const viewerId = sessionUser?.id ?? null;
+		result = await loadUserDiaryDetail(username, id, { viewerId });
+		if (result.status === "ok") {
+			html = await renderMarkdown(String(result.data.content || ""), {
 				target: "page",
 			});
-			const sidebarProfile = await loadPublicProfileByUsername(username);
+			const sidebarProfile = await loadProfileForViewer(username, viewerId);
 			if (sidebarProfile) {
 				Astro.locals.sidebarProfile = profileToSidebarData(sidebarProfile);
 			}
+		} else if (result.status === "permission_denied") {
+			Astro.response.status = 403;
 		} else {
 			Astro.response.status = 404;
 		}
@@ -54,14 +46,27 @@ if (!username || !id) {
 		Astro.response.status = 500;
 	}
 }
+
+const diary = result.status === "ok" ? result.data : null;
 ---
 
 <MainGridLayout title="日记详情" description={diary?.content || ""}>
-	{!diary ? (
-		<div class="card-base p-8 rounded-[var(--radius-large)] text-90">
-			<h1 class="text-2xl font-bold mb-2">日记不存在</h1>
-			<p class="text-70">该日记可能未公开或已删除。</p>
-		</div>
+	{result.status === "permission_denied" ? (
+		<ContentNotVisible
+			mode="permission_denied"
+			title="日记不可见"
+			description="由于用户权限设置，该日记内容不可见。"
+			backHref={`/${username}/diary`}
+			backLabel="返回日记列表"
+		/>
+	) : !diary ? (
+		<ContentNotVisible
+			mode="not_found"
+			title="日记不存在"
+			description="该日记可能未公开或已删除。"
+			backHref={`/${username}/diary`}
+			backLabel="返回日记列表"
+		/>
 	) : (
 		<>
 			<article

@@ -1,28 +1,33 @@
 ---
+import ContentNotVisible from "@components/misc/ContentNotVisible.astro";
 import MainGridLayout from "@layouts/MainGridLayout.astro";
 import {
 	loadUserHomeData,
 	profileToSidebarData,
 } from "@/server/api/v1/public-data";
+import type { ContentLoadResult, UserHomeData } from "@/server/api/v1/public-data";
 import {
 	isSpecialArticleSlug,
 	loadPublicArticleByShortId,
 	loadPublicArticleBySlug,
 } from "@/server/api/v1/shared";
 import { isShortId } from "@/server/utils/short-id";
+import { getSessionUser } from "@/server/auth/session";
 
 export const prerender = false;
 
 const username = (Astro.params.username || "").trim();
 
-let payload: Awaited<ReturnType<typeof loadUserHomeData>> = null;
+let result: ContentLoadResult<UserHomeData> = { status: "not_found" };
 
 try {
 	if (!username) {
 		Astro.response.status = 404;
 	} else {
-		payload = await loadUserHomeData(username);
-		if (!payload) {
+		const sessionUser = await getSessionUser(Astro);
+		const viewerId = sessionUser?.id ?? null;
+		result = await loadUserHomeData(username, { viewerId });
+		if (result.status === "not_found") {
 			// 用户不存在，尝试作为文章短链接解析
 			const article = isShortId(username)
 				? await loadPublicArticleByShortId(username)
@@ -33,14 +38,18 @@ try {
 				return Astro.redirect(`/posts/${article.short_id}`, 302);
 			}
 			Astro.response.status = 404;
+		} else if (result.status === "permission_denied") {
+			Astro.response.status = 403;
 		} else {
-			Astro.locals.sidebarProfile = profileToSidebarData(payload.profile);
+			Astro.locals.sidebarProfile = profileToSidebarData(result.data.profile);
 		}
 	}
 } catch (error) {
 	console.error("[profile] failed to load user home:", error);
 	Astro.response.status = 500;
 }
+
+const payload = result.status === "ok" ? result.data : null;
 
 function shortDiary(text: string): string {
 	const value = String(text || "").replace(/\s+/g, " ").trim();
@@ -52,33 +61,44 @@ function shortDiary(text: string): string {
 ---
 
 <MainGridLayout title={payload?.owner?.name || "用户主页"} description={payload?.profile?.bio || ""}>
-	{!payload ? (
-		<div class="card-base p-8 rounded-[var(--radius-large)]">
-			<h1 class="text-2xl font-bold mb-2">用户主页不存在</h1>
-			<p class="text-70">该用户可能关闭了主页公开，或用户名不存在。</p>
-		</div>
+	{result.status === "permission_denied" ? (
+		<ContentNotVisible
+			mode="permission_denied"
+			title="主页不可见"
+			description="由于用户权限设置，该主页内容不可见。"
+			backHref="/"
+			backLabel="返回首页"
+		/>
+	) : result.status === "not_found" ? (
+		<ContentNotVisible
+			mode="not_found"
+			title="用户不存在"
+			description="该用户不存在或链接错误。"
+			backHref="/"
+			backLabel="返回首页"
+		/>
 	) : (
 		<>
 			<section class="card-base p-6 rounded-[var(--radius-large)] mb-4">
 				<div class="flex items-center gap-4">
-					{payload.owner?.avatar_url ? (
-						<img src={payload.owner.avatar_url} alt="avatar" class="w-16 h-16 rounded-full object-cover border border-[var(--line-divider)]" loading="lazy" />
+					{payload!.owner?.avatar_url ? (
+						<img src={payload!.owner.avatar_url} alt="avatar" class="w-16 h-16 rounded-full object-cover border border-[var(--line-divider)]" loading="lazy" />
 					) : (
 						<div class="w-16 h-16 rounded-full bg-black/10 dark:bg-white/10" />
 					)}
 					<div>
-						<h1 class="text-2xl font-bold">{payload.owner?.name || "用户"}</h1>
-						<p class="text-xs text-60">@{payload.owner?.username || username}</p>
+						<h1 class="text-2xl font-bold">{payload!.owner?.name || "用户"}</h1>
+						<p class="text-xs text-60">@{payload!.owner?.username || username}</p>
 					</div>
 				</div>
-				{payload.profile?.bio && <p class="mt-4 text-sm text-75 leading-7">{payload.profile.bio}</p>}
+				{payload!.profile?.bio && <p class="mt-4 text-sm text-75 leading-7">{payload!.profile.bio}</p>}
 			</section>
 
-			{Array.isArray(payload.articles) && payload.articles.length > 0 && (
+			{Array.isArray(payload!.articles) && payload!.articles.length > 0 && (
 				<section class="card-base p-6 rounded-[var(--radius-large)] mb-4 space-y-3">
 					<h2 class="text-xl font-semibold">文章</h2>
 					<ul class="space-y-2">
-						{payload.articles.map((item) => (
+						{payload!.articles.map((item) => (
 							<li>
 								<a href={`/posts/${item.short_id || item.id}`} class="hover:text-[var(--primary)] transition-colors">{item.title}</a>
 							</li>
@@ -87,13 +107,13 @@ function shortDiary(text: string): string {
 				</section>
 			)}
 
-			{Array.isArray(payload.diaries) && payload.diaries.length > 0 && (
+			{Array.isArray(payload!.diaries) && payload!.diaries.length > 0 && (
 				<section class="card-base p-6 rounded-[var(--radius-large)] mb-4 space-y-3">
 					<h2 class="text-xl font-semibold">日记</h2>
 					<ul class="space-y-2 text-sm text-75">
-						{payload.diaries.map((item) => (
+						{payload!.diaries.map((item) => (
 							<li>
-								<a href={`/${payload.owner?.username || username}/diary/${item.short_id || item.id}`} class="hover:text-[var(--primary)] transition-colors">
+								<a href={`/${payload!.owner?.username || username}/diary/${item.short_id || item.id}`} class="hover:text-[var(--primary)] transition-colors">
 									{shortDiary(item.content)}
 								</a>
 							</li>
@@ -102,38 +122,38 @@ function shortDiary(text: string): string {
 				</section>
 			)}
 
-			{Array.isArray(payload.anime) && payload.anime.length > 0 && (
+			{Array.isArray(payload!.anime) && payload!.anime.length > 0 && (
 				<section class="card-base p-6 rounded-[var(--radius-large)] mb-4 space-y-3">
 					<h2 class="text-xl font-semibold">番剧</h2>
 					<ul class="space-y-2 text-sm text-75">
-						{payload.anime.map((item) => (
+						{payload!.anime.map((item) => (
 							<li>{item.title} · {item.watch_status}</li>
 						))}
 					</ul>
 				</section>
 			)}
 
-			{Array.isArray(payload.albums) && payload.albums.length > 0 && (
+			{Array.isArray(payload!.albums) && payload!.albums.length > 0 && (
 				<section class="card-base p-6 rounded-[var(--radius-large)] mb-4 space-y-3">
 					<h2 class="text-xl font-semibold">相册</h2>
 					<ul class="space-y-2">
-						{payload.albums.map((item) => (
+						{payload!.albums.map((item) => (
 							<li>
-								<a href={`/${payload.owner?.username || username}/albums/${item.short_id || item.id}`} class="hover:text-[var(--primary)] transition-colors">{item.title}</a>
+								<a href={`/${payload!.owner?.username || username}/albums/${item.short_id || item.id}`} class="hover:text-[var(--primary)] transition-colors">{item.title}</a>
 							</li>
 						))}
 					</ul>
 				</section>
 			)}
 
-			{payload.comments && (
+			{payload!.comments && (
 				<section class="card-base p-6 rounded-[var(--radius-large)] space-y-3">
 					<h2 class="text-xl font-semibold">评论</h2>
 					<div class="text-sm text-70">
-						文章评论：{payload.comments.article_comments?.length || 0} 条
+						文章评论：{payload!.comments.article_comments?.length || 0} 条
 					</div>
 					<div class="text-sm text-70">
-						日记评论：{payload.comments.diary_comments?.length || 0} 条
+						日记评论：{payload!.comments.diary_comments?.length || 0} 条
 					</div>
 				</section>
 			)}

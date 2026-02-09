@@ -1,11 +1,14 @@
 ---
+import ContentNotVisible from "@components/misc/ContentNotVisible.astro";
 import MainGridLayout from "@layouts/MainGridLayout.astro";
 import { buildDirectusAssetUrl } from "@/server/directus-auth";
 import {
-	loadPublicProfileByUsername,
+	loadProfileForViewer,
 	loadUserAlbumDetail,
 	profileToSidebarData,
 } from "@/server/api/v1/public-data";
+import type { ContentLoadResult } from "@/server/api/v1/public-data";
+import { getSessionUser } from "@/server/auth/session";
 
 export const prerender = false;
 
@@ -36,27 +39,32 @@ type AlbumPageData = {
 	}>;
 };
 
-let album: AlbumPageData | null = null;
+let result: ContentLoadResult<AlbumPageData> = { status: "not_found" };
 
 if (!username || !id) {
 	Astro.response.status = 404;
 } else {
 	try {
-		const result = await loadUserAlbumDetail(username, id);
-		if (result) {
-			album = result as AlbumPageData;
-			const sidebarProfile = await loadPublicProfileByUsername(username);
+		const sessionUser = await getSessionUser(Astro);
+		const viewerId = sessionUser?.id ?? null;
+		result = await loadUserAlbumDetail(username, id, { viewerId }) as ContentLoadResult<AlbumPageData>;
+		if (result.status === "not_found") {
+			Astro.response.status = 404;
+		} else if (result.status === "permission_denied") {
+			Astro.response.status = 403;
+		} else {
+			const sidebarProfile = await loadProfileForViewer(username, viewerId);
 			if (sidebarProfile) {
 				Astro.locals.sidebarProfile = profileToSidebarData(sidebarProfile);
 			}
-		} else {
-			Astro.response.status = 404;
 		}
 	} catch (error) {
 		console.error("[albums] failed to load detail:", error);
 		Astro.response.status = 500;
 	}
 }
+
+const album = result.status === "ok" ? result.data : null;
 
 const backHref = username ? `/${username}/albums` : "/";
 
@@ -76,11 +84,22 @@ function photoUrl(photo: { file_id: string | null; image_url: string | null }): 
 ---
 
 <MainGridLayout title={album?.title || "相册不存在"} description={album?.description || ""}>
-	{!album ? (
-		<div class="card-base p-8 rounded-[var(--radius-large)] text-90">
-			<h1 class="text-2xl font-bold mb-2">相册不存在</h1>
-			<p class="text-70">该相册可能未公开或已删除。</p>
-		</div>
+	{result.status === "permission_denied" ? (
+		<ContentNotVisible
+			mode="permission_denied"
+			title="相册不可见"
+			description="由于用户权限设置，该用户的相册内容不可见。"
+			backHref={`/${username}/albums`}
+			backLabel="返回相册列表"
+		/>
+	) : !album ? (
+		<ContentNotVisible
+			mode="not_found"
+			title="相册不存在"
+			description="该相册可能未公开或已删除。"
+			backHref={`/${username}/albums`}
+			backLabel="返回相册列表"
+		/>
 	) : (
 		<>
 			<section class="card-base p-6 rounded-[var(--radius-large)] mb-4 space-y-3 text-90">

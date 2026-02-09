@@ -37,7 +37,16 @@ function getFilterDom() {
 	};
 }
 
+function isArchivePage(): boolean {
+	return Boolean(document.querySelector(".archive-posts"));
+}
+
 function applyCalendarFilter(detail: CalendarFilterDetail) {
+	// archive 页面有自己的筛选系统，跳过此处理
+	if (isArchivePage()) {
+		return;
+	}
+
 	const { postList, pagination } = getFilterDom();
 	if (!postList) {
 		return;
@@ -58,6 +67,11 @@ function applyCalendarFilter(detail: CalendarFilterDetail) {
 }
 
 function clearCalendarFilter() {
+	// archive 页面有自己的筛选系统，跳过此处理
+	if (isArchivePage()) {
+		return;
+	}
+
 	const { postList, pagination } = getFilterDom();
 	if (!postList) {
 		return;

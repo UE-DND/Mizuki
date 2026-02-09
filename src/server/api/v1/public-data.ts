@@ -25,6 +25,42 @@ import {
 	safeCsv,
 } from "./shared";
 
+// ---------------------------------------------------------------------------
+// ContentLoadResult — distinguish "not found" from "permission denied"
+// ---------------------------------------------------------------------------
+
+export type ContentLoadResult<T> =
+	| { status: "ok"; data: T }
+	| { status: "not_found" }
+	| { status: "permission_denied"; reason: string };
+
+// ---------------------------------------------------------------------------
+// ViewerOptions — pass current viewer to bypass privacy for owner
+// ---------------------------------------------------------------------------
+
+export type ViewerOptions = { viewerId?: string | null };
+
+/** Owner sees everything; non-owner sees published + public + show_on_profile */
+function itemFilters(isOwner: boolean): JsonObject[] {
+	return isOwner
+		? []
+		: [filterPublicStatus(), { show_on_profile: { _eq: true } }];
+}
+
+// ---------------------------------------------------------------------------
+// Internal helper: load profile by username WITHOUT filtering profile_public
+// ---------------------------------------------------------------------------
+
+async function loadProfileByUsername(
+	username: string,
+): Promise<AppProfile | null> {
+	const rows = await readMany("app_user_profiles", {
+		filter: { username: { _eq: username } } as JsonObject,
+		limit: 1,
+	});
+	return (rows[0] as AppProfile | undefined) ?? null;
+}
+
 function toAuthorFallback(userId: string): AuthorBundleItem {
 	const normalized = String(userId || "").trim();
 	const shortId = (normalized || "user").slice(0, 8);
@@ -57,6 +93,25 @@ export async function loadPublicProfileByUsername(
 	return rows[0] || null;
 }
 
+/**
+ * Load profile for a specific viewer.
+ * Owner always gets the profile; non-owner requires profile_public=true.
+ */
+export async function loadProfileForViewer(
+	username: string,
+	viewerId?: string | null,
+): Promise<AppProfile | null> {
+	const profile = await loadProfileByUsername(username);
+	if (!profile) {
+		return null;
+	}
+	const isOwner = Boolean(viewerId) && viewerId === profile.user_id;
+	if (isOwner || profile.profile_public) {
+		return profile;
+	}
+	return null;
+}
+
 export type UserHomeData = {
 	profile: AppProfile;
 	owner: {
@@ -77,46 +132,39 @@ export type UserHomeData = {
 
 export async function loadUserHomeData(
 	username: string,
-): Promise<UserHomeData | null> {
-	const profileRows = await readMany("app_user_profiles", {
-		filter: {
-			_and: [
-				{ username: { _eq: username } },
-				{ profile_public: { _eq: true } },
-			],
-		} as JsonObject,
-		limit: 1,
-	});
-	const profile = profileRows[0] as AppProfile | undefined;
+	options?: ViewerOptions,
+): Promise<ContentLoadResult<UserHomeData>> {
+	const profile = await loadProfileByUsername(username);
 	if (!profile) {
-		return null;
+		return { status: "not_found" };
+	}
+	const isOwnerViewing =
+		Boolean(options?.viewerId) && options.viewerId === profile.user_id;
+	if (!isOwnerViewing && !profile.profile_public) {
+		return { status: "permission_denied", reason: "profile_not_public" };
 	}
 
 	const targetUserId = profile.user_id;
 	const [authorMap, articleComments, diaryComments] = await Promise.all([
 		getAuthorBundle([targetUserId]),
-		profile.show_comments_on_profile
+		isOwnerViewing || profile.show_comments_on_profile
 			? readMany("app_article_comments", {
 					filter: {
 						_and: [
 							{ author_id: { _eq: targetUserId } },
-							{ status: { _eq: "published" } },
-							{ is_public: { _eq: true } },
-							{ show_on_profile: { _eq: true } },
+							...itemFilters(isOwnerViewing),
 						],
 					} as JsonObject,
 					sort: ["-date_created"],
 					limit: 20,
 				})
 			: Promise.resolve([] as AppArticleComment[]),
-		profile.show_comments_on_profile
+		isOwnerViewing || profile.show_comments_on_profile
 			? readMany("app_diary_comments", {
 					filter: {
 						_and: [
 							{ author_id: { _eq: targetUserId } },
-							{ status: { _eq: "published" } },
-							{ is_public: { _eq: true } },
-							{ show_on_profile: { _eq: true } },
+							...itemFilters(isOwnerViewing),
 						],
 					} as JsonObject,
 					sort: ["-date_created"],
@@ -142,52 +190,48 @@ export async function loadUserHomeData(
 	};
 
 	const [articles, diaries, anime, albums] = await Promise.all([
-		profile.show_articles_on_profile
+		isOwnerViewing || profile.show_articles_on_profile
 			? readMany("app_articles", {
 					filter: {
 						_and: [
 							{ author_id: { _eq: targetUserId } },
-							filterPublicStatus(),
-							{ show_on_profile: { _eq: true } },
+							...itemFilters(isOwnerViewing),
 						],
 					} as JsonObject,
 					sort: ["-published_at", "-date_created"],
 					limit: 20,
 				})
 			: Promise.resolve([] as AppArticle[]),
-		profile.show_diaries_on_profile
+		isOwnerViewing || profile.show_diaries_on_profile
 			? readMany("app_diaries", {
 					filter: {
 						_and: [
 							{ author_id: { _eq: targetUserId } },
-							filterPublicStatus(),
-							{ show_on_profile: { _eq: true } },
+							...itemFilters(isOwnerViewing),
 						],
 					} as JsonObject,
 					sort: ["-happened_at", "-date_created"],
 					limit: 20,
 				})
 			: Promise.resolve([] as AppDiary[]),
-		profile.show_anime_on_profile
+		isOwnerViewing || profile.show_anime_on_profile
 			? readMany("app_anime_entries", {
 					filter: {
 						_and: [
 							{ author_id: { _eq: targetUserId } },
-							filterPublicStatus(),
-							{ show_on_profile: { _eq: true } },
+							...itemFilters(isOwnerViewing),
 						],
 					} as JsonObject,
 					sort: ["-date_created"],
 					limit: 20,
 				})
 			: Promise.resolve([] as AppAnimeEntry[]),
-		profile.show_albums_on_profile
+		isOwnerViewing || profile.show_albums_on_profile
 			? readMany("app_albums", {
 					filter: {
 						_and: [
 							{ author_id: { _eq: targetUserId } },
-							filterPublicStatus(),
-							{ show_on_profile: { _eq: true } },
+							...itemFilters(isOwnerViewing),
 						],
 					} as JsonObject,
 					sort: ["-date", "-date_created"],
@@ -197,27 +241,32 @@ export async function loadUserHomeData(
 	]);
 
 	return {
-		profile,
-		owner: ownerData,
-		articles: articles.map((item) => ({
-			...item,
-			tags: safeCsv(item.tags),
-		})),
-		diaries,
-		anime: anime.map((item) => ({
-			...item,
-			genres: safeCsv(item.genres),
-		})),
-		albums: albums.map((item) => ({
-			...item,
-			tags: safeCsv(item.tags),
-		})),
-		comments: profile.show_comments_on_profile
-			? {
-					article_comments: articleComments as AppArticleComment[],
-					diary_comments: diaryComments as AppDiaryComment[],
-				}
-			: { article_comments: [], diary_comments: [] },
+		status: "ok",
+		data: {
+			profile,
+			owner: ownerData,
+			articles: articles.map((item) => ({
+				...item,
+				tags: safeCsv(item.tags),
+			})),
+			diaries,
+			anime: anime.map((item) => ({
+				...item,
+				genres: safeCsv(item.genres),
+			})),
+			albums: albums.map((item) => ({
+				...item,
+				tags: safeCsv(item.tags),
+			})),
+			comments:
+				isOwnerViewing || profile.show_comments_on_profile
+					? {
+							article_comments:
+								articleComments as AppArticleComment[],
+							diary_comments: diaryComments as AppDiaryComment[],
+						}
+					: { article_comments: [], diary_comments: [] },
+		},
 	};
 }
 
@@ -236,16 +285,25 @@ export type UserAnimeListOptions = {
 
 export async function loadUserAnimeList(
 	username: string,
-	options: UserAnimeListOptions = {},
-): Promise<PaginatedResult<
-	AppAnimeEntry & { genres: string[]; author: AuthorBundleItem }
-> | null> {
-	const profile = await loadPublicProfileByUsername(username);
+	options: UserAnimeListOptions & ViewerOptions = {},
+): Promise<
+	ContentLoadResult<
+		PaginatedResult<
+			AppAnimeEntry & { genres: string[]; author: AuthorBundleItem }
+		>
+	>
+> {
+	const profile = await loadProfileByUsername(username);
 	if (!profile) {
-		return null;
+		return { status: "not_found" };
 	}
-	if (!profile.show_anime_on_profile) {
-		return null;
+	const isOwnerViewing =
+		Boolean(options.viewerId) && options.viewerId === profile.user_id;
+	if (!isOwnerViewing && !profile.profile_public) {
+		return { status: "permission_denied", reason: "profile_not_public" };
+	}
+	if (!isOwnerViewing && !profile.show_anime_on_profile) {
+		return { status: "permission_denied", reason: "anime_not_public" };
 	}
 	const userId = profile.user_id;
 
@@ -258,9 +316,8 @@ export async function loadUserAnimeList(
 	const offset = (page - 1) * limit;
 
 	const andFilters: JsonObject[] = [
-		filterPublicStatus(),
+		...itemFilters(isOwnerViewing),
 		{ author_id: { _eq: userId } },
-		{ show_on_profile: { _eq: true } },
 	];
 	if (options.status) {
 		andFilters.push({ watch_status: { _eq: options.status } });
@@ -284,7 +341,7 @@ export async function loadUserAnimeList(
 		author: readAuthor(authorMap, row.author_id),
 	}));
 
-	return { items, page, limit, total };
+	return { status: "ok", data: { items, page, limit, total } };
 }
 
 export type UserDiaryListOptions = {
@@ -294,16 +351,25 @@ export type UserDiaryListOptions = {
 
 export async function loadUserDiaryList(
 	username: string,
-	options: UserDiaryListOptions = {},
-): Promise<PaginatedResult<
-	AppDiary & { author: AuthorBundleItem; images: AppDiaryImage[] }
-> | null> {
-	const profile = await loadPublicProfileByUsername(username);
+	options: UserDiaryListOptions & ViewerOptions = {},
+): Promise<
+	ContentLoadResult<
+		PaginatedResult<
+			AppDiary & { author: AuthorBundleItem; images: AppDiaryImage[] }
+		>
+	>
+> {
+	const profile = await loadProfileByUsername(username);
 	if (!profile) {
-		return null;
+		return { status: "not_found" };
 	}
-	if (!profile.show_diaries_on_profile) {
-		return null;
+	const isOwnerViewing =
+		Boolean(options.viewerId) && options.viewerId === profile.user_id;
+	if (!isOwnerViewing && !profile.profile_public) {
+		return { status: "permission_denied", reason: "profile_not_public" };
+	}
+	if (!isOwnerViewing && !profile.show_diaries_on_profile) {
+		return { status: "permission_denied", reason: "diaries_not_public" };
 	}
 	const userId = profile.user_id;
 
@@ -316,11 +382,7 @@ export async function loadUserDiaryList(
 	const offset = (page - 1) * limit;
 
 	const diaryFilter = {
-		_and: [
-			filterPublicStatus(),
-			{ author_id: { _eq: userId } },
-			{ show_on_profile: { _eq: true } },
-		],
+		_and: [...itemFilters(isOwnerViewing), { author_id: { _eq: userId } }],
 	} as JsonObject;
 
 	const [rows, total] = await Promise.all([
@@ -334,17 +396,18 @@ export async function loadUserDiaryList(
 	]);
 
 	const diaryIds = rows.map((row) => row.id);
+	const diaryImageFilters: JsonObject[] = [{ diary_id: { _in: diaryIds } }];
+	if (!isOwnerViewing) {
+		diaryImageFilters.push(
+			{ status: { _eq: "published" } },
+			{ is_public: { _eq: true } },
+		);
+	}
 	const [images, authorMap] = await Promise.all([
 		readMany("app_diary_images", {
 			filter:
 				diaryIds.length > 0
-					? ({
-							_and: [
-								{ diary_id: { _in: diaryIds } },
-								{ status: { _eq: "published" } },
-								{ is_public: { _eq: true } },
-							],
-						} as JsonObject)
+					? ({ _and: diaryImageFilters } as JsonObject)
 					: ({ id: { _null: true } } as JsonObject),
 			sort: ["sort", "-date_created"],
 			limit: Math.max(diaryIds.length * 6, DEFAULT_LIST_LIMIT),
@@ -365,7 +428,7 @@ export async function loadUserDiaryList(
 		images: imageMap.get(row.id) || [],
 	}));
 
-	return { items, page, limit, total };
+	return { status: "ok", data: { items, page, limit, total } };
 }
 
 export type DiaryDetail = AppDiary & {
@@ -376,33 +439,54 @@ export type DiaryDetail = AppDiary & {
 export async function loadUserDiaryDetail(
 	username: string,
 	diaryId: string,
-): Promise<DiaryDetail | null> {
-	const profile = await loadPublicProfileByUsername(username);
+	options?: ViewerOptions,
+): Promise<ContentLoadResult<DiaryDetail>> {
+	const profile = await loadProfileByUsername(username);
 	if (!profile) {
-		return null;
+		return { status: "not_found" };
 	}
-	if (!profile.show_diaries_on_profile) {
-		return null;
+	const isOwnerViewing =
+		Boolean(options?.viewerId) && options.viewerId === profile.user_id;
+	if (!isOwnerViewing && !profile.profile_public) {
+		return { status: "permission_denied", reason: "profile_not_public" };
+	}
+	if (!isOwnerViewing && !profile.show_diaries_on_profile) {
+		return { status: "permission_denied", reason: "diaries_not_public" };
 	}
 	const userId = profile.user_id;
 
 	if (!isShortId(diaryId)) {
-		return null;
-	}
-	const diary = await loadPublicDiaryByShortId(diaryId);
-	if (!diary || diary.author_id !== userId || !diary.show_on_profile) {
-		return null;
+		return { status: "not_found" };
 	}
 
+	let diary: AppDiary | null;
+	if (isOwnerViewing) {
+		// Owner: load without status/is_public filter
+		const rows = await readMany("app_diaries", {
+			filter: { short_id: { _eq: diaryId } } as JsonObject,
+			limit: 1,
+		});
+		diary = (rows[0] as AppDiary | undefined) ?? null;
+	} else {
+		diary = await loadPublicDiaryByShortId(diaryId);
+	}
+	if (!diary || diary.author_id !== userId) {
+		return { status: "not_found" };
+	}
+	if (!isOwnerViewing && !diary.show_on_profile) {
+		return { status: "not_found" };
+	}
+
+	const diaryImageFilters: JsonObject[] = [{ diary_id: { _eq: diary.id } }];
+	if (!isOwnerViewing) {
+		diaryImageFilters.push(
+			{ status: { _eq: "published" } },
+			{ is_public: { _eq: true } },
+		);
+	}
 	const [images, authorMap] = await Promise.all([
 		readMany("app_diary_images", {
-			filter: {
-				_and: [
-					{ diary_id: { _eq: diary.id } },
-					{ status: { _eq: "published" } },
-					{ is_public: { _eq: true } },
-				],
-			} as JsonObject,
+			filter: { _and: diaryImageFilters } as JsonObject,
 			sort: ["sort", "-date_created"],
 			limit: 100,
 		}),
@@ -410,9 +494,12 @@ export async function loadUserDiaryDetail(
 	]);
 
 	return {
-		...diary,
-		author: readAuthor(authorMap, diary.author_id),
-		images,
+		status: "ok",
+		data: {
+			...diary,
+			author: readAuthor(authorMap, diary.author_id),
+			images,
+		},
 	};
 }
 
@@ -423,16 +510,23 @@ export type UserAlbumListOptions = {
 
 export async function loadUserAlbumList(
 	username: string,
-	options: UserAlbumListOptions = {},
-): Promise<PaginatedResult<
-	AppAlbum & { tags: string[]; author: AuthorBundleItem }
-> | null> {
-	const profile = await loadPublicProfileByUsername(username);
+	options: UserAlbumListOptions & ViewerOptions = {},
+): Promise<
+	ContentLoadResult<
+		PaginatedResult<AppAlbum & { tags: string[]; author: AuthorBundleItem }>
+	>
+> {
+	const profile = await loadProfileByUsername(username);
 	if (!profile) {
-		return null;
+		return { status: "not_found" };
 	}
-	if (!profile.show_albums_on_profile) {
-		return null;
+	const isOwnerViewing =
+		Boolean(options.viewerId) && options.viewerId === profile.user_id;
+	if (!isOwnerViewing && !profile.profile_public) {
+		return { status: "permission_denied", reason: "profile_not_public" };
+	}
+	if (!isOwnerViewing && !profile.show_albums_on_profile) {
+		return { status: "permission_denied", reason: "albums_not_public" };
 	}
 	const userId = profile.user_id;
 
@@ -445,11 +539,7 @@ export async function loadUserAlbumList(
 	const offset = (page - 1) * limit;
 
 	const albumFilter = {
-		_and: [
-			filterPublicStatus(),
-			{ author_id: { _eq: userId } },
-			{ show_on_profile: { _eq: true } },
-		],
+		_and: [...itemFilters(isOwnerViewing), { author_id: { _eq: userId } }],
 	} as JsonObject;
 
 	const [rows, total, authorMap] = await Promise.all([
@@ -469,7 +559,7 @@ export async function loadUserAlbumList(
 		author: readAuthor(authorMap, row.author_id),
 	}));
 
-	return { items, page, limit, total };
+	return { status: "ok", data: { items, page, limit, total } };
 }
 
 export type AlbumDetail = AppAlbum & {
@@ -481,33 +571,54 @@ export type AlbumDetail = AppAlbum & {
 export async function loadUserAlbumDetail(
 	username: string,
 	albumId: string,
-): Promise<AlbumDetail | null> {
-	const profile = await loadPublicProfileByUsername(username);
+	options?: ViewerOptions,
+): Promise<ContentLoadResult<AlbumDetail>> {
+	const profile = await loadProfileByUsername(username);
 	if (!profile) {
-		return null;
+		return { status: "not_found" };
 	}
-	if (!profile.show_albums_on_profile) {
-		return null;
+	const isOwnerViewing =
+		Boolean(options?.viewerId) && options.viewerId === profile.user_id;
+	if (!isOwnerViewing && !profile.profile_public) {
+		return { status: "permission_denied", reason: "profile_not_public" };
+	}
+	if (!isOwnerViewing && !profile.show_albums_on_profile) {
+		return { status: "permission_denied", reason: "albums_not_public" };
 	}
 	const userId = profile.user_id;
 
 	if (!isShortId(albumId)) {
-		return null;
-	}
-	const album = await loadPublicAlbumByShortId(albumId);
-	if (!album || album.author_id !== userId || !album.show_on_profile) {
-		return null;
+		return { status: "not_found" };
 	}
 
+	let album: AppAlbum | null;
+	if (isOwnerViewing) {
+		// Owner: load without status/is_public filter
+		const rows = await readMany("app_albums", {
+			filter: { short_id: { _eq: albumId } } as JsonObject,
+			limit: 1,
+		});
+		album = (rows[0] as AppAlbum | undefined) ?? null;
+	} else {
+		album = await loadPublicAlbumByShortId(albumId);
+	}
+	if (!album || album.author_id !== userId) {
+		return { status: "not_found" };
+	}
+	if (!isOwnerViewing && !album.show_on_profile) {
+		return { status: "not_found" };
+	}
+
+	const photoFilters: JsonObject[] = [{ album_id: { _eq: album.id } }];
+	if (!isOwnerViewing) {
+		photoFilters.push(
+			{ status: { _eq: "published" } },
+			{ is_public: { _eq: true } },
+		);
+	}
 	const [photos, authorMap] = await Promise.all([
 		readMany("app_album_photos", {
-			filter: {
-				_and: [
-					{ album_id: { _eq: album.id } },
-					{ status: { _eq: "published" } },
-					{ is_public: { _eq: true } },
-				],
-			} as JsonObject,
+			filter: { _and: photoFilters } as JsonObject,
 			sort: ["sort", "-date_created"],
 			limit: 200,
 		}) as Promise<AppAlbumPhoto[]>,
@@ -515,13 +626,16 @@ export async function loadUserAlbumDetail(
 	]);
 
 	return {
-		...album,
-		tags: safeCsv(album.tags),
-		author: readAuthor(authorMap, album.author_id),
-		photos: photos.map((photo) => ({
-			...photo,
-			tags: safeCsv(photo.tags),
-		})),
+		status: "ok",
+		data: {
+			...album,
+			tags: safeCsv(album.tags),
+			author: readAuthor(authorMap, album.author_id),
+			photos: photos.map((photo) => ({
+				...photo,
+				tags: safeCsv(photo.tags),
+			})),
+		},
 	};
 }
 
@@ -553,6 +667,25 @@ export async function loadPublicProfileByUserId(
 		limit: 1,
 	});
 	return rows[0] || null;
+}
+
+/**
+ * Load profile by userId for a specific viewer.
+ * Owner always gets the profile; non-owner requires profile_public=true.
+ */
+export async function loadProfileForViewerByUserId(
+	userId: string,
+	viewerId?: string | null,
+): Promise<AppProfile | null> {
+	const isOwner = Boolean(viewerId) && viewerId === userId;
+	if (isOwner) {
+		const rows = await readMany("app_user_profiles", {
+			filter: { user_id: { _eq: userId } } as JsonObject,
+			limit: 1,
+		});
+		return (rows[0] as AppProfile | undefined) ?? null;
+	}
+	return loadPublicProfileByUserId(userId);
 }
 
 let officialSidebarCache: {
