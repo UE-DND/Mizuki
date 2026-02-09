@@ -17,6 +17,7 @@ import {
 	readMany,
 } from "@/server/directus/client";
 import { buildDirectusAssetUrl } from "@/server/directus-auth";
+import { getPublicSiteSettings } from "@/server/site-settings/service";
 import { fail, ok } from "@/server/api/response";
 import { parsePagination } from "@/server/api/utils";
 import { getSessionUser } from "@/server/auth/session";
@@ -57,6 +58,23 @@ function readAuthor(
 	userId: string,
 ): { id: string; name: string; username?: string; avatar_url?: string } {
 	return authorMap.get(userId) || toAuthorFallback(userId);
+}
+
+async function handlePublicSiteSettings(
+	context: APIContext,
+	segments: string[],
+): Promise<Response> {
+	if (context.request.method !== "GET") {
+		return fail("方法不允许", 405);
+	}
+	if (segments.length !== 2) {
+		return fail("未找到接口", 404);
+	}
+	const data = await getPublicSiteSettings();
+	return ok({
+		settings: data.settings,
+		updated_at: data.updatedAt,
+	});
 }
 
 async function loadProfileByUsername(
@@ -906,6 +924,9 @@ export async function handlePublic(
 ): Promise<Response> {
 	if (segments[1] === "assets") {
 		return await handlePublicAsset(context, segments);
+	}
+	if (segments[1] === "site-settings") {
+		return await handlePublicSiteSettings(context, segments);
 	}
 	if (segments[1] === "articles") {
 		return await handlePublicArticles(context, segments);

@@ -39,8 +39,11 @@ const setPanelVisibility = async (show: boolean): Promise<void> => {
 
 const generateTOC = () => {
 	// 获取配置
-	useJapaneseBadge = window.siteConfig?.toc?.useJapaneseBadge ?? false;
-	tocDepth = window.siteConfig?.toc?.depth ?? 3;
+	useJapaneseBadge =
+		window.__MIZUKI_RUNTIME_SETTINGS__?.settings.toc.useJapaneseBadge ??
+		false;
+	tocDepth =
+		window.__MIZUKI_RUNTIME_SETTINGS__?.settings.toc.depth ?? 3;
 	const collected = collectMarkdownHeadings({ maxDepth: tocDepth });
 	headingElements = collected.map((item) => item.element);
 	const japaneseHiragana = [

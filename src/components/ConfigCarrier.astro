@@ -1,20 +1,43 @@
 ---
+import { buildLegacySiteConfig } from "@/config";
+import { getResolvedSiteSettings } from "@/server/site-settings/service";
+import type { ResolvedSiteSettings } from "@/types/site-settings";
 
-import { expressiveCodeConfig, siteConfig } from "../config";
+interface Props {
+	resolvedSiteSettings?: ResolvedSiteSettings;
+}
+
+const resolvedSiteSettings =
+	Astro.props.resolvedSiteSettings ??
+	Astro.locals.siteSettings ??
+	(await getResolvedSiteSettings());
+const legacySiteConfig = buildLegacySiteConfig(
+	resolvedSiteSettings.system,
+	resolvedSiteSettings.settings,
+);
 ---
 
 <!-- 全局配置载体 -->
-<div id="config-carrier" data-hue={siteConfig.themeColor.hue} data-hide-code-blocks-during-transition={expressiveCodeConfig.hideDuringThemeTransition ? "true" : "false"}>
+<div
+	id="config-carrier"
+	data-hue={resolvedSiteSettings.system.themeColor.hue}
+	data-hide-code-blocks-during-transition={
+		resolvedSiteSettings.system.expressiveCode.hideDuringThemeTransition
+			? "true"
+			: "false"
+	}
+>
 </div>
 
-<script is:inline define:vars={{ tocEnable: siteConfig.toc.enable, tocDepth: siteConfig.toc.depth, tocUseJapaneseBadge: siteConfig.toc.useJapaneseBadge }}>
-  // 将TOC配置传递到前端
-  window.siteConfig = window.siteConfig || {};
-  window.siteConfig.toc = {
-    enable: tocEnable,
-    depth: tocDepth,
-    useJapaneseBadge: tocUseJapaneseBadge
-  };
+<script
+	is:inline
+	define:vars={{
+		runtimeSettings: resolvedSiteSettings,
+		legacySiteConfig,
+	}}
+>
+	window.__MIZUKI_RUNTIME_SETTINGS__ = runtimeSettings;
+	window.siteConfig = legacySiteConfig;
 </script>
 
 <!-- 引入Umami Share工具脚本 -->

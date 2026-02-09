@@ -58,8 +58,7 @@ export type LayoutState = {
 
 ## Rollback Strategy
 
-Use `siteConfig.experimental.layoutStateMachineV2` in `src/config.ts`.
+Use `systemSiteConfig.experimental.layoutStateMachineV2` in `src/config.ts`.
 
 - `true`: V2 state machine path
 - `false`: legacy `scroll-ui-legacy.ts` and `swup-hooks-legacy.ts`
-

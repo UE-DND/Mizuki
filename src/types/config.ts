@@ -1,9 +1,4 @@
-import type {
-	DARK_MODE,
-	LIGHT_MODE,
-	WALLPAPER_BANNER,
-	WALLPAPER_NONE,
-} from "../constants/constants";
+import type { DARK_MODE, LIGHT_MODE } from "../constants/constants";
 import type { JsonValue } from "./json";
 
 export type SiteConfig = {
@@ -12,33 +7,6 @@ export type SiteConfig = {
 	siteURL: string; // 站点URL，以斜杠结尾，例如：https://mizuki.mysqil.com/
 	keywords?: string[]; // 站点关键词，用于生成 <meta name="keywords">
 	siteStartDate?: string; // 站点开始日期，格式：YYYY-MM-DD，用于计算运行天数
-
-	timeZone:
-		| -12
-		| -11
-		| -10
-		| -9
-		| -8
-		| -7
-		| -6
-		| -5
-		| -4
-		| -3
-		| -2
-		| -1
-		| 0
-		| 1
-		| 2
-		| 3
-		| 4
-		| 5
-		| 6
-		| 7
-		| 8
-		| 9
-		| 10
-		| 11
-		| 12;
 
 	lang:
 		| "en"
@@ -59,13 +27,7 @@ export type SiteConfig = {
 
 	// 特色页面开关配置
 	featurePages: {
-		anime: boolean; // 番剧页面开关
-		diary: boolean; // 日记页面开关
 		friends: boolean; // 友链页面开关
-		projects: boolean; // 项目页面开关
-		skills: boolean; // 技能页面开关
-		timeline: boolean; // 时间线页面开关
-		albums: boolean; // 相册页面开关
 	};
 
 	// 顶栏标题配置
@@ -101,31 +63,6 @@ export type SiteConfig = {
 			localFonts: string[];
 			enableCompress: boolean;
 		};
-	};
-
-	// 添加bangumi配置
-	bangumi?: {
-		userId?: string; // Bangumi用户ID
-		fetchOnDev?: boolean;
-	};
-
-	// 添加bilibili配置
-	bilibili?: {
-		vmid?: string; // Bilibili用户ID (vmid)
-		fetchOnDev?: boolean; // 是否在开发环境下获取 Bilibili 数据
-		SESSDATA?: string; // Bilibili SESSDATA（可选，用于获取进度信息）
-		coverMirror?: string; // 封面图片镜像源（可选，默认为空字符串）
-		useWebp?: boolean; // 是否使用WebP格式（默认 true）
-	};
-
-	// 添加番剧页面配置
-	anime?: {
-		mode?: "bangumi" | "local" | "bilibili"; // 番剧页面模式
-	};
-
-	// 标签样式配置
-	tagStyle?: {
-		useNewStyle?: boolean; // 是否使用新样式（悬停高亮样式）还是旧样式（外框常亮样式）
 	};
 
 	// 壁纸模式配置
@@ -182,10 +119,7 @@ export type SiteConfig = {
 		depth: 1 | 2 | 3;
 		useJapaneseBadge?: boolean; // 使用日语假名标记（あいうえお...）代替数字
 	};
-	showCoverInContent: boolean; // 控制文章封面在文章内容页显示的开关
-	generateOgImages: boolean;
 	favicon: Favicon[];
-	showLastModified: boolean; // 控制“上次编辑”卡片显示的开关
 };
 
 export type Favicon = {
@@ -217,21 +151,6 @@ export type NavBarLink = {
 
 export type NavBarConfig = {
 	links: (NavBarLink | LinkPreset)[];
-};
-
-export type ProfileConfig = {
-	avatar?: string;
-	name: string;
-	bio?: string;
-	links: {
-		name: string;
-		url: string;
-		icon: string;
-	}[];
-	typewriter?: {
-		enable: boolean; // 是否启用打字机效果
-		speed?: number; // 打字速度（毫秒）
-	};
 };
 
 export type LicenseConfig = {
@@ -266,31 +185,7 @@ export type PermalinkConfig = {
 	format: string;
 };
 
-// 评论配置
-
-export type CommentConfig = {
-	enable: boolean; // 是否启用评论功能
-};
-
 export type LIGHT_DARK_MODE = typeof LIGHT_MODE | typeof DARK_MODE;
-
-export type WALLPAPER_MODE = typeof WALLPAPER_BANNER | typeof WALLPAPER_NONE;
-
-export type BlogPostData = {
-	body: string;
-	title: string;
-	published: Date;
-	description: string;
-	tags: string[];
-	draft?: boolean;
-	image?: string;
-	category?: string;
-	pinned?: boolean;
-	prevTitle?: string;
-	prevSlug?: string;
-	nextTitle?: string;
-	nextSlug?: string;
-};
 
 export type ExpressiveCodeConfig = {
 	theme: string;
@@ -398,11 +293,4 @@ export type SakuraConfig = {
 		fadeSpeed: number; // 消失速度
 	};
 	zIndex: number; // 层级，确保樱花在合适的层级显示
-};
-
-/**
- * 分享组件配置
- */
-export type ShareConfig = {
-	enable: boolean; // 是否启用分享功能
 };

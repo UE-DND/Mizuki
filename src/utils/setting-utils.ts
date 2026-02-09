@@ -1,9 +1,17 @@
 import { DARK_MODE, DEFAULT_THEME, LIGHT_MODE } from "@constants/constants";
-import { siteConfig } from "@/config";
 import type { LIGHT_DARK_MODE } from "@/types/config";
 
+function getRuntimeSettings() {
+	return window.__MIZUKI_RUNTIME_SETTINGS__;
+}
+
+function isThemeColorFixed(): boolean {
+	return getRuntimeSettings()?.system.themeColor.fixed ?? false;
+}
+
 export function getDefaultHue(): number {
-	const fallback = "250";
+	const runtimeHue = getRuntimeSettings()?.system.themeColor.hue;
+	const fallback = String(typeof runtimeHue === "number" ? runtimeHue : 250);
 	const configCarrier = document.getElementById("config-carrier");
 	// 在Swup页面切换时，config-carrier可能不存在，使用默认值
 	if (!configCarrier) {
@@ -13,7 +21,7 @@ export function getDefaultHue(): number {
 }
 
 export function getHue(): number {
-	if (siteConfig.themeColor.fixed) {
+	if (isThemeColorFixed()) {
 		return getDefaultHue();
 	}
 	const stored = localStorage.getItem("hue");
@@ -21,7 +29,7 @@ export function getHue(): number {
 }
 
 export function setHue(hue: number): void {
-	if (siteConfig.themeColor.fixed) {
+	if (isThemeColorFixed()) {
 		return;
 	}
 	localStorage.setItem("hue", String(hue));
@@ -154,5 +162,5 @@ export function getStoredTheme(): LIGHT_DARK_MODE {
 
 export function getStoredWallpaperMode(): "banner" | "none" {
 	// 壁纸模式由配置控制，不再从 localStorage 读取
-	return siteConfig.wallpaperMode.defaultMode;
+	return getRuntimeSettings()?.settings.wallpaperMode.defaultMode || "banner";
 }

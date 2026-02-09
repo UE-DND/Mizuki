@@ -1,6 +1,7 @@
 import { defineMiddleware } from "astro:middleware";
 
 import { assertRequiredEnv } from "@/server/env/required";
+import { getResolvedSiteSettings } from "@/server/site-settings/service";
 
 function buildEnvErrorResponse(pathname: string): Response {
 	const isApiRequest = pathname.startsWith("/api/");
@@ -34,6 +35,12 @@ export const onRequest = defineMiddleware(async (context, next) => {
 	} catch (error) {
 		console.error("[middleware] required env validation failed:", error);
 		return buildEnvErrorResponse(context.url.pathname);
+	}
+
+	try {
+		context.locals.siteSettings = await getResolvedSiteSettings();
+	} catch (error) {
+		console.error("[middleware] failed to load site settings:", error);
 	}
 
 	return await next();

@@ -15,6 +15,7 @@ import type {
 	AppUserBlock,
 	AppUser,
 } from "@/types/app";
+import type { AppSiteSettings } from "@/types/site-settings";
 
 export type DirectusSchema = {
 	app_user_profiles: AppProfile[];
@@ -30,6 +31,7 @@ export type DirectusSchema = {
 	app_album_photos: AppAlbumPhoto[];
 	app_user_blocks: AppUserBlock[];
 	app_content_reports: AppContentReport[];
+	app_site_settings: AppSiteSettings[];
 	directus_users: AppUser[];
 	directus_files: AppFile[];
 };

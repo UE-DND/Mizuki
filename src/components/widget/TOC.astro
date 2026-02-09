@@ -291,9 +291,10 @@ const className = Astro.props.class;
 		}
 
 		regenerateTOC(retryCount = 0): void {
-			const siteConfig = window.siteConfig;
-			const maxLevel = siteConfig?.toc?.depth ?? 3;
-			const useJapaneseBadge = siteConfig?.toc?.useJapaneseBadge ?? false;
+			const runtimeSettings = window.__MIZUKI_RUNTIME_SETTINGS__;
+			const maxLevel = runtimeSettings?.settings.toc.depth ?? 3;
+			const useJapaneseBadge =
+				runtimeSettings?.settings.toc.useJapaneseBadge ?? false;
 			const headings = collectMarkdownHeadings({ maxDepth: maxLevel });
 
 			if (headings.length === 0) {

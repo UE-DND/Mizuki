@@ -2,13 +2,25 @@
 import Icon from "@iconify/svelte";
 import { onDestroy, onMount, tick } from "svelte";
 import { slide } from "svelte/transition";
-// 从配置文件中导入音乐播放器配置
-import { musicPlayerConfig } from "../../config";
 // 导入国际化相关的 Key 和 i18n 实例
 import Key from "../../i18n/i18nKey";
 import { i18n } from "../../i18n/translation";
+import type { MusicPlayerConfig } from "../../types/config";
 import type { JsonObject, JsonValue } from "../../types/json";
 import { getJsonNumber, getJsonString, isJsonObject } from "../../utils/json-utils";
+
+export let musicPlayer: MusicPlayerConfig = {
+	enable: false,
+	mode: "meting",
+	meting_api:
+		"https://www.bilibili.uno/api?server=:server&type=:type&id=:id&auth=:auth&r=:r",
+	id: "",
+	server: "netease",
+	type: "playlist",
+	marqueeSpeed: 40,
+};
+
+const musicPlayerConfig = musicPlayer;
 
 // 音乐播放器模式，可选 "local" 或 "meting"，从本地配置中获取或使用默认值 "meting"
 let mode = musicPlayerConfig.mode ?? "meting";

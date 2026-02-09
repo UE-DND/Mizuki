@@ -1,4 +1,5 @@
 import type { SiteConfig } from "./types/config";
+import type { ResolvedSiteSettings } from "./types/site-settings";
 
 export {};
 
@@ -81,6 +82,7 @@ declare global {
 			onLoad: (callback: () => void) => void;
 			isLoaded: boolean;
 		};
+		__MIZUKI_RUNTIME_SETTINGS__?: ResolvedSiteSettings;
 		siteConfig?: SiteConfig;
 	}
 }

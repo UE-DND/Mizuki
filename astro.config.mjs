@@ -8,14 +8,14 @@ import swup from "@swup/astro";
 import { defineConfig } from "astro/config";
 import expressiveCode from "astro-expressive-code";
 import icon from "astro-icon";
-import { siteConfig } from "./src/config.ts";
+import { systemSiteConfig } from "./src/config.ts";
 import { pluginCustomCopyButton } from "./src/plugins/expressive-code/custom-copy-button.js";
 import { pluginLanguageBadge } from "./src/plugins/expressive-code/language-badge.ts";
 import { rehypePlugins, remarkPlugins } from "./src/server/markdown/pipeline.ts";
 
 // https://astro.build/config
 export default defineConfig({
-	site: siteConfig.siteURL,
+	site: systemSiteConfig.siteURL,
 	base: "/",
 	trailingSlash: "never",
 

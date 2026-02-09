@@ -1,4 +1,4 @@
-import { siteConfig } from "../config";
+import { systemSiteConfig } from "../config";
 import type I18nKey from "./i18nKey";
 import { en } from "./languages/en";
 import { ja } from "./languages/ja";
@@ -27,6 +27,6 @@ export function getTranslation(lang: string): Translation {
 }
 
 export function i18n(key: I18nKey): string {
-	const lang = siteConfig.lang || "en";
+	const lang = systemSiteConfig.lang || "en";
 	return getTranslation(lang)[key];
 }

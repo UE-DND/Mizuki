@@ -11,7 +11,8 @@ import IconifyLoader from "../components/misc/IconifyLoader.astro";
 import ImageWrapper from "../components/misc/ImageWrapper.astro";
 import TypewriterText from "../components/TypewriterText.astro";
 import TOC from "../components/widget/TOC.astro";
-import { siteConfig } from "../config";
+import { buildLegacySiteConfig } from "@/config";
+import { getResolvedSiteSettings } from "@/server/site-settings/service";
 import {
 	BANNER_HEIGHT_EXTEND,
 	BANNER_HEIGHT_HOME,
@@ -19,6 +20,14 @@ import {
 } from "../constants/constants";
 import { widgetManager } from "../utils/widget-manager";
 import Layout from "./Layout.astro";
+
+const resolvedSiteSettings =
+	Astro.locals.siteSettings ?? (await getResolvedSiteSettings());
+const siteConfig = buildLegacySiteConfig(
+	resolvedSiteSettings.system,
+	resolvedSiteSettings.settings,
+);
+widgetManager.updateConfig(resolvedSiteSettings.settings.sidebarLayout);
 
 // TOC模式配置
 const tocMode = siteConfig.toc.mode || "float";
@@ -34,7 +43,6 @@ interface Props {
 	description?: string;
 	lang?: string;
 	setOGTypeArticle?: boolean;
-	postSlug?: string;
 	headings?: MarkdownHeading[];
 }
 
@@ -102,7 +110,6 @@ const {
 	description,
 	lang,
 	setOGTypeArticle,
-	postSlug,
 	headings = [],
 } = Astro.props;
 const hasBannerCredit = siteConfig.banner.credit.enable;
@@ -283,7 +290,7 @@ const mainContentClass = `
 
 ---
 
-<Layout title={title} banner={banner} description={description} lang={lang} setOGTypeArticle={setOGTypeArticle} postSlug={postSlug}>
+<Layout title={title} banner={banner} description={description} lang={lang} setOGTypeArticle={setOGTypeArticle}>
 
 <!-- 全局图标加载器 -->
 <IconifyLoader />

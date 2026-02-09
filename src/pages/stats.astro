@@ -1,6 +1,6 @@
 ---
 import { Icon } from "astro-icon/components";
-import { siteConfig } from "../config";
+import { getResolvedSiteSettings } from "@/server/site-settings/service";
 import I18nKey from "../i18n/i18nKey";
 import { i18n } from "../i18n/translation";
 import MainGridLayout from "../layouts/MainGridLayout.astro";
@@ -13,8 +13,11 @@ import {
 export const prerender = false;
 
 const title = i18n(I18nKey.siteStats);
+const resolvedSiteSettings =
+	Astro.locals.siteSettings ?? (await getResolvedSiteSettings());
 
-const siteStartDate = siteConfig.siteStartDate || "2025-01-01";
+const siteStartDate =
+	resolvedSiteSettings.settings.site.siteStartDate || "2025-01-01";
 
 const posts = await getSortedPosts();
 const categories = await getCategoryList();

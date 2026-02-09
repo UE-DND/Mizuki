@@ -68,7 +68,7 @@ function toOverlayField(field: FormDialogField): OverlayDialogField {
 export function showAuthRequiredDialog(message?: string): void {
 	void showOverlayDialog({
 		ariaLabel: "登录提示",
-		message: message || "登录后才能使用相关功能哦～",
+		message: message || "登录后才能使用相关功能哦~",
 		dismissKey: "cancel",
 		actions: [
 			{

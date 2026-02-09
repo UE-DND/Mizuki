@@ -37,47 +37,16 @@ function normalizeCopiedCode(rawCode: string): string {
 	});
 }
 
-function writeClipboardFallback(text: string): void {
-	const textarea = document.createElement("textarea");
-	textarea.value = text;
-	textarea.setAttribute("readonly", "");
-	textarea.style.position = "fixed";
-	textarea.style.top = "-9999px";
-	textarea.style.left = "-9999px";
-	textarea.style.opacity = "0";
-	document.body.appendChild(textarea);
-	textarea.focus();
-	textarea.select();
-
-	let copied = false;
-	try {
-		copied = document.execCommand("copy");
-	} finally {
-		document.body.removeChild(textarea);
-	}
-
-	if (!copied) {
-		throw new Error("execCommand 复制失败");
-	}
-}
-
 async function writeClipboard(text: string): Promise<void> {
 	if (
 		navigator.clipboard &&
 		typeof navigator.clipboard.writeText === "function"
 	) {
-		try {
-			await navigator.clipboard.writeText(text);
-			return;
-		} catch (error) {
-			console.warn(
-				"[markdown] navigator.clipboard.writeText failed, fallback to execCommand:",
-				error,
-			);
-		}
+		await navigator.clipboard.writeText(text);
+		return;
 	}
 
-	writeClipboardFallback(text);
+	throw new Error("Clipboard API 不可用");
 }
 
 function markCopySuccess(button: HTMLElement): void {

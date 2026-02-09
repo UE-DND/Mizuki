@@ -2,7 +2,6 @@
 import Icon from "../components/misc/Icon.astro";
 import IconifyLoader from "../components/misc/IconifyLoader.astro";
 import SkillsChart from "../components/skills/SkillsChart.astro";
-import { siteConfig } from "../config";
 import { UNCATEGORIZED } from "../constants/constants";
 import {
 	getAdvancedSkills,
@@ -16,12 +15,7 @@ import { i18n } from "../i18n/translation";
 
 import MainGridLayout from "../layouts/MainGridLayout.astro";
 
-export const prerender = true;
-
-// 检查技能页面是否启用
-if (!siteConfig.featurePages.skills) {
-	return Astro.redirect("/404");
-}
+export const prerender = false;
 
 // const { lang } = Astro.props;
 
