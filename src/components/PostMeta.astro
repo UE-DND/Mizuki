@@ -126,7 +126,7 @@ const {
             
             try {
                 // 构造文章页面的URL路径
-                const pageUrl = `/posts/${id}/`;
+                const pageUrl = `/posts/${id}`;
                 
                 // 调用全局工具获取特定页面的 Umami 统计数据
                 const stats = await window.getUmamiPageStats(umamiBaseUrl, umamiApiKey, umamiWebsiteId, pageUrl);

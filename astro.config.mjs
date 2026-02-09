@@ -17,7 +17,7 @@ import { rehypePlugins, remarkPlugins } from "./src/server/markdown/pipeline.ts"
 export default defineConfig({
 	site: siteConfig.siteURL,
 	base: "/",
-	trailingSlash: "always",
+	trailingSlash: "never",
 
 	output: "static",
 	adapter: vercel(),

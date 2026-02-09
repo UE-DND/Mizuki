@@ -218,7 +218,7 @@ export const navBarConfig: NavBarConfig = {
 		// 支持自定义导航栏链接，支持多级菜单
 		{
 			name: "链接",
-			url: "/links/",
+			url: "/links",
 			icon: "material-symbols:link",
 			children: [
 				{
@@ -243,7 +243,7 @@ export const navBarConfig: NavBarConfig = {
 		},
 		{
 			name: "我的",
-			url: "/content/",
+			url: "/content",
 			icon: "material-symbols:person",
 			children: [
 				{
@@ -265,22 +265,22 @@ export const navBarConfig: NavBarConfig = {
 		},
 		{
 			name: "关于",
-			url: "/content/",
+			url: "/content",
 			icon: "material-symbols:info",
 			children: [
 				{
 					name: "关于我们",
-					url: "/about/",
+					url: "/about",
 					icon: "material-symbols:person",
 				},
 				{
 					name: "友情链接",
-					url: "/friends/",
+					url: "/friends",
 					icon: "material-symbols:group",
 				},
 				{
 					name: "站点统计",
-					url: "/stats/",
+					url: "/stats",
 					icon: "material-symbols:bar-chart",
 				},
 			],
@@ -292,17 +292,17 @@ export const navBarConfig: NavBarConfig = {
 			children: [
 				{
 					name: "项目",
-					url: "/projects/",
+					url: "/projects",
 					icon: "material-symbols:work",
 				},
 				{
 					name: "技能",
-					url: "/skills/",
+					url: "/skills",
 					icon: "material-symbols:psychology",
 				},
 				{
 					name: "时间线",
-					url: "/timeline/",
+					url: "/timeline",
 					icon: "material-symbols:timeline",
 				},
 			],
@@ -402,7 +402,7 @@ export const announcementConfig: AnnouncementConfig = {
 	link: {
 		enable: true, // 启用链接
 		text: "了解更多", // 链接文本
-		url: "/about/", // 链接 URL
+		url: "/about", // 链接 URL
 		external: false, // 内部链接
 	},
 };

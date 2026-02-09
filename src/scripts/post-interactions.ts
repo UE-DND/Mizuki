@@ -245,7 +245,7 @@ function removeCardsByAuthorId(authorId: string) {
 
 async function requestDeleteArticle(articleId: string) {
 	const response = await fetch(
-		`/api/v1/me/articles/${encodeURIComponent(articleId)}/`,
+		`/api/v1/me/articles/${encodeURIComponent(articleId)}`,
 		{
 			method: "DELETE",
 			credentials: "include",
@@ -258,7 +258,7 @@ async function requestDeleteArticle(articleId: string) {
 }
 
 async function requestBlockUser(blockedUserId: string, reason?: string) {
-	const response = await fetch("/api/v1/me/blocks/", {
+	const response = await fetch("/api/v1/me/blocks", {
 		method: "POST",
 		credentials: "include",
 		headers: {
@@ -281,7 +281,7 @@ async function requestReportArticle(input: {
 	reason: string;
 	detail?: string;
 }) {
-	const response = await fetch("/api/v1/me/reports/", {
+	const response = await fetch("/api/v1/me/reports", {
 		method: "POST",
 		credentials: "include",
 		headers: {
@@ -305,7 +305,7 @@ async function requestToggleLike(articleId: string): Promise<{
 	liked: boolean;
 	like_count: number;
 }> {
-	const response = await fetch("/api/v1/me/article-likes/", {
+	const response = await fetch("/api/v1/me/article-likes", {
 		method: "POST",
 		credentials: "include",
 		headers: {

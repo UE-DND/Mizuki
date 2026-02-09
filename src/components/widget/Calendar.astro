@@ -525,7 +525,7 @@ const yearSuffix = isChinese ? "年" : " ";
 						" text-neutral-400 dark:text-neutral-500 group-hover:text-[var(--primary)]/70 dark:group-hover:text-[var(--primary)]/70";
 				}
 
-				const postUrl = post.url || `/posts/${post.id}/`;
+				const postUrl = post.url || `/posts/${post.id}`;
 				return `
             <a href="${postUrl}" class="${containerClass}">
                 <span class="${titleClass}">${post.title}</span>

@@ -10,15 +10,15 @@ export function buildLoginUrl(): string {
 		const redirect = `${pathname}${search}${hash}` || "/";
 
 		if (!redirect.startsWith("/") || redirect.startsWith("//")) {
-			return "/login/";
+			return "/login";
 		}
 		if (pathname === "/login/" || pathname === "/login") {
-			return "/login/";
+			return "/login";
 		}
 
 		const params = new URLSearchParams({ redirect });
-		return `/login/?${params.toString()}`;
+		return `/login?${params.toString()}`;
 	} catch {
-		return "/login/";
+		return "/login";
 	}
 }

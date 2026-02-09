@@ -143,16 +143,16 @@ const hasDirectusTarget = Boolean(moduleName && contentId);
 
 		const commentApiBase = () => {
 			if (moduleName === "diaries") {
-				return `/api/v1/diaries/${encodeURIComponent(contentId)}/comments/`;
+				return `/api/v1/diaries/${encodeURIComponent(contentId)}/comments`;
 			}
-			return `/api/v1/articles/${encodeURIComponent(contentId)}/comments/`;
+			return `/api/v1/articles/${encodeURIComponent(contentId)}/comments`;
 		};
 
 		const commentItemApi = (commentId: string): string => {
 			if (moduleName === "diaries") {
-				return `/api/v1/diaries/comments/${encodeURIComponent(commentId)}/`;
+				return `/api/v1/diaries/comments/${encodeURIComponent(commentId)}`;
 			}
-			return `/api/v1/articles/comments/${encodeURIComponent(commentId)}/`;
+			return `/api/v1/articles/comments/${encodeURIComponent(commentId)}`;
 		};
 
 		const setFormError = (message: string): void => {

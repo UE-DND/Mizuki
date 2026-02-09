@@ -181,7 +181,7 @@ const coverUrl = article?.cover_url
 				deleteBtn.disabled = true;
 				try {
 					const response = await fetch(
-						`/api/v1/me/articles/${encodeURIComponent(articleId)}/`,
+						`/api/v1/me/articles/${encodeURIComponent(articleId)}`,
 						{
 							method: "DELETE",
 							credentials: "include",

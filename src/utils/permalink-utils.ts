@@ -147,5 +147,5 @@ export function getPermalinkPath(post: PermalinkPost): string {
 	const slug = generatePermalinkSlug(post);
 
 	// 所有 permalink 生成的链接都在根目录下
-	return `/${slug}/`;
+	return `/${slug}`;
 }

@@ -13,7 +13,7 @@ export async function GET(): Promise<Response> {
 		return {
 			id: post.id,
 			title: post.data.title,
-			url: post.url || `/posts/${post.id}/`,
+			url: post.url || `/posts/${post.id}`,
 			date: `${year}-${month}-${day}`,
 		};
 	});

@@ -58,7 +58,7 @@ if (!username || !id) {
 	}
 }
 
-const backHref = username ? `/${username}/albums/` : "/";
+const backHref = username ? `/${username}/albums` : "/";
 
 function photoUrl(photo: { file_id: string | null; image_url: string | null }): string | null {
 	if (photo.image_url) {

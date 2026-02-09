@@ -72,7 +72,7 @@ function coverUrl(item: {
 		<div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
 			{items.map((item) => (
 				<article class="card-base rounded-[var(--radius-large)] overflow-hidden border border-[var(--line-divider)] text-90">
-					<a href={`/${username}/albums/${item.id}/`} class="block h-full">
+					<a href={`/${username}/albums/${item.id}`} class="block h-full">
 						{coverUrl(item) && (
 							<img
 								src={coverUrl(item) || ""}

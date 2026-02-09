@@ -28,7 +28,7 @@ if (Astro.locals.sidebarProfile) {
 const displayName = sidebarData.display_name || "user";
 const bio = sidebarData.bio || "";
 const avatarUrl = sidebarData.avatar_url || profileConfig.avatar || "";
-const profileLink = sidebarData.username ? url(`/u/${sidebarData.username}/`) : url('/about/');
+const profileLink = sidebarData.username ? url(`/${sidebarData.username}`) : url('/about');
 const enabledLinks = (sidebarData.social_links || []).filter((link: SocialLink) => link.enabled);
 ---
 

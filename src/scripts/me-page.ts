@@ -18,7 +18,9 @@ const runtimeWindow = window as RuntimeWindow;
 
 const normalizeApiUrl = (input: string): string => {
 	const [pathname, search = ""] = String(input || "").split("?");
-	const normalizedPath = pathname.endsWith("/") ? pathname : `${pathname}/`;
+	const normalizedPath = pathname.endsWith("/")
+		? pathname.slice(0, -1)
+		: pathname;
 	return search ? `${normalizedPath}?${search}` : normalizedPath;
 };
 
@@ -76,7 +78,7 @@ const buildAssetUrl = (fileId: string): string => {
 	if (!normalized) {
 		return "";
 	}
-	return `/api/v1/public/assets/${encodeURIComponent(normalized)}/`;
+	return `/api/v1/public/assets/${encodeURIComponent(normalized)}`;
 };
 
 const buildLoginRedirectHref = (): string => {
@@ -85,7 +87,7 @@ const buildLoginRedirectHref = (): string => {
 	const hash = String(window.location.hash || "");
 	const redirect = `${pathname}${search}${hash}` || "/";
 	if (!redirect.startsWith("/") || redirect.startsWith("//")) {
-		return "/login/";
+		return "/login";
 	}
 	return `/login/?redirect=${encodeURIComponent(redirect)}`;
 };
@@ -521,7 +523,11 @@ export function initMePage(): void {
 		row.addEventListener("drop", (e) => {
 			e.preventDefault();
 			row.style.borderTop = "";
-			if (!socialDragSource || socialDragSource === row || !socialLinksList) {
+			if (
+				!socialDragSource ||
+				socialDragSource === row ||
+				!socialLinksList
+			) {
 				return;
 			}
 			// 在目标位置前插入被拖拽行
@@ -1029,7 +1035,7 @@ export function initMePage(): void {
 	};
 
 	const loadAuthMe = async (): Promise<ApiResult> => {
-		let result = await api("/api/auth/me/");
+		let result = await api("/api/auth/me");
 		if (
 			(!result.response.ok || !result.data?.ok) &&
 			result.response.status === 401
@@ -1037,7 +1043,7 @@ export function initMePage(): void {
 			await new Promise<void>((resolve) =>
 				window.setTimeout(resolve, AUTH_ME_RETRY_DELAY_MS),
 			);
-			result = await api("/api/auth/me/");
+			result = await api("/api/auth/me");
 		}
 		return result;
 	};

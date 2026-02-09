@@ -97,7 +97,7 @@ function resolveUpdatedAt(post: AppArticle): Date {
 }
 
 function buildPostUrl(articleId: string): string {
-	return `/posts/${articleId}/`;
+	return `/posts/${articleId}`;
 }
 
 function resolveCoverImage(post: AppArticle): string | undefined {

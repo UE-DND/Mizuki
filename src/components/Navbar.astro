@@ -128,7 +128,7 @@ const links: NavBarLink[] = navBarConfig.links
                     anchor.setAttribute("href", "#");
                     anchor.setAttribute("data-needs-login", "");
                 } else {
-                    anchor.setAttribute("href", "/me/");
+                    anchor.setAttribute("href", "/me");
                     anchor.removeAttribute("data-needs-login");
                 }
                 return;
@@ -145,7 +145,7 @@ const links: NavBarLink[] = navBarConfig.links
             if (pathname === "/me" || pathname === "/me/") {
                 if (hash === "anime" || hash === "diary" || hash === "albums") {
                     if (cleanUsername) {
-                        anchor.setAttribute("href", `/${cleanUsername}/${hash}/`);
+                        anchor.setAttribute("href", `/${cleanUsername}/${hash}`);
                         anchor.removeAttribute("data-needs-login");
                     } else if (!isLoggedIn) {
                         anchor.setAttribute("href", "#");
@@ -158,13 +158,13 @@ const links: NavBarLink[] = navBarConfig.links
             if (!legacyTarget.includes(pathname)) return;
             const target = pathname.replace(/^\//, "").replace(/\/$/, "");
             if (cleanUsername) {
-                anchor.setAttribute("href", `/${cleanUsername}/${target}/`);
+                anchor.setAttribute("href", `/${cleanUsername}/${target}`);
                 anchor.removeAttribute("data-needs-login");
             } else if (!isLoggedIn) {
                 anchor.setAttribute("href", "#");
                 anchor.setAttribute("data-needs-login", "");
             } else {
-                anchor.setAttribute("href", "/me/");
+                anchor.setAttribute("href", "/me");
                 anchor.removeAttribute("data-needs-login");
             }
         });
@@ -172,7 +172,7 @@ const links: NavBarLink[] = navBarConfig.links
 
     const fetchAuthProfile = async () => {
         try {
-            const response = await fetch("/api/auth/me/", {
+            const response = await fetch("/api/auth/me", {
                 method: "GET",
                 credentials: "include",
                 headers: { Accept: "application/json" },
