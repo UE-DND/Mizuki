@@ -1,4 +1,5 @@
 import type { LayoutController } from "./layout-controller";
+import { getTocBaselineOffset } from "@/utils/toc-offset";
 
 type ScrollIntentSourceOptions = {
 	controller: LayoutController;
@@ -56,6 +57,25 @@ function updateBannerExtendCssVar(bannerHeightExtend: number): void {
 	);
 }
 
+function getCollapseScrollThreshold(
+	scrollTop: number,
+	bannerHeightHome: number,
+): number {
+	// Reuse TOC/hash-scroll baseline model so collapse timing follows
+	// real navbar height instead of a fixed magic number.
+	const baselineOffset = getTocBaselineOffset();
+	const contentWrapper = document.getElementById("content-wrapper");
+
+	if (contentWrapper) {
+		const rect = contentWrapper.getBoundingClientRect();
+		const absoluteTop = rect.top + scrollTop;
+		return Math.max(0, absoluteTop - baselineOffset);
+	}
+
+	const fallbackTop = window.innerHeight * (bannerHeightHome / 100);
+	return Math.max(0, fallbackTop - baselineOffset);
+}
+
 export function setupScrollIntentSource(
 	options: ScrollIntentSourceOptions,
 ): () => void {
@@ -78,8 +98,10 @@ export function setupScrollIntentSource(
 				currentState.isHome &&
 				viewportWidth >= 1024
 			) {
-				const threshold =
-					window.innerHeight * (options.bannerHeightHome / 100) - 88;
+				const threshold = getCollapseScrollThreshold(
+					scrollTop,
+					options.bannerHeightHome,
+				);
 				if (scrollTop >= threshold) {
 					options.controller.dispatch({
 						type: "COLLAPSE_BANNER",

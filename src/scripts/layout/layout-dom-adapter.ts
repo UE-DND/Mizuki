@@ -10,11 +10,11 @@ export type LayoutDomAdapterDeps = {
 type LayoutDomRuntimeWindow = Window &
 	typeof globalThis & {
 		__layoutCollapseScrollAnimationId?: number;
-		__layoutNavbarEnterTimeoutId?: number;
+		__layoutContentSoftTimeoutId?: number;
 	};
 
-const NAVBAR_ENTERING_CLASS = "layout-navbar-entering";
-const COLLAPSED_MAIN_PANEL_TOP_REM = 5.5;
+const CONTENT_SOFT_COLLAPSE_CLASS = "layout-content-soft-collapse";
+const CONTENT_SOFT_COLLAPSE_DURATION_MS = 220;
 
 function syncBodyState(next: LayoutState): void {
 	const body = document.body;
@@ -77,10 +77,6 @@ function syncNavbar(next: LayoutState): void {
 		next.navbarTransparentMode === "semifull" &&
 		next.scrollTop > 50;
 	navbar.classList.toggle("scrolled", shouldBeScrolled);
-
-	document
-		.getElementById("navbar-wrapper")
-		?.classList.remove("navbar-hidden");
 }
 
 function syncToc(next: LayoutState, deps: LayoutDomAdapterDeps): void {
@@ -101,21 +97,6 @@ function syncToc(next: LayoutState, deps: LayoutDomAdapterDeps): void {
 	tocWrapper.classList.toggle("toc-hide", next.scrollTop <= threshold);
 }
 
-function getLayoutTransitionDurationMs(): number {
-	const raw = getComputedStyle(document.documentElement)
-		.getPropertyValue("--layout-mode-transition-duration")
-		.trim();
-	if (raw.endsWith("ms")) {
-		const value = Number.parseFloat(raw);
-		return Number.isFinite(value) && value > 0 ? value : 500;
-	}
-	if (raw.endsWith("s")) {
-		const value = Number.parseFloat(raw);
-		return Number.isFinite(value) && value > 0 ? value * 1000 : 500;
-	}
-	return 500;
-}
-
 function getCollapseTargetScroll(
 	currentScroll: number,
 	deps: LayoutDomAdapterDeps,
@@ -128,30 +109,33 @@ function getCollapseTargetScroll(
 	return Math.max(0, currentScroll - delta);
 }
 
-function easeOutQuart(value: number): number {
-	return 1 - Math.pow(1 - value, 4);
+function getContentWrapperViewportTop(): number | null {
+	const contentWrapper = document.getElementById("content-wrapper");
+	if (!(contentWrapper instanceof HTMLElement)) {
+		return null;
+	}
+	return contentWrapper.getBoundingClientRect().top;
 }
 
-function resolveCollapseAnchor(): HTMLElement | null {
-	return (
-		document.getElementById("content-wrapper") ??
-		document.getElementById("main-grid")
-	);
-}
-
-function getCollapsedMainPanelTopPx(): number {
-	const rootFontSize = Number.parseFloat(
-		getComputedStyle(document.documentElement).fontSize,
-	);
-	const pxPerRem =
-		Number.isFinite(rootFontSize) && rootFontSize > 0 ? rootFontSize : 16;
-	return COLLAPSED_MAIN_PANEL_TOP_REM * pxPerRem;
-}
-
-function compensateScrollForCollapse(deps: LayoutDomAdapterDeps): void {
+function compensateScrollForCollapse(
+	deps: LayoutDomAdapterDeps,
+	contentTopBeforeCollapse: number | null,
+): void {
 	const documentRoot = document.documentElement;
 	const currentScroll = documentRoot.scrollTop;
-	const targetScroll = getCollapseTargetScroll(currentScroll, deps);
+	let targetScroll = getCollapseTargetScroll(currentScroll, deps);
+
+	// Prefer geometry-based compensation so breakpoint-specific layout top
+	// differences (for example tablet 70vh banner top) don't cause a snap.
+	const contentTopAfterCollapse = getContentWrapperViewportTop();
+	if (contentTopBeforeCollapse !== null && contentTopAfterCollapse !== null) {
+		targetScroll = Math.max(
+			0,
+			currentScroll +
+				(contentTopAfterCollapse - contentTopBeforeCollapse),
+		);
+	}
+
 	const scrollDistance = targetScroll - currentScroll;
 
 	if (Math.abs(scrollDistance) < 1) {
@@ -169,62 +153,9 @@ function compensateScrollForCollapse(deps: LayoutDomAdapterDeps): void {
 		runtimeWindow.__layoutCollapseScrollAnimationId = undefined;
 	}
 
-	const anchor = resolveCollapseAnchor();
-	if (!anchor) {
-		window.scrollTo({ top: targetScroll, behavior: "instant" });
-		return;
-	}
-
-	const startViewportTop = anchor.getBoundingClientRect().top;
-	const targetViewportTop = getCollapsedMainPanelTopPx();
-	const minScroll = Math.min(currentScroll, targetScroll);
-	const maxScroll = currentScroll;
-	const duration = getLayoutTransitionDurationMs();
-	const startTime = performance.now();
-
-	const USER_SCROLL_THRESHOLD = 2;
-	let lastSetScroll = currentScroll;
-
-	const animate = (now: number): void => {
-		const actualScroll = documentRoot.scrollTop;
-		if (Math.abs(actualScroll - lastSetScroll) > USER_SCROLL_THRESHOLD) {
-			runtimeWindow.__layoutCollapseScrollAnimationId = undefined;
-			return;
-		}
-
-		const elapsed = now - startTime;
-		const progress = Math.min(1, elapsed / duration);
-		const eased = easeOutQuart(progress);
-		const desiredViewportTop =
-			startViewportTop + (targetViewportTop - startViewportTop) * eased;
-		const currentViewportTop = anchor.getBoundingClientRect().top;
-		const correction = currentViewportTop - desiredViewportTop;
-		const nextScroll = Math.min(
-			maxScroll,
-			Math.max(minScroll, documentRoot.scrollTop + correction),
-		);
-		window.scrollTo({ top: nextScroll, behavior: "instant" });
-		lastSetScroll = nextScroll;
-
-		if (progress < 1) {
-			runtimeWindow.__layoutCollapseScrollAnimationId =
-				requestAnimationFrame(animate);
-			return;
-		}
-
-		const finalViewportTop = anchor.getBoundingClientRect().top;
-		const finalCorrection = finalViewportTop - targetViewportTop;
-		const finalScroll = Math.min(
-			maxScroll,
-			Math.max(minScroll, documentRoot.scrollTop + finalCorrection),
-		);
-		window.scrollTo({ top: finalScroll, behavior: "instant" });
-		lastSetScroll = finalScroll;
-		runtimeWindow.__layoutCollapseScrollAnimationId = undefined;
-	};
-
-	runtimeWindow.__layoutCollapseScrollAnimationId =
-		requestAnimationFrame(animate);
+	// Apply one-shot compensation to avoid any trailing "snap" animation
+	// on the article list while entering collapsed mode.
+	window.scrollTo({ top: targetScroll, behavior: "instant" });
 }
 
 function isSwupTransitioning(): boolean {
@@ -235,39 +166,32 @@ function isSwupTransitioning(): boolean {
 	);
 }
 
-function clearNavbarEnterAnimation(
+function clearContentSoftCollapseAnimation(
 	runtimeWindow: LayoutDomRuntimeWindow,
 ): void {
-	if (runtimeWindow.__layoutNavbarEnterTimeoutId !== undefined) {
-		window.clearTimeout(runtimeWindow.__layoutNavbarEnterTimeoutId);
-		runtimeWindow.__layoutNavbarEnterTimeoutId = undefined;
+	if (runtimeWindow.__layoutContentSoftTimeoutId !== undefined) {
+		window.clearTimeout(runtimeWindow.__layoutContentSoftTimeoutId);
+		runtimeWindow.__layoutContentSoftTimeoutId = undefined;
 	}
-	document
-		.getElementById("navbar-wrapper")
-		?.classList.remove(NAVBAR_ENTERING_CLASS);
+	document.body.classList.remove(CONTENT_SOFT_COLLAPSE_CLASS);
 }
 
-function triggerNavbarEnterAnimation(
+function triggerContentSoftCollapseAnimation(
 	runtimeWindow: LayoutDomRuntimeWindow,
 ): void {
 	if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
 		return;
 	}
 
-	const navbarWrapper = document.getElementById("navbar-wrapper");
-	if (!(navbarWrapper instanceof HTMLElement)) {
-		return;
-	}
+	clearContentSoftCollapseAnimation(runtimeWindow);
+	// Force reflow so quick re-entry can replay the animation.
+	void document.body.offsetHeight;
+	document.body.classList.add(CONTENT_SOFT_COLLAPSE_CLASS);
 
-	clearNavbarEnterAnimation(runtimeWindow);
-	// Force reflow to reliably restart animation if user quickly re-enters.
-	void navbarWrapper.offsetHeight;
-	navbarWrapper.classList.add(NAVBAR_ENTERING_CLASS);
-
-	runtimeWindow.__layoutNavbarEnterTimeoutId = window.setTimeout(() => {
-		navbarWrapper.classList.remove(NAVBAR_ENTERING_CLASS);
-		runtimeWindow.__layoutNavbarEnterTimeoutId = undefined;
-	}, getLayoutTransitionDurationMs() + 80);
+	runtimeWindow.__layoutContentSoftTimeoutId = window.setTimeout(() => {
+		document.body.classList.remove(CONTENT_SOFT_COLLAPSE_CLASS);
+		runtimeWindow.__layoutContentSoftTimeoutId = undefined;
+	}, CONTENT_SOFT_COLLAPSE_DURATION_MS + 40);
 }
 
 function shouldRestoreTopOnExpand(
@@ -295,11 +219,14 @@ export function applyLayoutState(
 		runtimeWindow.__layoutCollapseScrollAnimationId = undefined;
 	}
 	if (next.mode !== "collapsed") {
-		clearNavbarEnterAnimation(runtimeWindow);
+		clearContentSoftCollapseAnimation(runtimeWindow);
 	}
 
 	const collapsingFromBanner =
 		prev?.mode === "banner" && next.mode === "collapsed";
+	const contentTopBeforeCollapse = collapsingFromBanner
+		? getContentWrapperViewportTop()
+		: null;
 
 	syncBodyState(next);
 	syncBannerAndMainPanel(next);
@@ -307,8 +234,8 @@ export function applyLayoutState(
 	syncToc(next, deps);
 
 	if (collapsingFromBanner && !isSwupTransitioning()) {
-		triggerNavbarEnterAnimation(runtimeWindow);
-		compensateScrollForCollapse(deps);
+		compensateScrollForCollapse(deps, contentTopBeforeCollapse);
+		triggerContentSoftCollapseAnimation(runtimeWindow);
 	}
 
 	if (shouldRestoreTopOnExpand(prev, next)) {

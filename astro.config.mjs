@@ -37,17 +37,7 @@ export default defineConfig({
 			updateHead: true,
 			updateBodyClass: false,
 			globalInstance: true,
-			// 滚动相关配置优化
-			resolveUrl: (url) => url,
-			animateHistoryBrowsing: false,
-			skipPopStateHandling: (event) => {
-				// 跳过锚点链接的处理，让浏览器原生处理
-				return (
-					event.state &&
-					event.state.url &&
-					event.state.url.includes("#")
-				);
-			},
+			loadOnIdle: false, // 尽早初始化 swup，避免首页快速点击时退回原生跳转
 		}),
 		icon(),
 		expressiveCode({

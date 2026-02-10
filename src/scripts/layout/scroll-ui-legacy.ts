@@ -34,11 +34,6 @@ export function resetScrollCollapseState(): void {
 	isBannerCollapsedByScroll = false;
 	collapseCooldown = false;
 	document.body.classList.remove("scroll-collapsed-banner");
-	// 确保导航栏在页面切换后可见
-	const navbar = document.getElementById("navbar-wrapper");
-	if (navbar) {
-		navbar.classList.remove("navbar-hidden");
-	}
 }
 
 function collapseHomeBanner(
@@ -79,14 +74,13 @@ function collapseHomeBanner(
 		behavior: "instant",
 	});
 
-	// 4. Update navbar – force opaque, remove hidden
+	// 4. Update navbar – force opaque
 	if (navbar) {
 		const navbarInner = document.getElementById("navbar");
 		if (navbarInner) {
 			navbarInner.setAttribute("data-dynamic-transparent", "none");
 			navbarInner.removeAttribute("data-transparent-mode");
 		}
-		navbar.classList.remove("navbar-hidden");
 	}
 
 	// 5. Show TOC if present
@@ -103,7 +97,7 @@ function collapseHomeBanner(
 	}, 300);
 }
 
-function expandHomeBanner(navbar: HTMLElement | null): void {
+function expandHomeBanner(): void {
 	isBannerCollapsedByScroll = false;
 
 	const bannerWrapper = document.getElementById("banner-wrapper");
@@ -130,9 +124,6 @@ function expandHomeBanner(navbar: HTMLElement | null): void {
 			"data-transparent-mode",
 			configTransparentMode,
 		);
-	}
-	if (navbar) {
-		navbar.classList.remove("navbar-hidden");
 	}
 
 	// 4. Scroll to top
@@ -168,7 +159,7 @@ export function setupScrollUi(options: ScrollUiOptions): void {
 				return; // 非首页，走默认导航
 			}
 			e.preventDefault();
-			expandHomeBanner(navbar);
+			expandHomeBanner();
 		});
 	}
 
@@ -228,18 +219,6 @@ export function setupScrollUi(options: ScrollUiOptions): void {
 					if (scrollTop >= threshold) {
 						collapseHomeBanner(options, navbar, toc);
 						return;
-					}
-				}
-
-				// Default navbar hide/show at threshold (only when banner is visible)
-				if (
-					!isBannerCollapsedByScroll &&
-					document.body.classList.contains("enable-banner")
-				) {
-					if (scrollTop >= threshold) {
-						navbar.classList.add("navbar-hidden");
-					} else {
-						navbar.classList.remove("navbar-hidden");
 					}
 				}
 			}

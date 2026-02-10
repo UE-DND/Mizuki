@@ -297,8 +297,8 @@ const mainContentClass = `
 
 <!-- Navbar -->
 <slot slot="head" name="head"></slot>
-<div id="top-row" class="z-50 pointer-events-none relative transition-all duration-700 max-w-[var(--page-width)] px-0 md:px-4 mx-auto" class:list={[""]}>
-    <div id="navbar-wrapper" class="pointer-events-auto sticky top-0 transition-all">
+<div id="top-row" class="z-50 pointer-events-none fixed top-0 left-0 right-0" class:list={[""]}>
+    <div id="navbar-wrapper" class="pointer-events-auto">
         <Navbar></Navbar>
     </div>
 </div>
@@ -647,6 +647,66 @@ const mainContentClass = `
     overflow: visible;
 }
 
+/*
+ * Home banner -> spec page visit:
+ * match upstream feel:
+ * banner and main panel move up together like one page scroll.
+ * navbar stays persistent and does not collapse/re-enter.
+ */
+:global(html.layout-banner-to-spec-transition) #banner-wrapper,
+:global(html.layout-banner-to-spec-transition) .main-panel-wrapper {
+    transition:
+        transform 920ms cubic-bezier(0.22, 1, 0.36, 1),
+        opacity 920ms cubic-bezier(0.22, 1, 0.36, 1);
+    will-change: transform;
+}
+
+:global(html.layout-banner-to-spec-transition.layout-banner-to-spec-transition-active) #banner-wrapper,
+:global(html.layout-banner-to-spec-transition.layout-banner-to-spec-transition-active) .main-panel-wrapper {
+    transform: translate3d(0, calc(var(--layout-banner-route-up-shift, 0px) * -1), 0);
+}
+
+/*
+ * Keep Swup timing in sync with the banner-route upward move.
+ * This prevents cached/fast visits from truncating the upward transition.
+ */
+:global(html.layout-banner-to-spec-transition .transition-main),
+:global(html.layout-banner-to-spec-transition .transition-leaving),
+:global(html.layout-banner-to-spec-transition .transition-swup-fade) {
+    transition-duration: 320ms !important;
+    animation-duration: 920ms !important;
+}
+
+:global(html.layout-banner-to-spec-transition #content-wrapper) {
+    transition: opacity 320ms cubic-bezier(0.22, 1, 0.36, 1) !important;
+}
+
+:global(html.layout-banner-to-spec-transition.is-animating) #swup-container,
+:global(html.layout-banner-to-spec-transition.is-animating.is-leaving) #content-wrapper {
+    transform: none !important;
+}
+
+/* Old content: fade out while the frame is moving upward. */
+:global(html.layout-banner-to-spec-transition.is-animating.is-leaving) #content-wrapper {
+    opacity: 1 !important;
+}
+
+/* New content: start at transparent, then fade to visible after replace. */
+:global(html.layout-banner-to-spec-transition.layout-banner-to-spec-transition-content-fade-in) #content-wrapper {
+    opacity: 0 !important;
+}
+
+/* Keep navbar persistent during page transition. */
+:global(html.layout-banner-to-spec-transition) #top-row,
+:global(html.layout-banner-to-spec-transition.layout-banner-to-spec-transition-active) #top-row {
+    transform: translate3d(0, 0, 0) !important;
+}
+
+/* Keep banner visible during the synchronized upward transition. */
+:global(html.layout-banner-to-spec-transition) #banner-wrapper.wallpaper-layer-hidden {
+    opacity: 1 !important;
+}
+
 @media (min-width: 1280px) {
     :global(#right-sidebar-slot.right-sidebar-toc-fixed) {
         position: sticky;
@@ -701,34 +761,32 @@ const mainContentClass = `
 
 body[data-layout-mode="none"] #main-grid,
 body[data-layout-mode="collapsed"] #main-grid {
-    transition-duration: var(--layout-mode-transition-duration) !important;
+    transition: none !important;
 }
 
-/* 无 banner 模式下导航栏固定在视口顶部 */
-body[data-layout-mode="none"] #top-row,
-body[data-layout-mode="collapsed"] #top-row {
+body[data-layout-mode="none"] .main-panel-wrapper,
+body[data-layout-mode="collapsed"] .main-panel-wrapper {
+    transition: none !important;
+}
+
+body[data-layout-mode="none"] #toc-inner-wrapper,
+body[data-layout-mode="collapsed"] #toc-inner-wrapper {
+    transition: none !important;
+}
+
+body[data-layout-mode="none"] #content-wrapper,
+body[data-layout-mode="collapsed"] #content-wrapper {
+    overflow-anchor: none;
+}
+
+/* 导航栏常驻固定：避免 banner/collapsed/路由切换时被顶走再出现 */
+#top-row {
     position: fixed;
     top: 0;
     left: 0;
     right: 0;
     height: auto;
     z-index: 50;
-}
-
-/* 折叠时导航栏柔和切入：仅在 runtime 触发 class 时生效 */
-#navbar-wrapper.layout-navbar-entering {
-    animation: navbar-enter-collapse var(--layout-mode-transition-duration) var(--layout-mode-transition-easing) both;
-}
-
-@keyframes navbar-enter-collapse {
-    0% {
-        opacity: 0.08;
-        transform: translateY(-0.45rem) scale(0.992);
-    }
-    100% {
-        opacity: 1;
-        transform: translateY(0) scale(1);
-    }
 }
 
 /* 当没有 banner 时，主内容区域移到顶部 */
@@ -1530,8 +1588,9 @@ body[data-layout-mode="collapsed"] .waves > .parallax use {
     }
 }
 
-/* 无 banner/折叠模式下侧边栏固定【桌面端】 */
+/* 桌面端侧边栏固定：首页 banner 态与 collapsed/none 态保持同一停靠位 */
 @media (min-width: 1280px) {
+    :global(body[data-layout-mode="banner"][data-route-home="true"] #sidebar),
     :global(body[data-layout-mode="none"] #sidebar),
     :global(body[data-layout-mode="none"] #right-sidebar),
     :global(body[data-layout-mode="collapsed"] #sidebar),
@@ -1541,6 +1600,7 @@ body[data-layout-mode="collapsed"] .waves > .parallax use {
         align-self: start;
     }
 
+    :global(body[data-layout-mode="banner"][data-route-home="true"] #sidebar[data-scrollable="true"]),
     :global(body[data-layout-mode="none"] #sidebar[data-scrollable="true"]),
     :global(body[data-layout-mode="none"] #right-sidebar),
     :global(body[data-layout-mode="collapsed"] #sidebar[data-scrollable="true"]),
@@ -1551,12 +1611,14 @@ body[data-layout-mode="collapsed"] .waves > .parallax use {
     }
 
     /* 不可滚动时禁止溢出 */
+    :global(body[data-layout-mode="banner"][data-route-home="true"] #sidebar[data-scrollable="false"]),
     :global(body[data-layout-mode="none"] #sidebar[data-scrollable="false"]),
     :global(body[data-layout-mode="collapsed"] #sidebar[data-scrollable="false"]) {
         overflow-y: hidden;
     }
 
     /* 内部 sticky 区域在外层已 sticky 时改为 relative */
+    :global(body[data-layout-mode="banner"][data-route-home="true"] #sidebar #sidebar-sticky),
     :global(body[data-layout-mode="none"] #sidebar #sidebar-sticky),
     :global(body[data-layout-mode="none"] #right-sidebar #right-sidebar-sticky),
     :global(body[data-layout-mode="collapsed"] #sidebar #sidebar-sticky),

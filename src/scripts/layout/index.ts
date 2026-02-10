@@ -43,8 +43,79 @@ type LayoutRuntimeWindow = Window &
 					callback: (...args: never[]) => void,
 				) => void;
 			};
+			options?: {
+				animateHistoryBrowsing?: boolean;
+				skipPopStateHandling?: (event: PopStateEvent) => boolean;
+			};
 		};
 	};
+
+type PopStateSkipHandler = (event: PopStateEvent) => boolean;
+type PopStateSkipHandlerWithFlag = PopStateSkipHandler & {
+	__layoutSkipWrapped?: boolean;
+};
+
+function resolveStateUrl(state: unknown): string | null {
+	if (!state || typeof state !== "object") {
+		return null;
+	}
+
+	const stateRecord = state as Record<string, unknown>;
+	const stateUrl = stateRecord.url;
+	return typeof stateUrl === "string" && stateUrl.trim().length > 0
+		? stateUrl.trim()
+		: null;
+}
+
+function isHashOnlyHistoryPopState(event: PopStateEvent): boolean {
+	const stateUrl = resolveStateUrl(event.state);
+	if (!stateUrl) {
+		return false;
+	}
+
+	try {
+		const targetUrl = new URL(stateUrl, window.location.origin);
+		const currentUrl = new URL(window.location.href);
+		return (
+			targetUrl.origin === currentUrl.origin &&
+			targetUrl.pathname === currentUrl.pathname &&
+			targetUrl.search === currentUrl.search &&
+			targetUrl.hash.length > 0
+		);
+	} catch {
+		return stateUrl.includes("#");
+	}
+}
+
+function ensureSwupHistoryAnimation(
+	swup: NonNullable<LayoutRuntimeWindow["swup"]>,
+): void {
+	const options = (swup.options ??= {});
+	options.animateHistoryBrowsing = true;
+
+	const currentSkip = options.skipPopStateHandling as
+		| PopStateSkipHandlerWithFlag
+		| undefined;
+	if (currentSkip?.__layoutSkipWrapped) {
+		return;
+	}
+
+	const wrappedSkip: PopStateSkipHandlerWithFlag = (
+		event: PopStateEvent,
+	): boolean => {
+		if (isHashOnlyHistoryPopState(event)) {
+			return true;
+		}
+
+		if (typeof currentSkip === "function") {
+			return currentSkip(event);
+		}
+		return false;
+	};
+
+	wrappedSkip.__layoutSkipWrapped = true;
+	options.skipPopStateHandling = wrappedSkip;
+}
 
 export function initLayoutRuntime(): void {
 	const runtimeWindow = window as LayoutRuntimeWindow;
@@ -106,10 +177,16 @@ export function initLayoutRuntime(): void {
 		});
 
 		const attachSwupHooks = () => {
+			const swup = runtimeWindow.swup;
+			if (!swup) {
+				return;
+			}
+			ensureSwupHistoryAnimation(swup);
+
 			if (runtimeWindow.__layoutSwupHooksAttached) {
 				return;
 			}
-			if (!runtimeWindow.swup?.hooks) {
+			if (!swup.hooks) {
 				return;
 			}
 			setupSwupIntentSource({
@@ -146,10 +223,16 @@ export function initLayoutRuntime(): void {
 		}
 	} else {
 		const attachLegacySwupHooks = () => {
+			const swup = runtimeWindow.swup;
+			if (!swup) {
+				return;
+			}
+			ensureSwupHistoryAnimation(swup);
+
 			if (runtimeWindow.__layoutSwupHooksAttached) {
 				return;
 			}
-			if (!runtimeWindow.swup?.hooks) {
+			if (!swup.hooks) {
 				return;
 			}
 			setupSwupHooksLegacy({

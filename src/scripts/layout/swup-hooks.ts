@@ -1,12 +1,190 @@
 import type { LayoutController } from "./layout-controller";
 import { scrollToHashBelowTocBaseline } from "@/utils/hash-scroll";
+import { getTocBaselineOffset } from "@/utils/toc-offset";
 
 type SwupVisit = {
 	containers: string[];
 	to: {
 		document?: Document;
+		url?: unknown;
+		path?: unknown;
+		pathname?: unknown;
+		href?: unknown;
 	};
 };
+
+const BANNER_TO_SPEC_TRANSITION_CLASS = "layout-banner-to-spec-transition";
+const BANNER_TO_SPEC_TRANSITION_ACTIVE_CLASS =
+	"layout-banner-to-spec-transition-active";
+const BANNER_TO_SPEC_TRANSITION_CONTENT_FADE_IN_CLASS =
+	"layout-banner-to-spec-transition-content-fade-in";
+const BANNER_TO_SPEC_SHIFT_VAR = "--layout-banner-route-up-shift";
+const COLLAPSED_MAIN_PANEL_TOP = "5.5rem";
+const SIDEBAR_OVERSHOOT_TOLERANCE_PX = 0.75;
+
+function isCurrentHomeRoute(body: HTMLElement): boolean {
+	if (body.dataset.routeHome === "true") {
+		return true;
+	}
+	if (body.dataset.routeHome === "false") {
+		return false;
+	}
+	return body.classList.contains("lg:is-home");
+}
+
+function normalizePathname(pathname: string): string {
+	const normalized = pathname.replace(/\/+$/, "");
+	return normalized === "" ? "/" : normalized;
+}
+
+function asRecord(value: unknown): Record<string, unknown> | null {
+	if (!value || typeof value !== "object") {
+		return null;
+	}
+	return value as Record<string, unknown>;
+}
+
+function extractPathnameFromUnknown(value: unknown): string | null {
+	if (value instanceof URL) {
+		return normalizePathname(value.pathname);
+	}
+
+	if (typeof value === "string") {
+		const trimmed = value.trim();
+		if (!trimmed) {
+			return null;
+		}
+
+		try {
+			const parsed = new URL(trimmed, window.location.origin);
+			return normalizePathname(parsed.pathname);
+		} catch {
+			const fallbackPath = trimmed.split("#")[0]?.split("?")[0] || "";
+			if (!fallbackPath) {
+				return null;
+			}
+			return normalizePathname(fallbackPath);
+		}
+	}
+
+	const record = asRecord(value);
+	if (!record) {
+		return null;
+	}
+
+	return (
+		extractPathnameFromUnknown(record.pathname) ??
+		extractPathnameFromUnknown(record.path) ??
+		extractPathnameFromUnknown(record.url) ??
+		extractPathnameFromUnknown(record.href)
+	);
+}
+
+function extractVisitPathname(visit: SwupVisit): string | null {
+	const to = asRecord(visit.to);
+	const fromVisitTarget =
+		extractPathnameFromUnknown(to?.url) ??
+		extractPathnameFromUnknown(to?.pathname) ??
+		extractPathnameFromUnknown(to?.path) ??
+		extractPathnameFromUnknown(to?.href) ??
+		extractPathnameFromUnknown(
+			to?.document instanceof Document ? to.document.URL : null,
+		);
+	if (fromVisitTarget) {
+		return fromVisitTarget;
+	}
+
+	// Swup history navigation can provide target URL through history.state.
+	const historyState = asRecord(history.state);
+	return extractPathnameFromUnknown(historyState?.url);
+}
+
+function parseCssLengthToPx(lengthValue: string): number | null {
+	const trimmed = lengthValue.trim();
+	if (!trimmed) {
+		return null;
+	}
+
+	const probe = document.createElement("div");
+	probe.style.position = "absolute";
+	probe.style.visibility = "hidden";
+	probe.style.pointerEvents = "none";
+	probe.style.height = trimmed;
+	document.body.appendChild(probe);
+	const measuredPx = probe.getBoundingClientRect().height;
+	probe.remove();
+
+	if (!Number.isFinite(measuredPx) || measuredPx <= 0) {
+		return null;
+	}
+
+	return measuredPx;
+}
+
+function resolveTargetMainPanelTopPx(visit: SwupVisit): number {
+	const targetMainPanel = visit.to.document?.querySelector<HTMLElement>(
+		".main-panel-wrapper",
+	);
+	const inlineTop = targetMainPanel?.style.top?.trim() || "";
+	const parsedInlineTop =
+		inlineTop.length > 0 ? parseCssLengthToPx(inlineTop) : null;
+	if (parsedInlineTop !== null) {
+		return parsedInlineTop;
+	}
+
+	const collapsedTopPx = parseCssLengthToPx(COLLAPSED_MAIN_PANEL_TOP);
+	if (collapsedTopPx !== null) {
+		return collapsedTopPx;
+	}
+
+	return getTocBaselineOffset();
+}
+
+function resolveAnchorViewportTop(selector: string): number | null {
+	const element = document.querySelector<HTMLElement>(selector);
+	if (!(element instanceof HTMLElement)) {
+		return null;
+	}
+
+	const rect = element.getBoundingClientRect();
+	if (rect.height <= 0 || rect.width <= 0) {
+		return null;
+	}
+
+	return rect.top;
+}
+
+function resolveBannerToSpecShiftPx(visit: SwupVisit): number {
+	const targetTop = resolveTargetMainPanelTopPx(visit);
+	const mainPanelTop = resolveAnchorViewportTop(".main-panel-wrapper");
+	if (mainPanelTop === null) {
+		return 0;
+	}
+
+	// Keep the main panel as the primary anchor so transition end aligns
+	// exactly with the target layout top and avoids a tail "catch-up" snap.
+	const rawMainShift = mainPanelTop - targetTop;
+	if (rawMainShift <= 0) {
+		return 0;
+	}
+
+	// Apply a safety cap only when a sidebar would move above navbar baseline.
+	// This prevents overshoot while avoiding conservative under-shift.
+	const sidebarCap = ["#sidebar", "#right-sidebar-slot"]
+		.map((selector) => resolveAnchorViewportTop(selector))
+		.filter((top): top is number => typeof top === "number")
+		.map((top) => top - (targetTop - SIDEBAR_OVERSHOOT_TOLERANCE_PX))
+		.reduce<number>(
+			(minCap, candidate) => Math.min(minCap, candidate),
+			Number.POSITIVE_INFINITY,
+		);
+
+	const resolvedShift = Number.isFinite(sidebarCap)
+		? Math.min(rawMainShift, sidebarCap)
+		: rawMainShift;
+
+	return Math.max(0, Number(resolvedShift.toFixed(3)));
+}
 
 type SwupIntentSourceDependencies = {
 	controller: LayoutController;
@@ -45,6 +223,16 @@ export function setupSwupIntentSource(
 	if (!swup?.hooks) {
 		return;
 	}
+
+	let pendingBannerToSpecRoutePath: string | null = null;
+
+	const clearBannerToSpecTransitionVisualState = (): void => {
+		const root = document.documentElement;
+		root.classList.remove(BANNER_TO_SPEC_TRANSITION_CLASS);
+		root.classList.remove(BANNER_TO_SPEC_TRANSITION_ACTIVE_CLASS);
+		root.classList.remove(BANNER_TO_SPEC_TRANSITION_CONTENT_FADE_IN_CLASS);
+		root.style.removeProperty(BANNER_TO_SPEC_SHIFT_VAR);
+	};
 
 	swup.hooks.before("content:replace", (visit: SwupVisit) => {
 		// Sidebar UID 比较：相同 sidebar 跳过替换
@@ -95,10 +283,54 @@ export function setupSwupIntentSource(
 				runtimeWindow.floatingTOCInit?.();
 			}, 100);
 		}
+
+		// After container swap, crossfade in the new content while keeping
+		// the global upward move consistent.
+		if (pendingBannerToSpecRoutePath) {
+			document.documentElement.classList.add(
+				BANNER_TO_SPEC_TRANSITION_ACTIVE_CLASS,
+			);
+			document.documentElement.classList.add(
+				BANNER_TO_SPEC_TRANSITION_CONTENT_FADE_IN_CLASS,
+			);
+			requestAnimationFrame(() => {
+				requestAnimationFrame(() => {
+					document.documentElement.classList.remove(
+						BANNER_TO_SPEC_TRANSITION_CONTENT_FADE_IN_CLASS,
+					);
+				});
+			});
+		}
 	});
 
-	swup.hooks.on("visit:start", () => {
+	swup.hooks.on("visit:start", (visit: SwupVisit) => {
 		deps.cleanupFancybox();
+		pendingBannerToSpecRoutePath = null;
+		clearBannerToSpecTransitionVisualState();
+
+		const targetPathname = extractVisitPathname(visit);
+		const isTargetHome =
+			targetPathname !== null &&
+			deps.pathsEqual(targetPathname, deps.url("/"));
+		const body = document.body;
+		const currentPathname = normalizePathname(window.location.pathname);
+		const currentIsHome =
+			deps.pathsEqual(currentPathname, deps.url("/")) ||
+			isCurrentHomeRoute(body);
+		const hasBannerWrapper = document.getElementById("banner-wrapper");
+		const shouldUseBannerToSpecTransition =
+			currentIsHome &&
+			hasBannerWrapper !== null &&
+			targetPathname !== null &&
+			!isTargetHome;
+
+		if (shouldUseBannerToSpecTransition) {
+			pendingBannerToSpecRoutePath = targetPathname;
+			const shiftPx = resolveBannerToSpecShiftPx(visit);
+			const root = document.documentElement;
+			root.style.setProperty(BANNER_TO_SPEC_SHIFT_VAR, `${shiftPx}px`);
+			root.classList.add(BANNER_TO_SPEC_TRANSITION_CLASS);
+		}
 
 		const heightExtend = document.getElementById("page-height-extend");
 		if (heightExtend) {
@@ -111,7 +343,18 @@ export function setupSwupIntentSource(
 		}
 	});
 
+	swup.hooks.on("animation:out:start", () => {
+		if (!pendingBannerToSpecRoutePath) {
+			return;
+		}
+		document.documentElement.classList.add(
+			BANNER_TO_SPEC_TRANSITION_ACTIVE_CLASS,
+		);
+	});
+
 	swup.hooks.on("page:view", () => {
+		const hash = window.location.hash?.slice(1);
+
 		deps.controller.dispatch({
 			type: "ROUTE_CHANGED",
 			path: window.location.pathname,
@@ -119,6 +362,9 @@ export function setupSwupIntentSource(
 			viewportWidth: window.innerWidth,
 			reason: "route-change",
 		});
+
+		clearBannerToSpecTransitionVisualState();
+		pendingBannerToSpecRoutePath = null;
 
 		const isHomePage = deps.pathsEqual(
 			window.location.pathname,
@@ -141,7 +387,6 @@ export function setupSwupIntentSource(
 			heightExtend.classList.remove("hidden");
 		}
 
-		const hash = window.location.hash?.slice(1);
 		if (hash) {
 			requestAnimationFrame(() => {
 				scrollToHashBelowTocBaseline(hash, {
@@ -193,6 +438,9 @@ export function setupSwupIntentSource(
 	});
 
 	swup.hooks.on("visit:end", () => {
+		pendingBannerToSpecRoutePath = null;
+		clearBannerToSpecTransitionVisualState();
+
 		const sidebar = document.getElementById("sidebar");
 		if (sidebar) {
 			delete sidebar.dataset.sidebarPreserved;
