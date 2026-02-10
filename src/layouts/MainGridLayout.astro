@@ -636,7 +636,7 @@ const mainContentClass = `
 
 /* Prevent horizontal overflow during sidebar enter animations */
 :global(#sidebar) {
-    overflow-x: hidden;
+    overflow-x: clip;
 }
 
 /*
@@ -1530,26 +1530,38 @@ body[data-layout-mode="collapsed"] .waves > .parallax use {
     }
 }
 
-/* 无 banner/折叠模式下侧边栏对齐【桌面端】 */
+/* 无 banner/折叠模式下侧边栏固定【桌面端】 */
 @media (min-width: 1280px) {
-    :global(body[data-layout-mode="none"] #sidebar #sidebar-sticky),
-    :global(body[data-layout-mode="none"] #right-sidebar #right-sidebar-sticky),
-    :global(body[data-layout-mode="collapsed"] #sidebar #sidebar-sticky),
-    :global(body[data-layout-mode="collapsed"] #right-sidebar #right-sidebar-sticky) {
+    :global(body[data-layout-mode="none"] #sidebar),
+    :global(body[data-layout-mode="none"] #right-sidebar),
+    :global(body[data-layout-mode="collapsed"] #sidebar),
+    :global(body[data-layout-mode="collapsed"] #right-sidebar) {
+        position: sticky;
         top: 5.5rem;
+        align-self: start;
     }
 
-    :global(body[data-layout-mode="none"] #sidebar[data-scrollable="true"] #sidebar-sticky),
-    :global(body[data-layout-mode="none"] #right-sidebar #right-sidebar-sticky),
-    :global(body[data-layout-mode="collapsed"] #sidebar[data-scrollable="true"] #sidebar-sticky),
-    :global(body[data-layout-mode="collapsed"] #right-sidebar #right-sidebar-sticky) {
+    :global(body[data-layout-mode="none"] #sidebar[data-scrollable="true"]),
+    :global(body[data-layout-mode="none"] #right-sidebar),
+    :global(body[data-layout-mode="collapsed"] #sidebar[data-scrollable="true"]),
+    :global(body[data-layout-mode="collapsed"] #right-sidebar) {
         max-height: calc(100vh - 6.5rem);
         overflow-y: auto;
         scrollbar-width: thin;
     }
 
-    :global(body[data-layout-mode="none"] #sidebar[data-scrollable="false"] #sidebar-sticky),
-    :global(body[data-layout-mode="collapsed"] #sidebar[data-scrollable="false"] #sidebar-sticky) {
-        overflow-y: visible;
+    /* 不可滚动时禁止溢出 */
+    :global(body[data-layout-mode="none"] #sidebar[data-scrollable="false"]),
+    :global(body[data-layout-mode="collapsed"] #sidebar[data-scrollable="false"]) {
+        overflow-y: hidden;
+    }
+
+    /* 内部 sticky 区域在外层已 sticky 时改为 relative */
+    :global(body[data-layout-mode="none"] #sidebar #sidebar-sticky),
+    :global(body[data-layout-mode="none"] #right-sidebar #right-sidebar-sticky),
+    :global(body[data-layout-mode="collapsed"] #sidebar #sidebar-sticky),
+    :global(body[data-layout-mode="collapsed"] #right-sidebar #right-sidebar-sticky) {
+        position: relative;
+        top: auto;
     }
 }

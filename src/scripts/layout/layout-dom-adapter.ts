@@ -182,7 +182,16 @@ function compensateScrollForCollapse(deps: LayoutDomAdapterDeps): void {
 	const duration = getLayoutTransitionDurationMs();
 	const startTime = performance.now();
 
+	const USER_SCROLL_THRESHOLD = 2;
+	let lastSetScroll = currentScroll;
+
 	const animate = (now: number): void => {
+		const actualScroll = documentRoot.scrollTop;
+		if (Math.abs(actualScroll - lastSetScroll) > USER_SCROLL_THRESHOLD) {
+			runtimeWindow.__layoutCollapseScrollAnimationId = undefined;
+			return;
+		}
+
 		const elapsed = now - startTime;
 		const progress = Math.min(1, elapsed / duration);
 		const eased = easeOutQuart(progress);
@@ -195,6 +204,7 @@ function compensateScrollForCollapse(deps: LayoutDomAdapterDeps): void {
 			Math.max(minScroll, documentRoot.scrollTop + correction),
 		);
 		window.scrollTo({ top: nextScroll, behavior: "instant" });
+		lastSetScroll = nextScroll;
 
 		if (progress < 1) {
 			runtimeWindow.__layoutCollapseScrollAnimationId =
@@ -209,6 +219,7 @@ function compensateScrollForCollapse(deps: LayoutDomAdapterDeps): void {
 			Math.max(minScroll, documentRoot.scrollTop + finalCorrection),
 		);
 		window.scrollTo({ top: finalScroll, behavior: "instant" });
+		lastSetScroll = finalScroll;
 		runtimeWindow.__layoutCollapseScrollAnimationId = undefined;
 	};
 
