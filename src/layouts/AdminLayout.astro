@@ -49,6 +49,7 @@ if (user) {
 		headings={props.headings}
 	>
 		<slot />
+		<slot name="modal" slot="modal" />
 	</MainGridLayout>
 ) : (
 	<MainGridLayout
@@ -58,5 +59,6 @@ if (user) {
 		lang={props.lang}
 	>
 		<ContentNotVisible mode="permission_denied" title="权限不足" description="仅管理员可访问管理台。" />
+		<slot name="modal" slot="modal" />
 	</MainGridLayout>
 )}
