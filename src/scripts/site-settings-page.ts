@@ -294,7 +294,7 @@ const createNavLinkRow = (
 	track.appendChild(knob);
 	extLabel.appendChild(extCheck);
 	extLabel.appendChild(track);
-	extLabel.appendChild(document.createTextNode("外部"));
+	extLabel.appendChild(document.createTextNode("外部链接"));
 	row.appendChild(extLabel);
 
 	// Children toggle button (top-level only)
@@ -302,17 +302,13 @@ const createNavLinkRow = (
 		const childToggle = document.createElement("button");
 		childToggle.type = "button";
 		childToggle.className =
-			"px-2 py-1.5 rounded-lg border border-[var(--line-divider)] text-xs text-75 hover:border-[var(--primary)] hover:text-[var(--primary)] transition-colors";
-		childToggle.textContent = "子菜单";
-		childToggle.title = "添加/移除子菜单";
+			"nav-child-toggle px-2 py-1.5 rounded-lg border border-[var(--line-divider)] text-xs text-75 hover:border-[var(--primary)] hover:text-[var(--primary)] transition-colors";
+		childToggle.textContent = "添加子菜单";
+		childToggle.title = "添加子菜单";
 		childToggle.addEventListener("click", () => {
-			const nextEl = row.nextElementSibling;
-			if (nextEl && nextEl.classList.contains("nav-child-block")) {
-				nextEl.remove();
-			} else {
-				const block = createNavChildrenBlock([]);
-				row.after(block);
-			}
+			const block = createNavChildrenBlock([]);
+			row.after(block);
+			childToggle.classList.add("hidden");
 		});
 		row.appendChild(childToggle);
 	}
@@ -391,6 +387,10 @@ const fillNavLinks = (links: NavLinkItem[], container: HTMLElement): void => {
 
 		if (expanded.children && expanded.children.length > 0) {
 			container.appendChild(createNavChildrenBlock(expanded.children));
+			const toggle = row.querySelector(".nav-child-toggle");
+			if (toggle) {
+				toggle.classList.add("hidden");
+			}
 		}
 	}
 
@@ -746,7 +746,10 @@ export function initSiteSettingsPage(): void {
 			}
 			currentSettings = (data.settings ?? payload) as SettingsObj;
 			bindSettings(currentSettings);
-			setMsg(msgId, "保存成功");
+			setMsg(msgId, "已保存，正在刷新...");
+			window.setTimeout(() => {
+				window.location.reload();
+			}, 120);
 		} catch (err) {
 			setMsg(msgId, err instanceof Error ? err.message : "输入数据无效");
 		}

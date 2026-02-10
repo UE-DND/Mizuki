@@ -1476,7 +1476,10 @@ export function initMePage(): void {
 					);
 					return;
 				}
-				setSocialMsg("已保存");
+				setSocialMsg("已保存，正在刷新...");
+				window.setTimeout(() => {
+					window.location.reload();
+				}, 120);
 			} catch {
 				setSocialMsg("保存失败，请稍后重试");
 			}
@@ -1520,7 +1523,10 @@ export function initMePage(): void {
 			if (privacyMsg) {
 				if (response.ok && data?.ok) {
 					privacySnapshot = capturePrivacySnapshot();
-					privacyMsg.textContent = "已保存";
+					privacyMsg.textContent = "已保存，正在刷新...";
+					window.setTimeout(() => {
+						window.location.reload();
+					}, 120);
 				} else {
 					privacyMsg.textContent =
 						(data?.message as string | undefined) || "保存失败";
