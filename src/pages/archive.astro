@@ -43,7 +43,7 @@ const uncategorizedLabel = i18n(I18nKey.uncategorized);
 	<!-- 右侧栏 slot: 筛选面板 -->
 	<div slot="sidebar-right" class="archive-filter-panel max-h-[calc(100vh-6.5rem)] overflow-y-auto flex flex-col gap-4 self-start">
 		<!-- 日历 -->
-		<Calendar />
+			<Calendar defaultExpanded={false} />
 
 		<!-- 分类 -->
 		<div class="card-base rounded-[var(--radius-large)] pb-4">

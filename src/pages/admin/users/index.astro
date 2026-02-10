@@ -5,52 +5,55 @@ export const prerender = false;
 ---
 
 <AdminLayout title="用户管理" description="管理员管理用户账号与权限">
-	<section class="card-base p-6 rounded-[var(--radius-large)] mb-4 space-y-2">
-		<h1 class="text-2xl font-bold">用户管理</h1>
-		<p class="text-sm text-70">管理员可创建用户、设置应用角色与功能开关。</p>
+	<div class="space-y-4 text-75">
+		<section class="card-base px-9 py-6 rounded-[var(--radius-large)] space-y-2">
+			<h1 class="text-4xl font-bold text-90 mb-2 relative
+				before:w-1 before:h-8 before:rounded-md before:bg-[var(--primary)]
+				before:absolute before:top-1/2 before:-translate-y-1/2 before:-left-4">用户管理</h1>
+			<p class="text-base text-70">管理员可创建用户、设置应用角色与功能开关。</p>
+		</section>
 
-	</section>
+		<section class="card-base p-6 rounded-[var(--radius-large)] space-y-3">
+			<h2 class="text-xl font-semibold text-90">新建用户</h2>
+			<form id="admin-user-create" class="grid grid-cols-1 md:grid-cols-2 gap-3">
+				<input id="create-email" type="email" placeholder="邮箱" class="rounded-lg border border-[var(--line-divider)] px-3 py-2 bg-black/5 dark:bg-white/5 text-75 placeholder:text-50" required />
+				<input id="create-password" type="password" placeholder="初始密码" class="rounded-lg border border-[var(--line-divider)] px-3 py-2 bg-black/5 dark:bg-white/5 text-75 placeholder:text-50" required />
+				<input id="create-first-name" placeholder="名" class="rounded-lg border border-[var(--line-divider)] px-3 py-2 bg-black/5 dark:bg-white/5 text-75 placeholder:text-50" />
+				<input id="create-last-name" placeholder="姓" class="rounded-lg border border-[var(--line-divider)] px-3 py-2 bg-black/5 dark:bg-white/5 text-75 placeholder:text-50" />
+				<input id="create-username" placeholder="用户名（可选）" class="rounded-lg border border-[var(--line-divider)] px-3 py-2 bg-black/5 dark:bg-white/5 text-75 placeholder:text-50" />
+				<select id="create-app-role" class="rounded-lg border border-[var(--line-divider)] px-3 py-2 bg-black/5 dark:bg-white/5 text-75">
+					<option value="member">member</option>
+					<option value="admin">admin</option>
+				</select>
+				<div class="md:col-span-2">
+					<button type="submit" class="px-4 py-2 rounded-lg bg-[var(--btn-regular-bg)] text-[var(--btn-content)] text-sm">创建用户</button>
+					<span id="admin-user-create-msg" class="ml-2 text-xs text-60"></span>
+				</div>
+			</form>
+		</section>
 
-	<section class="card-base p-6 rounded-[var(--radius-large)] mb-4 space-y-3">
-		<h2 class="text-xl font-semibold">新建用户</h2>
-		<form id="admin-user-create" class="grid grid-cols-1 md:grid-cols-2 gap-3">
-			<input id="create-email" type="email" placeholder="邮箱" class="rounded-lg border border-[var(--line-divider)] px-3 py-2 bg-transparent" required />
-			<input id="create-password" type="password" placeholder="初始密码" class="rounded-lg border border-[var(--line-divider)] px-3 py-2 bg-transparent" required />
-			<input id="create-first-name" placeholder="名" class="rounded-lg border border-[var(--line-divider)] px-3 py-2 bg-transparent" />
-			<input id="create-last-name" placeholder="姓" class="rounded-lg border border-[var(--line-divider)] px-3 py-2 bg-transparent" />
-			<input id="create-username" placeholder="用户名（可选）" class="rounded-lg border border-[var(--line-divider)] px-3 py-2 bg-transparent" />
-			<select id="create-app-role" class="rounded-lg border border-[var(--line-divider)] px-3 py-2 bg-transparent">
-				<option value="member">member</option>
-				<option value="admin">admin</option>
-			</select>
-			<div class="md:col-span-2">
-				<button type="submit" class="px-4 py-2 rounded-lg bg-[var(--btn-regular-bg)] text-[var(--btn-content)] text-sm">创建用户</button>
-				<span id="admin-user-create-msg" class="ml-2 text-xs text-60"></span>
+		<section class="card-base p-6 rounded-[var(--radius-large)] space-y-3">
+			<div class="flex items-center justify-between gap-3">
+				<h2 class="text-xl font-semibold text-90">用户列表</h2>
+				<button id="admin-users-refresh" class="px-3 py-2 rounded-lg border border-[var(--line-divider)] text-sm text-75 hover:bg-[var(--btn-plain-bg-hover)] transition-colors">刷新</button>
 			</div>
-		</form>
-	</section>
-
-	<section class="card-base p-6 rounded-[var(--radius-large)] space-y-3">
-		<div class="flex items-center justify-between gap-3">
-			<h2 class="text-xl font-semibold">用户列表</h2>
-			<button id="admin-users-refresh" class="px-3 py-2 rounded-lg border border-[var(--line-divider)] text-sm">刷新</button>
-		</div>
-		<div class="overflow-auto">
-			<table class="w-full text-sm min-w-[860px]">
-				<thead>
-					<tr class="text-left text-60 border-b border-[var(--line-divider)]">
-						<th class="py-2">邮箱</th>
-						<th class="py-2">用户名</th>
-						<th class="py-2">角色</th>
-						<th class="py-2">状态</th>
-						<th class="py-2">挂起</th>
-						<th class="py-2">操作</th>
-					</tr>
-				</thead>
-				<tbody id="admin-users-table"></tbody>
-			</table>
-		</div>
-	</section>
+			<div class="overflow-auto">
+				<table class="w-full text-sm min-w-[860px] text-75">
+					<thead>
+						<tr class="text-left text-60 border-b border-[var(--line-divider)]">
+							<th class="py-2">邮箱</th>
+							<th class="py-2">用户名</th>
+							<th class="py-2">角色</th>
+							<th class="py-2">状态</th>
+							<th class="py-2">挂起</th>
+							<th class="py-2">操作</th>
+						</tr>
+					</thead>
+					<tbody id="admin-users-table"></tbody>
+				</table>
+			</div>
+		</section>
+	</div>
 </AdminLayout>
 
 <script is:inline>
@@ -89,31 +92,31 @@ export const prerender = false;
 				const profile = entry.profile || {};
 				const permissions = entry.permissions || {};
 				return `
-					<tr class="border-b border-[var(--line-divider)]">
+					<tr class="border-b border-[var(--line-divider)] text-75">
 						<td class="py-2 pr-2">${user.email || ""}</td>
 						<td class="py-2 pr-2">${profile.username || ""}</td>
 						<td class="py-2 pr-2">
-							<select data-user-id="${user.id}" data-field="app_role" class="rounded border border-[var(--line-divider)] px-2 py-1 bg-transparent">
+							<select data-user-id="${user.id}" data-field="app_role" class="rounded border border-[var(--line-divider)] px-2 py-1 bg-black/5 dark:bg-white/5 text-75">
 								<option value="member" ${permissions.app_role === "member" ? "selected" : ""}>member</option>
 								<option value="admin" ${permissions.app_role === "admin" ? "selected" : ""}>admin</option>
 							</select>
 						</td>
 						<td class="py-2 pr-2">
-							<select data-user-id="${user.id}" data-field="status" class="rounded border border-[var(--line-divider)] px-2 py-1 bg-transparent">
+							<select data-user-id="${user.id}" data-field="status" class="rounded border border-[var(--line-divider)] px-2 py-1 bg-black/5 dark:bg-white/5 text-75">
 								<option value="active" ${user.status === "active" ? "selected" : ""}>active</option>
 								<option value="suspended" ${user.status === "suspended" ? "selected" : ""}>suspended</option>
 							</select>
 						</td>
 						<td class="py-2 pr-2">
-							<label class="inline-flex items-center gap-1 text-xs">
+							<label class="inline-flex items-center gap-1 text-xs text-60">
 								<input type="checkbox" data-user-id="${user.id}" data-field="is_suspended" ${permissions.is_suspended ? "checked" : ""} />
 								<span>${permissions.is_suspended ? "是" : "否"}</span>
 							</label>
 						</td>
 						<td class="py-2 pr-2">
 							<div class="flex items-center gap-2">
-								<button class="text-xs text-[var(--primary)]" data-action="save" data-user-id="${user.id}">保存</button>
-								<button class="text-xs text-amber-500" data-action="reset" data-user-id="${user.id}">重置密码</button>
+								<button class="text-xs text-[var(--primary)] hover:underline" data-action="save" data-user-id="${user.id}">保存</button>
+								<button class="text-xs text-amber-600 dark:text-amber-400 hover:underline" data-action="reset" data-user-id="${user.id}">重置密码</button>
 							</div>
 						</td>
 					</tr>
