@@ -25,11 +25,17 @@ interface ApiResult {
 }
 
 const api = async (url: string, init: RequestInit = {}): Promise<ApiResult> => {
+	const isFormData =
+		typeof FormData !== "undefined" &&
+		Boolean(init.body) &&
+		init.body instanceof FormData;
 	const response = await fetch(normalizeApiUrl(url), {
 		credentials: "include",
 		headers: {
 			Accept: "application/json",
-			...(init.body ? { "Content-Type": "application/json" } : {}),
+			...(init.body && !isFormData
+				? { "Content-Type": "application/json" }
+				: {}),
 			...((init.headers as Record<string, string>) || {}),
 		},
 		...init,
@@ -80,6 +86,39 @@ const setMsg = (id: string, text: string): void => {
 	}
 };
 
+const clamp = (value: number, min: number, max: number): number =>
+	Math.min(max, Math.max(min, value));
+
+// ---------------------------------------------------------------------------
+// Asset helpers
+// ---------------------------------------------------------------------------
+
+const DIRECTUS_FILE_ID_PATTERN =
+	/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+const isLikelyDirectusFileId = (value: string): boolean =>
+	DIRECTUS_FILE_ID_PATTERN.test(value);
+
+const buildAssetUrl = (fileId: string): string =>
+	`/api/v1/public/assets/${encodeURIComponent(fileId)}`;
+
+const resolveAssetPreviewUrl = (value: string): string => {
+	const raw = String(value || "").trim();
+	if (!raw) {
+		return "";
+	}
+	if (isLikelyDirectusFileId(raw)) {
+		return buildAssetUrl(raw);
+	}
+	if (raw.startsWith("/")) {
+		return raw;
+	}
+	if (raw.startsWith("assets/")) {
+		return `/${raw}`;
+	}
+	return raw;
+};
+
 // ---------------------------------------------------------------------------
 // Constants for visual editors
 // ---------------------------------------------------------------------------
@@ -126,6 +165,14 @@ const BTN_DELETE_CLS =
 	"px-3 py-1.5 rounded-lg border border-[var(--line-divider)] text-sm text-75 hover:text-red-500 hover:border-red-300 transition-colors";
 const DRAG_HANDLE_CLS =
 	"cursor-grab active:cursor-grabbing text-30 hover:text-60 transition-colors select-none text-base leading-none";
+const PREVIEW_IMG_CLS =
+	"h-20 w-36 rounded-lg border border-[var(--line-divider)] object-cover bg-black/5";
+const PREVIEW_ICON_CLS =
+	"h-15 w-15 rounded-lg border border-[var(--line-divider)] object-contain bg-black/5";
+const CROP_ZOOM_MIN = 100;
+const CROP_ZOOM_MAX = 300;
+const CROP_OUTPUT_MAX_BYTES = 1.5 * 1024 * 1024;
+const CROP_INPUT_MAX_BYTES = 8 * 1024 * 1024;
 
 // ---------------------------------------------------------------------------
 // Generic drag-and-drop helpers
@@ -502,6 +549,256 @@ const collectChildLinks = (block: HTMLElement): NavBarLinkObj[] => {
 };
 
 // ---------------------------------------------------------------------------
+// Image list editors (favicons + banners)
+// ---------------------------------------------------------------------------
+
+type FaviconItem = {
+	src: string;
+	theme?: "light" | "dark";
+	sizes?: string;
+};
+
+let bannerDesktopDragSource: HTMLElement | null = null;
+let bannerMobileDragSource: HTMLElement | null = null;
+
+let faviconListContainer: HTMLElement | null = null;
+let bannerDesktopListContainer: HTMLElement | null = null;
+let bannerMobileListContainer: HTMLElement | null = null;
+let onFaviconRemoved: (() => void) | null = null;
+let onBannerRemoved: (() => void) | null = null;
+
+type PendingCropEntry = {
+	blob: Blob;
+	objectUrl: string;
+	titlePrefix: string;
+	fileExt: string;
+	targetFormat?: "ico";
+};
+const pendingCropBlobs = new Map<HTMLElement, PendingCropEntry>();
+
+const cleanupPendingBlob = (row: HTMLElement): void => {
+	const entry = pendingCropBlobs.get(row);
+	if (entry) {
+		URL.revokeObjectURL(entry.objectUrl);
+		pendingCropBlobs.delete(row);
+	}
+};
+
+const createDragHandle = (): HTMLElement => {
+	const dragHandle = document.createElement("span");
+	dragHandle.className = DRAG_HANDLE_CLS;
+	dragHandle.textContent = "≡";
+	dragHandle.title = "拖拽排序";
+	return dragHandle;
+};
+
+const updateImagePreview = (img: HTMLImageElement, value: string): void => {
+	const resolved = resolveAssetPreviewUrl(value);
+	img.src = resolved;
+	img.classList.toggle("opacity-30", !resolved);
+};
+
+const createBannerImageRow = (
+	src: string,
+	container: HTMLElement,
+	getDragSource: () => HTMLElement | null,
+	setDragSource: (el: HTMLElement | null) => void,
+): HTMLElement => {
+	const row = document.createElement("div");
+	row.className = "flex flex-wrap items-center gap-2";
+	row.dataset.src = src ?? "";
+
+	row.appendChild(createDragHandle());
+
+	const preview = document.createElement("img");
+	preview.className = PREVIEW_IMG_CLS;
+	preview.alt = "Banner preview";
+	row.appendChild(preview);
+
+	const removeBtn = document.createElement("button");
+	removeBtn.type = "button";
+	removeBtn.textContent = "删除";
+	removeBtn.className = BTN_DELETE_CLS;
+	removeBtn.addEventListener("click", () => {
+		cleanupPendingBlob(row);
+		row.remove();
+		onBannerRemoved?.();
+	});
+	row.appendChild(removeBtn);
+
+	updateImagePreview(preview, row.dataset.src ?? "");
+
+	attachDragEvents(row, getDragSource, setDragSource, container);
+
+	return row;
+};
+
+const createFaviconRow = (item: FaviconItem): HTMLElement => {
+	const row = document.createElement("div");
+	row.className = "flex flex-wrap items-center gap-2";
+	row.dataset.src = item.src ?? "";
+	row.dataset.theme = item.theme ?? "";
+	row.dataset.sizes = item.sizes ?? "";
+
+	const preview = document.createElement("img");
+	preview.className = PREVIEW_ICON_CLS;
+	preview.alt = "Favicon preview";
+	row.appendChild(preview);
+
+	const removeBtn = document.createElement("button");
+	removeBtn.type = "button";
+	removeBtn.textContent = "删除";
+	removeBtn.className = BTN_DELETE_CLS;
+	removeBtn.addEventListener("click", () => {
+		cleanupPendingBlob(row);
+		row.remove();
+		onFaviconRemoved?.();
+	});
+	row.appendChild(removeBtn);
+
+	updateImagePreview(preview, row.dataset.src ?? "");
+
+	return row;
+};
+
+const fillBannerList = (
+	items: string[],
+	container: HTMLElement,
+	getDragSource: () => HTMLElement | null,
+	setDragSource: (el: HTMLElement | null) => void,
+): void => {
+	container.innerHTML = "";
+	for (const src of items) {
+		container.appendChild(
+			createBannerImageRow(src, container, getDragSource, setDragSource),
+		);
+	}
+};
+
+const fillFaviconList = (
+	items: FaviconItem[],
+	container: HTMLElement,
+): void => {
+	container.innerHTML = "";
+	const first = items.find((item) => String(item.src || "").trim());
+	if (first) {
+		container.appendChild(createFaviconRow(first));
+	}
+};
+
+const collectBannerList = (container: HTMLElement): string[] => {
+	const rows = [...container.children] as HTMLElement[];
+	const values: string[] = [];
+	for (const row of rows) {
+		if (row.tagName === "BUTTON") {
+			continue;
+		}
+		const value = String(row.dataset.src ?? "").trim();
+		if (value) {
+			values.push(value);
+		}
+	}
+	return values;
+};
+
+const collectFaviconList = (container: HTMLElement): FaviconItem[] => {
+	const rows = [...container.children] as HTMLElement[];
+	const values: FaviconItem[] = [];
+	for (const row of rows) {
+		if (row.tagName === "BUTTON") {
+			continue;
+		}
+		const src = String(row.dataset.src ?? "").trim();
+		if (!src) {
+			continue;
+		}
+		const entry: FaviconItem = { src };
+		if (row.dataset.theme === "light" || row.dataset.theme === "dark") {
+			entry.theme = row.dataset.theme;
+		}
+		if (row.dataset.sizes) {
+			entry.sizes = row.dataset.sizes;
+		}
+		values.push(entry);
+	}
+	return values.slice(0, 1);
+};
+
+const normalizeBannerEditorList = (
+	raw: unknown,
+): {
+	desktop: string[];
+	mobile: string[];
+} => {
+	if (typeof raw === "string") {
+		return { desktop: [raw], mobile: [raw] };
+	}
+	if (Array.isArray(raw)) {
+		return { desktop: raw.map(String), mobile: raw.map(String) };
+	}
+	if (raw && typeof raw === "object") {
+		const record = raw as { desktop?: unknown; mobile?: unknown };
+		const toArray = (value: unknown): string[] => {
+			if (typeof value === "string") {
+				return [value];
+			}
+			if (Array.isArray(value)) {
+				return value.map((item) => String(item || "")).filter(Boolean);
+			}
+			return [];
+		};
+		return {
+			desktop: toArray(record.desktop),
+			mobile: toArray(record.mobile),
+		};
+	}
+	return { desktop: [], mobile: [] };
+};
+
+const uploadImageBlob = async (
+	blob: Blob,
+	messageTarget: string,
+	titlePrefix: string,
+	fileExt = "jpg",
+	targetFormat?: "ico",
+): Promise<string | null> => {
+	setMsg(messageTarget, "图片上传中...");
+	try {
+		const formData = new FormData();
+		formData.append(
+			"file",
+			blob,
+			`${titlePrefix}-${Date.now()}.${fileExt}`,
+		);
+		formData.append("title", `${titlePrefix}-${Date.now()}`);
+		if (targetFormat === "ico") {
+			formData.append("target_format", "ico");
+		}
+		const { response, data } = await api("/api/v1/uploads", {
+			method: "POST",
+			body: formData,
+		});
+		if (
+			!response.ok ||
+			!data?.ok ||
+			!(data?.file as Record<string, unknown> | undefined)?.id
+		) {
+			setMsg(
+				messageTarget,
+				(data?.message as string | undefined) || "图片上传失败",
+			);
+			return null;
+		}
+		setMsg(messageTarget, "");
+		return String((data.file as Record<string, unknown>).id || "");
+	} catch (error) {
+		console.error("[site-settings-page] upload failed", error);
+		setMsg(messageTarget, "图片上传失败");
+		return null;
+	}
+};
+
+// ---------------------------------------------------------------------------
 // Settings ↔ DOM mapping
 // ---------------------------------------------------------------------------
 
@@ -512,7 +809,6 @@ const bindSettings = (s: SettingsObj): void => {
 	const navbarTitle = (s.navbarTitle ?? {}) as SettingsObj;
 	const wallpaperMode = (s.wallpaperMode ?? {}) as SettingsObj;
 	const banner = (s.banner ?? {}) as SettingsObj;
-	const bannerCredit = (banner.credit ?? {}) as SettingsObj;
 	const toc = (s.toc ?? {}) as SettingsObj;
 	const announcement = (s.announcement ?? {}) as SettingsObj;
 	const annLink = (announcement.link ?? {}) as SettingsObj;
@@ -535,6 +831,12 @@ const bindSettings = (s: SettingsObj): void => {
 	setChecked("ss-umami-enabled", Boolean(umami.enabled));
 	setVal("ss-umami-url", String(umami.baseUrl ?? ""));
 	setVal("ss-umami-scripts", String(umami.scripts ?? ""));
+	if (faviconListContainer) {
+		fillFaviconList(
+			Array.isArray(site.favicon) ? (site.favicon as FaviconItem[]) : [],
+			faviconListContainer,
+		);
+	}
 
 	// Section 2 — 导航栏
 	setSelect("ss-navbar-mode", String(navbarTitle.mode ?? "logo"));
@@ -545,13 +847,42 @@ const bindSettings = (s: SettingsObj): void => {
 		fillNavLinks((navBar.links ?? []) as NavLinkItem[], navLinksContainer);
 	}
 
-	// Section 3 — 主页设置
+	// Section 3 — 首页设置
 	setSelect(
 		"ss-wallpaper-mode",
 		String(wallpaperMode.defaultMode ?? "banner"),
 	);
-	setVal("ss-banner-credit-text", String(bannerCredit.text ?? ""));
-	setVal("ss-banner-credit-url", String(bannerCredit.url ?? ""));
+	setChecked(
+		"ss-banner-carousel-enable",
+		Boolean((banner.carousel as SettingsObj | undefined)?.enable ?? false),
+	);
+	setVal(
+		"ss-banner-carousel-interval",
+		String((banner.carousel as SettingsObj | undefined)?.interval ?? ""),
+	);
+	const bannerLists = normalizeBannerEditorList(banner.src);
+	if (bannerDesktopListContainer) {
+		fillBannerList(
+			bannerLists.desktop,
+			bannerDesktopListContainer,
+			() => bannerDesktopDragSource,
+			(el) => {
+				bannerDesktopDragSource = el;
+			},
+		);
+	}
+	if (bannerMobileListContainer) {
+		fillBannerList(
+			bannerLists.mobile,
+			bannerMobileListContainer,
+			() => bannerMobileDragSource,
+			(el) => {
+				bannerMobileDragSource = el;
+			},
+		);
+	}
+
+	// Section 6 — 其它设置
 	setChecked("ss-music-enable", Boolean(musicPlayer.enable));
 	setSelect("ss-music-mode", String(musicPlayer.mode ?? "meting"));
 	setVal("ss-music-api", String(musicPlayer.meting_api ?? ""));
@@ -592,6 +923,9 @@ const collectSitePayload = (current: SettingsObj): SettingsObj => ({
 			.map((x) => x.trim())
 			.filter(Boolean),
 		siteStartDate: inputVal("ss-start-date") || null,
+		favicon: faviconListContainer
+			? collectFaviconList(faviconListContainer)
+			: ((current.site as SettingsObj | undefined)?.favicon ?? []),
 	},
 	umami: {
 		enabled: checked("ss-umami-enabled"),
@@ -620,12 +954,34 @@ const collectHomePayload = (current: SettingsObj): SettingsObj => ({
 	},
 	banner: {
 		...((current.banner ?? {}) as SettingsObj),
-		credit: {
-			...(((current.banner ?? {}) as SettingsObj).credit ?? {}),
-			text: inputVal("ss-banner-credit-text"),
-			url: inputVal("ss-banner-credit-url"),
+		src: (() => {
+			const desktopList = bannerDesktopListContainer
+				? collectBannerList(bannerDesktopListContainer)
+				: [];
+			const mobileList = bannerMobileListContainer
+				? collectBannerList(bannerMobileListContainer)
+				: [];
+			return {
+				desktop: desktopList,
+				mobile: mobileList,
+			};
+		})(),
+		carousel: {
+			...(((current.banner ?? {}) as SettingsObj).carousel ?? {}),
+			enable: checked("ss-banner-carousel-enable"),
+			interval:
+				Number(inputVal("ss-banner-carousel-interval") || 0) ||
+				Number(
+					(
+						((current.banner ?? {}) as SettingsObj)
+							.carousel as SettingsObj
+					)?.interval ?? 5,
+				),
 		},
 	},
+});
+
+const collectOtherPayload = (current: SettingsObj): SettingsObj => ({
 	musicPlayer: {
 		enable: checked("ss-music-enable"),
 		mode: inputVal("ss-music-mode") || "meting",
@@ -689,6 +1045,513 @@ export function initSiteSettingsPage(): void {
 
 	// Get container references for visual editors
 	navLinksContainer = el("ss-nav-links-list");
+	faviconListContainer = el("ss-favicon-list");
+	bannerDesktopListContainer = el("ss-banner-desktop-list");
+	bannerMobileListContainer = el("ss-banner-mobile-list");
+
+	const cropModal = el("ss-image-crop-modal");
+	const cropPanel = el("ss-image-crop-panel");
+	const cropTitle = el("ss-image-crop-title");
+	const cropHelp = el("ss-image-crop-help");
+	const cropViewport = el("ss-image-crop-viewport") as HTMLElement | null;
+	const cropImage = el("ss-image-crop-image") as HTMLImageElement | null;
+	const cropEmpty = el("ss-image-crop-empty");
+	const cropFileInput = el("ss-image-crop-file") as HTMLInputElement | null;
+	const cropSelectBtn = el(
+		"ss-image-crop-select-btn",
+	) as HTMLButtonElement | null;
+	const cropApplyBtn = el(
+		"ss-image-crop-apply-btn",
+	) as HTMLButtonElement | null;
+	const cropCancelBtn = el(
+		"ss-image-crop-cancel-btn",
+	) as HTMLButtonElement | null;
+	const cropZoomInput = el("ss-image-crop-zoom") as HTMLInputElement | null;
+	const cropMsg = el("ss-image-crop-msg");
+
+	type CropTarget = "favicon" | "banner-desktop" | "banner-mobile";
+	type CropTargetConfig = {
+		title: string;
+		help: string;
+		aspectWidth: number;
+		aspectHeight: number;
+		outputWidth: number;
+		outputHeight: number;
+		outputMimeType: "image/png" | "image/jpeg";
+		outputFileExt: "png" | "jpg" | "ico";
+		messageTarget: string;
+		titlePrefix: string;
+		container: HTMLElement | null;
+		createRow: (value: string) => HTMLElement;
+	};
+
+	const cropTargets: Record<CropTarget, CropTargetConfig> = {
+		favicon: {
+			title: "裁剪站点图标",
+			help: "建议使用方形图标，拖拽调整位置并缩放。",
+			aspectWidth: 1,
+			aspectHeight: 1,
+			outputWidth: 256,
+			outputHeight: 256,
+			outputMimeType: "image/png",
+			outputFileExt: "ico",
+			messageTarget: "ss-site-msg",
+			titlePrefix: "favicon",
+			container: faviconListContainer,
+			createRow: (value: string) => createFaviconRow({ src: value }),
+		},
+		"banner-desktop": {
+			title: "裁剪桌面 Banner",
+			help: "建议使用宽图（16:9），拖拽调整位置并缩放。",
+			aspectWidth: 16,
+			aspectHeight: 9,
+			outputWidth: 1600,
+			outputHeight: 900,
+			outputMimeType: "image/jpeg",
+			outputFileExt: "jpg",
+			messageTarget: "ss-home-msg",
+			titlePrefix: "banner-desktop",
+			container: bannerDesktopListContainer,
+			createRow: (value: string) =>
+				createBannerImageRow(
+					value,
+					bannerDesktopListContainer as HTMLElement,
+					() => bannerDesktopDragSource,
+					(el) => {
+						bannerDesktopDragSource = el;
+					},
+				),
+		},
+		"banner-mobile": {
+			title: "裁剪移动 Banner",
+			help: "建议使用竖图（9:16），拖拽调整位置并缩放。",
+			aspectWidth: 9,
+			aspectHeight: 16,
+			outputWidth: 900,
+			outputHeight: 1600,
+			outputMimeType: "image/jpeg",
+			outputFileExt: "jpg",
+			messageTarget: "ss-home-msg",
+			titlePrefix: "banner-mobile",
+			container: bannerMobileListContainer,
+			createRow: (value: string) =>
+				createBannerImageRow(
+					value,
+					bannerMobileListContainer as HTMLElement,
+					() => bannerMobileDragSource,
+					(el) => {
+						bannerMobileDragSource = el;
+					},
+				),
+		},
+	};
+
+	let activeCropTarget: CropTarget | null = null;
+	let cropUploading = false;
+	let cropObjectUrl = "";
+	let cropLoaded = false;
+	let cropImageWidth = 0;
+	let cropImageHeight = 0;
+	let cropViewportWidth = 0;
+	let cropViewportHeight = 0;
+	let cropMinScale = 1;
+	let cropScale = 1;
+	let cropOffsetX = 0;
+	let cropOffsetY = 0;
+	let cropPointerId: number | null = null;
+	let cropPointerX = 0;
+	let cropPointerY = 0;
+	let cropResizeHandlerBound = false;
+
+	const setCropMessage = (message: string): void => {
+		if (cropMsg) {
+			cropMsg.textContent = message;
+		}
+	};
+
+	const setCropEmptyVisible = (visible: boolean): void => {
+		if (cropEmpty) {
+			cropEmpty.classList.toggle("hidden", !visible);
+		}
+	};
+
+	const setCropApplyEnabled = (enabled: boolean): void => {
+		if (cropApplyBtn) {
+			cropApplyBtn.disabled = !enabled;
+		}
+	};
+
+	const updateCropApplyState = (): void => {
+		setCropApplyEnabled(cropLoaded && !cropUploading);
+		if (cropApplyBtn) {
+			cropApplyBtn.textContent = cropUploading ? "处理中..." : "确认裁剪";
+		}
+	};
+
+	const revokeCropObjectUrl = (): void => {
+		if (cropObjectUrl) {
+			URL.revokeObjectURL(cropObjectUrl);
+			cropObjectUrl = "";
+		}
+	};
+
+	const resetCropState = (): void => {
+		revokeCropObjectUrl();
+		cropLoaded = false;
+		cropImageWidth = 0;
+		cropImageHeight = 0;
+		cropViewportWidth = 0;
+		cropViewportHeight = 0;
+		cropMinScale = 1;
+		cropScale = 1;
+		cropOffsetX = 0;
+		cropOffsetY = 0;
+		cropPointerId = null;
+		cropPointerX = 0;
+		cropPointerY = 0;
+		if (cropImage) {
+			cropImage.removeAttribute("src");
+			cropImage.classList.add("hidden");
+			cropImage.style.transform = "";
+			cropImage.style.width = "";
+			cropImage.style.height = "";
+			cropImage.style.transformOrigin = "top left";
+		}
+		if (cropZoomInput) {
+			cropZoomInput.value = String(CROP_ZOOM_MIN);
+		}
+		setCropEmptyVisible(true);
+		updateCropApplyState();
+	};
+
+	const applyCropViewportBounds = (config: CropTargetConfig): void => {
+		if (!cropViewport) {
+			return;
+		}
+		const viewportMarginX = 48;
+		const reservedVerticalSpace = 330;
+		const maxHeight = Math.max(
+			220,
+			Math.min(700, window.innerHeight - reservedVerticalSpace),
+		);
+		const widthByHeight =
+			maxHeight * (config.aspectWidth / config.aspectHeight);
+		let maxWidth = Math.max(
+			180,
+			Math.min(640, window.innerWidth - viewportMarginX, widthByHeight),
+		);
+		let boundedMaxHeight = maxHeight;
+		if (config.aspectWidth === 1 && config.aspectHeight === 1) {
+			const avatarLikeSide = Math.max(
+				220,
+				Math.min(
+					360,
+					window.innerWidth - viewportMarginX,
+					window.innerHeight - reservedVerticalSpace,
+				),
+			);
+			maxWidth = avatarLikeSide;
+			boundedMaxHeight = avatarLikeSide;
+		}
+		cropViewport.style.maxWidth = `${Math.floor(maxWidth)}px`;
+		cropViewport.style.maxHeight = `${Math.floor(boundedMaxHeight)}px`;
+	};
+
+	const openCropModal = (target: CropTarget): void => {
+		const config = cropTargets[target];
+		if (!config?.container || !cropModal || !cropViewport) {
+			return;
+		}
+		if (cropPanel) {
+			cropPanel.classList.remove("max-w-xl", "max-w-2xl");
+			cropPanel.classList.add(
+				target === "favicon" ? "max-w-xl" : "max-w-2xl",
+			);
+		}
+		activeCropTarget = target;
+		if (cropTitle) {
+			cropTitle.textContent = config.title;
+		}
+		if (cropHelp) {
+			cropHelp.textContent = config.help;
+		}
+		cropViewport.style.aspectRatio = `${config.aspectWidth} / ${config.aspectHeight}`;
+		applyCropViewportBounds(config);
+		cropModal.classList.remove("hidden");
+		cropModal.classList.add("flex");
+		cropModal.focus();
+		setCropMessage("");
+		resetCropState();
+		if (!cropResizeHandlerBound) {
+			window.addEventListener("resize", () => {
+				if (!activeCropTarget) {
+					return;
+				}
+				applyCropViewportBounds(cropTargets[activeCropTarget]);
+				if (cropLoaded) {
+					renderCropImage();
+				}
+			});
+			cropResizeHandlerBound = true;
+		}
+	};
+
+	const closeCropModal = (): void => {
+		if (!cropModal) {
+			return;
+		}
+		cropModal.classList.remove("flex");
+		cropModal.classList.add("hidden");
+		if (cropFileInput) {
+			cropFileInput.value = "";
+		}
+		activeCropTarget = null;
+		cropUploading = false;
+		resetCropState();
+		setCropMessage("");
+	};
+
+	const measureCropViewport = (): void => {
+		if (!cropViewport) {
+			return;
+		}
+		const rect = cropViewport.getBoundingClientRect();
+		cropViewportWidth = rect.width;
+		cropViewportHeight = rect.height;
+	};
+
+	const clampCropOffset = (): void => {
+		if (!cropLoaded || cropViewportWidth <= 0 || cropViewportHeight <= 0) {
+			return;
+		}
+		const scaledWidth = cropImageWidth * cropScale;
+		const scaledHeight = cropImageHeight * cropScale;
+		const minX = cropViewportWidth - scaledWidth;
+		const minY = cropViewportHeight - scaledHeight;
+		cropOffsetX = clamp(cropOffsetX, minX, 0);
+		cropOffsetY = clamp(cropOffsetY, minY, 0);
+	};
+
+	const renderCropImage = (): void => {
+		if (!cropImage) {
+			return;
+		}
+		if (!cropLoaded) {
+			cropImage.classList.add("hidden");
+			setCropEmptyVisible(true);
+			return;
+		}
+		clampCropOffset();
+		cropImage.classList.remove("hidden");
+		cropImage.style.width = `${cropImageWidth}px`;
+		cropImage.style.height = `${cropImageHeight}px`;
+		cropImage.style.transformOrigin = "top left";
+		cropImage.style.transform = `translate3d(${cropOffsetX}px, ${cropOffsetY}px, 0) scale(${cropScale})`;
+		setCropEmptyVisible(false);
+	};
+
+	const setCropScaleFromZoom = (
+		zoomValue: string,
+		anchorX: number,
+		anchorY: number,
+	): void => {
+		if (!cropLoaded || cropViewportWidth <= 0 || cropViewportHeight <= 0) {
+			return;
+		}
+		const normalizedZoom = clamp(
+			Number.isFinite(Number(zoomValue))
+				? Number(zoomValue)
+				: CROP_ZOOM_MIN,
+			CROP_ZOOM_MIN,
+			CROP_ZOOM_MAX,
+		);
+		const nextScale = cropMinScale * (normalizedZoom / 100);
+		const safeAnchorX = clamp(anchorX, 0, cropViewportWidth);
+		const safeAnchorY = clamp(anchorY, 0, cropViewportHeight);
+		const imagePointX = (safeAnchorX - cropOffsetX) / cropScale;
+		const imagePointY = (safeAnchorY - cropOffsetY) / cropScale;
+		cropScale = nextScale;
+		cropOffsetX = safeAnchorX - imagePointX * cropScale;
+		cropOffsetY = safeAnchorY - imagePointY * cropScale;
+		clampCropOffset();
+		renderCropImage();
+		if (cropZoomInput) {
+			cropZoomInput.value = String(Math.round(normalizedZoom));
+		}
+	};
+
+	const loadCropFile = (file: File): void => {
+		if (!cropImage) {
+			setCropMessage("裁剪层初始化失败");
+			return;
+		}
+		if (!file) {
+			setCropMessage("请选择图片文件");
+			return;
+		}
+		if (file.size > CROP_INPUT_MAX_BYTES) {
+			setCropMessage("图片文件过大，请选择不超过 8 MB 的图片");
+			return;
+		}
+		setCropMessage("");
+		const nextObjectUrl = URL.createObjectURL(file);
+		const img = cropImage;
+		img.onload = () => {
+			cropLoaded = true;
+			cropImageWidth = Math.max(1, img.naturalWidth);
+			cropImageHeight = Math.max(1, img.naturalHeight);
+			measureCropViewport();
+			if (cropViewportWidth <= 0 || cropViewportHeight <= 0) {
+				cropViewportWidth = 320;
+				cropViewportHeight = 180;
+			}
+			cropMinScale = Math.max(
+				cropViewportWidth / cropImageWidth,
+				cropViewportHeight / cropImageHeight,
+			);
+			cropScale = cropMinScale;
+			cropOffsetX = (cropViewportWidth - cropImageWidth * cropScale) / 2;
+			cropOffsetY =
+				(cropViewportHeight - cropImageHeight * cropScale) / 2;
+			if (cropZoomInput) {
+				cropZoomInput.value = String(CROP_ZOOM_MIN);
+			}
+			renderCropImage();
+			updateCropApplyState();
+		};
+		img.onerror = () => {
+			setCropMessage("图片读取失败，请重试");
+			resetCropState();
+		};
+		revokeCropObjectUrl();
+		cropObjectUrl = nextObjectUrl;
+		img.src = nextObjectUrl;
+	};
+
+	const buildCropBlob = async (
+		outputWidth: number,
+		outputHeight: number,
+		mimeType: "image/png" | "image/jpeg",
+		quality?: number,
+	): Promise<Blob | null> => {
+		if (
+			!cropLoaded ||
+			!cropImage ||
+			cropViewportWidth <= 0 ||
+			cropViewportHeight <= 0
+		) {
+			return null;
+		}
+		const canvas = document.createElement("canvas");
+		canvas.width = outputWidth;
+		canvas.height = outputHeight;
+		const context = canvas.getContext("2d");
+		if (!context) {
+			return null;
+		}
+		const ratioX = outputWidth / cropViewportWidth;
+		const ratioY = outputHeight / cropViewportHeight;
+		context.imageSmoothingEnabled = true;
+		context.imageSmoothingQuality = "high";
+		context.clearRect(0, 0, canvas.width, canvas.height);
+		context.drawImage(
+			cropImage,
+			cropOffsetX * ratioX,
+			cropOffsetY * ratioY,
+			cropImageWidth * cropScale * ratioX,
+			cropImageHeight * cropScale * ratioY,
+		);
+		return await new Promise<Blob | null>((resolve) => {
+			canvas.toBlob((blob) => resolve(blob), mimeType, quality);
+		});
+	};
+
+	const buildCropBlobWithLimit = async (
+		outputWidth: number,
+		outputHeight: number,
+		mimeType: "image/png" | "image/jpeg",
+	): Promise<Blob | null> => {
+		if (mimeType === "image/png") {
+			const blob = await buildCropBlob(
+				outputWidth,
+				outputHeight,
+				mimeType,
+			);
+			return blob && blob.size <= CROP_OUTPUT_MAX_BYTES ? blob : null;
+		}
+		const qualities = [0.9, 0.82, 0.75];
+		for (const quality of qualities) {
+			const blob = await buildCropBlob(
+				outputWidth,
+				outputHeight,
+				mimeType,
+				quality,
+			);
+			if (blob && blob.size <= CROP_OUTPUT_MAX_BYTES) {
+				return blob;
+			}
+		}
+		return null;
+	};
+
+	const confirmCrop = async (): Promise<void> => {
+		if (!activeCropTarget) {
+			return;
+		}
+		const config = cropTargets[activeCropTarget];
+		if (!config?.container || !cropLoaded) {
+			setCropMessage("请先选择图片文件");
+			return;
+		}
+		cropUploading = true;
+		updateCropApplyState();
+		try {
+			const croppedBlob = await buildCropBlobWithLimit(
+				config.outputWidth,
+				config.outputHeight,
+				config.outputMimeType,
+			);
+			if (!croppedBlob) {
+				setCropMessage("裁剪失败或图片过大，请尝试重新裁剪");
+				return;
+			}
+			const blobUrl = URL.createObjectURL(croppedBlob);
+			const row = config.createRow(blobUrl);
+			pendingCropBlobs.set(row, {
+				blob: croppedBlob,
+				objectUrl: blobUrl,
+				titlePrefix: config.titlePrefix,
+				fileExt: config.outputFileExt,
+				targetFormat:
+					activeCropTarget === "favicon" ? "ico" : undefined,
+			});
+			if (activeCropTarget === "favicon") {
+				for (const child of [...config.container.children]) {
+					if ((child as HTMLElement).tagName !== "BUTTON") {
+						cleanupPendingBlob(child as HTMLElement);
+					}
+				}
+				config.container.innerHTML = "";
+			}
+			config.container.appendChild(row);
+			closeCropModal();
+		} finally {
+			cropUploading = false;
+			updateCropApplyState();
+		}
+	};
+
+	const bindCropUploadButton = (
+		buttonId: string,
+		target: CropTarget,
+	): void => {
+		const button = el(buttonId) as HTMLButtonElement | null;
+		if (!button || button.hasAttribute(DATA_BOUND)) {
+			return;
+		}
+		button.setAttribute(DATA_BOUND, "1");
+		button.addEventListener("click", () => openCropModal(target));
+	};
 
 	let currentSettings: SettingsObj | null = null;
 
@@ -714,6 +1577,29 @@ export function initSiteSettingsPage(): void {
 		}
 		setMsg(msgId, "保存中...");
 		try {
+			// Upload any pending cropped images first
+			for (const [row, pending] of pendingCropBlobs) {
+				setMsg(msgId, "正在上传图片...");
+				const fileId = await uploadImageBlob(
+					pending.blob,
+					msgId,
+					pending.titlePrefix,
+					pending.fileExt,
+					pending.targetFormat,
+				);
+				if (!fileId) {
+					setMsg(msgId, "图片上传失败，保存已取消");
+					return;
+				}
+				row.dataset.src = fileId;
+				const preview = row.querySelector("img");
+				if (preview) {
+					updateImagePreview(preview as HTMLImageElement, fileId);
+				}
+				URL.revokeObjectURL(pending.objectUrl);
+				pendingCropBlobs.delete(row);
+			}
+
 			const sectionPayload = collectFn(currentSettings);
 			const payload: SettingsObj = {
 				...currentSettings,
@@ -744,6 +1630,27 @@ export function initSiteSettingsPage(): void {
 		}
 	};
 
+	onFaviconRemoved = () => {
+		if (!currentSettings) {
+			return;
+		}
+		currentSettings = {
+			...currentSettings,
+			...collectSitePayload(currentSettings),
+		};
+		setMsg("ss-site-msg", "已删除，点击“保存站点信息”生效");
+	};
+	onBannerRemoved = () => {
+		if (!currentSettings) {
+			return;
+		}
+		currentSettings = {
+			...currentSettings,
+			...collectHomePayload(currentSettings),
+		};
+		setMsg("ss-home-msg", "已删除，点击“保存首页设置”生效");
+	};
+
 	// ---- form submit handlers ----
 
 	const bindForm = (
@@ -767,6 +1674,113 @@ export function initSiteSettingsPage(): void {
 	bindForm("ss-home-form", "ss-home-msg", collectHomePayload);
 	bindForm("ss-feature-form", "ss-feature-msg", collectFeaturePayload);
 	bindForm("ss-announce-form", "ss-announce-msg", collectAnnouncePayload);
+	bindForm("ss-other-form", "ss-other-msg", collectOtherPayload);
+
+	// ---- image list buttons ----
+
+	bindCropUploadButton("ss-favicon-upload-btn", "favicon");
+	bindCropUploadButton("ss-banner-desktop-upload-btn", "banner-desktop");
+	bindCropUploadButton("ss-banner-mobile-upload-btn", "banner-mobile");
+
+	// ---- crop modal bindings ----
+
+	if (cropSelectBtn && !cropSelectBtn.hasAttribute(DATA_BOUND)) {
+		cropSelectBtn.setAttribute(DATA_BOUND, "1");
+		cropSelectBtn.addEventListener("click", () => {
+			if (cropFileInput) {
+				cropFileInput.click();
+			}
+		});
+	}
+
+	if (cropFileInput && !cropFileInput.hasAttribute(DATA_BOUND)) {
+		cropFileInput.setAttribute(DATA_BOUND, "1");
+		cropFileInput.addEventListener("change", () => {
+			const file = cropFileInput.files?.[0];
+			if (file) {
+				loadCropFile(file);
+			}
+		});
+	}
+
+	if (cropZoomInput && !cropZoomInput.hasAttribute(DATA_BOUND)) {
+		cropZoomInput.setAttribute(DATA_BOUND, "1");
+		cropZoomInput.addEventListener("input", () => {
+			const anchorX = cropViewportWidth > 0 ? cropViewportWidth / 2 : 0;
+			const anchorY = cropViewportHeight > 0 ? cropViewportHeight / 2 : 0;
+			setCropScaleFromZoom(
+				cropZoomInput.value || String(CROP_ZOOM_MIN),
+				anchorX,
+				anchorY,
+			);
+		});
+	}
+
+	if (cropApplyBtn && !cropApplyBtn.hasAttribute(DATA_BOUND)) {
+		cropApplyBtn.setAttribute(DATA_BOUND, "1");
+		cropApplyBtn.addEventListener("click", async () => {
+			await confirmCrop();
+		});
+	}
+
+	if (cropCancelBtn && !cropCancelBtn.hasAttribute(DATA_BOUND)) {
+		cropCancelBtn.setAttribute(DATA_BOUND, "1");
+		cropCancelBtn.addEventListener("click", () => {
+			if (!cropUploading) {
+				closeCropModal();
+			}
+		});
+	}
+
+	if (cropModal && !cropModal.hasAttribute(DATA_BOUND)) {
+		cropModal.setAttribute(DATA_BOUND, "1");
+		cropModal.addEventListener("click", (event: MouseEvent) => {
+			if (!cropUploading && event.target === cropModal) {
+				closeCropModal();
+			}
+		});
+		cropModal.addEventListener("keydown", (event: KeyboardEvent) => {
+			if (event.key === "Escape" && !cropUploading) {
+				closeCropModal();
+			}
+		});
+	}
+
+	if (cropViewport && !cropViewport.hasAttribute(DATA_BOUND)) {
+		cropViewport.setAttribute(DATA_BOUND, "1");
+		cropViewport.addEventListener("pointerdown", (event: PointerEvent) => {
+			if (!cropLoaded || !cropViewport) {
+				return;
+			}
+			cropPointerId = event.pointerId;
+			cropPointerX = event.clientX;
+			cropPointerY = event.clientY;
+			cropViewport.setPointerCapture(event.pointerId);
+		});
+		cropViewport.addEventListener("pointermove", (event: PointerEvent) => {
+			if (!cropLoaded || cropPointerId !== event.pointerId) {
+				return;
+			}
+			const deltaX = event.clientX - cropPointerX;
+			const deltaY = event.clientY - cropPointerY;
+			cropPointerX = event.clientX;
+			cropPointerY = event.clientY;
+			cropOffsetX += deltaX;
+			cropOffsetY += deltaY;
+			renderCropImage();
+		});
+		const releasePointer = (event: PointerEvent): void => {
+			if (cropPointerId !== event.pointerId || !cropViewport) {
+				return;
+			}
+			if (cropViewport.hasPointerCapture(event.pointerId)) {
+				cropViewport.releasePointerCapture(event.pointerId);
+			}
+			cropPointerId = null;
+		};
+		cropViewport.addEventListener("pointerup", releasePointer);
+		cropViewport.addEventListener("pointercancel", releasePointer);
+	}
 
 	// ---- kick off ----
 

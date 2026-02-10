@@ -133,11 +133,6 @@ export const defaultSiteSettings: SiteSettingsPayload = {
 				pauseTime: 2000,
 			},
 		},
-		credit: {
-			enable: false,
-			text: "Describe",
-			url: "",
-		},
 		navbar: {
 			transparentMode: "semifull",
 		},

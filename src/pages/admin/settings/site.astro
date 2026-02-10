@@ -36,6 +36,15 @@ export const prerender = false;
 						<input id="ss-start-date" type="date" class="w-full rounded-lg border border-[var(--line-divider)] px-3.5 py-2.5 bg-transparent text-75" />
 					</label>
 					<hr class="border-[var(--line-divider)] md:col-span-2" />
+					<h3 class="text-lg font-medium text-75 md:col-span-2">站点图标</h3>
+					<div class="md:col-span-2 space-y-2">
+						<div class="flex flex-wrap items-center gap-2">
+							<button type="button" id="ss-favicon-upload-btn" class="px-3 py-1.5 rounded-lg border border-[var(--line-divider)] text-sm text-75 hover:border-[var(--primary)] hover:text-[var(--primary)] transition-colors">上传图片</button>
+							<span class="text-xs text-50">支持 PNG/JPG/ICO，最大 1.5MB</span>
+						</div>
+						<div id="ss-favicon-list" class="space-y-2"></div>
+					</div>
+					<hr class="border-[var(--line-divider)] md:col-span-2" />
 					<h3 class="text-lg font-medium text-75 md:col-span-2">统计（Umami）</h3>
 					<label class="flex items-center gap-3 text-75 cursor-pointer select-none md:col-span-2">
 						<input type="checkbox" id="ss-umami-enabled" class="toggle-checkbox" />
@@ -83,11 +92,11 @@ export const prerender = false;
 				</form>
 			</section>
 
-			<!-- ===== Section 3: 主页设置 ===== -->
+			<!-- ===== Section 3: 首页设置 ===== -->
 			<section class="card-base p-8 rounded-[var(--radius-large)] space-y-4">
-				<h2 class="text-2xl font-semibold text-90">主页设置</h2>
+				<h2 class="text-2xl font-semibold text-90">首页设置</h2>
 				<form id="ss-home-form" class="grid grid-cols-1 md:grid-cols-2 gap-4">
-					<h3 class="text-lg font-medium text-75 md:col-span-2">壁纸与 Banner</h3>
+					<h3 class="text-lg font-medium text-75 md:col-span-2">轮播壁纸</h3>
 					<label class="space-y-1.5">
 						<span class="text-sm text-60">壁纸模式</span>
 						<select id="ss-wallpaper-mode" class="w-full rounded-lg border border-[var(--line-divider)] px-3.5 py-2.5 bg-transparent text-75">
@@ -95,57 +104,33 @@ export const prerender = false;
 							<option value="none">none</option>
 						</select>
 					</label>
-					<label class="space-y-1.5">
-						<span class="text-sm text-60">Banner 署名文案</span>
-						<input id="ss-banner-credit-text" class="w-full rounded-lg border border-[var(--line-divider)] px-3.5 py-2.5 bg-transparent text-75 placeholder:text-50" placeholder="Photo by ..." />
-					</label>
-					<label class="space-y-1.5 md:col-span-2">
-						<span class="text-sm text-60">Banner 署名链接</span>
-						<input id="ss-banner-credit-url" class="w-full rounded-lg border border-[var(--line-divider)] px-3.5 py-2.5 bg-transparent text-75 placeholder:text-50" placeholder="https://..." />
-					</label>
-					<hr class="border-[var(--line-divider)] md:col-span-2" />
-					<h3 class="text-lg font-medium text-75 md:col-span-2">音乐播放器</h3>
 					<label class="flex items-center gap-3 text-75 cursor-pointer select-none md:col-span-2">
-						<input type="checkbox" id="ss-music-enable" class="toggle-checkbox" />
+						<input type="checkbox" id="ss-banner-carousel-enable" class="toggle-checkbox" />
 						<span class="toggle-track"><span class="toggle-knob"></span></span>
-						启用音乐播放器
+						启用 Banner 轮播
 					</label>
 					<label class="space-y-1.5">
-						<span class="text-sm text-60">模式</span>
-						<select id="ss-music-mode" class="w-full rounded-lg border border-[var(--line-divider)] px-3.5 py-2.5 bg-transparent text-75">
-							<option value="meting">meting</option>
-							<option value="local">local</option>
-						</select>
+						<span class="text-sm text-60">轮播间隔（秒）</span>
+						<input id="ss-banner-carousel-interval" type="number" min="1" max="120" class="w-full rounded-lg border border-[var(--line-divider)] px-3.5 py-2.5 bg-transparent text-75" placeholder="5" />
 					</label>
-					<label class="space-y-1.5">
-						<span class="text-sm text-60">Meting API</span>
-						<input id="ss-music-api" class="w-full rounded-lg border border-[var(--line-divider)] px-3.5 py-2.5 bg-transparent text-75 placeholder:text-50" placeholder="https://api.injahow.cn/meting/" />
-					</label>
-					<label class="space-y-1.5">
-						<span class="text-sm text-60">歌单 ID</span>
-						<input id="ss-music-id" class="w-full rounded-lg border border-[var(--line-divider)] px-3.5 py-2.5 bg-transparent text-75 placeholder:text-50" />
-					</label>
-					<label class="space-y-1.5">
-						<span class="text-sm text-60">服务器</span>
-						<input id="ss-music-server" class="w-full rounded-lg border border-[var(--line-divider)] px-3.5 py-2.5 bg-transparent text-75 placeholder:text-50" placeholder="netease" />
-					</label>
-					<label class="space-y-1.5">
-						<span class="text-sm text-60">类型</span>
-						<input id="ss-music-type" class="w-full rounded-lg border border-[var(--line-divider)] px-3.5 py-2.5 bg-transparent text-75 placeholder:text-50" placeholder="playlist" />
-					</label>
-					<label class="space-y-1.5">
-						<span class="text-sm text-60">歌曲名滚动速度</span>
-						<input id="ss-music-marquee" type="number" min="0" max="200" class="w-full rounded-lg border border-[var(--line-divider)] px-3.5 py-2.5 bg-transparent text-75" placeholder="30" />
-					</label>
-					<hr class="border-[var(--line-divider)] md:col-span-2" />
-					<h3 class="text-lg font-medium text-75 md:col-span-2">樱花特效</h3>
-					<label class="flex items-center gap-3 text-75 cursor-pointer select-none">
-						<input type="checkbox" id="ss-sakura-enable" class="toggle-checkbox" />
-						<span class="toggle-track"><span class="toggle-knob"></span></span>
-						启用樱花特效
-					</label>
+					<div class="md:col-span-2 space-y-2">
+						<h4 class="text-base font-medium text-75">桌面端 Banner</h4>
+						<div class="flex flex-wrap items-center gap-2">
+							<button type="button" id="ss-banner-desktop-upload-btn" class="px-3 py-1.5 rounded-lg border border-[var(--line-divider)] text-sm text-75 hover:border-[var(--primary)] hover:text-[var(--primary)] transition-colors">上传图片</button>
+							<span class="text-xs text-50">拖拽调整顺序</span>
+						</div>
+						<div id="ss-banner-desktop-list" class="space-y-2"></div>
+					</div>
+					<div class="md:col-span-2 space-y-2">
+						<h4 class="text-base font-medium text-75">移动端 Banner</h4>
+						<div class="flex flex-wrap items-center gap-2">
+							<button type="button" id="ss-banner-mobile-upload-btn" class="px-3 py-1.5 rounded-lg border border-[var(--line-divider)] text-sm text-75 hover:border-[var(--primary)] hover:text-[var(--primary)] transition-colors">上传图片</button>
+							<span class="text-xs text-50">拖拽调整顺序</span>
+						</div>
+						<div id="ss-banner-mobile-list" class="space-y-2"></div>
+					</div>
 					<div class="md:col-span-2 flex items-center gap-2 pt-2">
-						<button type="submit" class="px-4 py-2 rounded-lg bg-[var(--btn-regular-bg)] text-[var(--btn-content)] text-sm">保存主页设置</button>
+						<button type="submit" class="px-4 py-2 rounded-lg bg-[var(--btn-regular-bg)] text-[var(--btn-content)] text-sm">保存首页设置</button>
 						<span id="ss-home-msg" class="text-sm text-60"></span>
 					</div>
 				</form>
@@ -163,7 +148,7 @@ export const prerender = false;
 					<label class="flex items-center gap-3 text-75 cursor-pointer select-none">
 						<input type="checkbox" id="ss-toc-jp" class="toggle-checkbox" />
 						<span class="toggle-track"><span class="toggle-knob"></span></span>
-						日文序号
+						使用日文序号
 					</label>
 					<label class="space-y-1.5">
 						<span class="text-sm text-60">TOC 模式</span>
@@ -236,6 +221,102 @@ export const prerender = false;
 				</form>
 			</section>
 
+			<!-- ===== Section 6: 其它设置 ===== -->
+			<section class="card-base p-8 rounded-[var(--radius-large)] space-y-4">
+				<h2 class="text-2xl font-semibold text-90">其它设置</h2>
+				<form id="ss-other-form" class="grid grid-cols-1 md:grid-cols-2 gap-4">
+					<h3 class="text-lg font-medium text-75 md:col-span-2">音乐播放器</h3>
+					<label class="flex items-center gap-3 text-75 cursor-pointer select-none md:col-span-2">
+						<input type="checkbox" id="ss-music-enable" class="toggle-checkbox" />
+						<span class="toggle-track"><span class="toggle-knob"></span></span>
+						启用音乐播放器
+					</label>
+					<label class="space-y-1.5">
+						<span class="text-sm text-60">模式</span>
+						<select id="ss-music-mode" class="w-full rounded-lg border border-[var(--line-divider)] px-3.5 py-2.5 bg-transparent text-75">
+							<option value="meting">meting</option>
+							<option value="local">local</option>
+						</select>
+					</label>
+					<label class="space-y-1.5">
+						<span class="text-sm text-60">Meting API</span>
+						<input id="ss-music-api" class="w-full rounded-lg border border-[var(--line-divider)] px-3.5 py-2.5 bg-transparent text-75 placeholder:text-50" placeholder="https://api.injahow.cn/meting/" />
+					</label>
+					<label class="space-y-1.5">
+						<span class="text-sm text-60">歌单 ID</span>
+						<input id="ss-music-id" class="w-full rounded-lg border border-[var(--line-divider)] px-3.5 py-2.5 bg-transparent text-75 placeholder:text-50" />
+					</label>
+					<label class="space-y-1.5">
+						<span class="text-sm text-60">服务器</span>
+						<input id="ss-music-server" class="w-full rounded-lg border border-[var(--line-divider)] px-3.5 py-2.5 bg-transparent text-75 placeholder:text-50" placeholder="netease" />
+					</label>
+					<label class="space-y-1.5">
+						<span class="text-sm text-60">类型</span>
+						<input id="ss-music-type" class="w-full rounded-lg border border-[var(--line-divider)] px-3.5 py-2.5 bg-transparent text-75 placeholder:text-50" placeholder="playlist" />
+					</label>
+					<label class="space-y-1.5">
+						<span class="text-sm text-60">歌曲名滚动速度</span>
+						<input id="ss-music-marquee" type="number" min="0" max="200" class="w-full rounded-lg border border-[var(--line-divider)] px-3.5 py-2.5 bg-transparent text-75" placeholder="30" />
+					</label>
+					<hr class="border-[var(--line-divider)] md:col-span-2" />
+					<h3 class="text-lg font-medium text-75 md:col-span-2">樱花特效</h3>
+					<label class="flex items-center gap-3 text-75 cursor-pointer select-none">
+						<input type="checkbox" id="ss-sakura-enable" class="toggle-checkbox" />
+						<span class="toggle-track"><span class="toggle-knob"></span></span>
+						启用樱花特效
+					</label>
+					<div class="md:col-span-2 flex items-center gap-2 pt-2">
+						<button type="submit" class="px-4 py-2 rounded-lg bg-[var(--btn-regular-bg)] text-[var(--btn-content)] text-sm">保存其它设置</button>
+						<span id="ss-other-msg" class="text-sm text-60"></span>
+					</div>
+				</form>
+			</section>
+
+		</div>
+	</div>
+
+	<div
+		slot="modal"
+		id="ss-image-crop-modal"
+		class="fixed inset-0 z-[9999] hidden items-center justify-center bg-black/70 px-4 py-5"
+		tabindex="-1"
+	>
+		<div id="ss-image-crop-panel" class="card-base w-full max-w-2xl max-h-[92vh] overflow-y-auto rounded-[var(--radius-large)] border border-[var(--line-divider)] p-5 sm:p-6 space-y-4 text-75">
+			<div class="flex items-center gap-2">
+				<h3 id="ss-image-crop-title" class="text-lg sm:text-xl font-semibold text-90">裁剪图片</h3>
+			</div>
+			<p id="ss-image-crop-help" class="text-sm text-60">选择图片后，可拖拽调整位置并通过滑块缩放。</p>
+			<div
+				id="ss-image-crop-viewport"
+				class="relative mx-auto w-full max-w-[640px] overflow-hidden rounded-2xl border border-[var(--line-divider)] bg-black/15 dark:bg-white/10 select-none touch-none"
+				style="aspect-ratio: 16 / 9;"
+			>
+				<img id="ss-image-crop-image" class="absolute left-0 top-0 max-w-none pointer-events-none hidden" alt="待裁剪图片" />
+				<div
+					id="ss-image-crop-empty"
+					class="absolute inset-0 grid place-items-center text-sm text-60 pointer-events-none"
+				>
+					请选择图片
+				</div>
+				<div class="absolute inset-0 pointer-events-none rounded-2xl ring-2 ring-white/80"></div>
+			</div>
+			<div class="space-y-1">
+				<label for="ss-image-crop-zoom" class="text-sm text-60">缩放</label>
+				<input id="ss-image-crop-zoom" type="range" min="100" max="300" step="1" value="100" class="w-full" />
+			</div>
+			<div class="flex flex-wrap items-center gap-3">
+				<input id="ss-image-crop-file" type="file" accept="image/*" class="hidden" />
+				<button type="button" id="ss-image-crop-select-btn" class="px-4 py-2.5 rounded-lg border border-[var(--line-divider)] text-sm text-75">
+					选择文件
+				</button>
+				<button type="button" id="ss-image-crop-apply-btn" class="px-4 py-2.5 rounded-lg bg-[var(--btn-regular-bg)] text-[var(--btn-content)] text-sm">
+					确认裁剪
+				</button>
+				<button type="button" id="ss-image-crop-cancel-btn" class="ml-auto px-4 py-2.5 rounded-lg border border-[var(--line-divider)] text-sm text-75">
+					取消
+				</button>
+			</div>
+			<span id="ss-image-crop-msg" class="text-sm text-red-500"></span>
 		</div>
 	</div>
 </AdminLayout>

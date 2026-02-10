@@ -104,11 +104,6 @@ export type SiteConfig = {
 				pauseTime: number; // 完整显示后的暂停时间（毫秒）
 			};
 		};
-		credit: {
-			enable: boolean;
-			text: string;
-			url?: string;
-		};
 		navbar?: {
 			transparentMode?: "semi" | "full" | "semifull"; // 导航栏透明模式
 		};

@@ -230,6 +230,7 @@ export function initMePage(): void {
 		bio_typewriter_speed: number;
 		avatar_url: string;
 		avatar_file_id: string;
+		avatar_pending_upload: boolean;
 	}
 
 	interface PrivacySnapshot {
@@ -280,6 +281,7 @@ export function initMePage(): void {
 			? String(avatarUrlInput.value || "").trim()
 			: "",
 		avatar_file_id: currentAvatarFileId,
+		avatar_pending_upload: Boolean(pendingAvatarUpload),
 	});
 
 	const capturePrivacySnapshot = (): PrivacySnapshot => {
@@ -316,7 +318,9 @@ export function initMePage(): void {
 		}
 		if (
 			current.avatar_url !== profileSnapshot.avatar_url ||
-			current.avatar_file_id !== profileSnapshot.avatar_file_id
+			current.avatar_file_id !== profileSnapshot.avatar_file_id ||
+			current.avatar_pending_upload !==
+				profileSnapshot.avatar_pending_upload
 		) {
 			changed.push("头像");
 		}
@@ -351,6 +355,7 @@ export function initMePage(): void {
 	// ---- mutable state ----
 	let currentAvatarFileId = "";
 	let currentAvatarFallbackUrl = "";
+	let pendingAvatarUpload: { blob: Blob; previewUrl: string } | null = null;
 	let avatarCropObjectUrl = "";
 	let avatarCropLoaded = false;
 	let avatarCropImageWidth = 0;
@@ -367,6 +372,16 @@ export function initMePage(): void {
 
 	// ---- DOM helpers (closures over fresh refs) ----
 
+	const clearPendingAvatarUpload = (revokePreview = true): void => {
+		if (!pendingAvatarUpload) {
+			return;
+		}
+		if (revokePreview) {
+			URL.revokeObjectURL(pendingAvatarUpload.previewUrl);
+		}
+		pendingAvatarUpload = null;
+	};
+
 	const updateAvatarPreview = (): void => {
 		if (!avatarPreviewEl) {
 			return;
@@ -376,6 +391,7 @@ export function initMePage(): void {
 			: "";
 		const src =
 			avatarUrl ||
+			pendingAvatarUpload?.previewUrl ||
 			buildAssetUrl(currentAvatarFileId) ||
 			currentAvatarFallbackUrl;
 		avatarPreviewEl.src = src || EMPTY_AVATAR_SRC;
@@ -868,7 +884,7 @@ export function initMePage(): void {
 		if (avatarCropApplyBtn) {
 			avatarCropApplyBtn.textContent = avatarUploading
 				? "上传中..."
-				: "裁剪并上传";
+				: "确认裁剪";
 		}
 	};
 
@@ -1077,7 +1093,7 @@ export function initMePage(): void {
 		});
 	};
 
-	const uploadAvatarFromCrop = async (): Promise<void> => {
+	const applyAvatarFromCrop = async (): Promise<void> => {
 		if (!avatarCropLoaded) {
 			setCropMessage("请先选择头像文件");
 			return;
@@ -1090,26 +1106,13 @@ export function initMePage(): void {
 				setCropMessage("头像裁剪失败");
 				return;
 			}
-			const formData = new FormData();
-			formData.append("file", croppedBlob, `avatar-${Date.now()}.jpg`);
-			formData.append("title", `avatar-${Date.now()}`);
-			const { response, data } = await api("/api/v1/uploads", {
-				method: "POST",
-				body: formData,
-			});
-			if (
-				!response.ok ||
-				!data?.ok ||
-				!(data?.file as Record<string, unknown> | undefined)?.id
-			) {
-				setCropMessage(
-					(data?.message as string | undefined) || "头像上传失败",
-				);
-				return;
-			}
-			currentAvatarFileId = String(
-				(data.file as Record<string, unknown>).id,
-			);
+			clearPendingAvatarUpload(true);
+			pendingAvatarUpload = {
+				blob: croppedBlob,
+				previewUrl: URL.createObjectURL(croppedBlob),
+			};
+			currentAvatarFileId = "";
+			currentAvatarFallbackUrl = "";
 			if (avatarUrlInput) {
 				avatarUrlInput.value = "";
 			}
@@ -1122,12 +1125,47 @@ export function initMePage(): void {
 		}
 	};
 
+	const uploadPendingAvatarIfNeeded = async (): Promise<boolean> => {
+		const avatarUrl = avatarUrlInput
+			? String(avatarUrlInput.value || "").trim()
+			: "";
+		if (avatarUrl || !pendingAvatarUpload) {
+			return true;
+		}
+		setProfileMessage("头像上传中...");
+		const formData = new FormData();
+		formData.append(
+			"file",
+			pendingAvatarUpload.blob,
+			`avatar-${Date.now()}.jpg`,
+		);
+		formData.append("title", `avatar-${Date.now()}`);
+		const { response, data } = await api("/api/v1/uploads", {
+			method: "POST",
+			body: formData,
+		});
+		if (
+			!response.ok ||
+			!data?.ok ||
+			!(data?.file as Record<string, unknown> | undefined)?.id
+		) {
+			setProfileMessage(
+				(data?.message as string | undefined) || "头像上传失败",
+			);
+			return false;
+		}
+		clearPendingAvatarUpload(true);
+		currentAvatarFileId = String((data.file as Record<string, unknown>).id);
+		return true;
+	};
+
 	// ---- fill helpers ----
 
 	const fillProfile = (
 		profile: Record<string, unknown> | null | undefined,
 		fallbackAvatarUrl = "",
 	): void => {
+		clearPendingAvatarUpload(true);
 		if (usernameInput) {
 			usernameInput.value = (profile?.username as string) || "";
 			updateUsernameCounter();
@@ -1254,6 +1292,10 @@ export function initMePage(): void {
 				setProfileMessage(bioTypewriterError);
 				return;
 			}
+			const avatarUploaded = await uploadPendingAvatarIfNeeded();
+			if (!avatarUploaded) {
+				return;
+			}
 			const avatarUrl = avatarUrlInput
 				? String(avatarUrlInput.value || "").trim()
 				: "";
@@ -1296,6 +1338,9 @@ export function initMePage(): void {
 	if (avatarUrlInput && !avatarUrlInput.hasAttribute(DATA_BOUND)) {
 		avatarUrlInput.setAttribute(DATA_BOUND, "");
 		avatarUrlInput.addEventListener("input", () => {
+			if (String(avatarUrlInput.value || "").trim()) {
+				clearPendingAvatarUpload(true);
+			}
 			updateAvatarPreview();
 			checkProfileDirty();
 		});
@@ -1450,7 +1495,7 @@ export function initMePage(): void {
 	if (avatarCropApplyBtn && !avatarCropApplyBtn.hasAttribute(DATA_BOUND)) {
 		avatarCropApplyBtn.setAttribute(DATA_BOUND, "");
 		avatarCropApplyBtn.addEventListener("click", async () => {
-			await uploadAvatarFromCrop();
+			await applyAvatarFromCrop();
 		});
 	}
 
@@ -1530,6 +1575,7 @@ export function initMePage(): void {
 	if (avatarClearBtn && !avatarClearBtn.hasAttribute(DATA_BOUND)) {
 		avatarClearBtn.setAttribute(DATA_BOUND, "");
 		avatarClearBtn.addEventListener("click", () => {
+			clearPendingAvatarUpload(true);
 			currentAvatarFileId = "";
 			currentAvatarFallbackUrl = "";
 			if (avatarUrlInput) {

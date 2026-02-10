@@ -14,6 +14,7 @@ import {
 import {
 	createDirectusUser,
 	createOne,
+	deleteDirectusFile,
 	deleteOne,
 	listDirectusUsers,
 	readMany,
@@ -31,7 +32,7 @@ import {
 import {
 	getResolvedSiteSettings,
 	invalidateSiteSettingsCache,
-	mergeSiteSettingsPatch,
+	resolveSiteSettingsPayload,
 } from "@/server/site-settings/service";
 import { invalidateOfficialSidebarCache } from "./public-data";
 
@@ -144,6 +145,7 @@ async function readSiteSettingsRowMeta(): Promise<{
 	const rows = await readMany("app_site_settings", {
 		filter: { key: { _eq: "default" } } as JsonObject,
 		limit: 1,
+		sort: ["-date_updated", "-date_created"],
 		fields: ["id", "date_updated", "date_created"],
 	});
 	const row = rows[0];
@@ -179,6 +181,93 @@ async function upsertSiteSettings(
 	return {
 		updatedAt: updated.date_updated || updated.date_created || null,
 	};
+}
+
+const DIRECTUS_FILE_ID_PATTERN =
+	/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+function extractDirectusFileIdFromAssetValue(value: unknown): string | null {
+	if (typeof value !== "string") {
+		return null;
+	}
+	const raw = value.trim();
+	if (!raw) {
+		return null;
+	}
+	if (DIRECTUS_FILE_ID_PATTERN.test(raw)) {
+		return raw;
+	}
+	try {
+		const parsed = new URL(raw, "http://localhost");
+		const path = parsed.pathname;
+		const directPattern = /^\/api\/v1\/public\/assets\/([^/?#]+)\/?$/;
+		const assetPattern = /^\/assets\/([^/?#]+)\/?$/;
+		const matched =
+			path.match(directPattern)?.[1] ||
+			path.match(assetPattern)?.[1] ||
+			"";
+		if (!matched) {
+			return null;
+		}
+		const decoded = decodeURIComponent(matched).trim();
+		return DIRECTUS_FILE_ID_PATTERN.test(decoded) ? decoded : null;
+	} catch {
+		return null;
+	}
+}
+
+function collectBannerAssetValues(value: unknown): string[] {
+	if (typeof value === "string") {
+		return [value];
+	}
+	if (Array.isArray(value)) {
+		return value
+			.map((entry) => (typeof entry === "string" ? entry : ""))
+			.filter(Boolean);
+	}
+	if (value && typeof value === "object") {
+		const record = value as {
+			desktop?: string | string[];
+			mobile?: string | string[];
+		};
+		const collected: string[] = [];
+		const append = (input: unknown): void => {
+			if (typeof input === "string") {
+				if (input.trim()) {
+					collected.push(input);
+				}
+				return;
+			}
+			if (Array.isArray(input)) {
+				for (const item of input) {
+					if (typeof item === "string" && item.trim()) {
+						collected.push(item);
+					}
+				}
+			}
+		};
+		append(record.desktop);
+		append(record.mobile);
+		return collected;
+	}
+	return [];
+}
+
+function collectSettingsFileIds(settings: SiteSettingsPayload): Set<string> {
+	const ids = new Set<string>();
+	for (const item of settings.site.favicon || []) {
+		const fileId = extractDirectusFileIdFromAssetValue(item.src);
+		if (fileId) {
+			ids.add(fileId);
+		}
+	}
+	for (const source of collectBannerAssetValues(settings.banner.src)) {
+		const fileId = extractDirectusFileIdFromAssetValue(source);
+		if (fileId) {
+			ids.add(fileId);
+		}
+	}
+	return ids;
 }
 
 export async function handleAdminUsers(
@@ -645,9 +734,18 @@ export async function handleAdminSettings(
 	if (context.request.method === "PATCH") {
 		const body = await parseJsonBody(context.request);
 		const patch = body as Partial<EditableSiteSettings>;
-		const settings = await mergeSiteSettingsPatch(patch);
+		const current = await getResolvedSiteSettings();
+		const settings = resolveSiteSettingsPayload(patch, current.settings);
+		const prevFileIds = collectSettingsFileIds(current.settings);
+		const nextFileIds = collectSettingsFileIds(settings);
+		const removedFileIds = [...prevFileIds].filter(
+			(fileId) => !nextFileIds.has(fileId),
+		);
 		const { updatedAt } = await upsertSiteSettings(settings);
 		invalidateSiteSettingsCache();
+		for (const fileId of removedFileIds) {
+			await deleteDirectusFile(fileId);
+		}
 		return ok({
 			settings,
 			updated_at: updatedAt,

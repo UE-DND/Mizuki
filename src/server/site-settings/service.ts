@@ -1,4 +1,5 @@
 import { defaultSiteSettings, systemSiteConfig } from "@/config";
+import { buildDirectusAssetUrl } from "@/server/directus-auth";
 import { readMany } from "@/server/directus/client";
 import { sanitizeMarkdownHtml } from "@/server/markdown/sanitize";
 import type {
@@ -77,6 +78,9 @@ function normalizeAssetPath(
 	if (!value) {
 		return allowEmpty ? "" : fallback;
 	}
+	if (isLikelyDirectusFileId(value)) {
+		return buildDirectusAssetUrl(value);
+	}
 	if (value.startsWith("/") && !value.startsWith("//")) {
 		return value;
 	}
@@ -87,6 +91,12 @@ function normalizeAssetPath(
 		return value;
 	}
 	return fallback;
+}
+
+function isLikelyDirectusFileId(value: string): boolean {
+	return /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(
+		value,
+	);
 }
 
 type NavLinkLike = {
@@ -132,13 +142,13 @@ function normalizeBannerSrc(
 	fallback: SiteSettingsPayload["banner"]["src"],
 ): SiteSettingsPayload["banner"]["src"] {
 	if (typeof value === "string") {
-		return normalizeAssetPath(value, "", true) || fallback;
+		return normalizeAssetPath(value, "", true);
 	}
 	if (Array.isArray(value)) {
 		const entries = value
 			.map((entry) => normalizeAssetPath(String(entry || ""), "", true))
 			.filter(Boolean);
-		return entries.length > 0 ? entries : fallback;
+		return entries.length > 0 ? entries : "";
 	}
 	if (isRecord(value)) {
 		const desktopRaw = value.desktop;
@@ -159,23 +169,34 @@ function normalizeBannerSrc(
 						normalizeAssetPath(String(entry || ""), "", true),
 					)
 					.filter(Boolean);
-				return items.length > 0 ? items : undefined;
+				return items;
 			}
 			return undefined;
 		};
 		const desktop = normalizeSide(desktopRaw);
 		const mobile = normalizeSide(mobileRaw);
-		if (desktop) {
+		if (desktop !== undefined) {
 			normalized.desktop = desktop;
 		}
-		if (mobile) {
+		if (mobile !== undefined) {
 			normalized.mobile = mobile;
 		}
-		if (normalized.desktop || normalized.mobile) {
+		if (desktopRaw !== undefined || mobileRaw !== undefined) {
 			return normalized;
 		}
 	}
 	return fallback;
+}
+
+function readRawBannerSrc(raw: unknown): unknown {
+	if (!isRecord(raw)) {
+		return undefined;
+	}
+	const banner = raw.banner;
+	if (!isRecord(banner)) {
+		return undefined;
+	}
+	return banner.src;
 }
 
 function normalizeSettings(
@@ -227,6 +248,7 @@ function normalizeSettings(
 				.filter((item): item is NonNullable<typeof item> =>
 					Boolean(item),
 				)
+				.slice(0, 1)
 		: base.site.favicon;
 
 	merged.featurePages.friends = true;
@@ -242,7 +264,11 @@ function normalizeSettings(
 	merged.wallpaperMode.defaultMode =
 		merged.wallpaperMode.defaultMode === "none" ? "none" : "banner";
 
-	merged.banner.src = normalizeBannerSrc(merged.banner.src, base.banner.src);
+	const rawBannerSrc = readRawBannerSrc(raw);
+	merged.banner.src = normalizeBannerSrc(
+		rawBannerSrc !== undefined ? rawBannerSrc : merged.banner.src,
+		base.banner.src,
+	);
 	merged.banner.position =
 		merged.banner.position === "top" ||
 		merged.banner.position === "bottom" ||
@@ -358,17 +384,6 @@ function normalizeSettings(
 			),
 		},
 	};
-	merged.banner.credit = {
-		enable: Boolean(
-			merged.banner.credit?.enable ?? base.banner.credit.enable,
-		),
-		text: String(
-			merged.banner.credit?.text ?? base.banner.credit.text ?? "",
-		).trim(),
-		url: String(
-			merged.banner.credit?.url ?? base.banner.credit.url ?? "",
-		).trim(),
-	};
 	merged.banner.navbar = {
 		transparentMode:
 			merged.banner.navbar?.transparentMode === "full" ||
@@ -480,6 +495,7 @@ async function readSiteSettingsRow(): Promise<{
 			],
 		},
 		limit: 1,
+		sort: ["-date_updated", "-date_created"],
 		fields: ["id", "settings", "date_updated", "date_created"],
 	});
 	const row = rows[0];
