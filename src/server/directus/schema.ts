@@ -8,6 +8,7 @@ import type {
 	AppContentReport,
 	AppDiary,
 	AppDiaryComment,
+	AppDiaryLike,
 	AppDiaryImage,
 	AppFile,
 	AppPermissions,
@@ -26,6 +27,7 @@ export type DirectusSchema = {
 	app_diaries: AppDiary[];
 	app_diary_images: AppDiaryImage[];
 	app_diary_comments: AppDiaryComment[];
+	app_diary_likes: AppDiaryLike[];
 	app_anime_entries: AppAnimeEntry[];
 	app_albums: AppAlbum[];
 	app_album_photos: AppAlbumPhoto[];

@@ -187,6 +187,15 @@ export type AppArticleLike = {
 	date_updated: string | null;
 };
 
+export type AppDiaryLike = {
+	id: string;
+	diary_id: string;
+	user_id: string;
+	status: AppStatus;
+	date_created: string | null;
+	date_updated: string | null;
+};
+
 export type AppDiaryComment = {
 	id: string;
 	diary_id: string;

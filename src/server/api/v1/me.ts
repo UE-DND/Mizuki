@@ -9,6 +9,7 @@ import {
 } from "@/server/auth/acl";
 import { validateDisplayName } from "@/server/auth/username";
 import {
+	countItems,
 	createOne,
 	deleteDirectusFile,
 	deleteOne,
@@ -308,6 +309,9 @@ export async function handleMe(
 	if (segments.length >= 1 && segments[0] === "article-likes") {
 		return await handleMeArticleLikes(context, access, segments);
 	}
+	if (segments.length >= 1 && segments[0] === "diary-likes") {
+		return await handleMeDiaryLikes(context, access, segments);
+	}
 	if (segments.length >= 1 && segments[0] === "articles") {
 		return await handleMeArticles(context, access, segments);
 	}
@@ -450,17 +454,14 @@ async function handleMeReports(
 }
 
 async function getArticleLikeCount(articleId: string): Promise<number> {
-	const likes = await readMany("app_article_likes", {
+	return await countItems("app_article_likes", {
 		filter: {
 			_and: [
 				{ article_id: { _eq: articleId } },
 				{ status: { _eq: "published" } },
 			],
 		} as JsonObject,
-		limit: 5000,
-		fields: ["id"],
 	});
-	return likes.length;
 }
 
 async function handleMeArticleLikes(
@@ -484,12 +485,26 @@ async function handleMeArticleLikes(
 			sort: ["-date_created"],
 			limit,
 			offset,
+			fields: [
+				"id",
+				"article_id",
+				"user_id",
+				"status",
+				"date_created",
+				"date_updated",
+			],
 		});
+		const total = await countItems("app_article_likes", {
+			_and: [
+				{ user_id: { _eq: access.user.id } },
+				{ status: { _eq: "published" } },
+			],
+		} as JsonObject);
 		return ok({
 			items: rows,
 			page,
 			limit,
-			total: rows.length,
+			total,
 		});
 	}
 
@@ -549,6 +564,120 @@ async function handleMeArticleLikes(
 			liked,
 			like_count: likeCount,
 			article_id: articleId,
+		});
+	}
+
+	return fail("方法不允许", 405);
+}
+
+async function getDiaryLikeCount(diaryId: string): Promise<number> {
+	return await countItems("app_diary_likes", {
+		filter: {
+			_and: [
+				{ diary_id: { _eq: diaryId } },
+				{ status: { _eq: "published" } },
+			],
+		} as JsonObject,
+	});
+}
+
+async function handleMeDiaryLikes(
+	context: APIContext,
+	access: AppAccess,
+	segments: string[],
+): Promise<Response> {
+	if (segments.length !== 1) {
+		return fail("未找到接口", 404);
+	}
+
+	if (context.request.method === "GET") {
+		const { page, limit, offset } = parsePagination(context.url);
+		const rows = await readMany("app_diary_likes", {
+			filter: {
+				_and: [
+					{ user_id: { _eq: access.user.id } },
+					{ status: { _eq: "published" } },
+				],
+			} as JsonObject,
+			sort: ["-date_created"],
+			limit,
+			offset,
+			fields: [
+				"id",
+				"diary_id",
+				"user_id",
+				"status",
+				"date_created",
+				"date_updated",
+			],
+		});
+		const total = await countItems("app_diary_likes", {
+			_and: [
+				{ user_id: { _eq: access.user.id } },
+				{ status: { _eq: "published" } },
+			],
+		} as JsonObject);
+		return ok({
+			items: rows,
+			page,
+			limit,
+			total,
+		});
+	}
+
+	if (context.request.method === "POST") {
+		const body = await parseJsonBody(context.request);
+		const diaryId = parseBodyTextField(body, "diary_id");
+		if (!diaryId) {
+			return fail("缺少日记 ID", 400);
+		}
+
+		const diary = await readOneById("app_diaries", diaryId);
+		if (!diary || !(diary.status === "published" && diary.is_public)) {
+			return fail("日记不存在或不可见", 404);
+		}
+
+		const existing = await readMany("app_diary_likes", {
+			filter: {
+				_and: [
+					{ diary_id: { _eq: diaryId } },
+					{ user_id: { _eq: access.user.id } },
+				],
+			} as JsonObject,
+			sort: ["-date_created"],
+			limit: 1,
+		});
+		const current = existing[0];
+
+		let liked = false;
+		let item: Awaited<
+			ReturnType<typeof createOne<"app_diary_likes">>
+		> | null = null;
+		if (current && current.status === "published") {
+			item = await updateOne("app_diary_likes", current.id, {
+				status: "archived",
+			});
+			liked = false;
+		} else if (current) {
+			item = await updateOne("app_diary_likes", current.id, {
+				status: "published",
+			});
+			liked = true;
+		} else {
+			item = await createOne("app_diary_likes", {
+				status: "published",
+				diary_id: diaryId,
+				user_id: access.user.id,
+			});
+			liked = true;
+		}
+
+		const likeCount = await getDiaryLikeCount(diaryId);
+		return ok({
+			item,
+			liked,
+			like_count: likeCount,
+			diary_id: diaryId,
 		});
 	}
 

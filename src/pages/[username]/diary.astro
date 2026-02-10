@@ -1,5 +1,6 @@
 ---
 import ContentNotVisible from "@components/misc/ContentNotVisible.astro";
+import DiaryCard from "@components/DiaryCard.astro";
 import MainGridLayout from "@layouts/MainGridLayout.astro";
 import {
 	loadProfileForViewer,
@@ -7,21 +8,19 @@ import {
 	profileToSidebarData,
 } from "@/server/api/v1/public-data";
 import type { ContentLoadResult, PaginatedResult } from "@/server/api/v1/public-data";
+import type { AppDiary, AppDiaryImage } from "@/types/app";
+import type { AuthorBundleItem } from "@/server/api/v1/shared/author-cache";
 import { getSessionUser } from "@/server/auth/session";
 
 export const prerender = false;
 
 const username = (Astro.params.username || "").trim();
 
-type DiaryListItem = {
-	id: string;
-	short_id: string | null;
-	content: string;
-	mood: string | null;
-	location: string | null;
-	happened_at: string | null;
-	author?: { name?: string };
-	images?: Array<{ image_url: string | null }>;
+type DiaryListItem = AppDiary & {
+	author: AuthorBundleItem;
+	images: AppDiaryImage[];
+	comment_count: number;
+	like_count: number;
 };
 
 let result: ContentLoadResult<PaginatedResult<DiaryListItem>> = { status: "not_found" };
@@ -50,14 +49,6 @@ try {
 }
 
 const items = result.status === "ok" ? result.data.items : [];
-
-function shortText(input: string): string {
-	const text = String(input || "").replace(/\s+/g, " ").trim();
-	if (text.length <= 180) {
-		return text;
-	}
-	return `${text.slice(0, 180)}...`;
-}
 ---
 
 <MainGridLayout title="日记" description="用户公开日记列表">
@@ -91,35 +82,17 @@ function shortText(input: string): string {
 			) : (
 				<div class="space-y-4">
 					{items.map((item) => (
-						<article class="card-base p-5 rounded-[var(--radius-large)] border border-[var(--line-divider)] text-90">
-							<a href={`/${username}/diary/${item.short_id || item.id}`} class="block space-y-3">
-								<div class="flex flex-wrap items-center gap-3 text-xs text-60">
-									{item.author?.name && <span>作者：{item.author.name}</span>}
-									{item.happened_at && <time datetime={item.happened_at}>{new Date(item.happened_at).toLocaleString()}</time>}
-									{item.location && <span>地点：{item.location}</span>}
-									{item.mood && <span>心情：{item.mood}</span>}
-								</div>
-								<p class="text-sm md:text-base text-85 leading-7">{shortText(item.content)}</p>
-								{Array.isArray(item.images) && item.images.length > 0 && (
-									<div class="grid grid-cols-3 md:grid-cols-4 gap-2">
-										{item.images
-											.filter((image) => image.image_url)
-											.slice(0, 4)
-											.map((image) => (
-												<img
-													src={image.image_url || ""}
-													alt="日记配图"
-													class="w-full h-20 md:h-24 object-cover rounded-lg border border-[var(--line-divider)]"
-													loading="lazy"
-												/>
-											))}
-									</div>
-								)}
-							</a>
-						</article>
+						<div class="diary-list-item">
+							<DiaryCard entry={item} username={username} />
+						</div>
 					))}
 				</div>
 			)}
 		</>
 	)}
 </MainGridLayout>
+
+<script>
+import { initPostInteractions } from "@/scripts/post-interactions";
+initPostInteractions();
+</script>

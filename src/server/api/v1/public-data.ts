@@ -344,6 +344,65 @@ export async function loadUserAnimeList(
 	return { status: "ok", data: { items, page, limit, total } };
 }
 
+async function fetchDiaryCommentCountMap(
+	diaryIds: string[],
+): Promise<Map<string, number>> {
+	if (diaryIds.length === 0) {
+		return new Map();
+	}
+	const map = new Map<string, number>();
+	await Promise.all(
+		diaryIds.map(async (diaryId) => {
+			try {
+				const count = await countItems("app_diary_comments", {
+					_and: [
+						{ diary_id: { _eq: diaryId } },
+						{ status: { _eq: "published" } },
+						{ is_public: { _eq: true } },
+					],
+				} as JsonObject);
+				map.set(diaryId, count);
+			} catch (error) {
+				console.warn(
+					`[public-data] failed to load diary comment count: ${diaryId}`,
+					error,
+				);
+				map.set(diaryId, 0);
+			}
+		}),
+	);
+	return map;
+}
+
+async function fetchDiaryLikeCountMap(
+	diaryIds: string[],
+): Promise<Map<string, number>> {
+	if (diaryIds.length === 0) {
+		return new Map();
+	}
+	const map = new Map<string, number>();
+	await Promise.all(
+		diaryIds.map(async (diaryId) => {
+			try {
+				const count = await countItems("app_diary_likes", {
+					_and: [
+						{ diary_id: { _eq: diaryId } },
+						{ status: { _eq: "published" } },
+					],
+				} as JsonObject);
+				map.set(diaryId, count);
+			} catch (error) {
+				console.warn(
+					`[public-data] failed to load diary like count: ${diaryId}`,
+					error,
+				);
+				map.set(diaryId, 0);
+			}
+		}),
+	);
+	return map;
+}
+
 export type UserDiaryListOptions = {
 	page?: number;
 	limit?: number;
@@ -355,7 +414,12 @@ export async function loadUserDiaryList(
 ): Promise<
 	ContentLoadResult<
 		PaginatedResult<
-			AppDiary & { author: AuthorBundleItem; images: AppDiaryImage[] }
+			AppDiary & {
+				author: AuthorBundleItem;
+				images: AppDiaryImage[];
+				comment_count: number;
+				like_count: number;
+			}
 		>
 	>
 > {
@@ -403,17 +467,20 @@ export async function loadUserDiaryList(
 			{ is_public: { _eq: true } },
 		);
 	}
-	const [images, authorMap] = await Promise.all([
-		readMany("app_diary_images", {
-			filter:
-				diaryIds.length > 0
-					? ({ _and: diaryImageFilters } as JsonObject)
-					: ({ id: { _null: true } } as JsonObject),
-			sort: ["sort", "-date_created"],
-			limit: Math.max(diaryIds.length * 6, DEFAULT_LIST_LIMIT),
-		}),
-		getAuthorBundle([userId]),
-	]);
+	const [images, authorMap, commentCountMap, likeCountMap] =
+		await Promise.all([
+			readMany("app_diary_images", {
+				filter:
+					diaryIds.length > 0
+						? ({ _and: diaryImageFilters } as JsonObject)
+						: ({ id: { _null: true } } as JsonObject),
+				sort: ["sort", "-date_created"],
+				limit: Math.max(diaryIds.length * 6, DEFAULT_LIST_LIMIT),
+			}),
+			getAuthorBundle([userId]),
+			fetchDiaryCommentCountMap(diaryIds),
+			fetchDiaryLikeCountMap(diaryIds),
+		]);
 
 	const imageMap = new Map<string, AppDiaryImage[]>();
 	for (const image of images) {
@@ -426,6 +493,8 @@ export async function loadUserDiaryList(
 		...row,
 		author: readAuthor(authorMap, row.author_id),
 		images: imageMap.get(row.id) || [],
+		comment_count: commentCountMap.get(row.id) || 0,
+		like_count: likeCountMap.get(row.id) || 0,
 	}));
 
 	return { status: "ok", data: { items, page, limit, total } };

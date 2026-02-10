@@ -138,50 +138,72 @@ async function applyBlockedUsersFilter() {
 	}
 }
 
+function applyCardActionVisibility(
+	card: HTMLElement,
+	state: AuthState,
+	deleteOwnAction: string,
+	deleteAdminAction: string,
+) {
+	const authorId = String(card.dataset.authorId || "");
+	const deleteOwnBtn = card.querySelector<HTMLButtonElement>(
+		`button[data-action="${deleteOwnAction}"]`,
+	);
+	const deleteAdminBtn = card.querySelector<HTMLButtonElement>(
+		`button[data-action="${deleteAdminAction}"]`,
+	);
+	const blockBtn = card.querySelector<HTMLButtonElement>(
+		'button[data-action="block-user"]',
+	);
+	const reportBtn = card.querySelector<HTMLButtonElement>(
+		'button[data-action="report-content"]',
+	);
+	const likeBtn = card.querySelector<HTMLButtonElement>(
+		'button[data-action="toggle-like"]',
+	);
+
+	const isOwner =
+		state.isLoggedIn && Boolean(state.userId) && state.userId === authorId;
+	const isAdminOnly = state.isLoggedIn && state.isAdmin && !isOwner;
+
+	deleteOwnBtn?.classList.toggle("hidden", !isOwner);
+	deleteAdminBtn?.classList.toggle("hidden", !isAdminOnly);
+
+	if (blockBtn) {
+		const canBlock =
+			state.isLoggedIn && Boolean(authorId) && state.userId !== authorId;
+		blockBtn.classList.toggle("hidden", !canBlock);
+	}
+
+	if (reportBtn) {
+		reportBtn.classList.toggle("hidden", !state.isLoggedIn);
+	}
+
+	if (likeBtn) {
+		likeBtn.classList.toggle("opacity-60", !state.isLoggedIn);
+	}
+}
+
 function updateCardActionVisibility(state: AuthState) {
-	const cards = document.querySelectorAll<HTMLElement>("[data-post-card]");
-	cards.forEach((card) => {
-		const authorId = String(card.dataset.authorId || "");
-		const deleteOwnBtn = card.querySelector<HTMLButtonElement>(
-			'button[data-action="delete-own-article"]',
+	const postCards =
+		document.querySelectorAll<HTMLElement>("[data-post-card]");
+	postCards.forEach((card) => {
+		applyCardActionVisibility(
+			card,
+			state,
+			"delete-own-article",
+			"delete-admin-article",
 		);
-		const deleteAdminBtn = card.querySelector<HTMLButtonElement>(
-			'button[data-action="delete-admin-article"]',
+	});
+
+	const diaryCards =
+		document.querySelectorAll<HTMLElement>("[data-diary-card]");
+	diaryCards.forEach((card) => {
+		applyCardActionVisibility(
+			card,
+			state,
+			"delete-own-diary",
+			"delete-admin-diary",
 		);
-		const blockBtn = card.querySelector<HTMLButtonElement>(
-			'button[data-action="block-user"]',
-		);
-		const reportBtn = card.querySelector<HTMLButtonElement>(
-			'button[data-action="report-content"]',
-		);
-		const likeBtn = card.querySelector<HTMLButtonElement>(
-			'button[data-action="toggle-like"]',
-		);
-
-		const isOwner =
-			state.isLoggedIn &&
-			Boolean(state.userId) &&
-			state.userId === authorId;
-		const isAdminOnly = state.isLoggedIn && state.isAdmin && !isOwner;
-
-		deleteOwnBtn?.classList.toggle("hidden", !isOwner);
-		deleteAdminBtn?.classList.toggle("hidden", !isAdminOnly);
-
-		if (blockBtn) {
-			const canBlock =
-				state.isLoggedIn &&
-				Boolean(authorId) &&
-				state.userId !== authorId;
-			blockBtn.classList.toggle("hidden", !canBlock);
-		}
-
-		if (reportBtn) {
-			reportBtn.classList.toggle("hidden", !state.isLoggedIn);
-		}
-
-		if (likeBtn) {
-			likeBtn.classList.toggle("opacity-60", !state.isLoggedIn);
-		}
 	});
 }
 
@@ -192,10 +214,80 @@ function setLikeButtonState(
 ) {
 	button.dataset.liked = liked ? "true" : "false";
 	button.classList.toggle("text-[var(--primary)]", liked);
+	button.classList.toggle("text-50", !liked);
 	const countEl = button.querySelector<HTMLElement>("[data-like-count]");
 	if (countEl && typeof likeCount === "number") {
 		countEl.textContent = String(Math.max(0, likeCount));
 	}
+}
+
+const LIKE_SYNC_PAGE_LIMIT = 100;
+
+type LikeRelationField = "article_id" | "diary_id";
+
+type FetchAllLikedIdsOptions = {
+	endpoint: string;
+	idField: LikeRelationField;
+};
+
+function normalizeRelationId(value: unknown): string {
+	if (typeof value === "string" || typeof value === "number") {
+		return String(value).trim();
+	}
+	if (value && typeof value === "object" && "id" in value) {
+		const relationId = (value as { id?: unknown }).id;
+		if (typeof relationId === "string" || typeof relationId === "number") {
+			return String(relationId).trim();
+		}
+	}
+	return "";
+}
+
+async function fetchAllLikedIds({
+	endpoint,
+	idField,
+}: FetchAllLikedIdsOptions): Promise<Set<string>> {
+	const likedIds = new Set<string>();
+	let page = 1;
+	let total: number | null = null;
+	let fetched = 0;
+	let hasMore = true;
+
+	while (hasMore) {
+		const response = await fetch(
+			`${endpoint}?page=${page}&limit=${LIKE_SYNC_PAGE_LIMIT}`,
+			{
+				credentials: "include",
+			},
+		);
+		const data = await response.json().catch(() => ({}));
+		if (!response.ok || !data?.ok || !Array.isArray(data.items)) {
+			throw new Error(`failed to fetch likes list: ${endpoint}`);
+		}
+		if (typeof data.total === "number" && Number.isFinite(data.total)) {
+			total = Math.max(0, Math.floor(data.total));
+		}
+
+		const items = data.items as Array<Record<string, unknown>>;
+		fetched += items.length;
+		for (const item of items) {
+			const id = normalizeRelationId(item[idField]);
+			if (id) {
+				likedIds.add(id);
+			}
+		}
+
+		hasMore = !(
+			items.length < LIKE_SYNC_PAGE_LIMIT ||
+			items.length === 0 ||
+			(total !== null && fetched >= total)
+		);
+		if (hasMore) {
+			page += 1;
+		}
+	}
+
+	return likedIds;
 }
 
 async function syncLikeButtons() {
@@ -210,26 +302,40 @@ async function syncLikeButtons() {
 	}
 
 	try {
-		const response = await fetch("/api/v1/me/article-likes/?limit=500", {
-			credentials: "include",
-		});
-		const data = await response.json().catch(() => ({}));
-		if (!response.ok || !data?.ok || !Array.isArray(data.items)) {
-			return;
-		}
-		const likedArticleIds = new Set<string>(
-			data.items
-				.map((item: { article_id?: unknown }) =>
-					item?.article_id ? String(item.article_id) : "",
-				)
-				.filter(Boolean),
-		);
+		const hasPostCards =
+			document.querySelector("[data-post-card]") !== null;
+		const hasDiaryCards =
+			document.querySelector("[data-diary-card]") !== null;
+
+		const [likedArticleIds, likedDiaryIds] = await Promise.all([
+			hasPostCards
+				? fetchAllLikedIds({
+						endpoint: "/api/v1/me/article-likes",
+						idField: "article_id",
+					})
+				: Promise.resolve(new Set<string>()),
+			hasDiaryCards
+				? fetchAllLikedIds({
+						endpoint: "/api/v1/me/diary-likes",
+						idField: "diary_id",
+					})
+				: Promise.resolve(new Set<string>()),
+		]);
+
 		likeButtons.forEach((button) => {
-			const card = button.closest<HTMLElement>("[data-post-card]");
-			const articleId = card?.dataset.articleId
-				? String(card.dataset.articleId)
-				: "";
-			setLikeButtonState(button, likedArticleIds.has(articleId));
+			const postCard = button.closest<HTMLElement>("[data-post-card]");
+			if (postCard) {
+				const articleId = String(
+					postCard.dataset.articleId || "",
+				).trim();
+				setLikeButtonState(button, likedArticleIds.has(articleId));
+				return;
+			}
+			const diaryCard = button.closest<HTMLElement>("[data-diary-card]");
+			if (diaryCard) {
+				const diaryId = String(diaryCard.dataset.diaryId || "").trim();
+				setLikeButtonState(button, likedDiaryIds.has(diaryId));
+			}
 		});
 	} catch (error) {
 		console.error("[PostPage] failed to sync likes:", error);
@@ -247,19 +353,48 @@ function removeCardByArticleId(articleId: string) {
 	row?.remove();
 }
 
+function removeCardByDiaryId(diaryId: string) {
+	const card = document.querySelector<HTMLElement>(
+		`[data-diary-card][data-diary-id="${CSS.escape(diaryId)}"]`,
+	);
+	if (!card) {
+		return;
+	}
+	const row = card.closest<HTMLElement>(".diary-list-item") || card;
+	row.remove();
+}
+
 function removeCardsByAuthorId(authorId: string) {
+	const escaped = CSS.escape(authorId);
 	const cards = document.querySelectorAll<HTMLElement>(
-		`[data-post-card][data-author-id="${CSS.escape(authorId)}"]`,
+		`[data-post-card][data-author-id="${escaped}"], [data-diary-card][data-author-id="${escaped}"]`,
 	);
 	cards.forEach((card) => {
-		const row = card.closest<HTMLElement>(".post-list-item");
-		row?.remove();
+		const row =
+			card.closest<HTMLElement>(".post-list-item") ||
+			card.closest<HTMLElement>(".diary-list-item") ||
+			card;
+		row.remove();
 	});
 }
 
 async function requestDeleteArticle(articleId: string) {
 	const response = await fetch(
 		`/api/v1/me/articles/${encodeURIComponent(articleId)}`,
+		{
+			method: "DELETE",
+			credentials: "include",
+		},
+	);
+	const data = await response.json().catch(() => ({}));
+	if (!response.ok || !data?.ok) {
+		throw new Error(data?.message || "删除失败");
+	}
+}
+
+async function requestDeleteDiary(diaryId: string) {
+	const response = await fetch(
+		`/api/v1/me/diaries/${encodeURIComponent(diaryId)}`,
 		{
 			method: "DELETE",
 			credentials: "include",
@@ -289,7 +424,8 @@ async function requestBlockUser(blockedUserId: string, reason?: string) {
 	}
 }
 
-async function requestReportArticle(input: {
+async function requestReportContent(input: {
+	targetType: string;
 	targetId: string;
 	targetUserId: string;
 	reason: string;
@@ -302,7 +438,7 @@ async function requestReportArticle(input: {
 			"content-type": "application/json",
 		},
 		body: JSON.stringify({
-			target_type: "article",
+			target_type: input.targetType,
 			target_id: input.targetId,
 			target_user_id: input.targetUserId || undefined,
 			reason: input.reason,
@@ -339,6 +475,57 @@ async function requestToggleLike(articleId: string): Promise<{
 	};
 }
 
+async function requestToggleDiaryLike(diaryId: string): Promise<{
+	liked: boolean;
+	like_count: number;
+}> {
+	const response = await fetch("/api/v1/me/diary-likes", {
+		method: "POST",
+		credentials: "include",
+		headers: {
+			"content-type": "application/json",
+		},
+		body: JSON.stringify({
+			diary_id: diaryId,
+		}),
+	});
+	const data = await response.json().catch(() => ({}));
+	if (!response.ok || !data?.ok) {
+		throw new Error(data?.message || "点赞操作失败");
+	}
+	return {
+		liked: Boolean(data.liked),
+		like_count: Number(data.like_count || 0),
+	};
+}
+
+function resolveCardContext(actionEl: HTMLElement): {
+	cardType: "post" | "diary";
+	card: HTMLElement;
+	itemId: string;
+	authorId: string;
+} | null {
+	const postCard = actionEl.closest<HTMLElement>("[data-post-card]");
+	if (postCard) {
+		return {
+			cardType: "post",
+			card: postCard,
+			itemId: String(postCard.dataset.articleId || ""),
+			authorId: String(postCard.dataset.authorId || ""),
+		};
+	}
+	const diaryCard = actionEl.closest<HTMLElement>("[data-diary-card]");
+	if (diaryCard) {
+		return {
+			cardType: "diary",
+			card: diaryCard,
+			itemId: String(diaryCard.dataset.diaryId || ""),
+			authorId: String(diaryCard.dataset.authorId || ""),
+		};
+	}
+	return null;
+}
+
 function setupPostCardActions() {
 	if (runtimeWindow._postCardActionsAttached) {
 		return;
@@ -368,17 +555,13 @@ function setupPostCardActions() {
 			return;
 		}
 
-		const card = actionEl.closest<HTMLElement>("[data-post-card]");
-		if (!card) {
+		const ctx = resolveCardContext(actionEl);
+		if (!ctx || !ctx.itemId) {
 			return;
 		}
 
+		const { cardType, itemId, authorId } = ctx;
 		const action = String(actionEl.dataset.action || "");
-		const articleId = String(card.dataset.articleId || "");
-		const authorId = String(card.dataset.authorId || "");
-		if (!articleId) {
-			return;
-		}
 
 		if (!currentAuthState.isLoggedIn) {
 			showAuthRequiredDialog();
@@ -418,8 +601,52 @@ function setupPostCardActions() {
 					return;
 				}
 				try {
-					await requestDeleteArticle(articleId);
-					removeCardByArticleId(articleId);
+					await requestDeleteArticle(itemId);
+					removeCardByArticleId(itemId);
+				} catch (error) {
+					const message =
+						error instanceof Error
+							? error.message
+							: "删除失败，请稍后重试。";
+					await showNoticeDialog({
+						ariaLabel: "删除失败",
+						message,
+					});
+				}
+				return;
+			}
+
+			if (
+				action === "delete-own-diary" ||
+				action === "delete-admin-diary"
+			) {
+				const canDelete =
+					currentAuthState.isAdmin ||
+					currentAuthState.userId === authorId;
+				if (!canDelete) {
+					await showNoticeDialog({
+						ariaLabel: "权限提示",
+						message: "无权限删除该日记。",
+					});
+					return;
+				}
+				const confirmText =
+					action === "delete-admin-diary"
+						? "确认以管理员身份删除此日记？删除后不可恢复。"
+						: "确认删除这篇日记？删除后不可恢复。";
+				const confirmed = await showConfirmDialog({
+					ariaLabel: "删除确认",
+					message: confirmText,
+					confirmText: "确认删除",
+					cancelText: "取消",
+					confirmVariant: "danger",
+				});
+				if (!confirmed) {
+					return;
+				}
+				try {
+					await requestDeleteDiary(itemId);
+					removeCardByDiaryId(itemId);
 				} catch (error) {
 					const message =
 						error instanceof Error
@@ -435,8 +662,13 @@ function setupPostCardActions() {
 
 			if (action === "toggle-like") {
 				const button = actionEl as HTMLButtonElement;
-				const result = await requestToggleLike(articleId);
-				setLikeButtonState(button, result.liked, result.like_count);
+				if (cardType === "diary") {
+					const result = await requestToggleDiaryLike(itemId);
+					setLikeButtonState(button, result.liked, result.like_count);
+				} else {
+					const result = await requestToggleLike(itemId);
+					setLikeButtonState(button, result.liked, result.like_count);
+				}
 				return;
 			}
 
@@ -450,7 +682,7 @@ function setupPostCardActions() {
 				}
 				const formValues = await showFormDialog({
 					ariaLabel: "屏蔽用户",
-					message: "可选填写屏蔽原因，确认后将隐藏该用户的文章。",
+					message: "可选填写屏蔽原因，确认后将隐藏该用户的内容。",
 					confirmText: "确认屏蔽",
 					cancelText: "取消",
 					confirmVariant: "danger",
@@ -532,8 +764,9 @@ function setupPostCardActions() {
 					? reason
 					: "other";
 				const detail = String(formValues.detail || "").trim();
-				await requestReportArticle({
-					targetId: articleId,
+				await requestReportContent({
+					targetType: cardType === "diary" ? "diary" : "article",
+					targetId: itemId,
 					targetUserId: authorId,
 					reason: normalizedReason,
 					detail,

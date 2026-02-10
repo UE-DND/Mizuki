@@ -102,7 +102,7 @@ const publishedDate =
 
 		<div class="flex items-center justify-between gap-3 mt-2">
 			<div class="flex min-w-0 items-center gap-1.5 text-50 text-xs md:text-sm font-medium leading-none">
-				<span class="max-w-[10rem] truncate">@{authorHandle}</span>
+					<a href={`/${authorHandle}`} class="max-w-[10rem] truncate hover:text-[var(--primary)] transition-colors">@{authorHandle}</a>
 				<span class="text-[var(--meta-divider)]" aria-hidden="true">·</span>
 				<span>{publishedDate}</span>
 			</div>
