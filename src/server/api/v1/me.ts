@@ -40,6 +40,7 @@ import {
 	parseBodyTextField,
 	parseSocialLinks,
 	parseProfileBioField,
+	parseProfileTypewriterSpeedField,
 	parseRouteId,
 	parseVisibilityPatch,
 	requireAccess,
@@ -49,6 +50,7 @@ import {
 	hasOwn,
 } from "./shared";
 import { invalidateAuthorCache } from "./shared/author-cache";
+import { invalidateOfficialSidebarCache } from "./public-data";
 import { generateShortId } from "@/server/utils/short-id";
 
 async function handleMeProfile(
@@ -71,6 +73,18 @@ async function handleMeProfile(
 		let nextAvatarUrl = access.profile.avatar_url;
 		if (hasOwn(body, "bio")) {
 			payload.bio = parseProfileBioField(body.bio);
+		}
+		if (hasOwn(body, "bio_typewriter_enable")) {
+			payload.bio_typewriter_enable = toBooleanValue(
+				body.bio_typewriter_enable,
+				access.profile.bio_typewriter_enable,
+			);
+		}
+		if (hasOwn(body, "bio_typewriter_speed")) {
+			payload.bio_typewriter_speed = parseProfileTypewriterSpeedField(
+				body.bio_typewriter_speed,
+				access.profile.bio_typewriter_speed,
+			);
 		}
 		if (hasAvatarFilePatch) {
 			nextAvatarFile = toOptionalString(body.avatar_file);
@@ -122,6 +136,7 @@ async function handleMeProfile(
 			await updateDirectusUser(access.user.id, { avatar: null });
 		}
 		invalidateAuthorCache(access.user.id);
+		invalidateOfficialSidebarCache();
 		return ok({ profile: updated });
 	}
 

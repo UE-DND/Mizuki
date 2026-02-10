@@ -716,6 +716,14 @@ export function profileToSidebarData(profile: AppProfile): SidebarProfileData {
 	return {
 		display_name: profile.display_name || profile.username || "user",
 		bio: profile.bio ?? null,
+		bio_typewriter_enable: profile.bio_typewriter_enable ?? true,
+		bio_typewriter_speed: Math.max(
+			10,
+			Math.min(
+				500,
+				Math.floor(Number(profile.bio_typewriter_speed) || 80),
+			),
+		),
 		avatar_url: avatarUrl,
 		username: profile.username || null,
 		social_links: profile.social_links ?? null,
@@ -764,6 +772,10 @@ let officialSidebarCache: {
 
 const OFFICIAL_CACHE_TTL = 10 * 60 * 1000;
 
+export function invalidateOfficialSidebarCache(): void {
+	officialSidebarCache = null;
+}
+
 export async function loadOfficialSidebarProfile(): Promise<SidebarProfileData> {
 	if (officialSidebarCache && Date.now() < officialSidebarCache.expiry) {
 		return officialSidebarCache.data;
@@ -784,6 +796,8 @@ export async function loadOfficialSidebarProfile(): Promise<SidebarProfileData> 
 		return {
 			display_name: "Mizuki",
 			bio: null,
+			bio_typewriter_enable: true,
+			bio_typewriter_speed: 80,
 			avatar_url: null,
 			username: null,
 			social_links: null,

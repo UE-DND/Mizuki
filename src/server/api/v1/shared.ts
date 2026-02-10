@@ -19,6 +19,7 @@ import { calculateUsernameWeight } from "@/server/auth/username";
 import { fail } from "@/server/api/response";
 import {
 	toBooleanValue,
+	toNumberValue,
 	toOptionalString,
 	toStringValue,
 } from "@/server/api/utils";
@@ -385,6 +386,14 @@ export function parseProfileBioField(
 		throw new Error("PROFILE_BIO_TOO_LONG");
 	}
 	return value;
+}
+
+export function parseProfileTypewriterSpeedField(
+	input: JsonValue | undefined,
+	fallback = 80,
+): number {
+	const value = toNumberValue(input, fallback) ?? fallback;
+	return Math.max(10, Math.min(500, Math.floor(value)));
 }
 
 const SOCIAL_LINKS_MAX = 20;

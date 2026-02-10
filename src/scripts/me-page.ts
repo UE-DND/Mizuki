@@ -114,6 +114,8 @@ const AUTH_ME_RETRY_DELAY_MS = 220;
 const USERNAME_MAX_WEIGHT = 14;
 const DISPLAY_NAME_MAX_WEIGHT = 20;
 const PROFILE_BIO_MAX_LENGTH = 30;
+const PROFILE_BIO_TYPEWRITER_SPEED_MIN = 10;
+const PROFILE_BIO_TYPEWRITER_SPEED_MAX = 500;
 const AVATAR_CROP_OUTPUT_SIZE = 512;
 const AVATAR_CROP_ZOOM_MIN = 100;
 const AVATAR_CROP_ZOOM_MAX = 300;
@@ -160,6 +162,12 @@ export function initMePage(): void {
 		"me-bio",
 	) as HTMLTextAreaElement | null;
 	const bioCounter = document.getElementById("me-bio-counter");
+	const bioTypewriterEnableInput = document.getElementById(
+		"me-bio-typewriter-enable",
+	) as HTMLInputElement | null;
+	const bioTypewriterSpeedInput = document.getElementById(
+		"me-bio-typewriter-speed",
+	) as HTMLInputElement | null;
 	const displaynameDisplayBtn = document.getElementById(
 		"me-displayname-display-btn",
 	) as HTMLButtonElement | null;
@@ -218,6 +226,8 @@ export function initMePage(): void {
 		username: string;
 		display_name: string;
 		bio: string;
+		bio_typewriter_enable: boolean;
+		bio_typewriter_speed: number;
 		avatar_url: string;
 		avatar_file_id: string;
 	}
@@ -258,6 +268,14 @@ export function initMePage(): void {
 			? String(displaynameInput.value || "").trim()
 			: "",
 		bio: bioInput ? String(bioInput.value || "") : "",
+		bio_typewriter_enable: bioTypewriterEnableInput?.checked ?? true,
+		bio_typewriter_speed: Math.max(
+			PROFILE_BIO_TYPEWRITER_SPEED_MIN,
+			Math.min(
+				PROFILE_BIO_TYPEWRITER_SPEED_MAX,
+				Math.floor(Number(bioTypewriterSpeedInput?.value || 80) || 80),
+			),
+		),
 		avatar_url: avatarUrlInput
 			? String(avatarUrlInput.value || "").trim()
 			: "",
@@ -287,6 +305,14 @@ export function initMePage(): void {
 		}
 		if (current.bio !== profileSnapshot.bio) {
 			changed.push("简介");
+		}
+		if (
+			current.bio_typewriter_enable !==
+				profileSnapshot.bio_typewriter_enable ||
+			current.bio_typewriter_speed !==
+				profileSnapshot.bio_typewriter_speed
+		) {
+			changed.push("简介打字机");
 		}
 		if (
 			current.avatar_url !== profileSnapshot.avatar_url ||
@@ -802,6 +828,20 @@ export function initMePage(): void {
 		return null;
 	};
 
+	const validateBioTypewriterInput = (): string | null => {
+		if (!bioTypewriterSpeedInput) {
+			return null;
+		}
+		const speed = Math.floor(Number(bioTypewriterSpeedInput.value) || 80);
+		if (
+			speed < PROFILE_BIO_TYPEWRITER_SPEED_MIN ||
+			speed > PROFILE_BIO_TYPEWRITER_SPEED_MAX
+		) {
+			return "简介打字速度必须在 10-500 ms 之间";
+		}
+		return null;
+	};
+
 	// ---- avatar crop helpers ----
 
 	const revokeAvatarCropObjectUrl = (): void => {
@@ -1112,6 +1152,21 @@ export function initMePage(): void {
 			updateBioDisplay();
 			setBioEditing(false);
 		}
+		if (bioTypewriterEnableInput) {
+			bioTypewriterEnableInput.checked = Boolean(
+				profile?.bio_typewriter_enable ?? true,
+			);
+		}
+		if (bioTypewriterSpeedInput) {
+			const speed = Math.max(
+				PROFILE_BIO_TYPEWRITER_SPEED_MIN,
+				Math.min(
+					PROFILE_BIO_TYPEWRITER_SPEED_MAX,
+					Math.floor(Number(profile?.bio_typewriter_speed) || 80),
+				),
+			);
+			bioTypewriterSpeedInput.value = String(speed);
+		}
 		fillSocialLinks(
 			Array.isArray(profile?.social_links)
 				? (profile.social_links as Array<{
@@ -1194,13 +1249,30 @@ export function initMePage(): void {
 				setProfileMessage(bioError);
 				return;
 			}
+			const bioTypewriterError = validateBioTypewriterInput();
+			if (bioTypewriterError) {
+				setProfileMessage(bioTypewriterError);
+				return;
+			}
 			const avatarUrl = avatarUrlInput
 				? String(avatarUrlInput.value || "").trim()
 				: "";
+			const bioTypewriterSpeed = Math.max(
+				PROFILE_BIO_TYPEWRITER_SPEED_MIN,
+				Math.min(
+					PROFILE_BIO_TYPEWRITER_SPEED_MAX,
+					Math.floor(
+						Number(bioTypewriterSpeedInput?.value || 80) || 80,
+					),
+				),
+			);
 			const payload = {
 				username: usernameInput ? usernameInput.value : "",
 				display_name: displaynameInput ? displaynameInput.value : "",
 				bio: bioInput ? bioInput.value : "",
+				bio_typewriter_enable:
+					bioTypewriterEnableInput?.checked ?? true,
+				bio_typewriter_speed: bioTypewriterSpeed,
 				avatar_url: avatarUrl || null,
 				avatar_file: avatarUrl ? null : currentAvatarFileId || null,
 			};
@@ -1245,6 +1317,22 @@ export function initMePage(): void {
 			updateBioDisplay();
 			checkProfileDirty();
 		});
+	}
+
+	if (
+		bioTypewriterEnableInput &&
+		!bioTypewriterEnableInput.hasAttribute(DATA_BOUND)
+	) {
+		bioTypewriterEnableInput.setAttribute(DATA_BOUND, "");
+		bioTypewriterEnableInput.addEventListener("change", checkProfileDirty);
+	}
+
+	if (
+		bioTypewriterSpeedInput &&
+		!bioTypewriterSpeedInput.hasAttribute(DATA_BOUND)
+	) {
+		bioTypewriterSpeedInput.setAttribute(DATA_BOUND, "");
+		bioTypewriterSpeedInput.addEventListener("input", checkProfileDirty);
 	}
 
 	if (displaynameInput && !displaynameInput.hasAttribute(DATA_BOUND)) {

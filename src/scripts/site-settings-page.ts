@@ -514,8 +514,6 @@ const bindSettings = (s: SettingsObj): void => {
 	const banner = (s.banner ?? {}) as SettingsObj;
 	const bannerCredit = (banner.credit ?? {}) as SettingsObj;
 	const toc = (s.toc ?? {}) as SettingsObj;
-	const profile = (s.profile ?? {}) as SettingsObj;
-	const typewriter = (profile.typewriter ?? {}) as SettingsObj;
 	const announcement = (s.announcement ?? {}) as SettingsObj;
 	const annLink = (announcement.link ?? {}) as SettingsObj;
 	const footer = (s.footer ?? {}) as SettingsObj;
@@ -554,8 +552,6 @@ const bindSettings = (s: SettingsObj): void => {
 	);
 	setVal("ss-banner-credit-text", String(bannerCredit.text ?? ""));
 	setVal("ss-banner-credit-url", String(bannerCredit.url ?? ""));
-	setChecked("ss-typewriter-enable", Boolean(typewriter.enable));
-	setVal("ss-typewriter-speed", String(typewriter.speed ?? 80));
 	setChecked("ss-music-enable", Boolean(musicPlayer.enable));
 	setSelect("ss-music-mode", String(musicPlayer.mode ?? "meting"));
 	setVal("ss-music-api", String(musicPlayer.meting_api ?? ""));
@@ -628,13 +624,6 @@ const collectHomePayload = (current: SettingsObj): SettingsObj => ({
 			...(((current.banner ?? {}) as SettingsObj).credit ?? {}),
 			text: inputVal("ss-banner-credit-text"),
 			url: inputVal("ss-banner-credit-url"),
-		},
-	},
-	profile: {
-		...((current.profile ?? {}) as SettingsObj),
-		typewriter: {
-			enable: checked("ss-typewriter-enable"),
-			speed: Number(inputVal("ss-typewriter-speed") || 80),
 		},
 	},
 	musicPlayer: {

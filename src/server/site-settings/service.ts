@@ -400,19 +400,6 @@ function normalizeSettings(
 	merged.profile.name =
 		String(merged.profile.name || base.profile.name).trim() ||
 		base.profile.name;
-	merged.profile.typewriter = merged.profile.typewriter || {
-		...base.profile.typewriter,
-	};
-	merged.profile.typewriter.enable = Boolean(
-		merged.profile.typewriter.enable,
-	);
-	merged.profile.typewriter.speed = Math.max(
-		10,
-		Math.min(
-			500,
-			Math.floor(Number(merged.profile.typewriter.speed) || 80),
-		),
-	);
 
 	merged.license.enable = Boolean(merged.license.enable);
 	merged.license.name =

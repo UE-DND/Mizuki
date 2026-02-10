@@ -112,6 +112,16 @@ try {
 							</div>
 						</div>
 					</label>
+					<h3 class="text-lg font-medium text-75 md:col-span-2">简介打字机</h3>
+					<label class="flex items-center gap-3 text-75 cursor-pointer select-none">
+						<input type="checkbox" id="me-bio-typewriter-enable" class="toggle-checkbox" />
+						<span class="toggle-track"><span class="toggle-knob"></span></span>
+						启用打字机效果
+					</label>
+					<label class="space-y-1.5">
+						<span class="text-sm text-60">打字速度（ms）</span>
+						<input id="me-bio-typewriter-speed" type="number" min="10" max="500" class="w-full rounded-lg border border-[var(--line-divider)] px-3.5 py-2.5 bg-transparent text-75" placeholder="80" />
+					</label>
 					<div class="md:col-span-2 flex items-center gap-2">
 						<button type="submit" class="px-4 py-2 rounded-lg bg-[var(--btn-regular-bg)] text-[var(--btn-content)] text-sm">保存资料</button>
 						<span id="me-profile-msg" class="text-sm text-60"></span>

@@ -33,6 +33,7 @@ import {
 	invalidateSiteSettingsCache,
 	mergeSiteSettingsPatch,
 } from "@/server/site-settings/service";
+import { invalidateOfficialSidebarCache } from "./public-data";
 
 import {
 	ADMIN_MODULE_COLLECTION,
@@ -43,6 +44,7 @@ import {
 	normalizeAppRole,
 	parseBodyTextField,
 	parseProfileBioField,
+	parseProfileTypewriterSpeedField,
 	parseRouteId,
 	parseSocialLinks,
 	requireAdmin,
@@ -96,6 +98,8 @@ async function ensureUserProfile(
 		username: normalizedUsername,
 		display_name: normalizedUsername,
 		bio: null,
+		bio_typewriter_enable: true,
+		bio_typewriter_speed: 80,
 		avatar_file: null,
 		avatar_url: null,
 		profile_public: true,
@@ -269,6 +273,14 @@ export async function handleAdminUsers(
 				username: normalizedUsername,
 				display_name: normalizedUsername,
 				bio: parseProfileBioField(body.bio),
+				bio_typewriter_enable: toBooleanValue(
+					body.bio_typewriter_enable,
+					true,
+				),
+				bio_typewriter_speed: parseProfileTypewriterSpeedField(
+					body.bio_typewriter_speed,
+					80,
+				),
 				avatar_file: toOptionalString(body.avatar_file),
 				avatar_url: toOptionalString(body.avatar_url),
 				profile_public: toBooleanValue(body.profile_public, true),
@@ -323,6 +335,7 @@ export async function handleAdminUsers(
 			});
 
 			invalidateAuthorCache(createdUser.id);
+			invalidateOfficialSidebarCache();
 			return ok({ user: createdUser, profile, permissions });
 		}
 	}
@@ -389,6 +402,19 @@ export async function handleAdminUsers(
 			if (hasOwn(body, "bio")) {
 				profilePayload.bio = parseProfileBioField(body.bio);
 			}
+			if (hasOwn(body, "bio_typewriter_enable")) {
+				profilePayload.bio_typewriter_enable = toBooleanValue(
+					body.bio_typewriter_enable,
+					profile.bio_typewriter_enable,
+				);
+			}
+			if (hasOwn(body, "bio_typewriter_speed")) {
+				profilePayload.bio_typewriter_speed =
+					parseProfileTypewriterSpeedField(
+						body.bio_typewriter_speed,
+						profile.bio_typewriter_speed,
+					);
+			}
 			if (hasOwn(body, "avatar_file")) {
 				profilePayload.avatar_file = toOptionalString(body.avatar_file);
 			}
@@ -447,6 +473,7 @@ export async function handleAdminUsers(
 			]);
 
 			invalidateAuthorCache(userId);
+			invalidateOfficialSidebarCache();
 			return ok({
 				id: userId,
 				profile: updatedProfile,

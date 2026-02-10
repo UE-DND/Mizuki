@@ -16,10 +16,6 @@ import type {
 export type ProfileRuntimeSettings = {
 	avatar: string;
 	name: string;
-	typewriter: {
-		enable: boolean;
-		speed: number;
-	};
 };
 
 export type UmamiRuntimeSettings = {

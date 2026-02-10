@@ -201,10 +201,6 @@ export const defaultSiteSettings: SiteSettingsPayload = {
 	profile: {
 		avatar: "assets/images/avatar.webp",
 		name: "CiaLli†Channel",
-		typewriter: {
-			enable: true,
-			speed: 80,
-		},
 	},
 	license: {
 		enable: true,
