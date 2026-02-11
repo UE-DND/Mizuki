@@ -9,12 +9,16 @@
  * Initialization is handled by `runDynamicPageInit()` in layout/index.ts.
  */
 
+type CalendarFilterState = {
+	type: "day" | "month" | "year";
+	key: string;
+	label: string;
+};
+
 type FilterState = {
-	type: "none" | "tag" | "category" | "calendar";
-	value: string;
-	values?: string[];
-	calendarType?: "day" | "month" | "year";
-	calendarKey?: string;
+	tags: string[];
+	category: string | null;
+	calendar: CalendarFilterState | null;
 };
 
 type ArchiveRuntimeWindow = Window &
@@ -36,7 +40,11 @@ export function initArchiveFilter(): void {
 	}
 
 	let currentPage = 1;
-	let currentFilter: FilterState = { type: "none", value: "" };
+	let currentFilter: FilterState = {
+		tags: [],
+		category: null,
+		calendar: null,
+	};
 
 	const UNCATEGORIZED_LABEL = archiveRoot.dataset.uncategorizedLabel || "";
 
@@ -88,16 +96,15 @@ export function initArchiveFilter(): void {
 	}
 
 	function getSelectedTags(filter: FilterState): string[] {
-		if (filter.type !== "tag") {
-			return [];
-		}
-		const raw =
-			filter.values && filter.values.length > 0
-				? filter.values
-				: filter.value
-					? [filter.value]
-					: [];
-		return normalizeTagList(raw);
+		return normalizeTagList(filter.tags);
+	}
+
+	function hasActiveFilters(filter: FilterState): boolean {
+		return (
+			getSelectedTags(filter).length > 0 ||
+			filter.category !== null ||
+			filter.calendar !== null
+		);
 	}
 
 	function parseItemTags(item: HTMLElement): string[] {
@@ -125,49 +132,66 @@ export function initArchiveFilter(): void {
 
 	function getMatchingItems(filter: FilterState): HTMLElement[] {
 		const allItems = getAllPostItems();
-		if (filter.type === "none") {
+		const selectedTags = getSelectedTags(filter);
+		const hasTagFilter = selectedTags.length > 0;
+		const hasCategoryFilter = filter.category !== null;
+		const hasCalendarFilter = filter.calendar !== null;
+
+		if (!hasTagFilter && !hasCategoryFilter && !hasCalendarFilter) {
 			return allItems;
 		}
 
-		if (filter.type === "tag") {
-			const selectedTags = getSelectedTags(filter);
-			const withScores = allItems
-				.map((item) => ({
-					item,
-					score: getTagMatchCount(item, selectedTags),
-				}))
-				.filter(({ score }) => score > 0);
+		const withScores = allItems
+			.map((item) => {
+				const tagScore = hasTagFilter
+					? getTagMatchCount(item, selectedTags)
+					: 0;
+				const tagMatched =
+					!hasTagFilter || tagScore === selectedTags.length;
 
-			return withScores
-				.sort((a, b) => {
-					if (b.score !== a.score) {
-						return b.score - a.score;
+				const categoryMatched = hasCategoryFilter
+					? isUncategorizedValue(filter.category!)
+						? !item.dataset.category
+						: item.dataset.category === filter.category
+					: true;
+
+				let calendarMatched = true;
+				if (hasCalendarFilter && filter.calendar) {
+					if (filter.calendar.type === "year") {
+						calendarMatched =
+							item.dataset.year === filter.calendar.key;
+					} else if (filter.calendar.type === "month") {
+						calendarMatched =
+							item.dataset.month === filter.calendar.key;
+					} else {
+						calendarMatched =
+							item.dataset.day === filter.calendar.key;
 					}
-					return (
-						(originalOrder.get(a.item) ?? 0) -
-						(originalOrder.get(b.item) ?? 0)
-					);
-				})
-				.map(({ item }) => item);
+				}
+
+				return {
+					item,
+					score: tagScore,
+					matched: tagMatched && categoryMatched && calendarMatched,
+				};
+			})
+			.filter(({ matched }) => matched);
+
+		if (!hasTagFilter) {
+			return withScores.map(({ item }) => item);
 		}
 
-		return allItems.filter((item) => {
-			if (filter.type === "category") {
-				return isUncategorizedValue(filter.value)
-					? !item.dataset.category
-					: item.dataset.category === filter.value;
-			}
-			if (filter.type === "calendar") {
-				if (filter.calendarType === "year") {
-					return item.dataset.year === filter.calendarKey;
+		return withScores
+			.sort((a, b) => {
+				if (b.score !== a.score) {
+					return b.score - a.score;
 				}
-				if (filter.calendarType === "month") {
-					return item.dataset.month === filter.calendarKey;
-				}
-				return item.dataset.day === filter.calendarKey;
-			}
-			return true;
-		});
+				return (
+					(originalOrder.get(a.item) ?? 0) -
+					(originalOrder.get(b.item) ?? 0)
+				);
+			})
+			.map(({ item }) => item);
 	}
 
 	function renderPosts() {
@@ -194,7 +218,7 @@ export function initArchiveFilter(): void {
 		);
 		const matchingSet = new Set(matching);
 		const orderedItems =
-			currentFilter.type === "tag"
+			getSelectedTags(currentFilter).length > 0
 				? [
 						...matching,
 						...allItems.filter((item) => !matchingSet.has(item)),
@@ -214,7 +238,7 @@ export function initArchiveFilter(): void {
 
 		noResults?.classList.toggle(
 			"hidden",
-			currentFilter.type === "none" || matching.length > 0,
+			!hasActiveFilters(currentFilter) || matching.length > 0,
 		);
 	}
 
@@ -301,22 +325,30 @@ export function initArchiveFilter(): void {
 			return;
 		}
 
-		if (filter.type === "none") {
+		if (!hasActiveFilters(filter)) {
 			filterStatus.classList.add("hidden");
 			return;
 		}
 
 		filterStatus.classList.remove("hidden");
-		if (filter.type === "tag") {
-			const selectedTags = getSelectedTags(filter);
-			filterLabel.textContent = `标签：${selectedTags.join("、")}`;
-		} else if (filter.type === "category") {
-			filterLabel.textContent = isUncategorizedValue(filter.value)
-				? UNCATEGORIZED_LABEL || "未分类"
-				: `分类：${filter.value}`;
-		} else if (filter.type === "calendar") {
-			filterLabel.textContent = `日期：${filter.value}`;
+
+		const segments: string[] = [];
+		const selectedTags = getSelectedTags(filter);
+		if (selectedTags.length > 0) {
+			segments.push(`标签：${selectedTags.join("、")}`);
 		}
+		if (filter.category) {
+			segments.push(
+				isUncategorizedValue(filter.category)
+					? `分类：${UNCATEGORIZED_LABEL || "未分类"}`
+					: `分类：${filter.category}`,
+			);
+		}
+		if (filter.calendar) {
+			segments.push(`日期：${filter.calendar.label}`);
+		}
+
+		filterLabel.textContent = segments.join(" ｜ ");
 	}
 
 	function updateButtonStates(filter: FilterState) {
@@ -324,22 +356,16 @@ export function initArchiveFilter(): void {
 			.querySelectorAll<HTMLElement>(".archive-filter-btn")
 			.forEach((btn) => btn.classList.remove("active"));
 
-		if (filter.type === "none") {
-			return;
-		}
+		const selectedTags = getSelectedTags(filter);
+		selectedTags.forEach((tag) => {
+			const selector = `.archive-filter-btn[data-filter="tag"][data-value="${CSS.escape(tag)}"]`;
+			document
+				.querySelector<HTMLElement>(selector)
+				?.classList.add("active");
+		});
 
-		if (filter.type === "tag") {
-			const selectedTags = getSelectedTags(filter);
-			selectedTags.forEach((tag) => {
-				const selector = `.archive-filter-btn[data-filter="tag"][data-value="${CSS.escape(tag)}"]`;
-				document
-					.querySelector<HTMLElement>(selector)
-					?.classList.add("active");
-			});
-		}
-
-		if (filter.type === "category") {
-			const selector = `.archive-filter-btn[data-filter="category"][data-value="${CSS.escape(filter.value)}"]`;
+		if (filter.category) {
+			const selector = `.archive-filter-btn[data-filter="category"][data-value="${CSS.escape(filter.category)}"]`;
 			document
 				.querySelector<HTMLElement>(selector)
 				?.classList.add("active");
@@ -357,11 +383,15 @@ export function initArchiveFilter(): void {
 	function clearAllFilters() {
 		window.dispatchEvent(new CustomEvent("calendarFilterClear"));
 
-		currentFilter = { type: "none", value: "" };
+		currentFilter = {
+			tags: [],
+			category: null,
+			calendar: null,
+		};
 		currentPage = 1;
 		renderPosts();
-		updateFilterStatus({ type: "none", value: "" });
-		updateButtonStates({ type: "none", value: "" });
+		updateFilterStatus(currentFilter);
+		updateButtonStates(currentFilter);
 	}
 
 	// --- 使用 AbortController 注册所有事件，便于清理 ---
@@ -387,36 +417,25 @@ export function initArchiveFilter(): void {
 
 			window.dispatchEvent(new CustomEvent("calendarFilterClear"));
 			if (filterType === "tag") {
-				const selectedTags =
-					currentFilter.type === "tag"
-						? getSelectedTags(currentFilter)
-						: [];
+				const selectedTags = getSelectedTags(currentFilter);
 				const nextSelected = selectedTags.includes(filterValue)
 					? selectedTags.filter((tag) => tag !== filterValue)
 					: normalizeTagList([...selectedTags, filterValue]);
 
-				if (nextSelected.length === 0) {
-					clearAllFilters();
-					return;
-				}
-
 				applyFilter({
-					type: "tag",
-					value: nextSelected.join("、"),
-					values: nextSelected,
+					...currentFilter,
+					tags: nextSelected,
+					calendar: null,
 				});
 				return;
 			}
 
-			if (
-				currentFilter.type === "category" &&
-				currentFilter.value === filterValue
-			) {
-				clearAllFilters();
-				return;
-			}
-
-			applyFilter({ type: "category", value: filterValue });
+			applyFilter({
+				...currentFilter,
+				category:
+					currentFilter.category === filterValue ? null : filterValue,
+				calendar: null,
+			});
 		},
 		{ signal },
 	);
@@ -451,10 +470,12 @@ export function initArchiveFilter(): void {
 			}
 
 			currentFilter = {
-				type: "calendar",
-				value: detail.label || detail.key,
-				calendarType: detail.type,
-				calendarKey: detail.key,
+				...currentFilter,
+				calendar: {
+					type: detail.type,
+					key: detail.key,
+					label: detail.label || detail.key,
+				},
 			};
 
 			// 延迟一帧，覆盖 PostPage 的日历筛选结果
@@ -472,13 +493,16 @@ export function initArchiveFilter(): void {
 	window.addEventListener(
 		"calendarFilterClear",
 		() => {
-			if (currentFilter.type === "calendar") {
-				currentFilter = { type: "none", value: "" };
+			if (currentFilter.calendar !== null) {
+				currentFilter = {
+					...currentFilter,
+					calendar: null,
+				};
 				currentPage = 1;
 				requestAnimationFrame(() => {
 					renderPosts();
-					updateFilterStatus({ type: "none", value: "" });
-					updateButtonStates({ type: "none", value: "" });
+					updateFilterStatus(currentFilter);
+					updateButtonStates(currentFilter);
 				});
 			}
 		},
@@ -550,17 +574,19 @@ export function initArchiveFilter(): void {
 
 	if (tagParams.length > 0) {
 		const selectedTags = normalizeTagList(tagParams);
-		applyFilter({
-			type: "tag",
-			value: selectedTags.join("、"),
-			values: selectedTags,
-		});
+		currentFilter.tags = selectedTags;
 	} else if (tag) {
-		applyFilter({ type: "tag", value: tag, values: [tag] });
-	} else if (category) {
-		applyFilter({ type: "category", value: category });
+		currentFilter.tags = normalizeTagList([tag]);
+	}
+
+	if (category) {
+		currentFilter.category = category;
 	} else if (uncategorized) {
-		applyFilter({ type: "category", value: "uncategorized" });
+		currentFilter.category = "uncategorized";
+	}
+
+	if (hasActiveFilters(currentFilter)) {
+		applyFilter(currentFilter);
 	} else {
 		// 初始渲染：应用分页
 		renderPosts();

@@ -4,6 +4,7 @@ import { i18n } from "@i18n/translation";
 import MainGridLayout from "@layouts/MainGridLayout.astro";
 import PostPage from "@components/PostPage.astro";
 import Calendar from "@components/widget/Calendar.astro";
+import { Icon } from "astro-icon/components";
 import { getSortedPosts, getTagList, getCategoryList } from "@utils/content-utils";
 
 export const prerender = false;
@@ -33,9 +34,13 @@ const uncategorizedLabel = i18n(I18nKey.uncategorized);
 		<!-- 分页控件 -->
 		<div id="archive-pagination" class="hidden mt-4">
 			<div class="card-base p-3 rounded-[var(--radius-large)] flex items-center justify-center gap-2">
-				<button id="page-prev" class="pagination-btn" aria-label="上一页">＜</button>
+				<button id="page-prev" type="button" class="pagination-btn px-3.5 py-2.5" aria-label="上一页">
+					<Icon name="material-symbols:chevron-left-rounded" class="text-2xl" />
+				</button>
 				<div id="page-numbers" class="flex items-center gap-1"></div>
-				<button id="page-next" class="pagination-btn" aria-label="下一页">＞</button>
+				<button id="page-next" type="button" class="pagination-btn px-3.5 py-2.5" aria-label="下一页">
+					<Icon name="material-symbols:chevron-right-rounded" class="text-2xl" />
+				</button>
 			</div>
 		</div>
 	</div>
