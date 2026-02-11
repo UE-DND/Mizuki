@@ -22,9 +22,7 @@ import { createFancyboxController } from "./fancybox-init";
 import { checkKatex } from "./katex-loader";
 import { initLayoutController } from "./layout-controller";
 import { setupScrollIntentSource } from "./scroll-ui";
-import { setupScrollUi as setupScrollUiLegacy } from "./scroll-ui-legacy";
 import { setupSwupIntentSource } from "./swup-hooks";
-import { setupSwupHooks as setupSwupHooksLegacy } from "./swup-hooks-legacy";
 
 const BANNER_HEIGHT = 35;
 const BANNER_HEIGHT_EXTEND = 30;
@@ -127,8 +125,6 @@ export function initLayoutRuntime(): void {
 	const runtimeSettings = runtimeWindow.__MIZUKI_RUNTIME_SETTINGS__;
 	const bannerEnabled = Boolean(document.getElementById("banner-wrapper"));
 	const fancyboxController = createFancyboxController();
-	const useLayoutStateMachineV2 =
-		runtimeSettings?.system.experimental.layoutStateMachineV2 ?? true;
 	const navbarTransparentMode =
 		runtimeSettings?.settings.banner?.navbar?.transparentMode || "semi";
 
@@ -157,126 +153,68 @@ export function initLayoutRuntime(): void {
 		setupSakura();
 	}
 
-	if (useLayoutStateMachineV2) {
-		const layoutController = initLayoutController({
-			bannerEnabled,
-			defaultWallpaperMode:
-				runtimeSettings?.settings.wallpaperMode.defaultMode || "banner",
-			navbarTransparentMode,
-			bannerHeight: BANNER_HEIGHT,
-			bannerHeightHome: BANNER_HEIGHT_HOME,
-			bannerHeightExtend: BANNER_HEIGHT_EXTEND,
-			updateBannerCarouselState,
-		});
+	const layoutController = initLayoutController({
+		bannerEnabled,
+		defaultWallpaperMode:
+			runtimeSettings?.settings.wallpaperMode.defaultMode || "banner",
+		navbarTransparentMode,
+		bannerHeight: BANNER_HEIGHT,
+		bannerHeightHome: BANNER_HEIGHT_HOME,
+		bannerHeightExtend: BANNER_HEIGHT_EXTEND,
+		updateBannerCarouselState,
+	});
 
-		setupScrollIntentSource({
+	setupScrollIntentSource({
+		controller: layoutController,
+		bannerHeight: BANNER_HEIGHT,
+		bannerHeightHome: BANNER_HEIGHT_HOME,
+		bannerHeightExtend: BANNER_HEIGHT_EXTEND,
+	});
+
+	const attachSwupHooks = () => {
+		const swup = runtimeWindow.swup;
+		if (!swup) {
+			return;
+		}
+		ensureSwupHistoryAnimation(swup);
+
+		if (runtimeWindow.__layoutSwupHooksAttached) {
+			return;
+		}
+		if (!swup.hooks) {
+			return;
+		}
+		setupSwupIntentSource({
 			controller: layoutController,
-			bannerHeight: BANNER_HEIGHT,
-			bannerHeightHome: BANNER_HEIGHT_HOME,
-			bannerHeightExtend: BANNER_HEIGHT_EXTEND,
+			initFancybox: fancyboxController.initFancybox,
+			cleanupFancybox: fancyboxController.cleanupFancybox,
+			checkKatex,
+			initKatexScrollbars,
+			defaultTheme: DEFAULT_THEME,
+			darkMode: DARK_MODE,
+			pathsEqual,
+			url,
 		});
+		runtimeWindow.__layoutSwupHooksAttached = true;
+	};
 
-		const attachSwupHooks = () => {
-			const swup = runtimeWindow.swup;
-			if (!swup) {
-				return;
-			}
-			ensureSwupHistoryAnimation(swup);
-
-			if (runtimeWindow.__layoutSwupHooksAttached) {
-				return;
-			}
-			if (!swup.hooks) {
-				return;
-			}
-			setupSwupIntentSource({
-				controller: layoutController,
-				initFancybox: fancyboxController.initFancybox,
-				cleanupFancybox: fancyboxController.cleanupFancybox,
-				checkKatex,
-				initKatexScrollbars,
-				defaultTheme: DEFAULT_THEME,
-				darkMode: DARK_MODE,
-				pathsEqual,
-				url,
-			});
-			runtimeWindow.__layoutSwupHooksAttached = true;
-		};
-
-		if (runtimeWindow.swup?.hooks) {
-			void fancyboxController.initFancybox();
-			checkKatex();
-			attachSwupHooks();
-		} else {
-			document.addEventListener("swup:enable", attachSwupHooks, {
-				once: true,
-			});
-			if (document.readyState === "loading") {
-				document.addEventListener("DOMContentLoaded", () => {
-					void fancyboxController.initFancybox();
-					checkKatex();
-				});
-			} else {
-				void fancyboxController.initFancybox();
-				checkKatex();
-			}
-		}
+	if (runtimeWindow.swup?.hooks) {
+		void fancyboxController.initFancybox();
+		checkKatex();
+		attachSwupHooks();
 	} else {
-		const attachLegacySwupHooks = () => {
-			const swup = runtimeWindow.swup;
-			if (!swup) {
-				return;
-			}
-			ensureSwupHistoryAnimation(swup);
-
-			if (runtimeWindow.__layoutSwupHooksAttached) {
-				return;
-			}
-			if (!swup.hooks) {
-				return;
-			}
-			setupSwupHooksLegacy({
-				bannerEnabled,
-				bannerHeight: BANNER_HEIGHT,
-				bannerHeightHome: BANNER_HEIGHT_HOME,
-				initFancybox: fancyboxController.initFancybox,
-				cleanupFancybox: fancyboxController.cleanupFancybox,
-				checkKatex,
-				initKatexScrollbars,
-				updateBannerCarouselState,
-				defaultTheme: DEFAULT_THEME,
-				darkMode: DARK_MODE,
-				pathsEqual,
-				url,
-			});
-			runtimeWindow.__layoutSwupHooksAttached = true;
-		};
-
-		if (runtimeWindow.swup?.hooks) {
-			void fancyboxController.initFancybox();
-			checkKatex();
-			attachLegacySwupHooks();
-		} else {
-			document.addEventListener("swup:enable", attachLegacySwupHooks, {
-				once: true,
-			});
-			if (document.readyState === "loading") {
-				document.addEventListener("DOMContentLoaded", () => {
-					void fancyboxController.initFancybox();
-					checkKatex();
-				});
-			} else {
+		document.addEventListener("swup:enable", attachSwupHooks, {
+			once: true,
+		});
+		if (document.readyState === "loading") {
+			document.addEventListener("DOMContentLoaded", () => {
 				void fancyboxController.initFancybox();
 				checkKatex();
-			}
+			});
+		} else {
+			void fancyboxController.initFancybox();
+			checkKatex();
 		}
-
-		setupScrollUiLegacy({
-			bannerEnabled,
-			bannerHeight: BANNER_HEIGHT,
-			bannerHeightHome: BANNER_HEIGHT_HOME,
-			bannerHeightExtend: BANNER_HEIGHT_EXTEND,
-		});
 	}
 
 	const initBannerAndPanels = async () => {

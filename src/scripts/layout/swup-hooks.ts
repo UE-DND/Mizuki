@@ -1,4 +1,9 @@
 import type { LayoutController } from "./layout-controller";
+import {
+	applySidebarProfilePatch,
+	extractSidebarProfilePatch,
+	type SidebarProfilePatch,
+} from "./sidebar-profile-sync";
 import { scrollToHashBelowTocBaseline } from "@/utils/hash-scroll";
 import { getTocBaselineOffset } from "@/utils/toc-offset";
 
@@ -19,6 +24,7 @@ const BANNER_TO_SPEC_TRANSITION_ACTIVE_CLASS =
 const BANNER_TO_SPEC_TRANSITION_CONTENT_FADE_IN_CLASS =
 	"layout-banner-to-spec-transition-content-fade-in";
 const BANNER_TO_SPEC_SHIFT_VAR = "--layout-banner-route-up-shift";
+const BANNER_TO_SPEC_TRANSITION_DURATION_MS = 920;
 const COLLAPSED_MAIN_PANEL_TOP = "5.5rem";
 const SIDEBAR_OVERSHOOT_TOLERANCE_PX = 0.75;
 
@@ -186,6 +192,30 @@ function resolveBannerToSpecShiftPx(visit: SwupVisit): number {
 	return Math.max(0, Number(resolvedShift.toFixed(3)));
 }
 
+function isSidebarProfilePatchEqual(
+	left: SidebarProfilePatch,
+	right: SidebarProfilePatch,
+): boolean {
+	return (
+		left.uid === right.uid &&
+		left.displayName === right.displayName &&
+		left.bio === right.bio &&
+		left.profileLink === right.profileLink &&
+		left.avatarUrl === right.avatarUrl &&
+		left.socialHtml === right.socialHtml
+	);
+}
+
+function stripOnloadAnimationClasses(scope: HTMLElement): void {
+	scope.classList.remove("onload-animation");
+	const animatedElements =
+		scope.querySelectorAll<HTMLElement>(".onload-animation");
+	animatedElements.forEach((element) => {
+		element.classList.remove("onload-animation");
+		element.style.removeProperty("animation-delay");
+	});
+}
+
 type SwupIntentSourceDependencies = {
 	controller: LayoutController;
 	initFancybox: () => Promise<void>;
@@ -225,8 +255,31 @@ export function setupSwupIntentSource(
 	}
 
 	let pendingBannerToSpecRoutePath: string | null = null;
+	let pendingSidebarProfilePatch: SidebarProfilePatch | null = null;
+	let bannerToSpecAnimationStartedAt: number | null = null;
+	let delayedPageViewTimerId: number | null = null;
+
+	const clearDelayedPageViewTimer = (): void => {
+		if (delayedPageViewTimerId !== null) {
+			window.clearTimeout(delayedPageViewTimerId);
+			delayedPageViewTimerId = null;
+		}
+	};
+
+	const getBannerToSpecRemainingMs = (): number => {
+		if (
+			!pendingBannerToSpecRoutePath ||
+			bannerToSpecAnimationStartedAt === null
+		) {
+			return 0;
+		}
+		const elapsedMs = performance.now() - bannerToSpecAnimationStartedAt;
+		return Math.max(0, BANNER_TO_SPEC_TRANSITION_DURATION_MS - elapsedMs);
+	};
 
 	const clearBannerToSpecTransitionVisualState = (): void => {
+		clearDelayedPageViewTimer();
+		bannerToSpecAnimationStartedAt = null;
 		const root = document.documentElement;
 		root.classList.remove(BANNER_TO_SPEC_TRANSITION_CLASS);
 		root.classList.remove(BANNER_TO_SPEC_TRANSITION_ACTIVE_CLASS);
@@ -235,17 +288,65 @@ export function setupSwupIntentSource(
 	};
 
 	swup.hooks.before("content:replace", (visit: SwupVisit) => {
-		// Sidebar UID 比较：相同 sidebar 跳过替换
+		pendingSidebarProfilePatch = null;
+
+		// Sidebar UID 比较：相同 sidebar 跳过替换；不同账号但布局相同仅同步 profile 数据
 		const currentSidebar = document.querySelector<HTMLElement>("#sidebar");
 		const newSidebar = visit.to.document?.querySelector("#sidebar");
 		if (currentSidebar && newSidebar) {
 			const currentUid = currentSidebar.getAttribute("data-sidebar-uid");
 			const newUid = newSidebar.getAttribute("data-sidebar-uid");
-			if (currentUid && newUid && currentUid === newUid) {
+			const currentLayoutKey =
+				currentSidebar.getAttribute("data-sidebar-layout-key") || "";
+			const newLayoutKey =
+				newSidebar.getAttribute("data-sidebar-layout-key") || "";
+			const layoutComparable =
+				currentLayoutKey.length > 0 && newLayoutKey.length > 0;
+			const sameLayout =
+				layoutComparable && currentLayoutKey === newLayoutKey;
+			const currentPatch = extractSidebarProfilePatch(currentSidebar);
+			const nextPatch = extractSidebarProfilePatch(newSidebar);
+			const canPatch =
+				sameLayout && currentPatch !== null && nextPatch !== null;
+
+			const preserveSidebar = (): void => {
 				visit.containers = visit.containers.filter(
 					(c) => c !== "#sidebar",
 				);
+				stripOnloadAnimationClasses(currentSidebar);
 				currentSidebar.dataset.sidebarPreserved = "";
+				const nextScrollable =
+					newSidebar.getAttribute("data-scrollable");
+				if (nextScrollable) {
+					currentSidebar.setAttribute(
+						"data-scrollable",
+						nextScrollable,
+					);
+				}
+			};
+
+			if (currentUid && newUid && currentUid === newUid) {
+				if (layoutComparable && !sameLayout) {
+					// Same account but different widget layout -> let Swup replace full sidebar.
+				} else {
+					preserveSidebar();
+					if (
+						canPatch &&
+						!isSidebarProfilePatchEqual(
+							currentPatch as SidebarProfilePatch,
+							nextPatch as SidebarProfilePatch,
+						)
+					) {
+						pendingSidebarProfilePatch =
+							nextPatch as SidebarProfilePatch;
+					}
+				}
+			} else if (currentUid && newUid && sameLayout) {
+				if (canPatch) {
+					preserveSidebar();
+					pendingSidebarProfilePatch =
+						nextPatch as SidebarProfilePatch;
+				}
 			}
 		}
 
@@ -267,6 +368,10 @@ export function setupSwupIntentSource(
 		void deps.initFancybox();
 		deps.checkKatex();
 		deps.initKatexScrollbars();
+		if (pendingSidebarProfilePatch) {
+			applySidebarProfilePatch(pendingSidebarProfilePatch);
+			pendingSidebarProfilePatch = null;
+		}
 
 		const tocElement = document.querySelector("table-of-contents") as
 			| (HTMLElement & { init?: () => void })
@@ -306,6 +411,8 @@ export function setupSwupIntentSource(
 	swup.hooks.on("visit:start", (visit: SwupVisit) => {
 		deps.cleanupFancybox();
 		pendingBannerToSpecRoutePath = null;
+		pendingSidebarProfilePatch = null;
+		bannerToSpecAnimationStartedAt = null;
 		clearBannerToSpecTransitionVisualState();
 
 		const targetPathname = extractVisitPathname(visit);
@@ -347,105 +454,131 @@ export function setupSwupIntentSource(
 		if (!pendingBannerToSpecRoutePath) {
 			return;
 		}
+		bannerToSpecAnimationStartedAt = performance.now();
 		document.documentElement.classList.add(
 			BANNER_TO_SPEC_TRANSITION_ACTIVE_CLASS,
 		);
 	});
 
 	swup.hooks.on("page:view", () => {
-		const hash = window.location.hash?.slice(1);
+		const finalizePageView = (): void => {
+			const hash = window.location.hash?.slice(1);
 
-		deps.controller.dispatch({
-			type: "ROUTE_CHANGED",
-			path: window.location.pathname,
-			scrollTop: document.documentElement.scrollTop,
-			viewportWidth: window.innerWidth,
-			reason: "route-change",
-		});
-
-		clearBannerToSpecTransitionVisualState();
-		pendingBannerToSpecRoutePath = null;
-
-		const isHomePage = deps.pathsEqual(
-			window.location.pathname,
-			deps.url("/"),
-		);
-
-		const bannerTextOverlay = document.querySelector(
-			".banner-text-overlay",
-		);
-		if (bannerTextOverlay) {
-			if (isHomePage) {
-				bannerTextOverlay.classList.remove("hidden");
-			} else {
-				bannerTextOverlay.classList.add("hidden");
-			}
-		}
-
-		const heightExtend = document.getElementById("page-height-extend");
-		if (heightExtend) {
-			heightExtend.classList.remove("hidden");
-		}
-
-		if (hash) {
-			requestAnimationFrame(() => {
-				scrollToHashBelowTocBaseline(hash, {
-					behavior: "instant",
-				});
+			deps.controller.dispatch({
+				type: "ROUTE_CHANGED",
+				path: window.location.pathname,
+				scrollTop: document.documentElement.scrollTop,
+				viewportWidth: window.innerWidth,
+				reason: "route-change",
 			});
-		} else {
-			window.scrollTo({ top: 0, behavior: "instant" as ScrollBehavior });
-		}
 
-		const storedTheme = localStorage.getItem("theme") || deps.defaultTheme;
-		const isDark = storedTheme === deps.darkMode;
-		const expectedTheme = isDark ? "github-dark" : "github-light";
-		const currentTheme =
-			document.documentElement.getAttribute("data-theme");
-		const hasDarkClass =
-			document.documentElement.classList.contains("dark");
+			clearBannerToSpecTransitionVisualState();
+			pendingBannerToSpecRoutePath = null;
+			pendingSidebarProfilePatch = null;
 
-		if (currentTheme !== expectedTheme || hasDarkClass !== isDark) {
-			requestAnimationFrame(() => {
-				if (currentTheme !== expectedTheme) {
-					document.documentElement.setAttribute(
-						"data-theme",
-						expectedTheme,
+			const isHomePage = deps.pathsEqual(
+				window.location.pathname,
+				deps.url("/"),
+			);
+
+			const bannerTextOverlay = document.querySelector(
+				".banner-text-overlay",
+			);
+			if (bannerTextOverlay) {
+				if (isHomePage) {
+					bannerTextOverlay.classList.remove("hidden");
+				} else {
+					bannerTextOverlay.classList.add("hidden");
+				}
+			}
+
+			const heightExtend = document.getElementById("page-height-extend");
+			if (heightExtend) {
+				heightExtend.classList.remove("hidden");
+			}
+
+			if (hash) {
+				requestAnimationFrame(() => {
+					scrollToHashBelowTocBaseline(hash, {
+						behavior: "instant",
+					});
+				});
+			} else {
+				window.scrollTo({
+					top: 0,
+					behavior: "instant" as ScrollBehavior,
+				});
+			}
+
+			const storedTheme =
+				localStorage.getItem("theme") || deps.defaultTheme;
+			const isDark = storedTheme === deps.darkMode;
+			const expectedTheme = isDark ? "github-dark" : "github-light";
+			const currentTheme =
+				document.documentElement.getAttribute("data-theme");
+			const hasDarkClass =
+				document.documentElement.classList.contains("dark");
+
+			if (currentTheme !== expectedTheme || hasDarkClass !== isDark) {
+				requestAnimationFrame(() => {
+					if (currentTheme !== expectedTheme) {
+						document.documentElement.setAttribute(
+							"data-theme",
+							expectedTheme,
+						);
+					}
+					if (hasDarkClass !== isDark) {
+						if (isDark) {
+							document.documentElement.classList.add("dark");
+						} else {
+							document.documentElement.classList.remove("dark");
+						}
+					}
+				});
+			}
+
+			window.setTimeout(() => {
+				if (document.getElementById("tcomment")) {
+					document.dispatchEvent(
+						new CustomEvent("mizuki:page:loaded", {
+							detail: {
+								path: window.location.pathname,
+								timestamp: Date.now(),
+							},
+						}),
 					);
 				}
-				if (hasDarkClass !== isDark) {
-					if (isDark) {
-						document.documentElement.classList.add("dark");
-					} else {
-						document.documentElement.classList.remove("dark");
-					}
-				}
-			});
+			}, 300);
+		};
+
+		const remainingMs = getBannerToSpecRemainingMs();
+		if (remainingMs > 0) {
+			clearDelayedPageViewTimer();
+			delayedPageViewTimerId = window.setTimeout(() => {
+				delayedPageViewTimerId = null;
+				finalizePageView();
+			}, Math.ceil(remainingMs));
+			return;
 		}
 
-		window.setTimeout(() => {
-			if (document.getElementById("tcomment")) {
-				document.dispatchEvent(
-					new CustomEvent("mizuki:page:loaded", {
-						detail: {
-							path: window.location.pathname,
-							timestamp: Date.now(),
-						},
-					}),
-				);
-			}
-		}, 300);
+		finalizePageView();
 	});
 
 	swup.hooks.on("visit:end", () => {
-		pendingBannerToSpecRoutePath = null;
-		clearBannerToSpecTransitionVisualState();
+		const remainingMs = getBannerToSpecRemainingMs();
+		if (remainingMs <= 0) {
+			pendingBannerToSpecRoutePath = null;
+			pendingSidebarProfilePatch = null;
+			clearBannerToSpecTransitionVisualState();
+		}
 
 		const sidebar = document.getElementById("sidebar");
 		if (sidebar) {
 			delete sidebar.dataset.sidebarPreserved;
 		}
 
+		const cleanupDelayMs =
+			remainingMs > 0 ? Math.ceil(remainingMs) + 200 : 200;
 		window.setTimeout(() => {
 			const heightExtend = document.getElementById("page-height-extend");
 			if (heightExtend) {
@@ -455,6 +588,6 @@ export function setupSwupIntentSource(
 			if (toc) {
 				toc.classList.remove("toc-not-ready");
 			}
-		}, 200);
+		}, cleanupDelayMs);
 	});
 }

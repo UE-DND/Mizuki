@@ -39,6 +39,12 @@ const stickyContainerClass =
 	"flex flex-col w-full gap-4 sticky top-4 transition-[top] duration-[var(--layout-mode-transition-duration)] ease-[var(--layout-mode-transition-easing)]";
 
 const sidebarUid = Astro.locals.sidebarProfile?.username || "__official__";
+const sidebarLayoutKey = JSON.stringify({
+	mobileTop: mobileTopComponents.map((component) => component.type),
+	mobileSticky: mobileStickyComponents.map((component) => component.type),
+	tabletTop: tabletTopComponents.map((component) => component.type),
+	tabletSticky: tabletStickyComponents.map((component) => component.type),
+});
 const hasScrollableContent =
 	mobileStickyComponents.length > 0 || tabletStickyComponents.length > 0;
 ---
@@ -46,6 +52,7 @@ const hasScrollableContent =
 <div
 	id="sidebar"
 	data-sidebar-uid={sidebarUid}
+	data-sidebar-layout-key={sidebarLayoutKey}
 	data-scrollable={hasScrollableContent ? "true" : "false"}
 	class:list={[className, "w-full sidebar-root"]}
 >

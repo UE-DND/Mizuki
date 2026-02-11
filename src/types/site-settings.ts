@@ -60,7 +60,6 @@ export type SystemSiteConfig = {
 	themeColor: SiteConfig["themeColor"];
 	font: SiteConfig["font"];
 	pageScaling: NonNullable<SiteConfig["pageScaling"]>;
-	experimental: Required<NonNullable<SiteConfig["experimental"]>>;
 	permalink: PermalinkConfig;
 	expressiveCode: ExpressiveCodeConfig;
 };

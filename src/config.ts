@@ -50,9 +50,6 @@ export const systemSiteConfig: SystemSiteConfig = {
 		enable: true,
 		targetWidth: 2000,
 	},
-	experimental: {
-		layoutStateMachineV2: true,
-	},
 	permalink: {
 		enable: false,
 		format: "%postname%",
@@ -339,7 +336,6 @@ export function buildLegacySiteConfig(
 		featurePages: settings.featurePages,
 		navbarTitle: settings.navbarTitle,
 		pageScaling: system.pageScaling,
-		experimental: system.experimental,
 		font: system.font,
 		wallpaperMode: settings.wallpaperMode,
 		banner: settings.banner,

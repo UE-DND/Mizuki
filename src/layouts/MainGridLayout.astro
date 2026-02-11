@@ -656,12 +656,11 @@ const mainContentClass = `
 :global(html.layout-banner-to-spec-transition .transition-main),
 :global(html.layout-banner-to-spec-transition .transition-leaving),
 :global(html.layout-banner-to-spec-transition .transition-swup-fade) {
-    transition-duration: 320ms !important;
-    animation-duration: 920ms !important;
+    transition-duration: 280ms !important;
 }
 
 :global(html.layout-banner-to-spec-transition #content-wrapper) {
-    transition: opacity 320ms cubic-bezier(0.22, 1, 0.36, 1) !important;
+    transition: opacity 240ms cubic-bezier(0.22, 1, 0.36, 1) !important;
 }
 
 :global(html.layout-banner-to-spec-transition.is-animating) #swup-container,
@@ -683,6 +682,21 @@ const mainContentClass = `
 :global(html.layout-banner-to-spec-transition) #top-row,
 :global(html.layout-banner-to-spec-transition.layout-banner-to-spec-transition-active) #top-row {
     transform: translate3d(0, 0, 0) !important;
+}
+
+/* Start logo resize at the exact same frame as banner->spec transition start. */
+@media (min-width: 768px) {
+    :global(html.layout-banner-to-spec-transition #navbar-logo) {
+        height: 3.25rem !important;
+        transition-duration: 920ms !important;
+        transition-timing-function: cubic-bezier(0.22, 1, 0.36, 1) !important;
+    }
+
+    :global(html.layout-banner-to-spec-transition #navbar-logo img) {
+        height: 3.25rem !important;
+        transition-duration: 920ms !important;
+        transition-timing-function: cubic-bezier(0.22, 1, 0.36, 1) !important;
+    }
 }
 
 /* Keep banner visible during the synchronized upward transition. */
