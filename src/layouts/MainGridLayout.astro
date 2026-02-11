@@ -550,13 +550,43 @@ const mainContentClass = `
 	                ) : null}
 	            </div>
 
-            <main id="swup-container" class={`${mainContentClass} transition-main`}>
-                <div id="content-wrapper" class="onload-animation transition-leaving">
+            <main
+                id="swup-container"
+                data-enter-skeleton-target="fallback"
+                class={`${mainContentClass} transition-main relative`}
+            >
+                <div
+                    id="content-wrapper"
+                    data-enter-skeleton-content
+                    class="onload-animation transition-leaving"
+                >
                     <!-- the overflow-hidden here prevent long text break the layout-->
                     <!-- make id different from windows.swup global property -->
                     <slot></slot>
                     <div class="footer col-span-full onload-animation hidden lg:block">
                         <Footer></Footer>
+                    </div>
+                </div>
+                <div
+                    data-enter-skeleton-placeholder
+                    aria-hidden="true"
+                    class="absolute inset-0 z-20 pointer-events-none p-1"
+                >
+                    <div class="md3-skeleton-surface card-base h-full min-h-[16rem] rounded-[var(--radius-large)] p-6 md:p-8">
+                        <div class="space-y-4">
+                            <div class="md3-skeleton-text" style="--skeleton-width: 52%; --skeleton-height: 1.25rem;"></div>
+                            <div class="md3-skeleton-text" style="--skeleton-width: 36%;"></div>
+                            <div class="space-y-3 pt-3">
+                                <div class="md3-skeleton-text" style="--skeleton-width: 96%;"></div>
+                                <div class="md3-skeleton-text" style="--skeleton-width: 92%;"></div>
+                                <div class="md3-skeleton-text" style="--skeleton-width: 88%;"></div>
+                                <div class="md3-skeleton-text" style="--skeleton-width: 75%;"></div>
+                            </div>
+                            <div class="grid grid-cols-2 gap-4 pt-4">
+                                <div class="md3-skeleton-block h-20"></div>
+                                <div class="md3-skeleton-block h-20"></div>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </main>

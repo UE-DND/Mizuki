@@ -65,8 +65,18 @@ const enabledLinks = (sidebarData.social_links || []).filter((link: SocialLink) 
                   class="transition opacity-0 scale-90 group-hover:scale-100 group-hover:opacity-100 text-white text-5xl">
             </Icon>
         </div>
-        <div data-sidebar-profile-avatar class="mx-auto lg:w-full h-full lg:mt-0">
-            <ImageWrapper src={avatarUrl} alt="Profile Image of the Author" class="mx-auto lg:w-full h-full lg:mt-0 "></ImageWrapper>
+        <div
+            data-sidebar-avatar-shell
+            data-avatar-loading="true"
+            class="relative mx-auto lg:w-full h-full lg:mt-0"
+        >
+            <div
+                class="sidebar-avatar-skeleton md3-skeleton-circle"
+                aria-hidden="true"
+            ></div>
+            <div data-sidebar-profile-avatar class="mx-auto lg:w-full h-full lg:mt-0">
+                <ImageWrapper src={avatarUrl} alt="Profile Image of the Author" class="mx-auto lg:w-full h-full lg:mt-0 "></ImageWrapper>
+            </div>
         </div>
     </a>
     <div class="px-2">

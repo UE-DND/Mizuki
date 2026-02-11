@@ -2,8 +2,14 @@ import type { LayoutController } from "./layout-controller";
 import {
 	applySidebarProfilePatch,
 	extractSidebarProfilePatch,
+	syncSidebarAvatarLoadingState,
 	type SidebarProfilePatch,
 } from "./sidebar-profile-sync";
+import {
+	activateEnterSkeleton,
+	deactivateEnterSkeleton,
+	forceResetEnterSkeleton,
+} from "./enter-skeleton";
 import { scrollToHashBelowTocBaseline } from "@/utils/hash-scroll";
 import { getTocBaselineOffset } from "@/utils/toc-offset";
 
@@ -365,6 +371,7 @@ export function setupSwupIntentSource(
 	});
 
 	swup.hooks.on("content:replace", () => {
+		activateEnterSkeleton();
 		void deps.initFancybox();
 		deps.checkKatex();
 		deps.initKatexScrollbars();
@@ -372,6 +379,7 @@ export function setupSwupIntentSource(
 			applySidebarProfilePatch(pendingSidebarProfilePatch);
 			pendingSidebarProfilePatch = null;
 		}
+		syncSidebarAvatarLoadingState(document);
 
 		const tocElement = document.querySelector("table-of-contents") as
 			| (HTMLElement & { init?: () => void })
@@ -462,6 +470,7 @@ export function setupSwupIntentSource(
 
 	swup.hooks.on("page:view", () => {
 		const finalizePageView = (): void => {
+			deactivateEnterSkeleton();
 			const hash = window.location.hash?.slice(1);
 
 			deps.controller.dispatch({
@@ -565,6 +574,7 @@ export function setupSwupIntentSource(
 	});
 
 	swup.hooks.on("visit:end", () => {
+		forceResetEnterSkeleton();
 		const remainingMs = getBannerToSpecRemainingMs();
 		if (remainingMs <= 0) {
 			pendingBannerToSpecRoutePath = null;

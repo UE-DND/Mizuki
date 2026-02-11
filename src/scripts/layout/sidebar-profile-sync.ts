@@ -32,6 +32,92 @@ function readAllProfileRoots(scope: ParentNode | null): HTMLElement[] {
 	);
 }
 
+function setAvatarShellLoading(shell: HTMLElement, isLoading: boolean): void {
+	shell.dataset.avatarLoading = isLoading ? "true" : "false";
+}
+
+function isImageSettled(img: HTMLImageElement): boolean {
+	return (
+		img.complete &&
+		Number.isFinite(img.naturalWidth) &&
+		img.naturalWidth > 0
+	);
+}
+
+function resolveAvatarImage(
+	root: HTMLElement,
+): { shell: HTMLElement; img: HTMLImageElement } | null {
+	const shell = root.querySelector<HTMLElement>(
+		"[data-sidebar-avatar-shell]",
+	);
+	if (!(shell instanceof HTMLElement)) {
+		return null;
+	}
+
+	const img = shell.querySelector<HTMLImageElement>(
+		"[data-sidebar-profile-avatar] img",
+	);
+	if (!(img instanceof HTMLImageElement)) {
+		setAvatarShellLoading(shell, false);
+		return null;
+	}
+
+	return { shell, img };
+}
+
+function observeAvatarImageLoad(
+	shell: HTMLElement,
+	img: HTMLImageElement,
+): void {
+	const observedSrc = clean(img.currentSrc || img.getAttribute("src"));
+	const cachedObservedSrc = clean(shell.dataset.avatarObservedSrc);
+	const listenerAttached = shell.dataset.avatarListenerAttached === "true";
+
+	if (observedSrc && observedSrc === cachedObservedSrc && listenerAttached) {
+		return;
+	}
+
+	shell.dataset.avatarObservedSrc = observedSrc;
+	shell.dataset.avatarListenerAttached = "true";
+	setAvatarShellLoading(shell, true);
+
+	const settle = (): void => {
+		setAvatarShellLoading(shell, false);
+		delete shell.dataset.avatarListenerAttached;
+	};
+
+	img.addEventListener("load", settle, { once: true });
+	img.addEventListener("error", settle, { once: true });
+}
+
+export function syncSidebarAvatarLoadingState(scope: ParentNode | null): void {
+	const roots = readAllProfileRoots(scope);
+	if (roots.length === 0) {
+		return;
+	}
+
+	roots.forEach((root) => {
+		const avatar = resolveAvatarImage(root);
+		if (!avatar) {
+			return;
+		}
+
+		const { shell, img } = avatar;
+		const avatarSrc = clean(img.currentSrc || img.getAttribute("src"));
+		if (!avatarSrc) {
+			setAvatarShellLoading(shell, false);
+			return;
+		}
+
+		if (isImageSettled(img)) {
+			setAvatarShellLoading(shell, false);
+			return;
+		}
+
+		observeAvatarImageLoad(shell, img);
+	});
+}
+
 export function extractSidebarProfilePatch(
 	scope: ParentNode | null,
 ): SidebarProfilePatch | null {
@@ -131,6 +217,7 @@ export function applySidebarProfilePatch(patch: SidebarProfilePatch): void {
 	});
 
 	sidebar.dataset.sidebarUid = patch.uid || "__official__";
+	syncSidebarAvatarLoadingState(sidebar);
 
 	const nextAvatarUrl = clean(patch.avatarUrl);
 	const currentAvatarUrl = clean(avatars[0]?.getAttribute("src"));
@@ -139,6 +226,7 @@ export function applySidebarProfilePatch(patch: SidebarProfilePatch): void {
 		!nextAvatarUrl ||
 		nextAvatarUrl === currentAvatarUrl
 	) {
+		syncSidebarAvatarLoadingState(sidebar);
 		return;
 	}
 
@@ -152,6 +240,7 @@ export function applySidebarProfilePatch(patch: SidebarProfilePatch): void {
 			avatar.setAttribute("src", nextAvatarUrl);
 			avatar.removeAttribute("srcset");
 		});
+		syncSidebarAvatarLoadingState(sidebar);
 	};
 
 	const preloader = new Image();

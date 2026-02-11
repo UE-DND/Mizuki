@@ -56,8 +56,10 @@ const publishedDate =
 	data-article-id={article_id}
 	data-author-id={author_id}
 	data-author-handle={authorHandle}
+	data-enter-skeleton-target="post-card"
 >
 	<div
+		data-enter-skeleton-content
 		class:list={[
 			"pl-6 md:pl-9 pr-6 md:pr-2 pt-6 md:pt-7 pb-6 relative",
 			{
@@ -174,6 +176,7 @@ const publishedDate =
 	{
 		hasCover && (
 			<a
+				data-enter-skeleton-content
 				href={url}
 				aria-label={title}
 				class:list={[
@@ -202,6 +205,7 @@ const publishedDate =
 	{
 		!hasCover && (
 			<a
+				data-enter-skeleton-content
 				href={url}
 				aria-label={title}
 				class="hidden md:flex btn-regular w-[3.25rem]
@@ -215,6 +219,56 @@ const publishedDate =
 			</a>
 		)
 	}
+	<div
+		data-enter-skeleton-placeholder
+		aria-hidden="true"
+		class="absolute inset-0 z-20 pointer-events-none"
+	>
+		<div
+			class:list={[
+				"pl-6 md:pl-9 pr-6 md:pr-2 pt-6 md:pt-7 pb-6 h-full",
+				{
+					"w-full md:w-[calc(100%_-_3.25rem_-_0.75rem)]": !hasCover,
+					"w-full md:w-[calc(100%_-_var(--coverWidth)_-_0.75rem)]": hasCover,
+				},
+			]}
+		>
+			<div class="space-y-3.5">
+				<div class="md3-skeleton-text" style="--skeleton-width: 78%; --skeleton-height: 1.6rem;"></div>
+				<div class="md3-skeleton-text hidden md:block" style="--skeleton-width: 48%; --skeleton-height: 1.6rem;"></div>
+				<div class="md3-skeleton-text md:hidden" style="--skeleton-width: 56%; --skeleton-height: 1.35rem;"></div>
+				<div class="pt-2 space-y-2.5">
+					<div class="md3-skeleton-text" style="--skeleton-width: 94%;"></div>
+					<div class="md3-skeleton-text" style="--skeleton-width: 72%;"></div>
+				</div>
+				<div class="flex items-center justify-between pt-3">
+					<div class="flex items-center gap-2 w-[11rem]">
+						<div class="md3-skeleton-text" style="--skeleton-width: 58%; --skeleton-height: 0.72rem;"></div>
+						<div class="md3-skeleton-circle h-1.5 w-1.5"></div>
+						<div class="md3-skeleton-text" style="--skeleton-width: 36%; --skeleton-height: 0.72rem;"></div>
+					</div>
+					<div class="flex items-center gap-2.5 w-[8.75rem] justify-end">
+						<div class="md3-skeleton-block h-6 w-12 rounded-lg"></div>
+						<div class="md3-skeleton-block h-6 w-12 rounded-lg"></div>
+						<div class="md3-skeleton-circle h-8 w-8"></div>
+					</div>
+				</div>
+			</div>
+		</div>
+		{
+			hasCover ? (
+				<div
+					class="max-h-[20vh] md:max-h-none mx-4 mt-4 -mb-2 md:mb-0 md:mx-0 md:mt-0 md:w-[var(--coverWidth)] relative md:absolute md:top-3 md:bottom-3 md:right-3 rounded-xl overflow-hidden"
+				>
+					<div class="md3-skeleton-block h-full w-full rounded-xl"></div>
+				</div>
+			) : (
+				<div class="hidden md:flex absolute right-3 top-3 bottom-3 w-[3.25rem] rounded-xl overflow-hidden">
+					<div class="md3-skeleton-block h-full w-full rounded-xl"></div>
+				</div>
+			)
+		}
+	</div>
 </div>
 <div
 	class="transition border-t-[1px] border-dashed mx-6 border-black/10 dark:border-white/[0.15] last:border-t-0 md:hidden"

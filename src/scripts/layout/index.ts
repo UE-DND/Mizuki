@@ -21,6 +21,7 @@ import {
 import { createFancyboxController } from "./fancybox-init";
 import { checkKatex } from "./katex-loader";
 import { initLayoutController } from "./layout-controller";
+import { syncSidebarAvatarLoadingState } from "./sidebar-profile-sync";
 import { setupScrollIntentSource } from "./scroll-ui";
 import { setupSwupIntentSource } from "./swup-hooks";
 
@@ -132,6 +133,7 @@ export function initLayoutRuntime(): void {
 	setupCodeCopyDelegation();
 	setupBannerRuntime();
 	setupHashOffsetNavigation(runtimeWindow);
+	syncSidebarAvatarLoadingState(document);
 
 	const setupSakura = () => {
 		const sakuraConfig = runtimeSettings?.settings.sakura;

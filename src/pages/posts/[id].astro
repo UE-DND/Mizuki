@@ -124,55 +124,81 @@ const coverUrl = article?.cover_url
 		<>
 			<article
 				id="post-container"
-				class="card-base p-6 md:p-8 rounded-[var(--radius-large)] mb-4"
+				data-enter-skeleton-target="post-detail"
+				class="card-base p-6 md:p-8 rounded-[var(--radius-large)] mb-4 relative"
 			>
-				<div
-					id="article-manage-root"
-					class="hidden mb-4 flex items-center justify-end"
-					data-article-id={article.id}
-					data-author-id={article.author?.id || ""}
-				>
-					<details class="relative">
-						<summary class="list-none cursor-pointer btn-plain scale-animation w-9 h-9 rounded-lg flex items-center justify-center text-lg select-none" aria-label="更多操作">
-							...
-						</summary>
-						<div class="absolute right-0 top-10 z-10 min-w-[8rem] card-base rounded-xl border border-[var(--line-divider)] p-2">
-							<button
-								type="button"
-								id="article-delete-trigger"
-								class="w-full text-left px-3 py-2 rounded-lg text-sm text-red-500 hover:bg-black/5 dark:hover:bg-white/10"
-							>
-								删除文章
-							</button>
-						</div>
-					</details>
-				</div>
-				<header class="mb-6 space-y-3">
-					<h1 class="text-3xl md:text-4xl font-bold text-90">{article.title}</h1>
-					<div class="flex flex-wrap items-center gap-3 text-sm text-60">
-						{article.author?.name && <span>作者：{article.author.name}</span>}
-						{article.published_at && <time datetime={article.published_at}>发布时间：{new Date(article.published_at).toLocaleString()}</time>}
-						{article.category && <span>分类：{article.category}</span>}
+				<div data-enter-skeleton-content>
+					<div
+						id="article-manage-root"
+						class="hidden mb-4 flex items-center justify-end"
+						data-article-id={article.id}
+						data-author-id={article.author?.id || ""}
+					>
+						<details class="relative">
+							<summary class="list-none cursor-pointer btn-plain scale-animation w-9 h-9 rounded-lg flex items-center justify-center text-lg select-none" aria-label="更多操作">
+								...
+							</summary>
+							<div class="absolute right-0 top-10 z-10 min-w-[8rem] card-base rounded-xl border border-[var(--line-divider)] p-2">
+								<button
+									type="button"
+									id="article-delete-trigger"
+									class="w-full text-left px-3 py-2 rounded-lg text-sm text-red-500 hover:bg-black/5 dark:hover:bg-white/10"
+								>
+									删除文章
+								</button>
+							</div>
+						</details>
 					</div>
-					{article.summary && <p class="text-base text-75">{article.summary}</p>}
-					{article.tags.length > 0 && (
-						<div class="flex flex-wrap gap-2">
-							{article.tags.map((tag) => (
-								<span class="btn-regular h-7 text-xs px-3 rounded-lg">#{tag}</span>
-							))}
+					<header class="mb-6 space-y-3">
+						<h1 class="text-3xl md:text-4xl font-bold text-90">{article.title}</h1>
+						<div class="flex flex-wrap items-center gap-3 text-sm text-60">
+							{article.author?.name && <span>作者：{article.author.name}</span>}
+							{article.published_at && <time datetime={article.published_at}>发布时间：{new Date(article.published_at).toLocaleString()}</time>}
+							{article.category && <span>分类：{article.category}</span>}
+						</div>
+						{article.summary && <p class="text-base text-75">{article.summary}</p>}
+						{article.tags.length > 0 && (
+							<div class="flex flex-wrap gap-2">
+								{article.tags.map((tag) => (
+									<span class="btn-regular h-7 text-xs px-3 rounded-lg">#{tag}</span>
+								))}
+							</div>
+						)}
+					</header>
+
+					{coverUrl && (
+						<div class="mb-6">
+							<img src={coverUrl} alt={article.title} class="w-full max-h-[420px] object-cover rounded-xl border border-[var(--line-divider)]" loading="lazy" />
 						</div>
 					)}
-				</header>
 
-				{coverUrl && (
-					<div class="mb-6">
-						<img src={coverUrl} alt={article.title} class="w-full max-h-[420px] object-cover rounded-xl border border-[var(--line-divider)]" loading="lazy" />
+					<Markdown class="markdown-content">
+						<Fragment set:html={articleHtml} />
+					</Markdown>
+				</div>
+				<div data-enter-skeleton-placeholder aria-hidden="true" class="absolute inset-0 z-20 pointer-events-none p-6 md:p-8">
+					<div class="space-y-4">
+						<div class="md3-skeleton-text" style="--skeleton-width: 62%; --skeleton-height: 2rem;"></div>
+						<div class="md3-skeleton-text" style="--skeleton-width: 48%; --skeleton-height: 0.95rem;"></div>
+						<div class="space-y-2 pt-1">
+							<div class="md3-skeleton-text" style="--skeleton-width: 92%;"></div>
+							<div class="md3-skeleton-text" style="--skeleton-width: 66%;"></div>
+						</div>
+						{coverUrl && (
+							<div class="md3-skeleton-block h-[240px] md:h-[320px] w-full rounded-xl"></div>
+						)}
+						<div class="space-y-3 pt-2">
+							<div class="md3-skeleton-text" style="--skeleton-width: 100%;"></div>
+							<div class="md3-skeleton-text" style="--skeleton-width: 96%;"></div>
+							<div class="md3-skeleton-text" style="--skeleton-width: 94%;"></div>
+							<div class="md3-skeleton-text" style="--skeleton-width: 98%;"></div>
+							<div class="md3-skeleton-text" style="--skeleton-width: 90%;"></div>
+							<div class="md3-skeleton-text" style="--skeleton-width: 84%;"></div>
+							<div class="md3-skeleton-text" style="--skeleton-width: 88%;"></div>
+							<div class="md3-skeleton-text" style="--skeleton-width: 72%;"></div>
+						</div>
 					</div>
-				)}
-
-				<Markdown class="markdown-content">
-					<Fragment set:html={articleHtml} />
-				</Markdown>
+				</div>
 			</article>
 
 			<Comment module="articles" contentId={article.id} allowComments={article.allow_comments} />
