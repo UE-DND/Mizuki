@@ -308,6 +308,9 @@ html {
   .text-75 {
     @apply text-black/75 dark:text-white/75;
   }
+  .text-70 {
+    @apply text-black/70 dark:text-white/70;
+  }
   .text-60 {
     @apply text-black/60 dark:text-white/60;
   }
@@ -461,6 +464,12 @@ html {
 /* 夜间模式下选中文本的颜色 */
 :root.dark ::selection {
   color: #ffffff;
+}
+
+/* 深色模式下输入框光标颜色 */
+:root.dark input,
+:root.dark textarea {
+  caret-color: white;
 }
 
 .dash-line {

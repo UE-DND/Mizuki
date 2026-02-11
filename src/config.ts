@@ -156,17 +156,17 @@ export const defaultSiteSettings: SiteSettingsPayload = {
 					},
 					{
 						name: "番剧",
-						url: "/me/#anime",
+						url: "/__user__/anime",
 						icon: "material-symbols:movie",
 					},
 					{
 						name: "日记",
-						url: "/me/#diary",
+						url: "/__user__/diary",
 						icon: "material-symbols:book",
 					},
 					{
 						name: "相册",
-						url: "/me/#albums",
+						url: "/__user__/albums",
 						icon: "material-symbols:photo-library",
 					},
 				],
