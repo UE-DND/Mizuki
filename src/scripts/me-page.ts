@@ -89,7 +89,7 @@ const buildLoginRedirectHref = (): string => {
 	if (!redirect.startsWith("/") || redirect.startsWith("//")) {
 		return "/login";
 	}
-	return `/login/?redirect=${encodeURIComponent(redirect)}`;
+	return `/login?redirect=${encodeURIComponent(redirect)}`;
 };
 
 const extractFileId = (value: unknown): string => {

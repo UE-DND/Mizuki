@@ -118,7 +118,7 @@ async function applyBlockedUsersFilter() {
 		return;
 	}
 	try {
-		const response = await fetch("/api/v1/me/blocks/?limit=200", {
+		const response = await fetch("/api/v1/me/blocks?limit=200", {
 			credentials: "include",
 		});
 		const data = await response.json().catch(() => ({}));

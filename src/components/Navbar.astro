@@ -121,11 +121,35 @@ const links: NavBarLink[] = navBarConfig.links
         anchors.forEach((anchor) => {
             const rawHref = anchor.getAttribute("href") || "";
             if (!rawHref.startsWith("/")) return;
-            if (rawHref.includes("/__user__/")) {
+            let pathname = rawHref;
+            let search = "";
+            let hash = "";
+            try {
+                const parsed = new URL(rawHref, window.location.origin);
+                pathname = parsed.pathname;
+                search = parsed.search;
+                hash = parsed.hash;
+            } catch {
+                pathname = rawHref;
+            }
+
+            const hasUserPlaceholder = pathname
+                .split("/")
+                .filter(Boolean)
+                .includes("__user__");
+
+            if (hasUserPlaceholder) {
                 if (cleanUsername) {
+                    const resolvedPath = `/${pathname
+                        .split("/")
+                        .filter(Boolean)
+                        .map((segment) =>
+                            segment === "__user__" ? cleanUsername : segment,
+                        )
+                        .join("/")}`;
                     anchor.setAttribute(
                         "href",
-                        rawHref.replace("/__user__/", `/${cleanUsername}/`),
+                        `${resolvedPath}${search}${hash}`,
                     );
                     anchor.removeAttribute("data-needs-login");
                 } else if (!isLoggedIn) {
@@ -137,19 +161,18 @@ const links: NavBarLink[] = navBarConfig.links
                 }
                 return;
             }
-            let pathname = rawHref;
-            let hash = "";
+            let hashLower = "";
             try {
                 const parsed = new URL(rawHref, window.location.origin);
                 pathname = parsed.pathname;
-                hash = parsed.hash.replace(/^#/, "").trim().toLowerCase();
+                hashLower = parsed.hash.replace(/^#/, "").trim().toLowerCase();
             } catch {
                 pathname = rawHref;
             }
-            if (pathname === "/me" || pathname === "/me/") {
-                if (hash === "anime" || hash === "diary" || hash === "albums") {
+            if (pathname === "/me") {
+                if (hashLower === "anime" || hashLower === "diary" || hashLower === "albums") {
                     if (cleanUsername) {
-                        anchor.setAttribute("href", `/${cleanUsername}/${hash}`);
+                        anchor.setAttribute("href", `/${cleanUsername}/${hashLower}`);
                         anchor.removeAttribute("data-needs-login");
                     } else if (!isLoggedIn) {
                         anchor.setAttribute("href", "#");
@@ -158,9 +181,9 @@ const links: NavBarLink[] = navBarConfig.links
                 }
                 return;
             }
-            const legacyTarget = ["/anime", "/anime/", "/diary", "/diary/", "/albums", "/albums/"];
+            const legacyTarget = ["/anime", "/diary", "/albums"];
             if (!legacyTarget.includes(pathname)) return;
-            const target = pathname.replace(/^\//, "").replace(/\/$/, "");
+            const target = pathname.replace(/^\//, "");
             if (cleanUsername) {
                 anchor.setAttribute("href", `/${cleanUsername}/${target}`);
                 anchor.removeAttribute("data-needs-login");

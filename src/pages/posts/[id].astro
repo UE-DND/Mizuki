@@ -21,6 +21,7 @@ import {
 	profileToSidebarData,
 } from "@/server/api/v1/public-data";
 import { getSessionUser } from "@/server/auth/session";
+import ArticleManageFloat from "@components/control/ArticleManageFloat.astro";
 
 export const prerender = false;
 
@@ -128,27 +129,6 @@ const coverUrl = article?.cover_url
 				class="card-base p-6 md:p-8 rounded-[var(--radius-large)] mb-4 relative"
 			>
 				<div data-enter-skeleton-content>
-					<div
-						id="article-manage-root"
-						class="hidden mb-4 flex items-center justify-end"
-						data-article-id={article.id}
-						data-author-id={article.author?.id || ""}
-					>
-						<details class="relative">
-							<summary class="list-none cursor-pointer btn-plain scale-animation w-9 h-9 rounded-lg flex items-center justify-center text-lg select-none" aria-label="更多操作">
-								...
-							</summary>
-							<div class="absolute right-0 top-10 z-10 min-w-[8rem] card-base rounded-xl border border-[var(--line-divider)] p-2">
-								<button
-									type="button"
-									id="article-delete-trigger"
-									class="w-full text-left px-3 py-2 rounded-lg text-sm text-red-500 hover:bg-black/5 dark:hover:bg-white/10"
-								>
-									删除文章
-								</button>
-							</div>
-						</details>
-					</div>
 					<header class="mb-6 space-y-3">
 						<h1 class="text-3xl md:text-4xl font-bold text-90">{article.title}</h1>
 						<div class="flex flex-wrap items-center gap-3 text-sm text-60">
@@ -201,64 +181,9 @@ const coverUrl = article?.cover_url
 				</div>
 			</article>
 
+			<ArticleManageFloat articleId={article.id} authorId={article.author?.id || ""} />
+
 			<Comment module="articles" contentId={article.id} allowComments={article.allow_comments} />
 		</>
 	)}
 </MainGridLayout>
-
-<script>
-	import { getAuthState, subscribeAuthState } from "@/scripts/auth-state";
-	import type { AuthState } from "@/scripts/auth-state";
-
-	const manageRoot = document.getElementById("article-manage-root");
-
-	if (manageRoot instanceof HTMLElement && !manageRoot.dataset.bound) {
-		manageRoot.dataset.bound = "1";
-		const articleId = String(manageRoot.dataset.articleId || "");
-		const authorId = String(manageRoot.dataset.authorId || "");
-		const deleteBtn = document.getElementById("article-delete-trigger");
-		const applyManageMenuVisibility = (state: AuthState): void => {
-			const canDelete =
-				state.isLoggedIn &&
-				Boolean(state.userId) &&
-				(state.isAdmin || state.userId === authorId);
-			manageRoot.classList.toggle("hidden", !canDelete);
-		};
-
-		if (deleteBtn instanceof HTMLButtonElement) {
-			deleteBtn.addEventListener("click", async () => {
-				if (!articleId) return;
-				const confirmed = window.confirm("确认删除这篇文章？删除后不可恢复。");
-				if (!confirmed) return;
-
-				deleteBtn.disabled = true;
-				try {
-					const response = await fetch(
-						`/api/v1/me/articles/${encodeURIComponent(articleId)}`,
-						{
-							method: "DELETE",
-							credentials: "include",
-							headers: { Accept: "application/json" },
-						},
-					);
-					const data = await response.json().catch(() => null);
-					if (!response.ok || !data?.ok) {
-						window.alert(data?.message || "删除失败");
-						return;
-					}
-					window.location.href = "/";
-				} catch (error) {
-					console.error("[posts] delete article failed:", error);
-					window.alert("删除失败，请稍后重试");
-				} finally {
-					deleteBtn.disabled = false;
-				}
-			});
-		}
-
-		applyManageMenuVisibility(getAuthState());
-		subscribeAuthState((state) => {
-			applyManageMenuVisibility(state);
-		});
-	}
-</script>

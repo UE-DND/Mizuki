@@ -12,7 +12,7 @@ export function buildLoginUrl(): string {
 		if (!redirect.startsWith("/") || redirect.startsWith("//")) {
 			return "/login";
 		}
-		if (pathname === "/login/" || pathname === "/login") {
+		if (pathname === "/login") {
 			return "/login";
 		}
 

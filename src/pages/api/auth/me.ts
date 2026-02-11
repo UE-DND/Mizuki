@@ -25,7 +25,9 @@ export async function GET(context: APIContext): Promise<Response> {
 		const access = await getAppAccessContext(user);
 		const profile = access.profile;
 		const username = String(profile.username || "").trim();
-		const name = username || user.name || user.email || "Member";
+		const displayName = String(profile.display_name || "").trim();
+		const name =
+			displayName || username || user.name || user.email || "Member";
 		const avatarUrl =
 			profile.avatar_url ||
 			(profile.avatar_file

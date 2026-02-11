@@ -112,7 +112,7 @@ let initTask: Promise<void> | null = null;
 				userEl.classList.remove("hidden");
 				userEl.classList.add("flex");
 				userNameEl.textContent =
-					user.username || user.name || user.email || "Member";
+					user.name || user.username || user.email || "Member";
 
 				if (avatarEl && iconEl && user.avatarUrl) {
 					avatarEl.src = user.avatarUrl;

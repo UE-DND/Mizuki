@@ -1,0 +1,246 @@
+---
+import { Icon } from "astro-icon/components";
+
+interface Props {
+	articleId: string;
+	authorId: string;
+}
+
+const { articleId, authorId } = Astro.props;
+---
+
+<div
+	class="article-manage-float"
+	data-article-id={articleId}
+	data-author-id={authorId}
+>
+	<div class="article-manage-btn-wrap rounded-2xl transition">
+		<button
+			aria-label="文章管理"
+			class="btn-card h-[3.75rem] w-[3.75rem]"
+		>
+			<Icon name="material-symbols:more-vert" class="mx-auto" />
+		</button>
+	</div>
+	<div class="article-manage-panel">
+		<button
+			type="button"
+			class="article-manage-delete w-full text-left px-3 py-2 rounded-lg text-sm text-red-500 hover:bg-black/5 dark:hover:bg-white/10"
+		>
+			删除文章
+		</button>
+	</div>
+</div>
+
+<style lang="stylus">
+  .article-manage-float
+    position: relative
+    width: 3.75rem
+    height: 3.75rem
+    margin-left: 0
+    margin-right: auto
+    margin-top: 9.5rem
+    display: none
+
+    &.visible
+      display: block
+
+  .article-manage-btn-wrap
+    width: 3.75rem
+    height: 3.75rem
+    display: flex
+    align-items: center
+    justify-content: center
+    overflow: hidden
+    border: none
+    color: var(--primary)
+    font-size: 2.25rem
+    font-weight: bold
+    cursor: pointer
+    transition: box-shadow 1s ease-in-out
+
+    button
+      width: 100%
+      height: 100%
+
+    i
+      font-size: 1.75rem
+
+    &.active
+      background: var(--btn-card-bg-active)
+      border-radius: 1rem
+
+  .article-manage-panel
+    position: absolute
+    top: calc(100% + .4rem)
+    left: 0
+    min-width: 8rem
+    z-index: 60
+    background: var(--card-bg)
+    border: 1px solid var(--line-divider)
+    border-radius: 1rem
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15)
+    padding: 0.5rem
+    opacity: 0
+    visibility: hidden
+    transform: translate(-6px, -6px) scale(0.95)
+    transition: all 0.2s ease
+    pointer-events: none
+
+    &.show
+      opacity: 1
+      visibility: visible
+      transform: translate(0, 0) scale(1)
+      pointer-events: auto
+
+  @media (max-width: 1560px)
+    .article-manage-btn-wrap
+      box-shadow: none
+
+  @media (max-width: 1279px)
+    .article-manage-float
+      display: none !important
+</style>
+
+<script>
+	import { getAuthState, subscribeAuthState } from "@/scripts/auth-state";
+	import type { AuthState } from "@/scripts/auth-state";
+	import { showConfirmDialog, showNoticeDialog } from "@/scripts/dialogs";
+
+	function initArticleManageFloat(): void {
+		const floatEl = document.querySelector<HTMLElement>(".article-manage-float");
+		if (!floatEl || floatEl.dataset.bound === "1") return;
+		floatEl.dataset.bound = "1";
+
+		const rightSidebarSlot = document.getElementById("right-sidebar-slot");
+		const tocWrapper = document.querySelector<HTMLElement>(
+			"#right-sidebar-slot #toc-wrapper",
+		);
+		const tocRoot = document.querySelector<HTMLElement>("#right-sidebar-slot #toc");
+		const mountTarget =
+			tocWrapper || tocRoot?.parentElement || rightSidebarSlot || null;
+		if (mountTarget && floatEl.parentElement !== mountTarget) {
+			mountTarget.appendChild(floatEl);
+		}
+
+		const articleId = String(floatEl.dataset.articleId || "");
+		const authorId = String(floatEl.dataset.authorId || "");
+		const btnWrap = floatEl.querySelector<HTMLElement>(
+			".article-manage-btn-wrap",
+		);
+		const panel = floatEl.querySelector<HTMLElement>(
+			".article-manage-panel",
+		);
+		const deleteBtn = floatEl.querySelector<HTMLButtonElement>(
+			".article-manage-delete",
+		);
+
+		let isOpen = false;
+
+		function applyVisibility(state: AuthState): void {
+			const canManage =
+				state.isLoggedIn &&
+				Boolean(state.userId) &&
+				(state.isAdmin || state.userId === authorId);
+			floatEl!.classList.toggle("visible", canManage);
+		}
+
+		function open(): void {
+			isOpen = true;
+			panel?.classList.add("show");
+			btnWrap?.classList.add("active");
+		}
+
+		function close(): void {
+			isOpen = false;
+			panel?.classList.remove("show");
+			btnWrap?.classList.remove("active");
+		}
+
+		btnWrap?.addEventListener("click", (event) => {
+			event.stopPropagation();
+			if (isOpen) {
+				close();
+			} else {
+				open();
+			}
+		});
+
+		document.addEventListener("click", (event) => {
+			if (!isOpen) return;
+			if (!floatEl!.contains(event.target as Node)) {
+				close();
+			}
+		});
+
+		document.addEventListener("keydown", (event) => {
+			if (event.key === "Escape" && isOpen) {
+				close();
+			}
+		});
+
+		if (deleteBtn) {
+			deleteBtn.addEventListener("click", async () => {
+				if (!articleId) return;
+				const confirmed = await showConfirmDialog({
+					ariaLabel: "删除确认",
+					message: "确认删除这篇文章？删除后不可恢复。",
+					confirmText: "确认删除",
+					cancelText: "取消",
+					confirmVariant: "danger",
+				});
+				if (!confirmed) {
+					close();
+					return;
+				}
+
+				deleteBtn.disabled = true;
+				try {
+					const response = await fetch(
+						`/api/v1/me/articles/${encodeURIComponent(articleId)}`,
+						{
+							method: "DELETE",
+							credentials: "include",
+							headers: { Accept: "application/json" },
+						},
+					);
+					const data = await response.json().catch(() => null);
+					if (!response.ok || !data?.ok) {
+						await showNoticeDialog({
+							ariaLabel: "删除失败",
+							message: data?.message || "删除失败",
+						});
+						return;
+					}
+					window.location.href = "/";
+				} catch (error) {
+					console.error(
+						"[article-manage] delete article failed:",
+						error,
+					);
+					await showNoticeDialog({
+						ariaLabel: "删除失败",
+						message: "删除失败，请稍后重试。",
+					});
+				} finally {
+					deleteBtn.disabled = false;
+				}
+			});
+		}
+
+		applyVisibility(getAuthState());
+		subscribeAuthState((state) => {
+			applyVisibility(state);
+		});
+	}
+
+	if (document.readyState === "loading") {
+		document.addEventListener("DOMContentLoaded", initArticleManageFloat, {
+			once: true,
+		});
+	} else {
+		initArticleManageFloat();
+	}
+
+	document.addEventListener("astro:after-swap", initArticleManageFloat);
+</script>

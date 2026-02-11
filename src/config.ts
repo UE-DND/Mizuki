@@ -150,6 +150,11 @@ export const defaultSiteSettings: SiteSettingsPayload = {
 				icon: "material-symbols:person",
 				children: [
 					{
+						name: "个人主页",
+						url: "/__user__",
+						icon: "material-symbols:account-circle",
+					},
+					{
 						name: "番剧",
 						url: "/me/#anime",
 						icon: "material-symbols:movie",
