@@ -140,18 +140,6 @@ const calendarTitle = isChinese ? "日期" : "Date";
 						}
 					</div>
 					<div id="calendar-grid" class="grid grid-cols-7 gap-1"></div>
-					<div id="calendar-posts" class="mt-4 hidden">
-						<div
-							class="h-[1px] w-full bg-neutral-200 dark:bg-neutral-700 mb-2 hidden"
-							id="calendar-posts-divider"
-						>
-						</div>
-						<div
-							class="flex flex-col gap-1 max-h-[9.375rem] overflow-y-auto custom-scrollbar"
-							id="calendar-posts-list"
-						>
-						</div>
-					</div>
 				</div>
 				<div
 					id="selection-panel"
@@ -332,9 +320,6 @@ const calendarTitle = isChinese ? "日期" : "Date";
 		selectionPanel: document.getElementById("selection-panel"),
 		selectionContent: document.getElementById("selection-content"),
 		grid: document.getElementById("calendar-grid"),
-		postsContainer: document.getElementById("calendar-posts"),
-		postsList: document.getElementById("calendar-posts-list"),
-		divider: document.getElementById("calendar-posts-divider"),
 	};
 
 	const ac = new AbortController();
@@ -505,62 +490,6 @@ const calendarTitle = isChinese ? "日期" : "Date";
 		selectedCell?.classList.add("is-selected");
 	}
 
-	function renderPostList(posts) {
-		if (!dom.postsList) {return;}
-		if (posts.length === 0) {
-			dom.divider?.classList.add("hidden");
-			dom.postsList.innerHTML = "";
-			return;
-		}
-
-		dom.divider?.classList.remove("hidden");
-		const currentPostId = getCurrentPostId();
-
-		const listHtml = posts
-			.map((post) => {
-				const [, m, d] = post.date.split("-");
-				const dateStr = `${parseInt(m)}-${parseInt(d)}`;
-
-				const isCurrentPost = post.id === currentPostId;
-				let containerClass =
-					"flex items-center justify-between text-sm transition-colors px-2 py-2 rounded-lg group border border-transparent";
-				const titleClass = "truncate flex-1 font-bold transition-colors";
-				let dateClass = "text-xs ml-2 whitespace-nowrap transition-colors";
-
-				if (isCurrentPost) {
-					containerClass +=
-						" bg-[var(--primary)]/10 text-[var(--primary)] border-[var(--primary)]/10";
-					dateClass += " text-[var(--primary)]/80";
-				} else {
-					containerClass +=
-						" text-neutral-700 dark:text-neutral-300 hover:text-[var(--primary)] dark:hover:text-[var(--primary)] hover:bg-[var(--btn-plain-bg-hover)]";
-					dateClass +=
-						" text-neutral-400 dark:text-neutral-500 group-hover:text-[var(--primary)]/70 dark:group-hover:text-[var(--primary)]/70";
-				}
-
-				const postUrl = post.url || `/posts/${post.id}`;
-				return `
-					<a href="${postUrl}" class="${containerClass}">
-						<span class="${titleClass}">${post.title}</span>
-						<span class="${dateClass}">${dateStr}</span>
-					</a>
-				`;
-			})
-			.join("");
-
-		dom.postsList.innerHTML = listHtml;
-	}
-
-	function renderPostsSection() {
-		const dayPosts =
-			activeFilter?.type === "day" && selectedDateKey
-				? activeFilter.posts || []
-				: [];
-		const hasDayPosts = dayPosts.length > 0;
-		dom.postsContainer?.classList.toggle("hidden", !hasDayPosts);
-		renderPostList(dayPosts);
-	}
-
 	function renderCalendar(forceGrid = false) {
 		renderHeaderState();
 		updateHeaderControls();
@@ -572,7 +501,6 @@ const calendarTitle = isChinese ? "日期" : "Date";
 
 		renderDayGridIfNeeded(forceGrid);
 		syncSelectedDayState();
-		renderPostsSection();
 		renderLoadState();
 	}
 
