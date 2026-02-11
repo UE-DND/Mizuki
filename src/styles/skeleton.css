@@ -62,6 +62,17 @@
   transition: opacity 120ms ease;
 }
 
+html.enter-skeleton-active .transition-main {
+  opacity: 1 !important;
+  transform: none !important;
+}
+
+html.enter-skeleton-awaiting-replace.is-animating.is-leaving .transition-main,
+html.enter-skeleton-awaiting-replace.is-animating.is-leaving #content-wrapper {
+  opacity: 1 !important;
+  transform: none !important;
+}
+
 html.enter-skeleton-active[data-enter-skeleton-mode="post-card"] [data-enter-skeleton-target="post-card"] [data-enter-skeleton-content] {
   opacity: 0;
   pointer-events: none;

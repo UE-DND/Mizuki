@@ -226,32 +226,32 @@ const publishedDate =
 	>
 		<div
 			class:list={[
-				"pl-6 md:pl-9 pr-6 md:pr-2 pt-6 md:pt-7 pb-6 h-full",
+				"pl-6 md:pl-9 pr-6 md:pr-2 pt-6 md:pt-7 pb-6 h-full flex flex-col",
 				{
 					"w-full md:w-[calc(100%_-_3.25rem_-_0.75rem)]": !hasCover,
 					"w-full md:w-[calc(100%_-_var(--coverWidth)_-_0.75rem)]": hasCover,
 				},
 			]}
 		>
-			<div class="space-y-3.5">
+			<div class="space-y-3">
 				<div class="md3-skeleton-text" style="--skeleton-width: 78%; --skeleton-height: 1.6rem;"></div>
 				<div class="md3-skeleton-text hidden md:block" style="--skeleton-width: 48%; --skeleton-height: 1.6rem;"></div>
 				<div class="md3-skeleton-text md:hidden" style="--skeleton-width: 56%; --skeleton-height: 1.35rem;"></div>
-				<div class="pt-2 space-y-2.5">
+				<div class="pt-1.5 space-y-2">
 					<div class="md3-skeleton-text" style="--skeleton-width: 94%;"></div>
 					<div class="md3-skeleton-text" style="--skeleton-width: 72%;"></div>
 				</div>
-				<div class="flex items-center justify-between pt-3">
-					<div class="flex items-center gap-2 w-[11rem]">
-						<div class="md3-skeleton-text" style="--skeleton-width: 58%; --skeleton-height: 0.72rem;"></div>
-						<div class="md3-skeleton-circle h-1.5 w-1.5"></div>
-						<div class="md3-skeleton-text" style="--skeleton-width: 36%; --skeleton-height: 0.72rem;"></div>
-					</div>
-					<div class="flex items-center gap-2.5 w-[8.75rem] justify-end">
-						<div class="md3-skeleton-block h-6 w-12 rounded-lg"></div>
-						<div class="md3-skeleton-block h-6 w-12 rounded-lg"></div>
-						<div class="md3-skeleton-circle h-8 w-8"></div>
-					</div>
+			</div>
+			<div class="mt-auto flex items-center justify-between gap-3 pt-3">
+				<div class="flex min-w-0 items-center gap-2">
+					<div class="md3-skeleton-text w-20 md:w-24" style="--skeleton-height: 0.72rem;"></div>
+					<div class="md3-skeleton-circle h-1.5 w-1.5"></div>
+					<div class="md3-skeleton-text w-14 md:w-16" style="--skeleton-height: 0.72rem;"></div>
+				</div>
+				<div class="ml-3 mr-2 flex shrink-0 items-center gap-2.5 md:gap-4">
+					<div class="md3-skeleton-block h-6 w-10 rounded-lg"></div>
+					<div class="md3-skeleton-block h-6 w-10 rounded-lg"></div>
+					<div class="md3-skeleton-circle h-8 w-8"></div>
 				</div>
 			</div>
 		</div>

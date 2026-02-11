@@ -30,6 +30,7 @@ const BANNER_TO_SPEC_TRANSITION_ACTIVE_CLASS =
 const BANNER_TO_SPEC_TRANSITION_CONTENT_FADE_IN_CLASS =
 	"layout-banner-to-spec-transition-content-fade-in";
 const BANNER_TO_SPEC_SHIFT_VAR = "--layout-banner-route-up-shift";
+const ENTER_SKELETON_AWAITING_REPLACE_CLASS = "enter-skeleton-awaiting-replace";
 const BANNER_TO_SPEC_TRANSITION_DURATION_MS = 920;
 const COLLAPSED_MAIN_PANEL_TOP = "5.5rem";
 const SIDEBAR_OVERSHOOT_TOLERANCE_PX = 0.75;
@@ -264,12 +265,21 @@ export function setupSwupIntentSource(
 	let pendingSidebarProfilePatch: SidebarProfilePatch | null = null;
 	let bannerToSpecAnimationStartedAt: number | null = null;
 	let delayedPageViewTimerId: number | null = null;
+	let didReplaceContentDuringVisit = false;
 
 	const clearDelayedPageViewTimer = (): void => {
 		if (delayedPageViewTimerId !== null) {
 			window.clearTimeout(delayedPageViewTimerId);
 			delayedPageViewTimerId = null;
 		}
+	};
+
+	const setAwaitingReplaceState = (isAwaiting: boolean): void => {
+		const root = document.documentElement;
+		root.classList.toggle(
+			ENTER_SKELETON_AWAITING_REPLACE_CLASS,
+			isAwaiting,
+		);
 	};
 
 	const getBannerToSpecRemainingMs = (): number => {
@@ -371,6 +381,8 @@ export function setupSwupIntentSource(
 	});
 
 	swup.hooks.on("content:replace", () => {
+		didReplaceContentDuringVisit = true;
+		setAwaitingReplaceState(false);
 		activateEnterSkeleton();
 		void deps.initFancybox();
 		deps.checkKatex();
@@ -417,6 +429,9 @@ export function setupSwupIntentSource(
 	});
 
 	swup.hooks.on("visit:start", (visit: SwupVisit) => {
+		didReplaceContentDuringVisit = false;
+		forceResetEnterSkeleton();
+		setAwaitingReplaceState(true);
 		deps.cleanupFancybox();
 		pendingBannerToSpecRoutePath = null;
 		pendingSidebarProfilePatch = null;
@@ -470,6 +485,7 @@ export function setupSwupIntentSource(
 
 	swup.hooks.on("page:view", () => {
 		const finalizePageView = (): void => {
+			setAwaitingReplaceState(false);
 			deactivateEnterSkeleton();
 			const hash = window.location.hash?.slice(1);
 
@@ -574,7 +590,10 @@ export function setupSwupIntentSource(
 	});
 
 	swup.hooks.on("visit:end", () => {
-		forceResetEnterSkeleton();
+		setAwaitingReplaceState(false);
+		if (!didReplaceContentDuringVisit) {
+			forceResetEnterSkeleton();
+		}
 		const remainingMs = getBannerToSpecRemainingMs();
 		if (remainingMs <= 0) {
 			pendingBannerToSpecRoutePath = null;
