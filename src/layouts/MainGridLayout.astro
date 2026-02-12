@@ -277,7 +277,7 @@ const rowStart = hasCustomRightSidebar
 	: "row-start-1 row-end-2";
 
 const mainContentClass = `
-	transition-swup-fade overflow-hidden w-full
+	transition-swup-fade overflow-clip w-full
 	col-span-1 ${rowStart}
 	${tabletAnySidebar ? "md:col-start-2 md:col-end-3" : "md:col-start-1 md:col-end-2"}
 	${desktopShowSidebar ? desktopMainPos : "lg:col-span-1"}
@@ -770,6 +770,12 @@ const mainContentClass = `
 /* 非 banner 模式下强制即时隐藏，避免模式切换和路由切换时的底层闪现。 */
 body[data-layout-mode="none"] #banner-wrapper,
 body[data-layout-mode="collapsed"] #banner-wrapper {
+    display: none !important;
+    height: 0 !important;
+    min-height: 0 !important;
+    max-height: 0 !important;
+    top: 0 !important;
+    overflow: hidden !important;
     opacity: 0 !important;
     visibility: hidden !important;
     transition: none !important;
@@ -1182,7 +1188,6 @@ body[data-layout-mode="collapsed"] #toc-inner-wrapper {
     }
 }
 
-/* 手机端非首页隐藏banner - 改进的分阶段动画 */
 @media (max-width: 1279px) {
     #banner-wrapper {
         transition:

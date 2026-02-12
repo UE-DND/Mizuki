@@ -1,6 +1,7 @@
 ---
 import ContentNotVisible from "@components/misc/ContentNotVisible.astro";
 import MainGridLayout from "@layouts/MainGridLayout.astro";
+import AlbumDetailEditor from "@components/album/AlbumDetailEditor.svelte";
 import { buildDirectusAssetUrl } from "@/server/directus-auth";
 import {
 	loadProfileForViewer,
@@ -17,6 +18,7 @@ const id = (Astro.params.id || "").trim();
 
 type AlbumPageData = {
 	id: string;
+	short_id: string | null;
 	title: string;
 	slug: string;
 	description: string | null;
@@ -25,8 +27,13 @@ type AlbumPageData = {
 	date: string | null;
 	location: string | null;
 	tags: string[];
+	category: string | null;
 	layout: "grid" | "masonry";
 	columns: number;
+	status: string;
+	is_public: boolean;
+	show_on_profile: boolean;
+	author_id: string;
 	author?: { name?: string; username?: string };
 	photos: Array<{
 		id: string;
@@ -36,10 +43,13 @@ type AlbumPageData = {
 		description: string | null;
 		tags: string[];
 		location: string | null;
+		sort: number | null;
 	}>;
 };
 
 let result: ContentLoadResult<AlbumPageData> = { status: "not_found" };
+let isOwner = false;
+let autoEdit = false;
 
 if (!username || !id) {
 	Astro.response.status = 404;
@@ -53,10 +63,12 @@ if (!username || !id) {
 		} else if (result.status === "permission_denied") {
 			Astro.response.status = 403;
 		} else {
-			const sidebarProfile = await loadProfileForViewer(username, viewerId);
-			if (sidebarProfile) {
-				Astro.locals.sidebarProfile = profileToSidebarData(sidebarProfile);
+			const profile = await loadProfileForViewer(username, viewerId);
+			if (profile) {
+				Astro.locals.sidebarProfile = profileToSidebarData(profile);
+				isOwner = Boolean(viewerId) && viewerId === profile.user_id;
 			}
+			autoEdit = isOwner && Astro.url.searchParams.get("edit") === "1";
 		}
 	} catch (error) {
 		console.error("[albums] failed to load detail:", error);
@@ -65,8 +77,6 @@ if (!username || !id) {
 }
 
 const album = result.status === "ok" ? result.data : null;
-
-const backHref = username ? `/${username}/albums` : "/";
 
 function photoUrl(photo: { file_id: string | null; image_url: string | null }): string | null {
 	if (photo.image_url) {
@@ -100,15 +110,49 @@ function photoUrl(photo: { file_id: string | null; image_url: string | null }): 
 			backHref={`/${username}/albums`}
 			backLabel="返回相册列表"
 		/>
+	) : isOwner ? (
+		<AlbumDetailEditor
+			client:only="svelte"
+			albumId={album.id}
+			username={username}
+			isOwner={true}
+			initialEditMode={autoEdit}
+			album={{
+				title: album.title,
+				description: album.description,
+				category: album.category,
+				tags: album.tags,
+				date: album.date,
+				location: album.location,
+				layout: album.layout,
+				columns: album.columns,
+				status: album.status,
+				is_public: album.is_public,
+				show_on_profile: album.show_on_profile,
+				cover_file: album.cover_file,
+				cover_url: album.cover_url,
+			}}
+			photos={album.photos.map((p) => ({
+				id: p.id,
+				file_id: p.file_id,
+				image_url: p.image_url,
+				title: p.title,
+				description: p.description,
+				tags: p.tags,
+				location: p.location,
+				sort: p.sort,
+			}))}
+		/>
 	) : (
 		<>
 			<section class="card-base p-6 rounded-[var(--radius-large)] mb-4 space-y-3 text-90">
-				<a href={backHref} class="text-sm text-[var(--primary)] hover:underline">返回相册列表</a>
+				<a href={`/${username}/albums`} class="text-sm text-[var(--primary)] hover:underline">返回相册列表</a>
 				<h1 class="text-3xl font-bold">{album.title}</h1>
 				<div class="text-xs text-60 flex flex-wrap items-center gap-2">
 					{album.author?.name && <span>作者：{album.author.name}</span>}
 					{album.date && <span>{album.date}</span>}
 					{album.location && <span>{album.location}</span>}
+					{album.category && <span class="px-2 py-0.5 rounded bg-[var(--btn-plain-bg-hover)] text-75">{album.category}</span>}
 				</div>
 				{album.description && <p class="text-75">{album.description}</p>}
 				{album.tags.length > 0 && (

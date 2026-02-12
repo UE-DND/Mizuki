@@ -15,7 +15,10 @@ import type {
 } from "@/types/app";
 import type { JsonObject, JsonValue } from "@/types/json";
 import { assertNotSuspended, getAppAccessContext } from "@/server/auth/acl";
-import { calculateUsernameWeight } from "@/server/auth/username";
+import {
+	weightedCharLength,
+	PROFILE_BIO_MAX_LENGTH,
+} from "@/constants/text-limits";
 import { fail } from "@/server/api/response";
 import {
 	toBooleanValue,
@@ -60,8 +63,6 @@ export type CommentTreeNode = {
 	author: AuthorBundleItem;
 	replies: CommentTreeNode[];
 };
-
-const PROFILE_BIO_MAX_LENGTH = 30;
 
 export function isWriteMethod(method: string): boolean {
 	return method === "POST" || method === "PATCH" || method === "DELETE";
@@ -384,7 +385,7 @@ export function parseProfileBioField(
 	if (!value) {
 		return null;
 	}
-	if (calculateUsernameWeight(value) > PROFILE_BIO_MAX_LENGTH) {
+	if (weightedCharLength(value) > PROFILE_BIO_MAX_LENGTH) {
 		throw new Error("PROFILE_BIO_TOO_LONG");
 	}
 	return value;

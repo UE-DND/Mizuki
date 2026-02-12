@@ -1,0 +1,149 @@
+---
+import MainGridLayout from "@layouts/MainGridLayout.astro";
+import {
+	loadProfileForViewer,
+	profileToSidebarData,
+} from "@/server/api/v1/public-data";
+import { getSessionUser } from "@/server/auth/session";
+
+export const prerender = false;
+
+const username = (Astro.params.username || "").trim();
+
+if (!username) {
+	return Astro.redirect("/");
+}
+
+const sessionUser = await getSessionUser(Astro);
+if (!sessionUser) {
+	return Astro.redirect(`/${username}/albums`);
+}
+
+const profile = await loadProfileForViewer(username, sessionUser.id);
+if (!profile || profile.user_id !== sessionUser.id) {
+	return Astro.redirect(`/${username}/albums`);
+}
+
+Astro.locals.sidebarProfile = profileToSidebarData(profile);
+---
+
+<MainGridLayout title="新建相册" description="创建一个新相册">
+	<section class="card-base p-6 rounded-[var(--radius-large)] mb-4 space-y-3 text-90">
+		<a href={`/${username}/albums`} class="text-sm text-[var(--primary)] hover:underline">返回相册列表</a>
+		<h1 class="text-3xl font-bold text-black/90 dark:text-white/90">新建相册</h1>
+		<p class="text-75">创建相册后将自动进入编辑模式。你可以上传照片、设置相册封面等。</p>
+	</section>
+
+	<section class="card-base p-6 rounded-[var(--radius-large)] space-y-5 text-90">
+		<form id="album-publish-form" class="space-y-5">
+			<div>
+				<label for="album-title" class="block text-sm font-medium mb-1.5 text-75">相册标题 <span class="text-red-500">*</span></label>
+				<input
+					id="album-title"
+					name="title"
+					type="text"
+					required
+					maxlength="40"
+					placeholder="输入相册标题"
+					class="w-full h-10 px-3 rounded-lg border border-[var(--line-divider)]
+						bg-[var(--card-bg)] text-90 placeholder:text-50
+						focus:outline-none focus:ring-2 focus:ring-[var(--primary)] focus:border-transparent
+						transition"
+				/>
+				<span id="album-title-counter" class="text-xs mt-1 block text-50"></span>
+			</div>
+
+			<div id="album-publish-error" class="hidden text-sm text-red-500"></div>
+
+			<div class="flex items-center gap-3">
+				<button
+					id="album-publish-btn"
+					type="submit"
+					class="px-6 h-10 rounded-lg bg-[var(--primary)] text-white font-medium
+						hover:opacity-90 active:opacity-80 transition cursor-pointer
+						disabled:opacity-50 disabled:cursor-not-allowed"
+				>
+					创建相册
+				</button>
+				<a
+					href={`/${username}/albums`}
+					class="px-4 h-10 rounded-lg border border-[var(--line-divider)]
+						flex items-center text-sm text-75 hover:bg-[var(--btn-plain-bg-hover)] transition"
+				>
+					取消
+				</a>
+			</div>
+		</form>
+	</section>
+</MainGridLayout>
+
+<script define:vars={{ username }} is:inline>
+	var ALBUM_TITLE_MAX = 20;
+	var CJK_RE = /[\u2E80-\u9FFF\uF900-\uFAFF\uFE30-\uFE4F\uFF00-\uFFEF]/;
+	function wcLen(s) {
+		var n = 0;
+		for (var c of s) n += CJK_RE.test(c) ? 2 : 1;
+		return n;
+	}
+
+	const form = document.getElementById("album-publish-form");
+	const titleInput = document.getElementById("album-title");
+	const submitBtn = document.getElementById("album-publish-btn");
+	const errorEl = document.getElementById("album-publish-error");
+	const counterEl = document.getElementById("album-title-counter");
+
+	function updateCounter() {
+		if (!titleInput || !counterEl) return;
+		var len = wcLen(titleInput.value);
+		counterEl.textContent = len + " / " + ALBUM_TITLE_MAX;
+		counterEl.className = "text-xs mt-1 block " + (len > ALBUM_TITLE_MAX ? "text-red-500" : "text-50");
+	}
+	titleInput?.addEventListener("input", updateCounter);
+	updateCounter();
+
+	function showError(msg) {
+		if (errorEl) {
+			errorEl.textContent = msg;
+			errorEl.classList.remove("hidden");
+		}
+	}
+
+	form?.addEventListener("submit", async (e) => {
+		e.preventDefault();
+		errorEl?.classList.add("hidden");
+
+		const title = titleInput?.value?.trim();
+		if (!title) {
+			showError("请输入相册标题");
+			return;
+		}
+		if (wcLen(title) > ALBUM_TITLE_MAX) {
+			showError("标题过长（最多 " + ALBUM_TITLE_MAX + " 字符，中文算 2 字符）");
+			return;
+		}
+
+		submitBtn?.setAttribute("disabled", "");
+		submitBtn.textContent = "创建中…";
+
+		try {
+			const res = await fetch("/api/v1/me/albums", {
+				method: "POST",
+				headers: { "Content-Type": "application/json" },
+				body: JSON.stringify({ title, status: "draft" }),
+			});
+			const data = await res.json();
+			if (!res.ok || !data.item) {
+				showError(data.error || data.message || "创建失败，请重试");
+				submitBtn?.removeAttribute("disabled");
+				submitBtn.textContent = "创建相册";
+				return;
+			}
+			const shortId = data.item.short_id || data.item.id;
+			window.location.href = `/${username}/albums/${shortId}?edit=1`;
+		} catch (err) {
+			showError("网络错误，请重试");
+			submitBtn?.removeAttribute("disabled");
+			submitBtn.textContent = "创建相册";
+		}
+	});
+</script>

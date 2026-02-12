@@ -9,6 +9,9 @@
 // Module-scope helpers (no DOM dependency)
 // ---------------------------------------------------------------------------
 
+import type { UploadPurpose } from "@/constants/upload-limits";
+import { UPLOAD_LIMITS, UPLOAD_LIMIT_LABELS } from "@/constants/upload-limits";
+
 const DATA_BOUND = "data-ss-bound";
 
 const normalizeApiUrl = (input: string): string => {
@@ -172,7 +175,6 @@ const PREVIEW_ICON_CLS =
 const CROP_ZOOM_MIN = 100;
 const CROP_ZOOM_MAX = 300;
 const CROP_OUTPUT_MAX_BYTES = 1.5 * 1024 * 1024;
-const CROP_INPUT_MAX_BYTES = 8 * 1024 * 1024;
 
 // ---------------------------------------------------------------------------
 // Generic drag-and-drop helpers
@@ -573,6 +575,7 @@ type PendingCropEntry = {
 	titlePrefix: string;
 	fileExt: string;
 	targetFormat?: "ico";
+	purpose?: UploadPurpose;
 };
 const pendingCropBlobs = new Map<HTMLElement, PendingCropEntry>();
 
@@ -761,6 +764,7 @@ const uploadImageBlob = async (
 	titlePrefix: string,
 	fileExt = "jpg",
 	targetFormat?: "ico",
+	purpose?: UploadPurpose,
 ): Promise<string | null> => {
 	setMsg(messageTarget, "图片上传中...");
 	try {
@@ -773,6 +777,9 @@ const uploadImageBlob = async (
 		formData.append("title", `${titlePrefix}-${Date.now()}`);
 		if (targetFormat === "ico") {
 			formData.append("target_format", "ico");
+		}
+		if (purpose) {
+			formData.append("purpose", purpose);
 		}
 		const { response, data } = await api("/api/v1/uploads", {
 			method: "POST",
@@ -1081,6 +1088,8 @@ export function initSiteSettingsPage(): void {
 		outputFileExt: "png" | "jpg" | "ico";
 		messageTarget: string;
 		titlePrefix: string;
+		maxInputBytes: number;
+		purpose: UploadPurpose;
 		container: HTMLElement | null;
 		createRow: (value: string) => HTMLElement;
 	};
@@ -1097,6 +1106,8 @@ export function initSiteSettingsPage(): void {
 			outputFileExt: "ico",
 			messageTarget: "ss-site-msg",
 			titlePrefix: "favicon",
+			maxInputBytes: UPLOAD_LIMITS.favicon,
+			purpose: "favicon",
 			container: faviconListContainer,
 			createRow: (value: string) => createFaviconRow({ src: value }),
 		},
@@ -1111,6 +1122,8 @@ export function initSiteSettingsPage(): void {
 			outputFileExt: "jpg",
 			messageTarget: "ss-home-msg",
 			titlePrefix: "banner-desktop",
+			maxInputBytes: UPLOAD_LIMITS.banner,
+			purpose: "banner",
 			container: bannerDesktopListContainer,
 			createRow: (value: string) =>
 				createBannerImageRow(
@@ -1133,6 +1146,8 @@ export function initSiteSettingsPage(): void {
 			outputFileExt: "jpg",
 			messageTarget: "ss-home-msg",
 			titlePrefix: "banner-mobile",
+			maxInputBytes: UPLOAD_LIMITS.banner,
+			purpose: "banner",
 			container: bannerMobileListContainer,
 			createRow: (value: string) =>
 				createBannerImageRow(
@@ -1389,8 +1404,13 @@ export function initSiteSettingsPage(): void {
 			setCropMessage("请选择图片文件");
 			return;
 		}
-		if (file.size > CROP_INPUT_MAX_BYTES) {
-			setCropMessage("图片文件过大，请选择不超过 8 MB 的图片");
+		const config = activeCropTarget ? cropTargets[activeCropTarget] : null;
+		const maxBytes = config?.maxInputBytes ?? UPLOAD_LIMITS.general;
+		const label = config?.purpose
+			? UPLOAD_LIMIT_LABELS[config.purpose]
+			: UPLOAD_LIMIT_LABELS.general;
+		if (file.size > maxBytes) {
+			setCropMessage(`图片文件过大，请选择不超过 ${label} 的图片`);
 			return;
 		}
 		setCropMessage("");
@@ -1524,6 +1544,7 @@ export function initSiteSettingsPage(): void {
 				fileExt: config.outputFileExt,
 				targetFormat:
 					activeCropTarget === "favicon" ? "ico" : undefined,
+				purpose: config.purpose,
 			});
 			if (activeCropTarget === "favicon") {
 				for (const child of [...config.container.children]) {
@@ -1586,6 +1607,7 @@ export function initSiteSettingsPage(): void {
 					pending.titlePrefix,
 					pending.fileExt,
 					pending.targetFormat,
+					pending.purpose,
 				);
 				if (!fileId) {
 					setMsg(msgId, "图片上传失败，保存已取消");

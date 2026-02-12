@@ -335,6 +335,9 @@ const runDynamicPageInit = async (): Promise<void> => {
 	} else if (path === "/archive") {
 		const { initArchiveFilter } = await import("@/scripts/archive-filter");
 		initArchiveFilter();
+	} else if (/^\/[^/]+\/albums\/?$/.test(path)) {
+		const { initAlbumFilter } = await import("@/scripts/album-filter");
+		initAlbumFilter();
 	} else if (path === "/admin/settings/site") {
 		const { initSiteSettingsPage } =
 			await import("@/scripts/site-settings-page");

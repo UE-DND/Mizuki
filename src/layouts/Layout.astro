@@ -430,6 +430,10 @@ if (siteConfig.font) {
 	>
 		@tailwind components;
 		@layer components {
+			#page-height-extend {
+				display: none !important;
+			}
+
 			body[data-layout-mode="banner"][data-route-home="true"] #banner-wrapper {
 				@apply h-[var(--banner-height-home)] translate-y-[var(--banner-height-extend)];
 			}
