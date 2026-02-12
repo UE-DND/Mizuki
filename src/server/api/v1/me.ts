@@ -16,7 +16,6 @@ import { validateDisplayName } from "@/server/auth/username";
 import {
 	countItems,
 	createOne,
-	deleteDirectusFile,
 	deleteOne,
 	readMany,
 	readOneById,
@@ -58,6 +57,12 @@ import {
 import { invalidateAuthorCache } from "./shared/author-cache";
 import { invalidateOfficialSidebarCache } from "./public-data";
 import { generateShortId } from "@/server/utils/short-id";
+import {
+	cleanupOrphanDirectusFiles,
+	collectAlbumFileIds,
+	collectDiaryFileIds,
+	normalizeDirectusFileId,
+} from "./shared/file-cleanup";
 
 function isUniqueConstraintError(error: unknown): boolean {
 	const message = String(error).toLowerCase();
@@ -163,7 +168,7 @@ async function handleMeProfile(
 			prevAvatarFile &&
 			prevAvatarFile !== nextAvatarFile
 		) {
-			await deleteDirectusFile(prevAvatarFile);
+			await cleanupOrphanDirectusFiles([prevAvatarFile]);
 		}
 		if (
 			(hasAvatarFilePatch || hasAvatarUrlPatch) &&
@@ -845,6 +850,8 @@ async function handleMeArticles(
 		if (context.request.method === "PATCH") {
 			const body = await parseJsonBody(context.request);
 			const payload: JsonObject = {};
+			const prevCoverFile = normalizeDirectusFileId(target.cover_file);
+			let nextCoverFile = prevCoverFile;
 
 			if (hasOwn(body, "title")) {
 				payload.title = parseBodyTextField(body, "title");
@@ -864,6 +871,7 @@ async function handleMeArticles(
 				);
 			}
 			if (hasOwn(body, "cover_file")) {
+				nextCoverFile = normalizeDirectusFileId(body.cover_file);
 				payload.cover_file = toOptionalString(body.cover_file);
 			}
 			if (hasOwn(body, "cover_url")) {
@@ -887,11 +895,22 @@ async function handleMeArticles(
 			}
 
 			const updated = await updateOne("app_articles", id, payload);
+			if (
+				hasOwn(body, "cover_file") &&
+				prevCoverFile &&
+				prevCoverFile !== nextCoverFile
+			) {
+				await cleanupOrphanDirectusFiles([prevCoverFile]);
+			}
 			return ok({ item: { ...updated, tags: safeCsv(updated.tags) } });
 		}
 
 		if (context.request.method === "DELETE") {
+			const coverFile = normalizeDirectusFileId(target.cover_file);
 			await deleteOne("app_articles", id);
+			if (coverFile) {
+				await cleanupOrphanDirectusFiles([coverFile]);
+			}
 			return ok({ id });
 		}
 	}
@@ -1030,7 +1049,9 @@ async function handleMeDiaries(
 		}
 
 		if (context.request.method === "DELETE") {
+			const fileIds = await collectDiaryFileIds(id);
 			await deleteOne("app_diaries", id);
+			await cleanupOrphanDirectusFiles(fileIds);
 			return ok({ id });
 		}
 	}
@@ -1118,6 +1139,8 @@ async function handleMeAnime(
 		if (context.request.method === "PATCH") {
 			const body = await parseJsonBody(context.request);
 			const payload: JsonObject = {};
+			const prevCoverFile = normalizeDirectusFileId(target.cover_file);
+			let nextCoverFile = prevCoverFile;
 			if (hasOwn(body, "title")) {
 				payload.title = parseBodyTextField(body, "title");
 			}
@@ -1151,6 +1174,7 @@ async function handleMeAnime(
 				payload.link = toOptionalString(body.link);
 			}
 			if (hasOwn(body, "cover_file")) {
+				nextCoverFile = normalizeDirectusFileId(body.cover_file);
 				payload.cover_file = toOptionalString(body.cover_file);
 			}
 			if (hasOwn(body, "cover_url")) {
@@ -1158,13 +1182,24 @@ async function handleMeAnime(
 			}
 			Object.assign(payload, parseVisibilityPatch(body));
 			const updated = await updateOne("app_anime_entries", id, payload);
+			if (
+				hasOwn(body, "cover_file") &&
+				prevCoverFile &&
+				prevCoverFile !== nextCoverFile
+			) {
+				await cleanupOrphanDirectusFiles([prevCoverFile]);
+			}
 			return ok({
 				item: { ...updated, genres: safeCsv(updated.genres) },
 			});
 		}
 
 		if (context.request.method === "DELETE") {
+			const coverFile = normalizeDirectusFileId(target.cover_file);
 			await deleteOne("app_anime_entries", id);
+			if (coverFile) {
+				await cleanupOrphanDirectusFiles([coverFile]);
+			}
 			return ok({ id });
 		}
 	}
@@ -1308,6 +1343,8 @@ async function handleMeAlbums(
 		if (context.request.method === "PATCH") {
 			const body = await parseJsonBody(context.request);
 			const payload: JsonObject = {};
+			const prevCoverFile = normalizeDirectusFileId(target.cover_file);
+			let nextCoverFile = prevCoverFile;
 			if (hasOwn(body, "title")) {
 				const t = parseBodyTextField(body, "title");
 				if (t && weightedCharLength(t) > ALBUM_TITLE_MAX) {
@@ -1325,6 +1362,7 @@ async function handleMeAlbums(
 				payload.description = toOptionalString(body.description);
 			}
 			if (hasOwn(body, "cover_file")) {
+				nextCoverFile = normalizeDirectusFileId(body.cover_file);
 				payload.cover_file = toOptionalString(body.cover_file);
 			}
 			if (hasOwn(body, "cover_url")) {
@@ -1369,11 +1407,20 @@ async function handleMeAlbums(
 				);
 			}
 			const updated = await updateOne("app_albums", id, payload);
+			if (
+				hasOwn(body, "cover_file") &&
+				prevCoverFile &&
+				prevCoverFile !== nextCoverFile
+			) {
+				await cleanupOrphanDirectusFiles([prevCoverFile]);
+			}
 			return ok({ item: { ...updated, tags: safeCsv(updated.tags) } });
 		}
 
 		if (context.request.method === "DELETE") {
+			const fileIds = await collectAlbumFileIds(id, target.cover_file);
 			await deleteOne("app_albums", id);
+			await cleanupOrphanDirectusFiles(fileIds);
 			return ok({ id });
 		}
 	}
@@ -1441,7 +1488,10 @@ async function handleMeAlbumPhotos(
 		if (context.request.method === "PATCH") {
 			const body = await parseJsonBody(context.request);
 			const payload: JsonObject = {};
+			const prevFileId = normalizeDirectusFileId(photo.file_id);
+			let nextFileId = prevFileId;
 			if (hasOwn(body, "file_id")) {
+				nextFileId = normalizeDirectusFileId(body.file_id);
 				payload.file_id = toOptionalString(body.file_id);
 			}
 			if (hasOwn(body, "image_url")) {
@@ -1488,11 +1538,22 @@ async function handleMeAlbumPhotos(
 				photoId,
 				payload,
 			);
+			if (
+				hasOwn(body, "file_id") &&
+				prevFileId &&
+				prevFileId !== nextFileId
+			) {
+				await cleanupOrphanDirectusFiles([prevFileId]);
+			}
 			return ok({ item: { ...updated, tags: safeCsv(updated.tags) } });
 		}
 
 		if (context.request.method === "DELETE") {
+			const fileId = normalizeDirectusFileId(photo.file_id);
 			await deleteOne("app_album_photos", photoId);
+			if (fileId) {
+				await cleanupOrphanDirectusFiles([fileId]);
+			}
 			return ok({ id: photoId });
 		}
 	}
@@ -1550,7 +1611,10 @@ async function handleMeDiaryImages(
 		if (context.request.method === "PATCH") {
 			const body = await parseJsonBody(context.request);
 			const payload: JsonObject = {};
+			const prevFileId = normalizeDirectusFileId(image.file_id);
+			let nextFileId = prevFileId;
 			if (hasOwn(body, "file_id")) {
+				nextFileId = normalizeDirectusFileId(body.file_id);
 				payload.file_id = toOptionalString(body.file_id);
 			}
 			if (hasOwn(body, "image_url")) {
@@ -1585,11 +1649,22 @@ async function handleMeDiaryImages(
 				imageId,
 				payload,
 			);
+			if (
+				hasOwn(body, "file_id") &&
+				prevFileId &&
+				prevFileId !== nextFileId
+			) {
+				await cleanupOrphanDirectusFiles([prevFileId]);
+			}
 			return ok({ item: updated });
 		}
 
 		if (context.request.method === "DELETE") {
+			const fileId = normalizeDirectusFileId(image.file_id);
 			await deleteOne("app_diary_images", imageId);
+			if (fileId) {
+				await cleanupOrphanDirectusFiles([fileId]);
+			}
 			return ok({ id: imageId });
 		}
 	}

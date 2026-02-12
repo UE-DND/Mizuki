@@ -32,6 +32,9 @@ export type EditableSiteSettings = {
 		siteStartDate: string | null;
 		favicon: Favicon[];
 	};
+	auth: {
+		register_enabled: boolean;
+	};
 	featurePages: {
 		friends: boolean;
 	};

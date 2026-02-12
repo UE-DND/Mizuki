@@ -4,7 +4,10 @@ import sharp from "sharp";
 import type { UploadPurpose } from "@/constants/upload-limits";
 import { UPLOAD_LIMITS, UPLOAD_LIMIT_LABELS } from "@/constants/upload-limits";
 import { assertCan } from "@/server/auth/acl";
-import { uploadDirectusFile } from "@/server/directus/client";
+import {
+	uploadDirectusFile,
+	updateDirectusFileMetadata,
+} from "@/server/directus/client";
 import { fail, ok } from "@/server/api/response";
 
 import { requireAccess } from "./shared";
@@ -54,14 +57,17 @@ export async function handleUploads(context: APIContext): Promise<Response> {
 	if (context.request.method !== "POST") {
 		return fail("方法不允许", 405);
 	}
-	const required = await requireAccess(context);
-	if ("response" in required) {
-		return required.response;
-	}
-	const access = required.access;
-	assertCan(access, "can_upload_files");
-
 	const formData = await context.request.formData();
+	const purpose = resolvePurpose(formData.get("purpose"));
+	if (purpose !== "registration-avatar") {
+		const required = await requireAccess(context);
+		if ("response" in required) {
+			return required.response;
+		}
+		const access = required.access;
+		assertCan(access, "can_upload_files");
+	}
+
 	const file = formData.get("file");
 	if (!(file instanceof File)) {
 		return fail("缺少上传文件", 400);
@@ -69,8 +75,6 @@ export async function handleUploads(context: APIContext): Promise<Response> {
 	const targetFormatRaw = formData.get("target_format");
 	const targetFormat =
 		typeof targetFormatRaw === "string" ? targetFormatRaw : "";
-
-	const purpose = resolvePurpose(formData.get("purpose"));
 	const maxSize = UPLOAD_LIMITS[purpose];
 	const label = UPLOAD_LIMIT_LABELS[purpose];
 
@@ -93,10 +97,16 @@ export async function handleUploads(context: APIContext): Promise<Response> {
 
 	const titleRaw = formData.get("title");
 	const folderRaw = formData.get("folder");
+	const requestedTitle = typeof titleRaw === "string" ? titleRaw.trim() : "";
 	const uploaded = await uploadDirectusFile({
 		file: uploadFile,
-		title: typeof titleRaw === "string" ? titleRaw : undefined,
+		title: requestedTitle || undefined,
 		folder: typeof folderRaw === "string" ? folderRaw : undefined,
 	});
+	if (requestedTitle && uploaded.id) {
+		await updateDirectusFileMetadata(uploaded.id, {
+			title: requestedTitle,
+		});
+	}
 	return ok({ file: uploaded });
 }

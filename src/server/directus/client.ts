@@ -14,6 +14,7 @@ import {
 	rest,
 	staticToken,
 	updateItem,
+	updateFile,
 	updateUser,
 	uploadFiles,
 } from "@directus/sdk";
@@ -303,6 +304,17 @@ export async function updateDirectusUser(
 	return { id: userId };
 }
 
+export async function deleteDirectusUser(id: string): Promise<void> {
+	await runDirectusRequest("删除 Directus 用户", async () => {
+		await getDirectusClient().request(
+			customEndpoint({
+				path: `/users/${encodeURIComponent(id)}`,
+				method: "DELETE",
+			}),
+		);
+	});
+}
+
 export async function listDirectusUsers(params?: {
 	limit?: number;
 	offset?: number;
@@ -317,7 +329,6 @@ export async function listDirectusUsers(params?: {
 					"first_name",
 					"last_name",
 					"avatar",
-					"status",
 					"role",
 				],
 				limit: params?.limit ?? 50,
@@ -375,6 +386,20 @@ export async function uploadDirectusFile(params: {
 					undefined)
 				: undefined,
 	};
+}
+
+export async function updateDirectusFileMetadata(
+	id: string,
+	payload: {
+		title?: string | null;
+		description?: string | null;
+		filename_download?: string | null;
+		folder?: string | null;
+	},
+): Promise<void> {
+	await runDirectusRequest("更新 Directus 文件元数据", async () => {
+		await getDirectusClient().request(updateFile(id, payload as never));
+	});
 }
 
 /**

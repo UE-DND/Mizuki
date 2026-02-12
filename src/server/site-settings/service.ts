@@ -251,6 +251,10 @@ function normalizeSettings(
 				.slice(0, 1)
 		: base.site.favicon;
 
+	merged.auth.register_enabled = Boolean(
+		merged.auth.register_enabled ?? base.auth.register_enabled,
+	);
+
 	merged.featurePages.friends = true;
 
 	merged.navbarTitle.text =

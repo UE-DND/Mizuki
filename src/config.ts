@@ -68,6 +68,9 @@ export const defaultSiteSettings: SiteSettingsPayload = {
 		siteStartDate: "2026-02-01",
 		favicon: [],
 	},
+	auth: {
+		register_enabled: false,
+	},
 	featurePages: {
 		friends: true,
 	},

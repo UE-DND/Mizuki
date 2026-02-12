@@ -66,6 +66,29 @@
   color: var(--deep-text);
 }
 
+.overlay-dialog-field-label-highlight {
+  color: var(--primary);
+  font-weight: 600;
+}
+
+.overlay-dialog-field-hint {
+  font-size: 0.8125rem;
+  line-height: 1.45;
+  color: var(--deep-text);
+  opacity: 0.72;
+}
+
+.overlay-dialog-field-hint-primary {
+  color: var(--primary);
+  opacity: 1;
+  font-weight: 600;
+}
+
+.overlay-dialog-field-hint-danger {
+  color: oklch(0.62 0.22 25);
+  opacity: 1;
+}
+
 .overlay-dialog-field-control {
   width: 100%;
   border: 1px solid var(--line-divider);
@@ -93,6 +116,14 @@ textarea.overlay-dialog-field-control {
 :root.dark .overlay-dialog-field-label,
 :root.dark .overlay-dialog-field-control {
   color: oklch(0.9 0.02 var(--hue));
+}
+
+.overlay-dialog-error {
+  margin: -0.625rem 0 1.125rem;
+  font-size: 0.8125rem;
+  line-height: 1.5;
+  text-align: left;
+  color: oklch(0.62 0.22 25);
 }
 
 .overlay-dialog-actions {

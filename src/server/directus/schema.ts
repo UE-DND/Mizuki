@@ -13,6 +13,7 @@ import type {
 	AppFile,
 	AppPermissions,
 	AppProfile,
+	AppUserRegistrationRequest,
 	AppUserBlock,
 	AppUser,
 } from "@/types/app";
@@ -33,6 +34,7 @@ export type DirectusSchema = {
 	app_album_photos: AppAlbumPhoto[];
 	app_user_blocks: AppUserBlock[];
 	app_content_reports: AppContentReport[];
+	app_user_registration_requests: AppUserRegistrationRequest[];
 	app_site_settings: AppSiteSettings[];
 	directus_users: AppUser[];
 	directus_files: AppFile[];

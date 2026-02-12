@@ -17,7 +17,7 @@ interface Props {
 const props = Astro.props;
 
 const user = await getSessionUser(Astro);
-const loginUrl = `/login?redirect=${encodeURIComponent(Astro.url.pathname)}`;
+const loginUrl = `/auth/login?redirect=${encodeURIComponent(Astro.url.pathname)}`;
 
 let isAdmin = false;
 if (user) {

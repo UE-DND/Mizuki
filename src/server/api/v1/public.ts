@@ -12,6 +12,7 @@ import type {
 } from "@/types/app";
 import type { JsonObject } from "@/types/json";
 import {
+	createOne,
 	countItems,
 	readDirectusAssetResponse,
 	readMany,
@@ -19,7 +20,15 @@ import {
 import { buildDirectusAssetUrl } from "@/server/directus-auth";
 import { getPublicSiteSettings } from "@/server/site-settings/service";
 import { fail, ok } from "@/server/api/response";
-import { parsePagination } from "@/server/api/utils";
+import {
+	parseJsonBody,
+	parsePagination,
+	toStringValue,
+} from "@/server/api/utils";
+import {
+	normalizeRequestedUsername,
+	validateDisplayName,
+} from "@/server/auth/username";
 import { getSessionUser } from "@/server/auth/session";
 
 import {
@@ -35,6 +44,90 @@ import {
 	toDirectusAssetQuery,
 } from "./shared";
 import { getAuthorBundle } from "./shared/author-cache";
+
+const REGISTRATION_REASON_MAX_LENGTH = 500;
+
+function assertRegisterEnabled(context: APIContext): void {
+	const enabled = Boolean(
+		context.locals.siteSettings?.settings.auth?.register_enabled,
+	);
+	if (!enabled) {
+		throw new Error("REGISTER_DISABLED");
+	}
+}
+
+function parseRegistrationReason(raw: unknown): string {
+	const reason = String(raw || "").trim();
+	if (!reason) {
+		throw new Error("REGISTRATION_REASON_EMPTY");
+	}
+	if (reason.length > REGISTRATION_REASON_MAX_LENGTH) {
+		throw new Error("REGISTRATION_REASON_TOO_LONG");
+	}
+	return reason;
+}
+
+function parseRegistrationEmail(raw: unknown): string {
+	const email = String(raw || "")
+		.trim()
+		.toLowerCase();
+	if (!email) {
+		throw new Error("EMAIL_EMPTY");
+	}
+	const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+	if (!emailPattern.test(email)) {
+		throw new Error("EMAIL_INVALID");
+	}
+	return email;
+}
+
+async function assertRegistrationEmailAvailable(email: string): Promise<void> {
+	const rows = await readMany("directus_users", {
+		filter: { email: { _eq: email } } as JsonObject,
+		limit: 1,
+		fields: ["id"],
+	});
+	if (rows.length > 0) {
+		throw new Error("EMAIL_EXISTS");
+	}
+}
+
+async function assertRegistrationUsernameAvailable(
+	username: string,
+): Promise<void> {
+	const rows = await readMany("app_user_profiles", {
+		filter: { username: { _eq: username } } as JsonObject,
+		limit: 1,
+		fields: ["id"],
+	});
+	if (rows.length > 0) {
+		throw new Error("USERNAME_EXISTS");
+	}
+}
+
+async function assertNoPendingRegistrationConflict(
+	email: string,
+	username: string,
+): Promise<void> {
+	const rows = await readMany("app_user_registration_requests", {
+		filter: {
+			_and: [
+				{ request_status: { _eq: "pending" } },
+				{
+					_or: [
+						{ email: { _eq: email } },
+						{ username: { _eq: username } },
+					],
+				},
+			],
+		} as JsonObject,
+		limit: 1,
+		fields: ["id"],
+	});
+	if (rows.length > 0) {
+		throw new Error("REGISTRATION_REQUEST_EXISTS");
+	}
+}
 
 function toAuthorFallback(userId: string): {
 	id: string;
@@ -74,6 +167,58 @@ async function handlePublicSiteSettings(
 	return ok({
 		settings: data.settings,
 		updated_at: data.updatedAt,
+	});
+}
+
+async function handlePublicRegistrationRequests(
+	context: APIContext,
+	segments: string[],
+): Promise<Response> {
+	if (segments.length !== 2) {
+		return fail("未找到接口", 404);
+	}
+	if (context.request.method !== "POST") {
+		return fail("方法不允许", 405);
+	}
+
+	assertRegisterEnabled(context);
+	const body = await parseJsonBody(context.request);
+	const email = parseRegistrationEmail(body.email);
+	const username = normalizeRequestedUsername(
+		toStringValue(body.username).trim(),
+	);
+	const displayName = validateDisplayName(
+		toStringValue(body.display_name).trim(),
+	);
+	const registrationReason = parseRegistrationReason(
+		body.registration_reason,
+	);
+	const avatarFileRaw = toStringValue(body.avatar_file).trim();
+	const avatarFile = avatarFileRaw ? parseRouteId(avatarFileRaw) : null;
+
+	await assertNoPendingRegistrationConflict(email, username);
+	await Promise.all([
+		assertRegistrationEmailAvailable(email),
+		assertRegistrationUsernameAvailable(username),
+	]);
+
+	const created = await createOne("app_user_registration_requests", {
+		status: "published",
+		email,
+		username,
+		display_name: displayName,
+		avatar_file: avatarFile,
+		registration_reason: registrationReason,
+		request_status: "pending",
+		reviewed_by: null,
+		reviewed_at: null,
+		reject_reason: null,
+		cancel_reason: null,
+		approved_user_id: null,
+	});
+
+	return ok({
+		item: created,
 	});
 }
 
@@ -962,6 +1107,9 @@ export async function handlePublic(
 	}
 	if (segments[1] === "site-settings") {
 		return await handlePublicSiteSettings(context, segments);
+	}
+	if (segments[1] === "registration-requests") {
+		return await handlePublicRegistrationRequests(context, segments);
 	}
 	if (segments[1] === "articles") {
 		return await handlePublicArticles(context, segments);

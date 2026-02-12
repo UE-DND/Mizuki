@@ -4,6 +4,7 @@ import { fail, ok } from "@/server/api/response";
 
 import {
 	handleAdminContent,
+	handleAdminRegistrationRequests,
 	handleAdminSettings,
 	handleAdminUsers,
 } from "./admin";
@@ -59,6 +60,12 @@ export async function handleV1(context: APIContext): Promise<Response> {
 		if (segments[0] === "admin") {
 			if (segments[1] === "users") {
 				return await handleAdminUsers(context, segments.slice(1));
+			}
+			if (segments[1] === "registration-requests") {
+				return await handleAdminRegistrationRequests(
+					context,
+					segments.slice(1),
+				);
 			}
 			if (segments[1] === "content") {
 				return await handleAdminContent(context, segments.slice(1));

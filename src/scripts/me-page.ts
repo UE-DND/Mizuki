@@ -76,9 +76,9 @@ const buildLoginRedirectHref = (): string => {
 	const hash = String(window.location.hash || "");
 	const redirect = `${pathname}${search}${hash}` || "/";
 	if (!redirect.startsWith("/") || redirect.startsWith("//")) {
-		return "/login";
+		return "/auth/login";
 	}
-	return `/login?redirect=${encodeURIComponent(redirect)}`;
+	return `/auth/login?redirect=${encodeURIComponent(redirect)}`;
 };
 
 const extractFileId = (value: unknown): string => {

@@ -4,7 +4,7 @@ import AdminLayout from "@layouts/AdminLayout.astro";
 export const prerender = false;
 ---
 
-<AdminLayout title="用户管理" description="管理员管理用户账号与权限">
+<AdminLayout title="用户管理" description="管理员管理用户账号与注册审批">
   <div
     data-enter-skeleton-page="admin-users"
     data-enter-skeleton-target="admin-users"
@@ -19,62 +19,63 @@ export const prerender = false;
           用户管理
         </h1>
         <p class="text-base text-70">
-          管理员可创建用户、设置应用角色与功能开关。
+          管理员可审批注册申请，并维护现有用户角色与权限。
         </p>
+        <div class="pt-2 flex flex-wrap items-center gap-3">
+          <label
+            class="flex items-center gap-3 text-75 cursor-pointer select-none"
+          >
+            <input
+              type="checkbox"
+              id="admin-register-enabled"
+              class="toggle-checkbox"
+            />
+            <span class="toggle-track"><span class="toggle-knob"></span></span>
+            开放注册入口
+          </label>
+          <span id="admin-register-msg" class="text-xs text-60"></span>
+        </div>
       </section>
 
       <section class="card-base p-6 rounded-(--radius-large) space-y-3">
-        <h2 class="text-xl font-semibold text-90">新建用户</h2>
-        <form
-          id="admin-user-create"
-          class="grid grid-cols-1 md:grid-cols-2 gap-3"
-        >
-          <input
-            id="create-email"
-            type="email"
-            placeholder="邮箱"
-            class="rounded-lg border border-(--line-divider) px-3 py-2 bg-black/5 dark:bg-white/5 text-75 placeholder:text-50"
-            required
-          />
-          <input
-            id="create-password"
-            type="password"
-            placeholder="初始密码"
-            class="rounded-lg border border-(--line-divider) px-3 py-2 bg-black/5 dark:bg-white/5 text-75 placeholder:text-50"
-            required
-          />
-          <input
-            id="create-first-name"
-            placeholder="名"
-            class="rounded-lg border border-(--line-divider) px-3 py-2 bg-black/5 dark:bg-white/5 text-75 placeholder:text-50"
-          />
-          <input
-            id="create-last-name"
-            placeholder="姓"
-            class="rounded-lg border border-(--line-divider) px-3 py-2 bg-black/5 dark:bg-white/5 text-75 placeholder:text-50"
-          />
-          <input
-            id="create-username"
-            placeholder="用户名（可选）"
-            class="rounded-lg border border-(--line-divider) px-3 py-2 bg-black/5 dark:bg-white/5 text-75 placeholder:text-50"
-          />
-          <select
-            id="create-app-role"
-            class="rounded-lg border border-(--line-divider) px-3 py-2 bg-black/5 dark:bg-white/5 text-75"
-          >
-            <option value="member">member</option>
-            <option value="admin">admin</option>
-          </select>
-          <div class="md:col-span-2">
-            <button
-              type="submit"
-              class="px-4 py-2 rounded-lg bg-(--btn-regular-bg) text-(--btn-content) text-sm"
-              >创建用户</button
+        <div class="flex flex-wrap items-center justify-between gap-3">
+          <h2 class="text-xl font-semibold text-90">注册申请列表</h2>
+          <div class="flex items-center gap-2">
+            <select
+              id="admin-registration-status"
+              class="rounded-lg border border-(--line-divider) px-3 py-2 text-sm bg-black/5 dark:bg-white/5 text-75"
             >
-            <span id="admin-user-create-msg" class="ml-2 text-xs text-60"
-            ></span>
+              <option value="pending">pending</option>
+              <option value="approved">approved</option>
+              <option value="rejected">rejected</option>
+              <option value="cancelled">cancelled</option>
+              <option value="all">all</option>
+            </select>
+            <button
+              id="admin-registration-refresh"
+              class="px-3 py-2 rounded-lg border border-(--line-divider) text-sm text-75 hover:bg-(--btn-plain-bg-hover) transition-colors"
+            >
+              刷新
+            </button>
           </div>
-        </form>
+        </div>
+        <div class="overflow-auto">
+          <table class="w-full text-sm min-w-[980px] text-75">
+            <thead>
+              <tr class="text-left text-60 border-b border-(--line-divider)">
+                <th class="py-2">头像</th>
+                <th class="py-2">邮箱</th>
+                <th class="py-2">用户名</th>
+                <th class="py-2">昵称</th>
+                <th class="py-2">状态</th>
+                <th class="py-2">提交时间</th>
+                <th class="py-2">操作</th>
+              </tr>
+            </thead>
+            <tbody id="admin-registration-table"></tbody>
+          </table>
+        </div>
+        <div id="admin-registration-msg" class="text-xs text-60"></div>
       </section>
 
       <section class="card-base p-6 rounded-(--radius-large) space-y-3">
@@ -83,8 +84,9 @@ export const prerender = false;
           <button
             id="admin-users-refresh"
             class="px-3 py-2 rounded-lg border border-(--line-divider) text-sm text-75 hover:bg-(--btn-plain-bg-hover) transition-colors"
-            >刷新</button
           >
+            刷新
+          </button>
         </div>
         <div class="overflow-auto">
           <table class="w-full text-sm min-w-[860px] text-75">
@@ -93,8 +95,6 @@ export const prerender = false;
                 <th class="py-2">邮箱</th>
                 <th class="py-2">用户名</th>
                 <th class="py-2">角色</th>
-                <th class="py-2">状态</th>
-                <th class="py-2">挂起</th>
                 <th class="py-2">操作</th>
               </tr>
             </thead>
@@ -116,23 +116,23 @@ export const prerender = false;
         </div>
         <div class="md3-skeleton-text" style="--skeleton-width: 54%;"></div>
       </section>
-
-      <section class="card-base p-6 rounded-(--radius-large) space-y-3">
-        <div
-          class="md3-skeleton-text"
-          style="--skeleton-width: 24%; --skeleton-height: 1.25rem;"
-        >
+      <section class="card-base p-6 rounded-(--radius-large) space-y-4">
+        <div class="flex items-center justify-between gap-3">
+          <div
+            class="md3-skeleton-text"
+            style="--skeleton-width: 24%; --skeleton-height: 1.25rem;"
+          >
+          </div>
+          <div class="md3-skeleton-block h-9 w-16 rounded-lg"></div>
         </div>
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+        <div class="space-y-2">
           {
             Array.from({ length: 6 }).map(() => (
-              <div class="md3-skeleton-block h-10 rounded-lg" />
+              <div class="md3-skeleton-block h-11 rounded-lg" />
             ))
           }
-          <div class="md3-skeleton-block h-10 rounded-lg md:col-span-2"></div>
         </div>
       </section>
-
       <section class="card-base p-6 rounded-(--radius-large) space-y-4">
         <div class="flex items-center justify-between gap-3">
           <div
@@ -154,8 +154,10 @@ export const prerender = false;
   </div>
 </AdminLayout>
 
-<script is:inline>
-  const normalizeApiUrl = (input) => {
+<script>
+  import { showConfirmDialog } from "@/scripts/dialogs";
+
+  const normalizeApiUrl = (input: string): string => {
     const [pathname, search = ""] = String(input || "").split("?");
     const normalizedPath = pathname.endsWith("/")
       ? pathname.slice(0, -1)
@@ -163,13 +165,13 @@ export const prerender = false;
     return search ? `${normalizedPath}?${search}` : normalizedPath;
   };
 
-  const api = async (url, init = {}) => {
+  const api = async (url: string, init: RequestInit = {}) => {
     const response = await fetch(normalizeApiUrl(url), {
       credentials: "include",
       headers: {
         Accept: "application/json",
         ...(init.body ? { "Content-Type": "application/json" } : {}),
-        ...(init.headers || {}),
+        ...((init.headers as Record<string, string>) || {}),
       },
       ...init,
     });
@@ -177,46 +179,158 @@ export const prerender = false;
     return { response, data };
   };
 
-  const createMessage = document.getElementById("admin-user-create-msg");
-  const tableBody = document.getElementById("admin-users-table");
+  const usersTableBody = document.getElementById(
+    "admin-users-table",
+  ) as HTMLTableSectionElement | null;
+  const registerEnabledInput = document.getElementById(
+    "admin-register-enabled",
+  ) as HTMLInputElement | null;
+  const registerMessage = document.getElementById("admin-register-msg");
+  const registrationTableBody = document.getElementById(
+    "admin-registration-table",
+  ) as HTMLTableSectionElement | null;
+  const registrationMessage = document.getElementById("admin-registration-msg");
+  const registrationStatusSelect = document.getElementById(
+    "admin-registration-status",
+  ) as HTMLSelectElement | null;
 
-  const renderRows = (rows) => {
-    if (!tableBody) return;
-    if (!Array.isArray(rows) || rows.length === 0) {
-      tableBody.innerHTML = `<tr><td colspan="6" class="py-4 text-60">暂无用户数据</td></tr>`;
+  const setRegistrationMessage = (message: string) => {
+    if (!registrationMessage) {
       return;
     }
-    tableBody.innerHTML = rows
+    registrationMessage.textContent = String(message || "");
+  };
+
+  const setRegisterMessage = (message: string) => {
+    if (!registerMessage) {
+      return;
+    }
+    registerMessage.textContent = String(message || "");
+  };
+
+  type UnknownRecord = Record<string, unknown>;
+
+  const resolveErrorMessage = (
+    data: UnknownRecord | null,
+    fallback: string,
+  ) => {
+    const code = String(data?.code || "");
+    if (code === "REGISTER_DISABLED") {
+      return "注册入口未开启";
+    }
+    if (code === "EMAIL_EXISTS") {
+      return "邮箱已存在";
+    }
+    if (code === "USERNAME_EXISTS") {
+      return "用户名已存在";
+    }
+    if (code === "REGISTRATION_REQUEST_EXISTS") {
+      return "该邮箱或用户名已有待处理申请";
+    }
+    if (code === "REGISTRATION_STATUS_CONFLICT") {
+      return "申请状态冲突，请刷新后重试";
+    }
+    return String(data?.message || fallback || "请求失败");
+  };
+
+  const renderUsersRows = (rows: UnknownRecord[]) => {
+    if (!usersTableBody) return;
+    if (!Array.isArray(rows) || rows.length === 0) {
+      usersTableBody.innerHTML =
+        '<tr><td colspan="4" class="py-4 text-60">暂无用户数据</td></tr>';
+      return;
+    }
+    usersTableBody.innerHTML = rows
       .map((entry) => {
-        const user = entry.user || {};
-        const profile = entry.profile || {};
-        const permissions = entry.permissions || {};
+        const userRecord =
+          typeof entry.user === "object" && entry.user
+            ? (entry.user as UnknownRecord)
+            : {};
+        const profileRecord =
+          typeof entry.profile === "object" && entry.profile
+            ? (entry.profile as UnknownRecord)
+            : {};
+        const permissionsRecord =
+          typeof entry.permissions === "object" && entry.permissions
+            ? (entry.permissions as UnknownRecord)
+            : {};
+
+        const userId = String(userRecord.id || "");
+        const userEmail = String(userRecord.email || "");
+        const username = String(profileRecord.username || "");
+        const appRole = String(permissionsRecord.app_role || "member");
         return `
 					<tr class="border-b border-(--line-divider) text-75">
-						<td class="py-2 pr-2">${user.email || ""}</td>
-						<td class="py-2 pr-2">${profile.username || ""}</td>
+						<td class="py-2 pr-2">${userEmail}</td>
+						<td class="py-2 pr-2">${username}</td>
 						<td class="py-2 pr-2">
-							<select data-user-id="${user.id}" data-field="app_role" class="rounded border border-(--line-divider) px-2 py-1 bg-black/5 dark:bg-white/5 text-75">
-								<option value="member" ${permissions.app_role === "member" ? "selected" : ""}>member</option>
-								<option value="admin" ${permissions.app_role === "admin" ? "selected" : ""}>admin</option>
+							<select data-user-id="${userId}" data-field="app_role" class="rounded border border-(--line-divider) px-2 py-1 bg-black/5 dark:bg-white/5 text-75">
+								<option value="member" ${appRole === "member" ? "selected" : ""}>member</option>
+								<option value="admin" ${appRole === "admin" ? "selected" : ""}>admin</option>
 							</select>
-						</td>
-						<td class="py-2 pr-2">
-							<select data-user-id="${user.id}" data-field="status" class="rounded border border-(--line-divider) px-2 py-1 bg-black/5 dark:bg-white/5 text-75">
-								<option value="active" ${user.status === "active" ? "selected" : ""}>active</option>
-								<option value="suspended" ${user.status === "suspended" ? "selected" : ""}>suspended</option>
-							</select>
-						</td>
-						<td class="py-2 pr-2">
-							<label class="inline-flex items-center gap-1 text-xs text-60">
-								<input type="checkbox" data-user-id="${user.id}" data-field="is_suspended" ${permissions.is_suspended ? "checked" : ""} />
-								<span>${permissions.is_suspended ? "是" : "否"}</span>
-							</label>
 						</td>
 						<td class="py-2 pr-2">
 							<div class="flex items-center gap-2">
-								<button class="text-xs text-(--primary) hover:underline" data-action="save" data-user-id="${user.id}">保存</button>
-								<button class="text-xs text-amber-600 dark:text-amber-400 hover:underline" data-action="reset" data-user-id="${user.id}">重置密码</button>
+								<button class="text-xs text-(--primary) hover:underline" data-action="save" data-user-id="${userId}">保存</button>
+								<button class="text-xs text-amber-600 dark:text-amber-400 hover:underline" data-action="reset" data-user-id="${userId}">重置密码</button>
+								<button class="text-xs text-red-500 hover:underline" data-action="delete" data-user-id="${userId}" data-username="${username}">删除账号</button>
+							</div>
+						</td>
+					</tr>
+				`;
+      })
+      .join("");
+  };
+
+  const renderRegistrationRows = (rows: UnknownRecord[]) => {
+    if (!registrationTableBody) {
+      return;
+    }
+    if (!Array.isArray(rows) || rows.length === 0) {
+      registrationTableBody.innerHTML =
+        '<tr><td colspan="7" class="py-4 text-60">暂无申请数据</td></tr>';
+      return;
+    }
+    registrationTableBody.innerHTML = rows
+      .map((item) => {
+        const avatarFile = String(item.avatar_file || "").trim();
+        const avatarHtml = avatarFile
+          ? `<img src="/api/v1/public/assets/${encodeURIComponent(avatarFile)}?width=72&height=72&fit=cover" class="w-9 h-9 rounded-full object-cover border border-(--line-divider)" alt="avatar" loading="lazy" />`
+          : '<span class="text-xs text-50">无</span>';
+        const reason = String(item.registration_reason || "").trim();
+        const reviewedBy = String(item.reviewed_by || "").trim();
+        const reviewedAt = String(item.reviewed_at || "").trim();
+        const detail = [
+          `邮箱: ${item.email || ""}`,
+          `用户名: ${item.username || ""}`,
+          `昵称: ${item.display_name || ""}`,
+          `申请状态: ${item.request_status || ""}`,
+          `注册理由: ${reason || "无"}`,
+          `拒绝原因: ${item.reject_reason || "无"}`,
+          `取消原因: ${item.cancel_reason || "无"}`,
+          `审批人: ${reviewedBy || "无"}`,
+          `审批时间: ${reviewedAt || "无"}`,
+        ].join("\n");
+        const status = String(item.request_status || "");
+        const canReview = status === "pending";
+        return `
+					<tr class="border-b border-(--line-divider) text-75">
+						<td class="py-2 pr-2">${avatarHtml}</td>
+						<td class="py-2 pr-2">${item.email || ""}</td>
+						<td class="py-2 pr-2">${item.username || ""}</td>
+						<td class="py-2 pr-2">${item.display_name || ""}</td>
+						<td class="py-2 pr-2">${status || ""}</td>
+						<td class="py-2 pr-2">${item.date_created || ""}</td>
+						<td class="py-2 pr-2">
+							<div class="flex items-center gap-2">
+								<button class="text-xs text-60 hover:text-(--primary) hover:underline" data-registration-action="detail" data-registration-id="${item.id}" data-registration-detail="${encodeURIComponent(detail)}">详情</button>
+								${
+                  canReview
+                    ? `<button class="text-xs text-emerald-600 hover:underline" data-registration-action="approve" data-registration-id="${item.id}">通过</button>
+								<button class="text-xs text-amber-600 hover:underline" data-registration-action="reject" data-registration-id="${item.id}">拒绝</button>
+								<button class="text-xs text-red-500 hover:underline" data-registration-action="cancel" data-registration-id="${item.id}">取消</button>`
+                    : ""
+                }
 							</div>
 						</td>
 					</tr>
@@ -228,45 +342,82 @@ export const prerender = false;
   const loadUsers = async () => {
     const { response, data } = await api("/api/v1/admin/users?limit=200");
     if (!response.ok || !data?.ok) {
-      renderRows([]);
+      renderUsersRows([]);
       return;
     }
-    renderRows(data.items || []);
+    renderUsersRows(data.items || []);
+  };
+
+  const loadRegisterSwitch = async () => {
+    const { response, data } = await api("/api/v1/admin/settings/site");
+    if (!response.ok || !data?.ok) {
+      setRegisterMessage(resolveErrorMessage(data, "读取开关失败"));
+      return;
+    }
+    const enabled = Boolean(data?.settings?.auth?.register_enabled);
+    if (registerEnabledInput) {
+      registerEnabledInput.checked = enabled;
+    }
+    setRegisterMessage("");
+  };
+
+  const loadRegistrationRequests = async () => {
+    const status =
+      String(registrationStatusSelect?.value || "").trim() || "pending";
+    const params =
+      status && status !== "all"
+        ? `?status=${encodeURIComponent(status)}&limit=200`
+        : "?limit=200";
+    const { response, data } = await api(
+      `/api/v1/admin/registration-requests${params}`,
+    );
+    if (!response.ok || !data?.ok) {
+      renderRegistrationRows([]);
+      setRegistrationMessage(resolveErrorMessage(data, "加载申请失败"));
+      return;
+    }
+    setRegistrationMessage("");
+    renderRegistrationRows(data.items || []);
   };
 
   document
     .getElementById("admin-users-refresh")
-    ?.addEventListener("click", loadUsers);
+    ?.addEventListener("click", () => void loadUsers());
 
   document
-    .getElementById("admin-user-create")
-    ?.addEventListener("submit", async (event) => {
-      event.preventDefault();
-      const payload = {
-        email: document.getElementById("create-email").value,
-        password: document.getElementById("create-password").value,
-        first_name: document.getElementById("create-first-name").value,
-        last_name: document.getElementById("create-last-name").value,
-        username: document.getElementById("create-username").value,
-        app_role: document.getElementById("create-app-role").value,
-      };
-      const { response, data } = await api("/api/v1/admin/users", {
-        method: "POST",
-        body: JSON.stringify(payload),
-      });
-      createMessage.textContent =
-        response.ok && data?.ok ? "创建成功" : data?.message || "创建失败";
-      if (response.ok && data?.ok) {
-        document.getElementById("create-email").value = "";
-        document.getElementById("create-password").value = "";
-        document.getElementById("create-first-name").value = "";
-        document.getElementById("create-last-name").value = "";
-        document.getElementById("create-username").value = "";
-        await loadUsers();
-      }
-    });
+    .getElementById("admin-registration-refresh")
+    ?.addEventListener("click", () => void loadRegistrationRequests());
 
-  tableBody?.addEventListener("click", async (event) => {
+  registrationStatusSelect?.addEventListener("change", () => {
+    void loadRegistrationRequests();
+  });
+
+  registerEnabledInput?.addEventListener("change", async () => {
+    if (!registerEnabledInput) {
+      return;
+    }
+    const previousChecked = !registerEnabledInput.checked;
+    registerEnabledInput.disabled = true;
+    setRegisterMessage("保存中...");
+    const { response, data } = await api("/api/v1/admin/settings/site", {
+      method: "PATCH",
+      body: JSON.stringify({
+        auth: {
+          register_enabled: Boolean(registerEnabledInput.checked),
+        },
+      }),
+    });
+    if (!response.ok || !data?.ok) {
+      registerEnabledInput.checked = previousChecked;
+      registerEnabledInput.disabled = false;
+      setRegisterMessage(resolveErrorMessage(data, "保存失败"));
+      return;
+    }
+    registerEnabledInput.disabled = false;
+    setRegisterMessage("保存成功");
+  });
+
+  usersTableBody?.addEventListener("click", async (event) => {
     const target = event.target instanceof HTMLElement ? event.target : null;
     if (!target) return;
     const action = target.getAttribute("data-action");
@@ -276,25 +427,19 @@ export const prerender = false;
     if (action === "save") {
       const row = target.closest("tr");
       if (!row) return;
-      const appRole = row.querySelector(
-        `select[data-user-id="${userId}"][data-field="app_role"]`,
+      const appRole = (
+        row.querySelector(
+          `select[data-user-id="${userId}"][data-field="app_role"]`,
+        ) as HTMLSelectElement | null
       )?.value;
-      const status = row.querySelector(
-        `select[data-user-id="${userId}"][data-field="status"]`,
-      )?.value;
-      const isSuspended = row.querySelector(
-        `input[data-user-id="${userId}"][data-field="is_suspended"]`,
-      )?.checked;
       const { response, data } = await api(`/api/v1/admin/users/${userId}`, {
         method: "PATCH",
         body: JSON.stringify({
           app_role: appRole,
-          status,
-          is_suspended: Boolean(isSuspended),
         }),
       });
       if (!response.ok || !data?.ok) {
-        window.alert(data?.message || "保存失败");
+        window.alert(resolveErrorMessage(data, "保存失败"));
         return;
       }
       await loadUsers();
@@ -312,13 +457,114 @@ export const prerender = false;
         },
       );
       if (!response.ok || !data?.ok) {
-        window.alert(data?.message || "重置失败");
+        window.alert(resolveErrorMessage(data, "重置失败"));
         return;
       }
       window.alert("密码已重置");
+      return;
+    }
+
+    if (action === "delete") {
+      const username = String(
+        target.getAttribute("data-username") || "",
+      ).trim();
+      const expectedText = `确认删除${username || userId}`;
+      const confirmDelete = await showConfirmDialog({
+        message: "确认删除这个账号？删除后不可恢复。",
+        confirmText: "确认删除",
+        confirmVariant: "danger",
+        manualConfirm: {
+          expectedText,
+          placeholder: expectedText,
+          mismatchMessage: "输入内容不匹配，请重试",
+        },
+      });
+      if (!confirmDelete) {
+        return;
+      }
+
+      const { response, data } = await api(`/api/v1/admin/users/${userId}`, {
+        method: "DELETE",
+      });
+      if (!response.ok || !data?.ok) {
+        window.alert(resolveErrorMessage(data, "删除失败"));
+        return;
+      }
+      window.alert("账号已删除");
+      await loadUsers();
     }
   });
 
-  loadUsers();
-  document.addEventListener("astro:after-swap", loadUsers);
+  registrationTableBody?.addEventListener("click", async (event) => {
+    const target = event.target instanceof HTMLElement ? event.target : null;
+    if (!target) {
+      return;
+    }
+    const action = String(
+      target.getAttribute("data-registration-action") || "",
+    );
+    const requestId = String(target.getAttribute("data-registration-id") || "");
+    if (!action) {
+      return;
+    }
+
+    if (action === "detail") {
+      const detail = decodeURIComponent(
+        String(target.getAttribute("data-registration-detail") || ""),
+      );
+      window.alert(detail || "无详情");
+      return;
+    }
+
+    if (!requestId) {
+      return;
+    }
+
+    const payload: { action: string; password?: string; reason?: string } = {
+      action,
+    };
+    if (action === "approve") {
+      const password = window.prompt("请输入初始密码");
+      if (!password) {
+        return;
+      }
+      payload.password = password;
+    }
+    if (action === "reject" || action === "cancel") {
+      const reason = window.prompt("请输入原因（可选）");
+      payload.reason = reason || "";
+    }
+
+    setRegistrationMessage("处理中...");
+    const { response, data } = await api(
+      `/api/v1/admin/registration-requests/${encodeURIComponent(requestId)}`,
+      {
+        method: "PATCH",
+        body: JSON.stringify(payload),
+      },
+    );
+    if (!response.ok || !data?.ok) {
+      setRegistrationMessage(resolveErrorMessage(data, "操作失败"));
+      return;
+    }
+
+    setRegistrationMessage("操作成功");
+    await loadRegistrationRequests();
+    if (action === "approve") {
+      await loadUsers();
+    }
+  });
+
+  void Promise.all([
+    loadUsers(),
+    loadRegistrationRequests(),
+    loadRegisterSwitch(),
+  ]);
+  document.addEventListener("astro:after-swap", () => {
+    void Promise.all([
+      loadUsers(),
+      loadRegistrationRequests(),
+      loadRegisterSwitch(),
+    ]);
+  });
 </script>

@@ -1,6 +1,11 @@
 import type { APIContext } from "astro";
 
-import type { AppPermissions, AppProfile } from "@/types/app";
+import type {
+	AppPermissions,
+	AppProfile,
+	AppUserRegistrationRequest,
+	RegistrationRequestStatus,
+} from "@/types/app";
 import type { JsonObject } from "@/types/json";
 import type {
 	EditableSiteSettings,
@@ -12,9 +17,10 @@ import {
 	validateDisplayName,
 } from "@/server/auth/username";
 import {
+	countItems,
 	createDirectusUser,
 	createOne,
-	deleteDirectusFile,
+	deleteDirectusUser,
 	deleteOne,
 	listDirectusUsers,
 	readMany,
@@ -35,6 +41,13 @@ import {
 	resolveSiteSettingsPayload,
 } from "@/server/site-settings/service";
 import { invalidateOfficialSidebarCache } from "./public-data";
+import {
+	cleanupOrphanDirectusFiles,
+	collectAlbumFileIds,
+	collectDiaryFileIds,
+	collectUserOwnedFileIds,
+	normalizeDirectusFileId,
+} from "./shared/file-cleanup";
 
 import {
 	ADMIN_MODULE_COLLECTION,
@@ -43,6 +56,7 @@ import {
 	ensureUsernameAvailable,
 	hasOwn,
 	normalizeAppRole,
+	normalizeRegistrationRequestStatus,
 	parseBodyTextField,
 	parseProfileBioField,
 	parseProfileTypewriterSpeedField,
@@ -62,7 +76,6 @@ function extractPermissionPatch(body: JsonObject): JsonObject {
 		"can_manage_anime",
 		"can_manage_albums",
 		"can_upload_files",
-		"is_suspended",
 	];
 	const payload: JsonObject = {};
 	for (const field of permissionFields) {
@@ -134,7 +147,6 @@ async function ensureUserPermissions(userId: string): Promise<AppPermissions> {
 		can_manage_anime: true,
 		can_manage_albums: true,
 		can_upload_files: true,
-		is_suspended: false,
 	});
 }
 
@@ -270,6 +282,128 @@ function collectSettingsFileIds(settings: SiteSettingsPayload): Set<string> {
 	return ids;
 }
 
+const REGISTRATION_REASON_MAX_LENGTH = 500;
+
+function parseOptionalRegistrationReason(raw: unknown): string | null {
+	const reason = String(raw ?? "").trim() || null;
+	if (!reason) {
+		return null;
+	}
+	if (reason.length > REGISTRATION_REASON_MAX_LENGTH) {
+		throw new Error("REGISTRATION_REASON_TOO_LONG");
+	}
+	return reason;
+}
+
+function parseNormalizedEmail(raw: unknown): string {
+	const email = String(raw || "")
+		.trim()
+		.toLowerCase();
+	if (!email) {
+		throw new Error("EMAIL_EMPTY");
+	}
+	const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+	if (!emailPattern.test(email)) {
+		throw new Error("EMAIL_INVALID");
+	}
+	return email;
+}
+
+async function assertDirectusEmailAvailable(email: string): Promise<void> {
+	const rows = await readMany("directus_users", {
+		filter: { email: { _eq: email } } as JsonObject,
+		limit: 1,
+		fields: ["id"],
+	});
+	if (rows.length > 0) {
+		throw new Error("EMAIL_EXISTS");
+	}
+}
+
+type ManagedUserCreateInput = {
+	email: string;
+	password: string;
+	requestedUsername: string;
+	displayName: string;
+	avatarFile?: string | null;
+	appRole?: AppPermissions["app_role"];
+};
+
+type ManagedUserCreateResult = {
+	user: { id: string };
+	profile: AppProfile;
+	permissions: AppPermissions;
+};
+
+async function createManagedUser(
+	input: ManagedUserCreateInput,
+): Promise<ManagedUserCreateResult> {
+	await Promise.all([
+		assertDirectusEmailAvailable(input.email),
+		ensureUsernameAvailable(input.requestedUsername),
+	]);
+
+	const createdUser = await createDirectusUser({
+		email: input.email,
+		password: input.password,
+		first_name: input.displayName || undefined,
+		status: "active",
+	});
+
+	const profile = await createOne("app_user_profiles", {
+		status: "published",
+		user_id: createdUser.id,
+		username: input.requestedUsername,
+		display_name: input.displayName,
+		bio: null,
+		bio_typewriter_enable: true,
+		bio_typewriter_speed: 80,
+		avatar_file: input.avatarFile || null,
+		avatar_url: null,
+		profile_public: true,
+		show_articles_on_profile: true,
+		show_diaries_on_profile: true,
+		show_anime_on_profile: true,
+		show_albums_on_profile: true,
+		show_comments_on_profile: true,
+	});
+
+	const permissions = await createOne("app_user_permissions", {
+		status: "published",
+		user_id: createdUser.id,
+		app_role: normalizeAppRole(input.appRole || "member"),
+		can_publish_articles: true,
+		can_comment_articles: true,
+		can_manage_diaries: true,
+		can_comment_diaries: true,
+		can_manage_anime: true,
+		can_manage_albums: true,
+		can_upload_files: true,
+	});
+
+	invalidateAuthorCache(createdUser.id);
+	invalidateOfficialSidebarCache();
+	return { user: createdUser, profile, permissions };
+}
+
+async function readRegistrationRequestById(
+	requestId: string,
+): Promise<AppUserRegistrationRequest | null> {
+	const rows = await readMany("app_user_registration_requests", {
+		filter: { id: { _eq: requestId } } as JsonObject,
+		limit: 1,
+	});
+	return rows[0] || null;
+}
+
+function ensurePendingRegistrationStatus(
+	status: RegistrationRequestStatus,
+): void {
+	if (status !== "pending") {
+		throw new Error("REGISTRATION_STATUS_CONFLICT");
+	}
+}
+
 export async function handleAdminUsers(
 	context: APIContext,
 	segments: string[],
@@ -327,105 +461,7 @@ export async function handleAdminUsers(
 		}
 
 		if (context.request.method === "POST") {
-			const body = await parseJsonBody(context.request);
-			const email = parseBodyTextField(body, "email");
-			const password = parseBodyTextField(body, "password");
-			if (!email || !password) {
-				return fail("邮箱和密码必填", 400);
-			}
-			const firstName = parseBodyTextField(body, "first_name");
-			const lastName = parseBodyTextField(body, "last_name");
-			const createdUser = await createDirectusUser({
-				email,
-				password,
-				first_name: firstName || undefined,
-				last_name: lastName || undefined,
-				status: parseBodyTextField(body, "status") || "active",
-			});
-
-			const displayName =
-				[firstName, lastName].filter(Boolean).join(" ").trim() ||
-				email.split("@")[0] ||
-				"Member";
-			const requestedUsername = parseBodyTextField(body, "username");
-			let normalizedUsername: string;
-			if (requestedUsername) {
-				normalizedUsername =
-					normalizeRequestedUsername(requestedUsername);
-				await ensureUsernameAvailable(normalizedUsername);
-			} else {
-				normalizedUsername = await createUniqueUsername(displayName);
-			}
-			const profile = await createOne("app_user_profiles", {
-				status: "published",
-				user_id: createdUser.id,
-				username: normalizedUsername,
-				display_name: normalizedUsername,
-				bio: parseProfileBioField(body.bio),
-				bio_typewriter_enable: toBooleanValue(
-					body.bio_typewriter_enable,
-					true,
-				),
-				bio_typewriter_speed: parseProfileTypewriterSpeedField(
-					body.bio_typewriter_speed,
-					80,
-				),
-				avatar_file: toOptionalString(body.avatar_file),
-				avatar_url: toOptionalString(body.avatar_url),
-				profile_public: toBooleanValue(body.profile_public, true),
-				show_articles_on_profile: toBooleanValue(
-					body.show_articles_on_profile,
-					true,
-				),
-				show_diaries_on_profile: toBooleanValue(
-					body.show_diaries_on_profile,
-					true,
-				),
-				show_anime_on_profile: toBooleanValue(
-					body.show_anime_on_profile,
-					true,
-				),
-				show_albums_on_profile: toBooleanValue(
-					body.show_albums_on_profile,
-					true,
-				),
-				show_comments_on_profile: toBooleanValue(
-					body.show_comments_on_profile,
-					true,
-				),
-			});
-
-			const permissions = await createOne("app_user_permissions", {
-				status: "published",
-				user_id: createdUser.id,
-				app_role: normalizeAppRole(
-					parseBodyTextField(body, "app_role"),
-				),
-				can_publish_articles: toBooleanValue(
-					body.can_publish_articles,
-					true,
-				),
-				can_comment_articles: toBooleanValue(
-					body.can_comment_articles,
-					true,
-				),
-				can_manage_diaries: toBooleanValue(
-					body.can_manage_diaries,
-					true,
-				),
-				can_comment_diaries: toBooleanValue(
-					body.can_comment_diaries,
-					true,
-				),
-				can_manage_anime: toBooleanValue(body.can_manage_anime, true),
-				can_manage_albums: toBooleanValue(body.can_manage_albums, true),
-				can_upload_files: toBooleanValue(body.can_upload_files, true),
-				is_suspended: toBooleanValue(body.is_suspended, false),
-			});
-
-			invalidateAuthorCache(createdUser.id);
-			invalidateOfficialSidebarCache();
-			return ok({ user: createdUser, profile, permissions });
+			return fail("接口不存在", 404, "LEGACY_ENDPOINT_DISABLED");
 		}
 	}
 
@@ -447,9 +483,6 @@ export async function handleAdminUsers(
 			if (hasOwn(body, "last_name")) {
 				directusPayload.last_name = toOptionalString(body.last_name);
 			}
-			if (hasOwn(body, "status")) {
-				directusPayload.status = parseBodyTextField(body, "status");
-			}
 			if (hasOwn(body, "role")) {
 				directusPayload.role = toOptionalString(body.role);
 			}
@@ -469,6 +502,8 @@ export async function handleAdminUsers(
 				parseBodyTextField(body, "username") || "Member",
 			);
 			const permissions = await ensureUserPermissions(userId);
+			const prevAvatarFile = normalizeDirectusFileId(profile.avatar_file);
+			let nextAvatarFile = prevAvatarFile;
 
 			const profilePayload: JsonObject = {};
 			if (hasOwn(body, "username")) {
@@ -505,6 +540,7 @@ export async function handleAdminUsers(
 					);
 			}
 			if (hasOwn(body, "avatar_file")) {
+				nextAvatarFile = normalizeDirectusFileId(body.avatar_file);
 				profilePayload.avatar_file = toOptionalString(body.avatar_file);
 			}
 			if (hasOwn(body, "avatar_url")) {
@@ -563,11 +599,51 @@ export async function handleAdminUsers(
 
 			invalidateAuthorCache(userId);
 			invalidateOfficialSidebarCache();
+			if (
+				hasOwn(body, "avatar_file") &&
+				prevAvatarFile &&
+				prevAvatarFile !== nextAvatarFile
+			) {
+				await cleanupOrphanDirectusFiles([prevAvatarFile]);
+			}
 			return ok({
 				id: userId,
 				profile: updatedProfile,
 				permissions: updatedPermissions,
 			});
+		}
+
+		if (context.request.method === "DELETE") {
+			if (required.access.user.id === userId) {
+				throw new Error("USER_DELETE_SELF_FORBIDDEN");
+			}
+			const candidateFileIds = await collectUserOwnedFileIds(userId);
+
+			const [profiles, permissions] = await Promise.all([
+				readMany("app_user_profiles", {
+					filter: { user_id: { _eq: userId } } as JsonObject,
+					limit: 10,
+					fields: ["id"],
+				}),
+				readMany("app_user_permissions", {
+					filter: { user_id: { _eq: userId } } as JsonObject,
+					limit: 10,
+					fields: ["id"],
+				}),
+			]);
+
+			for (const profile of profiles) {
+				await deleteOne("app_user_profiles", profile.id);
+			}
+			for (const permission of permissions) {
+				await deleteOne("app_user_permissions", permission.id);
+			}
+
+			await deleteDirectusUser(userId);
+			await cleanupOrphanDirectusFiles(candidateFileIds);
+			invalidateAuthorCache(userId);
+			invalidateOfficialSidebarCache();
+			return ok({ id: userId, deleted: true });
 		}
 	}
 
@@ -588,6 +664,133 @@ export async function handleAdminUsers(
 			password: newPassword,
 		});
 		return ok({ id: userId, reset: true });
+	}
+
+	return fail("未找到接口", 404);
+}
+
+export async function handleAdminRegistrationRequests(
+	context: APIContext,
+	segments: string[],
+): Promise<Response> {
+	const required = await requireAdmin(context);
+	if ("response" in required) {
+		return required.response;
+	}
+
+	if (segments.length === 1 && context.request.method === "GET") {
+		const { page, limit, offset } = parsePagination(context.url);
+		const statusRaw = String(
+			context.url.searchParams.get("status") || "",
+		).trim();
+
+		let statusFilter: RegistrationRequestStatus | null = null;
+		if (statusRaw && statusRaw !== "all") {
+			const normalized = normalizeRegistrationRequestStatus(
+				statusRaw,
+				"pending",
+			);
+			if (normalized !== statusRaw) {
+				throw new Error("REGISTRATION_STATUS_INVALID");
+			}
+			statusFilter = normalized;
+		}
+
+		const filter = statusFilter
+			? ({ request_status: { _eq: statusFilter } } as JsonObject)
+			: undefined;
+		const [items, total] = await Promise.all([
+			readMany("app_user_registration_requests", {
+				filter,
+				sort: ["-date_created"],
+				limit,
+				offset,
+			}),
+			countItems("app_user_registration_requests", filter),
+		]);
+
+		return ok({
+			items,
+			page,
+			limit,
+			total,
+		});
+	}
+
+	if (segments.length === 2 && context.request.method === "PATCH") {
+		const requestId = parseRouteId(segments[1]);
+		if (!requestId) {
+			return fail("缺少申请 ID", 400);
+		}
+		const body = await parseJsonBody(context.request);
+		const action = parseBodyTextField(body, "action");
+		const target = await readRegistrationRequestById(requestId);
+		if (!target) {
+			throw new Error("REGISTRATION_NOT_FOUND");
+		}
+		ensurePendingRegistrationStatus(
+			normalizeRegistrationRequestStatus(
+				target.request_status,
+				"pending",
+			),
+		);
+
+		const reviewedBy = required.access.user.id;
+		const reviewedAt = new Date().toISOString();
+
+		if (action === "approve") {
+			const password = parseBodyTextField(body, "password");
+			if (!password) {
+				throw new Error("REGISTRATION_APPROVE_PASSWORD_REQUIRED");
+			}
+
+			const created = await createManagedUser({
+				email: parseNormalizedEmail(target.email),
+				password,
+				requestedUsername: normalizeRequestedUsername(target.username),
+				displayName: validateDisplayName(target.display_name),
+				avatarFile: target.avatar_file,
+				appRole: "member",
+			});
+
+			const updated = await updateOne(
+				"app_user_registration_requests",
+				target.id,
+				{
+					request_status: "approved",
+					reviewed_by: reviewedBy,
+					reviewed_at: reviewedAt,
+					approved_user_id: created.user.id,
+					reject_reason: null,
+					cancel_reason: null,
+				},
+			);
+			return ok({
+				item: updated,
+				user: created.user,
+				profile: created.profile,
+				permissions: created.permissions,
+			});
+		}
+
+		if (action === "reject" || action === "cancel") {
+			const reason = parseOptionalRegistrationReason(body.reason);
+			const updated = await updateOne(
+				"app_user_registration_requests",
+				target.id,
+				{
+					request_status:
+						action === "reject" ? "rejected" : "cancelled",
+					reviewed_by: reviewedBy,
+					reviewed_at: reviewedAt,
+					reject_reason: action === "reject" ? reason : null,
+					cancel_reason: action === "cancel" ? reason : null,
+				},
+			);
+			return ok({ item: updated });
+		}
+
+		throw new Error("REGISTRATION_ACTION_INVALID");
 	}
 
 	return fail("未找到接口", 404);
@@ -699,7 +902,47 @@ export async function handleAdminContent(
 		}
 
 		if (context.request.method === "DELETE") {
+			const candidateFileIds: string[] = [];
+			if (module === "articles") {
+				const rows = await readMany("app_articles", {
+					filter: { id: { _eq: id } } as JsonObject,
+					fields: ["cover_file"],
+					limit: 1,
+				});
+				const coverFile = normalizeDirectusFileId(rows[0]?.cover_file);
+				if (coverFile) {
+					candidateFileIds.push(coverFile);
+				}
+			}
+			if (module === "anime") {
+				const rows = await readMany("app_anime_entries", {
+					filter: { id: { _eq: id } } as JsonObject,
+					fields: ["cover_file"],
+					limit: 1,
+				});
+				const coverFile = normalizeDirectusFileId(rows[0]?.cover_file);
+				if (coverFile) {
+					candidateFileIds.push(coverFile);
+				}
+			}
+			if (module === "albums") {
+				const rows = await readMany("app_albums", {
+					filter: { id: { _eq: id } } as JsonObject,
+					fields: ["cover_file"],
+					limit: 1,
+				});
+				const fileIds = await collectAlbumFileIds(
+					id,
+					rows[0]?.cover_file,
+				);
+				candidateFileIds.push(...fileIds);
+			}
+			if (module === "diaries") {
+				const fileIds = await collectDiaryFileIds(id);
+				candidateFileIds.push(...fileIds);
+			}
 			await deleteOne(collection, id);
+			await cleanupOrphanDirectusFiles(candidateFileIds);
 			return ok({ id, module });
 		}
 	}
@@ -743,9 +986,7 @@ export async function handleAdminSettings(
 		);
 		const { updatedAt } = await upsertSiteSettings(settings);
 		invalidateSiteSettingsCache();
-		for (const fileId of removedFileIds) {
-			await deleteDirectusFile(fileId);
-		}
+		await cleanupOrphanDirectusFiles(removedFileIds);
 		return ok({
 			settings,
 			updated_at: updatedAt,

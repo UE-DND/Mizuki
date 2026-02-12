@@ -12,6 +12,12 @@ type ConfirmDialogOptions = {
 	confirmText?: string;
 	cancelText?: string;
 	confirmVariant?: OverlayDialogActionVariant;
+	manualConfirm?: {
+		expectedText: string;
+		label?: string;
+		placeholder?: string;
+		mismatchMessage?: string;
+	};
 };
 
 type NoticeDialogOptions = {
@@ -90,10 +96,65 @@ export function showAuthRequiredDialog(message?: string): void {
 export async function showConfirmDialog(
 	options: ConfirmDialogOptions,
 ): Promise<boolean> {
+	const manualConfirm = options.manualConfirm;
+	if (!manualConfirm) {
+		const result = await showOverlayDialog({
+			ariaLabel: options.ariaLabel || "确认操作",
+			message: options.message,
+			dismissKey: "cancel",
+			actions: [
+				{
+					key: "confirm",
+					label: options.confirmText || "确认",
+					variant: options.confirmVariant || "primary",
+				},
+				{
+					key: "cancel",
+					label: options.cancelText || "取消",
+					variant: "secondary",
+				},
+			],
+		});
+		return result.actionKey === "confirm";
+	}
+
+	const expectedText = String(manualConfirm.expectedText || "").trim();
+	if (!expectedText) {
+		throw new Error("[dialogs] manualConfirm.expectedText 不能为空");
+	}
+
 	const result = await showOverlayDialog({
 		ariaLabel: options.ariaLabel || "确认操作",
 		message: options.message,
 		dismissKey: "cancel",
+		fields: [
+			{
+				name: "manual_confirm_text",
+				label: manualConfirm.label || "键入“",
+				labelHighlightText: manualConfirm.label
+					? undefined
+					: expectedText,
+				labelSuffix: manualConfirm.label ? undefined : "”以确认删除",
+				kind: "input",
+				required: true,
+				placeholder: manualConfirm.placeholder || expectedText,
+			},
+		],
+		actionGuard: (actionKey, values) => {
+			if (actionKey !== "confirm") {
+				return null;
+			}
+			const inputText = String(values.manual_confirm_text || "").trim();
+			if (inputText === expectedText) {
+				return null;
+			}
+			return {
+				message:
+					manualConfirm.mismatchMessage ||
+					`输入内容不匹配，请输入“${expectedText}”`,
+				invalidFieldNames: ["manual_confirm_text"],
+			};
+		},
 		actions: [
 			{
 				key: "confirm",

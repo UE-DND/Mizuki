@@ -116,7 +116,9 @@ html.enter-skeleton-active[data-enter-skeleton-mode="admin-site-settings"] [data
 html.enter-skeleton-active[data-enter-skeleton-mode="me-settings"] [data-enter-skeleton-target="me-settings"] [data-enter-skeleton-inline-content],
 html.enter-skeleton-active[data-enter-skeleton-mode="about-page"] [data-enter-skeleton-target="about-page"] [data-enter-skeleton-inline-content],
 html.enter-skeleton-active[data-enter-skeleton-mode="friends-page"] [data-enter-skeleton-target="friends-page"] [data-enter-skeleton-inline-content],
-html.enter-skeleton-active[data-enter-skeleton-mode="stats-page"] [data-enter-skeleton-target="stats-page"] [data-enter-skeleton-inline-content] {
+html.enter-skeleton-active[data-enter-skeleton-mode="stats-page"] [data-enter-skeleton-target="stats-page"] [data-enter-skeleton-inline-content],
+html.enter-skeleton-active[data-enter-skeleton-mode="auth-login"] [data-enter-skeleton-target="auth-login"] [data-enter-skeleton-inline-content],
+html.enter-skeleton-active[data-enter-skeleton-mode="auth-register"] [data-enter-skeleton-target="auth-register"] [data-enter-skeleton-inline-content] {
   display: none;
 }
 
@@ -130,7 +132,9 @@ html.enter-skeleton-active[data-enter-skeleton-mode="admin-site-settings"] [data
 html.enter-skeleton-active[data-enter-skeleton-mode="me-settings"] [data-enter-skeleton-target="me-settings"] [data-enter-skeleton-inline-placeholder],
 html.enter-skeleton-active[data-enter-skeleton-mode="about-page"] [data-enter-skeleton-target="about-page"] [data-enter-skeleton-inline-placeholder],
 html.enter-skeleton-active[data-enter-skeleton-mode="friends-page"] [data-enter-skeleton-target="friends-page"] [data-enter-skeleton-inline-placeholder],
-html.enter-skeleton-active[data-enter-skeleton-mode="stats-page"] [data-enter-skeleton-target="stats-page"] [data-enter-skeleton-inline-placeholder] {
+html.enter-skeleton-active[data-enter-skeleton-mode="stats-page"] [data-enter-skeleton-target="stats-page"] [data-enter-skeleton-inline-placeholder],
+html.enter-skeleton-active[data-enter-skeleton-mode="auth-login"] [data-enter-skeleton-target="auth-login"] [data-enter-skeleton-inline-placeholder],
+html.enter-skeleton-active[data-enter-skeleton-mode="auth-register"] [data-enter-skeleton-target="auth-register"] [data-enter-skeleton-inline-placeholder] {
   display: block;
 }
 

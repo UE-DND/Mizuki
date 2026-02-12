@@ -9,6 +9,7 @@ import type {
 	AppDiary,
 	AppDiaryComment,
 	AppRole,
+	RegistrationRequestStatus,
 	AppStatus,
 	CommentStatus,
 	SocialLink,
@@ -199,6 +200,21 @@ export function normalizeReportReason(input: string): ContentReportReason {
 		return input;
 	}
 	return "other";
+}
+
+export function normalizeRegistrationRequestStatus(
+	input: string,
+	fallback: RegistrationRequestStatus = "pending",
+): RegistrationRequestStatus {
+	if (
+		input === "pending" ||
+		input === "approved" ||
+		input === "rejected" ||
+		input === "cancelled"
+	) {
+		return input;
+	}
+	return fallback;
 }
 
 export function safeCsv(value: string[] | string | null | undefined): string[] {
@@ -502,6 +518,77 @@ export function toErrorResponse(
 	}
 	if (message.includes("USERNAME_EXISTS")) {
 		return fail("用户名已存在", 409, "USERNAME_EXISTS");
+	}
+	if (message.includes("EMAIL_EXISTS")) {
+		return fail("邮箱已存在", 409, "EMAIL_EXISTS");
+	}
+	if (message.includes("EMAIL_EMPTY")) {
+		return fail("邮箱不能为空", 400, "EMAIL_EMPTY");
+	}
+	if (message.includes("EMAIL_INVALID")) {
+		return fail("邮箱格式不正确", 400, "EMAIL_INVALID");
+	}
+	if (message.includes("REGISTER_DISABLED")) {
+		return fail("资源不存在", 404, "REGISTER_DISABLED");
+	}
+	if (message.includes("REGISTRATION_REQUEST_EXISTS")) {
+		return fail(
+			"该邮箱或用户名已有待处理申请",
+			409,
+			"REGISTRATION_REQUEST_EXISTS",
+		);
+	}
+	if (message.includes("REGISTRATION_NOT_FOUND")) {
+		return fail("申请不存在", 404, "REGISTRATION_NOT_FOUND");
+	}
+	if (message.includes("REGISTRATION_STATUS_CONFLICT")) {
+		return fail(
+			"申请状态冲突，请刷新后重试",
+			409,
+			"REGISTRATION_STATUS_CONFLICT",
+		);
+	}
+	if (message.includes("REGISTRATION_STATUS_INVALID")) {
+		return fail("申请状态参数无效", 400, "REGISTRATION_STATUS_INVALID");
+	}
+	if (message.includes("REGISTRATION_REASON_EMPTY")) {
+		return fail("注册理由不能为空", 400, "REGISTRATION_REASON_EMPTY");
+	}
+	if (message.includes("REGISTRATION_REASON_TOO_LONG")) {
+		return fail(
+			"注册理由最多 500 字符",
+			400,
+			"REGISTRATION_REASON_TOO_LONG",
+		);
+	}
+	if (message.includes("REGISTRATION_ACTION_INVALID")) {
+		return fail("不支持的申请操作", 400, "REGISTRATION_ACTION_INVALID");
+	}
+	if (message.includes("REGISTRATION_APPROVE_PASSWORD_REQUIRED")) {
+		return fail(
+			"审批通过时必须设置初始密码",
+			400,
+			"REGISTRATION_APPROVE_PASSWORD_REQUIRED",
+		);
+	}
+	if (message.includes("LEGACY_ENDPOINT_DISABLED")) {
+		return fail("接口不存在", 404, "LEGACY_ENDPOINT_DISABLED");
+	}
+	if (message.includes("USER_DELETE_SELF_FORBIDDEN")) {
+		return fail("不能删除当前登录账号", 400, "USER_DELETE_SELF_FORBIDDEN");
+	}
+	if (message.includes("FORBIDDEN") && message.includes("directus/client")) {
+		return fail("删除账号失败，权限不足", 403, "USER_DELETE_FORBIDDEN");
+	}
+	if (
+		message.includes("CONSTRAINT") &&
+		message.includes("删除 Directus 用户")
+	) {
+		return fail(
+			"删除账号失败，请先处理该用户关联内容",
+			409,
+			"USER_DELETE_CONSTRAINT",
+		);
 	}
 	if (message.includes("USERNAME_EMPTY")) {
 		return fail("用户名不能为空", 400, "USERNAME_EMPTY");

@@ -53,7 +53,6 @@ export type AppPermissions = {
 	can_manage_anime: boolean;
 	can_manage_albums: boolean;
 	can_upload_files: boolean;
-	is_suspended: boolean;
 	status: AppStatus;
 };
 
@@ -259,13 +258,39 @@ export type AppContentReport = {
 	date_updated: string | null;
 };
 
+export type RegistrationRequestStatus =
+	| "pending"
+	| "approved"
+	| "rejected"
+	| "cancelled";
+
+export type AppUserRegistrationRequest = {
+	id: string;
+	email: string;
+	username: string;
+	display_name: string;
+	avatar_file: string | null;
+	registration_reason: string;
+	request_status: RegistrationRequestStatus;
+	reviewed_by: string | null;
+	reviewed_at: string | null;
+	reject_reason: string | null;
+	cancel_reason: string | null;
+	approved_user_id: string | null;
+	status: AppStatus;
+	sort: number | null;
+	user_created: string | null;
+	date_created: string | null;
+	user_updated: string | null;
+	date_updated: string | null;
+};
+
 export type AppUser = {
 	id: string;
 	email: string;
 	first_name: string | null;
 	last_name: string | null;
 	avatar: string | null;
-	status: string | null;
 	role: string | { id?: string; name?: string } | null;
 };
 

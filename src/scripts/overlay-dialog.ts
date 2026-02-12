@@ -17,12 +17,21 @@ export type OverlayDialogFieldOption = {
 export type OverlayDialogField = {
 	name: string;
 	label: string;
+	labelHighlightText?: string;
+	labelSuffix?: string;
 	kind: "input" | "textarea" | "select";
 	required?: boolean;
 	placeholder?: string;
 	value?: string;
 	rows?: number;
 	options?: OverlayDialogFieldOption[];
+	hint?: string;
+	hintTone?: "default" | "primary" | "danger";
+};
+
+export type OverlayDialogActionGuardResult = {
+	message?: string;
+	invalidFieldNames?: string[];
 };
 
 export type OverlayDialogOptions = {
@@ -31,6 +40,10 @@ export type OverlayDialogOptions = {
 	actions: OverlayDialogAction[];
 	dismissKey: string | null;
 	fields?: OverlayDialogField[];
+	actionGuard?: (
+		actionKey: string,
+		values: Record<string, string>,
+	) => OverlayDialogActionGuardResult | null;
 };
 
 export type OverlayDialogResult = {
@@ -47,6 +60,7 @@ type OverlayDialogControl = {
 let overlayEl: HTMLElement | null = null;
 let messageEl: HTMLElement | null = null;
 let fieldsEl: HTMLElement | null = null;
+let errorEl: HTMLElement | null = null;
 let actionsEl: HTMLElement | null = null;
 let savedOverflow = "";
 let activeResolve: ((result: OverlayDialogResult) => void) | null = null;
@@ -75,11 +89,16 @@ function ensureDOM(): void {
 	fieldsEl.className = "overlay-dialog-fields";
 	fieldsEl.hidden = true;
 
+	errorEl = document.createElement("p");
+	errorEl.className = "overlay-dialog-error";
+	errorEl.hidden = true;
+
 	actionsEl = document.createElement("div");
 	actionsEl.className = "overlay-dialog-actions";
 
 	card.appendChild(messageEl);
 	card.appendChild(fieldsEl);
+	card.appendChild(errorEl);
 	card.appendChild(actionsEl);
 	overlayEl.appendChild(card);
 
@@ -221,6 +240,27 @@ function createFieldControl(field: OverlayDialogField): OverlayDialogControl {
 	};
 }
 
+function clearDialogError(): void {
+	if (!errorEl) {
+		return;
+	}
+	errorEl.textContent = "";
+	errorEl.hidden = true;
+}
+
+function setDialogError(message: string): void {
+	if (!errorEl) {
+		return;
+	}
+	const content = String(message || "").trim();
+	if (!content) {
+		clearDialogError();
+		return;
+	}
+	errorEl.textContent = content;
+	errorEl.hidden = false;
+}
+
 function renderFields(fields: OverlayDialogField[] | undefined): void {
 	if (!fieldsEl) {
 		return;
@@ -241,18 +281,45 @@ function renderFields(fields: OverlayDialogField[] | undefined): void {
 
 		const label = document.createElement("span");
 		label.className = "overlay-dialog-field-label";
-		label.textContent = field.label;
+		label.textContent = "";
+		const labelPrefix = document.createElement("span");
+		labelPrefix.textContent = field.label;
+		label.appendChild(labelPrefix);
+		if (field.labelHighlightText) {
+			const highlight = document.createElement("span");
+			highlight.className = "overlay-dialog-field-label-highlight";
+			highlight.textContent = field.labelHighlightText;
+			label.appendChild(highlight);
+		}
+		if (field.labelSuffix) {
+			const suffix = document.createElement("span");
+			suffix.textContent = field.labelSuffix;
+			label.appendChild(suffix);
+		}
 
 		const control = createFieldControl(field);
 		control.element.addEventListener("input", () => {
 			control.element.classList.remove("is-invalid");
+			clearDialogError();
 		});
 		control.element.addEventListener("change", () => {
 			control.element.classList.remove("is-invalid");
+			clearDialogError();
 		});
 
 		group.appendChild(label);
 		group.appendChild(control.element);
+		if (field.hint) {
+			const hint = document.createElement("span");
+			hint.className =
+				field.hintTone === "primary"
+					? "overlay-dialog-field-hint overlay-dialog-field-hint-primary"
+					: field.hintTone === "danger"
+						? "overlay-dialog-field-hint overlay-dialog-field-hint-danger"
+						: "overlay-dialog-field-hint";
+			hint.textContent = field.hint;
+			group.appendChild(hint);
+		}
 		fieldsEl.appendChild(group);
 		fieldControls.push(control);
 	}
@@ -297,7 +364,10 @@ function validateFields(actionKey: string): boolean {
 	return true;
 }
 
-function renderActions(actions: OverlayDialogAction[]): void {
+function renderActions(
+	actions: OverlayDialogAction[],
+	actionGuard?: OverlayDialogOptions["actionGuard"],
+): void {
 	if (!actionsEl) {
 		return;
 	}
@@ -339,6 +409,35 @@ function renderActions(actions: OverlayDialogAction[]): void {
 				return;
 			}
 			const values = collectFieldValues();
+			if (actionGuard) {
+				const guardResult = actionGuard(action.key, values);
+				if (guardResult) {
+					setDialogError(guardResult.message || "");
+					const invalidFieldNames = Array.isArray(
+						guardResult.invalidFieldNames,
+					)
+						? guardResult.invalidFieldNames
+						: [];
+					let firstInvalidControl: OverlayDialogControl | null = null;
+					for (const control of fieldControls) {
+						const isInvalid = invalidFieldNames.includes(
+							control.name,
+						);
+						control.element.classList.toggle(
+							"is-invalid",
+							isInvalid,
+						);
+						if (isInvalid && !firstInvalidControl) {
+							firstInvalidControl = control;
+						}
+					}
+					if (firstInvalidControl) {
+						firstInvalidControl.element.focus();
+					}
+					return;
+				}
+			}
+			clearDialogError();
 			if (activeDismissKey && action.key === activeDismissKey) {
 				closeWithoutAnimation({
 					actionKey: action.key,
@@ -372,8 +471,9 @@ export function showOverlayDialog(
 
 	overlayEl.setAttribute("aria-label", options.ariaLabel);
 	messageEl.textContent = options.message;
+	clearDialogError();
 	renderFields(options.fields);
-	renderActions(options.actions);
+	renderActions(options.actions, options.actionGuard);
 	activeDismissKey = options.dismissKey;
 
 	savedOverflow = document.body.style.overflow;

@@ -72,7 +72,6 @@ function normalizePermissions(raw: Partial<AppPermissions>): AppPermissions {
 		can_manage_anime: raw.can_manage_anime ?? true,
 		can_manage_albums: raw.can_manage_albums ?? true,
 		can_upload_files: raw.can_upload_files ?? true,
-		is_suspended: raw.is_suspended ?? false,
 		status: raw.status || "published",
 	};
 }
@@ -187,7 +186,6 @@ export async function ensureAppIdentity(
 			can_manage_anime: true,
 			can_manage_albums: true,
 			can_upload_files: true,
-			is_suspended: false,
 		});
 		permissions = normalizePermissions(created);
 	}
@@ -208,9 +206,7 @@ export async function getAppAccessContext(
 }
 
 export function assertNotSuspended(access: AppAccessContext): void {
-	if (access.permissions.is_suspended) {
-		throw new Error("ACCOUNT_SUSPENDED");
-	}
+	void access;
 }
 
 export function assertCan(
