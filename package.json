@@ -85,24 +85,27 @@
 	},
 	"devDependencies": {
 		"@astrojs/ts-plugin": "^1.10.6",
+		"@eslint/js": "^10.0.1",
 		"@iconify-json/mdi": "^1.2.3",
 		"@rollup/plugin-yaml": "^4.1.2",
 		"@types/hast": "^3.0.4",
 		"@types/mdast": "^4.0.4",
 		"@types/qrcode": "^1.5.6",
 		"@types/sanitize-html": "^2.16.0",
-		"@typescript-eslint/eslint-plugin": "^7.18.0",
-		"@typescript-eslint/parser": "^7.18.0",
+		"@typescript-eslint/eslint-plugin": "^8.55.0",
+		"@typescript-eslint/parser": "^8.55.0",
 		"baseline-browser-mapping": "^2.9.19",
-		"eslint": "^8.57.0",
-		"eslint-config-prettier": "^9.1.0",
+		"eslint": "^10.0.0",
+		"eslint-config-prettier": "^10.1.8",
 		"eslint-plugin-astro": "^1.3.1",
-		"eslint-plugin-svelte": "^2.46.0",
+		"eslint-plugin-svelte": "^3.15.0",
 		"fontmin": "^1.1.1",
+		"globals": "^16.5.0",
 		"postcss-import": "^16.1.1",
 		"postcss-nesting": "^13.0.2",
 		"prettier": "^3.8.1",
-		"svelte-eslint-parser": "^0.39.1"
+		"svelte-eslint-parser": "^1.4.1",
+		"typescript-eslint": "^8.55.0"
 	},
 	"packageManager": "pnpm@10.22.0",
 	"pnpm": {
@@ -111,4 +114,3 @@
 		}
 	}
 }
-

@@ -555,10 +555,8 @@ async function handleMeArticleLikes(
 		});
 		const current = existing[0];
 
-		let liked = false;
-		let item: Awaited<
-			ReturnType<typeof createOne<"app_article_likes">>
-		> | null = null;
+		let liked: boolean;
+		let item: Awaited<ReturnType<typeof createOne<"app_article_likes">>>;
 		if (current && current.status === "published") {
 			item = await updateOne("app_article_likes", current.id, {
 				status: "archived",
@@ -669,10 +667,8 @@ async function handleMeDiaryLikes(
 		});
 		const current = existing[0];
 
-		let liked = false;
-		let item: Awaited<
-			ReturnType<typeof createOne<"app_diary_likes">>
-		> | null = null;
+		let liked: boolean;
+		let item: Awaited<ReturnType<typeof createOne<"app_diary_likes">>>;
 		if (current && current.status === "published") {
 			item = await updateOne("app_diary_likes", current.id, {
 				status: "archived",

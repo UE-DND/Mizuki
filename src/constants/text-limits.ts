@@ -2,7 +2,7 @@
  * Weighted character length — CJK fullwidth characters count as 2, others as 1.
  * This gives a more intuitive "visual width" metric for mixed CJK/Latin text.
  */
-// eslint-disable-next-line no-control-regex
+
 const CJK_RE =
 	/[\u2E80-\u9FFF\uF900-\uFAFF\uFE30-\uFE4F\uFF00-\uFFEF\u{20000}-\u{2FA1F}]/u;
 

@@ -39,7 +39,7 @@ class PanelManager {
 			panel.style.transform = "scale(0.95) translateY(-10px)";
 			panel.style.pointerEvents = "none";
 
-			panel.offsetHeight; // 强制重排
+			void panel.offsetHeight; // 强制重排
 
 			panel.style.transition = `all ${this.duration}ms ease-out`;
 
