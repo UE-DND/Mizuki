@@ -267,6 +267,16 @@ export function setupSwupIntentSource(
 	let delayedPageViewTimerId: number | null = null;
 	let didReplaceContentDuringVisit = false;
 
+	const setPageHeightExtendVisible = (_visible: boolean): void => {
+		const heightExtend = document.getElementById("page-height-extend");
+		if (!heightExtend) {
+			return;
+		}
+		// Keep the spacer permanently hidden to guarantee a deterministic
+		// page bottom boundary across all navigation states.
+		heightExtend.classList.add("hidden");
+	};
+
 	const clearDelayedPageViewTimer = (): void => {
 		if (delayedPageViewTimerId !== null) {
 			window.clearTimeout(delayedPageViewTimerId);
@@ -302,6 +312,16 @@ export function setupSwupIntentSource(
 		root.classList.remove(BANNER_TO_SPEC_TRANSITION_CONTENT_FADE_IN_CLASS);
 		root.style.removeProperty(BANNER_TO_SPEC_SHIFT_VAR);
 	};
+
+	// Ensure spacer is always reset when tab visibility/lifecycle changes.
+	document.addEventListener("visibilitychange", () => {
+		if (document.visibilityState !== "visible") {
+			setPageHeightExtendVisible(false);
+		}
+	});
+	window.addEventListener("pageshow", () => {
+		setPageHeightExtendVisible(false);
+	});
 
 	swup.hooks.before("content:replace", (visit: SwupVisit) => {
 		pendingSidebarProfilePatch = null;
@@ -462,10 +482,7 @@ export function setupSwupIntentSource(
 			root.classList.add(BANNER_TO_SPEC_TRANSITION_CLASS);
 		}
 
-		const heightExtend = document.getElementById("page-height-extend");
-		if (heightExtend) {
-			heightExtend.classList.remove("hidden");
-		}
+		setPageHeightExtendVisible(true);
 
 		const toc = document.getElementById("toc-wrapper");
 		if (toc) {
@@ -517,10 +534,7 @@ export function setupSwupIntentSource(
 				}
 			}
 
-			const heightExtend = document.getElementById("page-height-extend");
-			if (heightExtend) {
-				heightExtend.classList.remove("hidden");
-			}
+			setPageHeightExtendVisible(false);
 
 			if (hash) {
 				requestAnimationFrame(() => {
@@ -609,10 +623,7 @@ export function setupSwupIntentSource(
 		const cleanupDelayMs =
 			remainingMs > 0 ? Math.ceil(remainingMs) + 200 : 200;
 		window.setTimeout(() => {
-			const heightExtend = document.getElementById("page-height-extend");
-			if (heightExtend) {
-				heightExtend.classList.add("hidden");
-			}
+			setPageHeightExtendVisible(false);
 			const toc = document.getElementById("toc-wrapper");
 			if (toc) {
 				toc.classList.remove("toc-not-ready");
