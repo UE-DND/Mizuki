@@ -2,6 +2,7 @@
 import { widgetManager } from "../utils/widget-manager";
 import { formatDateToYYYYMMDD } from "../utils/date-utils";
 import type { DirectusPostEntry } from "@/utils/content-utils";
+import { resolveAuthorIdentity } from "@/utils/author-identity";
 
 import PostCard from "./PostCard.astro";
 
@@ -35,6 +36,15 @@ const initialLayoutClass = "list-mode";
       const date = formatDateToYYYYMMDD(entry.data.published);
       const [year, month] = date.split("-");
       const monthKey = `${year}-${month}`;
+      const { username: authorHandle } = resolveAuthorIdentity(
+        {
+          id: entry.data.author?.id,
+          name: entry.data.author?.name,
+          username: entry.data.author?.username,
+          display_name: entry.data.author?.display_name,
+        },
+        entry.data.author_id,
+      );
       return (
         <div
           class="post-list-item"
@@ -43,6 +53,8 @@ const initialLayoutClass = "list-mode";
           data-day={date}
           data-tags={JSON.stringify(entry.data.tags || [])}
           data-category={entry.data.category || ""}
+          data-author-id={entry.data.author_id}
+          data-author-handle={authorHandle}
         >
           <PostCard
             entry={entry}

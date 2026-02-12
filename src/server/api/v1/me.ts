@@ -59,6 +59,24 @@ import { invalidateAuthorCache } from "./shared/author-cache";
 import { invalidateOfficialSidebarCache } from "./public-data";
 import { generateShortId } from "@/server/utils/short-id";
 
+function isUniqueConstraintError(error: unknown): boolean {
+	const message = String(error).toLowerCase();
+	return (
+		message.includes("unique") ||
+		message.includes("duplicate") ||
+		message.includes("not_unique")
+	);
+}
+
+function isSlugUniqueConflict(error: unknown): boolean {
+	const message = String(error).toLowerCase();
+	return (
+		message.includes('field "slug"') ||
+		message.includes(" field slug ") ||
+		message.includes(".slug")
+	);
+}
+
 async function renderMeMarkdownPreview(markdown: string): Promise<string> {
 	const source = String(markdown || "");
 	if (!source.trim()) {
@@ -1201,11 +1219,14 @@ async function handleMeAlbums(
 			}
 			const status: "draft" | "published" =
 				statusValue === "published" ? "published" : "draft";
+			const baseSlug = sanitizeSlug(
+				parseBodyTextField(body, "slug") || title,
+			);
 			const albumPayload = {
 				status,
 				author_id: access.user.id,
 				title,
-				slug: sanitizeSlug(parseBodyTextField(body, "slug") || title),
+				slug: baseSlug,
 				description: toOptionalString(body.description),
 				cover_file: toOptionalString(body.cover_file),
 				cover_url: toOptionalString(body.cover_url),
@@ -1222,20 +1243,31 @@ async function handleMeAlbums(
 			};
 
 			let created: AppAlbum | null = null;
-			const MAX_ALBUM_SID_RETRIES = 3;
-			for (let attempt = 0; attempt < MAX_ALBUM_SID_RETRIES; attempt++) {
+			let nextSlug = baseSlug;
+			let slugSuffix = 1;
+			const MAX_ALBUM_CREATE_RETRIES = 6;
+			for (
+				let attempt = 0;
+				attempt < MAX_ALBUM_CREATE_RETRIES;
+				attempt++
+			) {
 				try {
 					created = await createOne("app_albums", {
 						...albumPayload,
+						slug: nextSlug,
 						short_id: generateShortId(),
 					});
 					break;
 				} catch (error) {
-					const msg = String(error);
+					const isUniqueError = isUniqueConstraintError(error);
 					if (
-						(msg.includes("unique") || msg.includes("duplicate")) &&
-						attempt < MAX_ALBUM_SID_RETRIES - 1
+						isUniqueError &&
+						attempt < MAX_ALBUM_CREATE_RETRIES - 1
 					) {
+						if (isSlugUniqueConflict(error)) {
+							slugSuffix += 1;
+							nextSlug = `${baseSlug}-${slugSuffix}`;
+						}
 						continue;
 					}
 					throw error;

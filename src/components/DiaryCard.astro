@@ -4,6 +4,7 @@ import { Icon } from "astro-icon/components";
 import type { AppDiary, AppDiaryImage } from "@/types/app";
 import type { AuthorBundleItem } from "@/server/api/v1/shared/author-cache";
 import { buildDirectusAssetUrl } from "@/server/directus-auth";
+import { resolveAuthorIdentity } from "@/utils/author-identity";
 
 interface Props {
   class?: string;
@@ -34,7 +35,16 @@ const {
 } = entry;
 
 const diaryUrl = `/${username}/diary/${short_id || id}`;
-const authorHandle = String(author?.username || author?.id || "user").trim();
+const { displayName: authorDisplayName, username: authorHandle } =
+  resolveAuthorIdentity(
+    {
+      id: author?.id,
+      name: author?.name,
+      username: author?.username,
+      display_name: author?.display_name,
+    },
+    author_id,
+  );
 
 const bodyText = String(content || "")
   .replace(/<[^>]+>/g, " ")
@@ -134,11 +144,20 @@ function resolveDiaryImageSrc(image: AppDiaryImage): string {
       <div
         class="flex min-w-0 items-center gap-1.5 text-50 text-xs md:text-sm font-medium leading-none"
       >
-        <a
-          href={`/${authorHandle}`}
-          class="max-w-[10rem] truncate hover:text-(--primary) transition-colors"
-          >@{authorHandle}</a
-        >
+        <div class="max-w-[14rem] min-w-0 inline-flex items-baseline gap-1">
+          <a
+            href={`/${authorHandle}`}
+            class="truncate text-90 border-b border-transparent hover:border-current"
+          >
+            {authorDisplayName}
+          </a>
+          <a
+            href={`/${authorHandle}`}
+            class="shrink-0 text-60 hover:text-(--primary) transition-colors"
+          >
+            @{authorHandle}
+          </a>
+        </div>
         <span class="text-(--meta-divider)" aria-hidden="true">&middot;</span>
         <span>{publishedDate}</span>
       </div>

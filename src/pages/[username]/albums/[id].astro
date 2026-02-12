@@ -80,7 +80,32 @@ if (!username || !id) {
 
 const album = result.status === "ok" ? result.data : null;
 
-function photoUrl(photo: {
+function photoUrl(
+  photo: {
+    file_id: string | null;
+    image_url: string | null;
+  },
+  layout: "grid" | "masonry",
+): string | null {
+  if (photo.image_url) {
+    return photo.image_url;
+  }
+  if (photo.file_id) {
+    if (layout === "masonry") {
+      return buildDirectusAssetUrl(photo.file_id, {
+        width: 1920,
+      });
+    }
+    return buildDirectusAssetUrl(photo.file_id, {
+      width: 1200,
+      height: 900,
+      fit: "cover",
+    });
+  }
+  return null;
+}
+
+function photoPreviewUrl(photo: {
   file_id: string | null;
   image_url: string | null;
 }): string | null {
@@ -89,12 +114,27 @@ function photoUrl(photo: {
   }
   if (photo.file_id) {
     return buildDirectusAssetUrl(photo.file_id, {
-      width: 1200,
-      height: 900,
-      fit: "cover",
+      width: 1920,
     });
   }
   return null;
+}
+
+function buildGoogleMapsSearchUrl(value: string | null | undefined): string {
+  const query = String(value || "").trim();
+  return `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(query)}`;
+}
+
+function formatAlbumDate(value: string | null | undefined): string {
+  const raw = String(value || "").trim();
+  if (!raw) {
+    return "";
+  }
+  const parsed = new Date(raw);
+  if (Number.isNaN(parsed.getTime())) {
+    return raw;
+  }
+  return `${parsed.getFullYear()}/${String(parsed.getMonth() + 1).padStart(2, "0")}/${String(parsed.getDate()).padStart(2, "0")}`;
 }
 ---
 
@@ -166,8 +206,32 @@ function photoUrl(photo: {
           <h1 class="text-3xl font-bold">{album.title}</h1>
           <div class="text-xs text-60 flex flex-wrap items-center gap-2">
             {album.author?.name && <span>{album.author.name}</span>}
-            {album.date && <span>{album.date}</span>}
-            {album.location && <span>{album.location}</span>}
+            {album.date && <span>{formatAlbumDate(album.date)}</span>}
+            {album.location && (
+              <a
+                href={buildGoogleMapsSearchUrl(album.location)}
+                target="_blank"
+                rel="noopener noreferrer"
+                class="inline-flex items-center gap-1 px-1.5 py-0.5 rounded transition-colors hover:bg-(--btn-plain-bg-hover) active:bg-(--btn-plain-bg-active) hover:text-(--primary)"
+                data-no-swup
+              >
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  class="w-3.5 h-3.5"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  aria-hidden="true"
+                >
+                  <path d="M12 22s8-6.2 8-12a8 8 0 10-16 0c0 5.8 8 12 8 12z" />
+                  <circle cx="12" cy="10" r="3" />
+                </svg>
+                {album.location}
+              </a>
+            )}
             {album.category && (
               <span class="px-2 py-0.5 rounded bg-(--btn-plain-bg-hover) text-75">
                 {album.category}
@@ -193,39 +257,71 @@ function photoUrl(photo: {
         ) : (
           <div
             class:list={[
-              "gap-3",
+              "mzk-album-gallery gap-3",
               album.layout === "masonry"
                 ? "columns-2 md:columns-3"
                 : "grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4",
             ]}
           >
-            {album.photos.map((photo) => (
-              <figure
-                class:list={[
-                  "rounded-xl overflow-hidden border border-(--line-divider) bg-(--card-bg)",
-                  album.layout === "masonry" ? "mb-3 break-inside-avoid" : "",
-                ]}
-              >
-                {photoUrl(photo) && (
-                  <img
-                    src={photoUrl(photo) || ""}
-                    alt={photo.title || "album photo"}
-                    class="w-full h-auto object-cover"
-                    loading="lazy"
-                  />
-                )}
-                {(photo.title || photo.description) && (
-                  <figcaption class="p-3 space-y-1 text-90">
-                    {photo.title && (
-                      <div class="text-sm font-medium">{photo.title}</div>
+            {album.photos.map((photo) => {
+              const thumbSrc = photoUrl(photo, album.layout);
+              const previewSrc = photoPreviewUrl(photo) || thumbSrc;
+              const captionText = [photo.title, photo.description]
+                .filter(Boolean)
+                .join("\n");
+
+              return (
+                <figure
+                  class:list={[
+                    "album-photo-item rounded-xl overflow-hidden border border-(--line-divider) bg-(--card-bg) relative",
+                    album.layout === "masonry" ? "mb-3 break-inside-avoid" : "",
+                  ]}
+                >
+                  {thumbSrc && previewSrc && (
+                    <a
+                      href={previewSrc}
+                      data-fancybox="album-photo-preview"
+                      data-caption={captionText || undefined}
+                      data-no-swup
+                      class="block relative"
+                    >
+                      <img
+                        src={thumbSrc}
+                        alt={photo.title || "album photo"}
+                        class="w-full h-auto object-cover"
+                        loading="lazy"
+                      />
+                      {(photo.title || photo.description) &&
+                        album.layout === "grid" && (
+                          <div class="absolute inset-x-0 bottom-0 p-3 space-y-1 text-white bg-linear-to-t from-black/70 via-black/35 to-transparent">
+                            {photo.title && (
+                              <div class="text-sm font-medium line-clamp-1">
+                                {photo.title}
+                              </div>
+                            )}
+                            {photo.description && (
+                              <div class="text-xs text-white/85 line-clamp-2">
+                                {photo.description}
+                              </div>
+                            )}
+                          </div>
+                        )}
+                    </a>
+                  )}
+                  {(photo.title || photo.description) &&
+                    album.layout !== "grid" && (
+                      <figcaption class="p-3 space-y-1 text-90">
+                        {photo.title && (
+                          <div class="text-sm font-medium">{photo.title}</div>
+                        )}
+                        {photo.description && (
+                          <div class="text-xs text-60">{photo.description}</div>
+                        )}
+                      </figcaption>
                     )}
-                    {photo.description && (
-                      <div class="text-xs text-60">{photo.description}</div>
-                    )}
-                  </figcaption>
-                )}
-              </figure>
-            ))}
+                </figure>
+              );
+            })}
           </div>
         )}
       </>

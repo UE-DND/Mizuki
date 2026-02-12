@@ -272,6 +272,53 @@
     return "";
   }
 
+  function photoDisplaySrc(
+    photo: { file_id: string | null; image_url: string | null },
+    layout: "grid" | "masonry",
+  ): string {
+    if (layout === "masonry") {
+      return photoPreviewSrc(photo) || photoSrc(photo);
+    }
+    return photoSrc(photo);
+  }
+
+  function photoPreviewSrc(photo: {
+    file_id: string | null;
+    image_url: string | null;
+  }): string {
+    if (photo.image_url) {
+      return photo.image_url;
+    }
+    if (photo.file_id) {
+      return `${assetUrlPrefix}/${photo.file_id}?width=1920`;
+    }
+    return "";
+  }
+
+  function photoCaption(photo: {
+    title: string | null;
+    description: string | null;
+  }): string {
+    return [photo.title, photo.description].filter(Boolean).join("\n");
+  }
+
+  function buildGoogleMapsSearchUrl(value: string | null | undefined): string {
+    const query = String(value || "").trim();
+    return `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(query)}`;
+  }
+
+  function formatAlbumDateDisplay(value: string | null | undefined): string {
+    const raw = String(value || "").trim();
+    if (!raw) {
+      return "";
+    }
+    const parsed = new Date(raw);
+    if (Number.isNaN(parsed.getTime())) {
+      return raw;
+    }
+    return `${parsed.getFullYear()}/${String(parsed.getMonth() + 1).padStart(2, "0")}/${String(parsed.getDate()).padStart(2, "0")}`;
+  }
+
   function flash(msg: string): void {
     saveMsg = msg;
     setTimeout(() => {
@@ -975,9 +1022,14 @@
     {:else}
       <h1 class="text-3xl font-bold">{mTitle}</h1>
       <div class="text-xs text-60 flex flex-wrap items-center gap-2">
-        {#if mDate}<span>{mDate}</span>{/if}
+        {#if mDate}<span>{formatAlbumDateDisplay(mDate)}</span>{/if}
         {#if mLocation}
-          <span class="inline-flex items-center gap-1">
+          <a
+            href={buildGoogleMapsSearchUrl(mLocation)}
+            target="_blank"
+            rel="noopener noreferrer"
+            class="inline-flex items-center gap-1 px-1.5 py-0.5 rounded transition-colors hover:bg-(--btn-plain-bg-hover) active:bg-(--btn-plain-bg-active) hover:text-(--primary)"
+          >
             <svg
               xmlns="http://www.w3.org/2000/svg"
               class="w-3.5 h-3.5"
@@ -993,7 +1045,7 @@
               <circle cx="12" cy="10" r="3" />
             </svg>
             {mLocation}
-          </span>
+          </a>
         {/if}
         {#if mCategory}<span
             class="px-2 py-0.5 rounded bg-(--btn-plain-bg-hover) text-75"
@@ -1131,8 +1183,8 @@
   {:else}
     <div
       class={mLayout === "masonry"
-        ? "columns-2 md:columns-3 gap-3"
-        : "grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3"}
+        ? "mzk-album-gallery columns-2 md:columns-3 gap-3"
+        : "mzk-album-gallery grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3"}
     >
       {#each mPhotos as photo, index (photo.id)}
         <figure
@@ -1145,15 +1197,48 @@
           on:dragover={(e) => onDragOver(e, index)}
           on:dragend={onDragEnd}
         >
-          {#if photoSrc(photo)}
-            <img
-              src={photoSrc(photo)}
-              alt={photo.title || "album photo"}
-              class="w-full h-auto object-cover"
-              loading="lazy"
-            />
+          {#if photoDisplaySrc(photo, mLayout)}
+            {#if !editing}
+              <a
+                href={photoPreviewSrc(photo) || photoDisplaySrc(photo, mLayout)}
+                data-fancybox="album-photo-preview"
+                data-caption={photoCaption(photo) || undefined}
+                data-no-swup
+                class="block relative"
+              >
+                <img
+                  src={photoDisplaySrc(photo, mLayout)}
+                  alt={photo.title || "album photo"}
+                  class="w-full h-auto object-cover"
+                  loading="lazy"
+                />
+                {#if (photo.title || photo.description) && mLayout === "grid"}
+                  <div
+                    class="absolute inset-x-0 bottom-0 p-3 space-y-1 text-white bg-linear-to-t from-black/70 via-black/35 to-transparent"
+                  >
+                    {#if photo.title}<div
+                        class="text-sm font-medium line-clamp-1"
+                      >
+                        {photo.title}
+                      </div>{/if}
+                    {#if photo.description}<div
+                        class="text-xs text-white/85 line-clamp-2"
+                      >
+                        {photo.description}
+                      </div>{/if}
+                  </div>
+                {/if}
+              </a>
+            {:else}
+              <img
+                src={photoDisplaySrc(photo, mLayout)}
+                alt={photo.title || "album photo"}
+                class="w-full h-auto object-cover"
+                loading="lazy"
+              />
+            {/if}
           {/if}
-          {#if !editing && (photo.title || photo.description)}
+          {#if !editing && (photo.title || photo.description) && mLayout !== "grid"}
             <figcaption class="p-3 space-y-1 text-90">
               {#if photo.title}<div class="text-sm font-medium">
                   {photo.title}

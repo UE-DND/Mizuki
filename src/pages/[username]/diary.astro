@@ -128,50 +128,33 @@ const items = result.status === "ok" ? result.data.items : [];
           <div class="space-y-4">
             {Array.from({ length: 3 }).map(() => (
               <article class="card-base flex flex-col w-full rounded-(--radius-large) overflow-hidden">
-                <div class="pl-6 md:pl-9 pr-6 md:pr-2 pt-6 md:pt-7 pb-6 space-y-3">
-                  <div
-                    class="md3-skeleton-text"
-                    style="--skeleton-width: 36%; --skeleton-height: 0.72rem;"
-                  />
-                  <div class="space-y-2">
+                <div class="pl-6 md:pl-9 pr-6 md:pr-2 pt-6 md:pt-7 pb-6 space-y-4">
+                  <div>
                     <div
                       class="md3-skeleton-text"
-                      style="--skeleton-width: 94%;"
-                    />
-                    <div
-                      class="md3-skeleton-text"
-                      style="--skeleton-width: 86%;"
-                    />
-                    <div
-                      class="md3-skeleton-text"
-                      style="--skeleton-width: 72%;"
+                      style="--skeleton-width: 44%; --skeleton-height: 2rem;"
                     />
                   </div>
                   <div class="grid grid-cols-3 md:grid-cols-4 gap-2">
                     <div class="md3-skeleton-block h-20 md:h-24 rounded-lg" />
                     <div class="md3-skeleton-block h-20 md:h-24 rounded-lg" />
-                    <div class="md3-skeleton-block h-20 md:h-24 rounded-lg" />
-                    <div class="hidden md:block md3-skeleton-block h-20 md:h-24 rounded-lg" />
                   </div>
                   <div class="flex items-center justify-between gap-3 mt-4">
-                    <div class="flex items-center gap-1.5 w-1/2">
+                    <div class="flex items-center gap-1.5 min-w-0">
                       <div
                         class="md3-skeleton-text"
-                        style="--skeleton-width: 42%; --skeleton-height: 0.72rem;"
+                        style="--skeleton-width: 10.5rem; --skeleton-height: 1.45rem;"
                       />
+                      <div class="md3-skeleton-circle h-1.5 w-1.5" />
                       <div
                         class="md3-skeleton-text"
-                        style="--skeleton-width: 10%; --skeleton-height: 0.38rem;"
-                      />
-                      <div
-                        class="md3-skeleton-text"
-                        style="--skeleton-width: 48%; --skeleton-height: 0.72rem;"
+                        style="--skeleton-width: 7.5rem; --skeleton-height: 1.45rem;"
                       />
                     </div>
                     <div class="flex items-center gap-3 md:gap-4">
-                      <div class="md3-skeleton-block h-6 w-10 rounded-lg" />
-                      <div class="md3-skeleton-block h-6 w-10 rounded-lg" />
-                      <div class="md3-skeleton-circle h-8 w-8 rounded-lg" />
+                      <div class="md3-skeleton-block h-6 w-8 rounded-lg" />
+                      <div class="md3-skeleton-block h-6 w-8 rounded-lg" />
+                      <div class="md3-skeleton-circle h-6 w-6 rounded-lg" />
                     </div>
                   </div>
                 </div>

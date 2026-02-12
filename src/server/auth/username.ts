@@ -5,7 +5,7 @@ import {
 	DISPLAY_NAME_MAX_WEIGHT,
 } from "@/constants/text-limits";
 
-const USERNAME_ALLOWED_PATTERN = /^[\p{Script=Han}A-Za-z0-9_-]+$/u;
+const USERNAME_ALLOWED_PATTERN = /^[A-Za-z0-9_-]+$/;
 
 function trimUsernameEdges(value: string): string {
 	return value.replace(/^[-_]+|[-_]+$/g, "");
@@ -57,7 +57,7 @@ export function normalizeAutoUsername(input: string): string {
 	const normalized = trimUsernameEdges(
 		normalizeAutoUsernameBase(input)
 			.replace(/\s+/g, "-")
-			.replace(/[^\p{Script=Han}A-Za-z0-9_-]/gu, "-")
+			.replace(/[^A-Za-z0-9_-]/g, "-")
 			.replace(/-+/g, "-"),
 	);
 	const fallback = normalized || "user";

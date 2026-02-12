@@ -18,6 +18,7 @@ type CalendarFilterState = {
 type FilterState = {
 	tags: string[];
 	category: string | null;
+	author: string | null;
 	calendar: CalendarFilterState | null;
 };
 
@@ -43,6 +44,7 @@ export function initArchiveFilter(): void {
 	let currentFilter: FilterState = {
 		tags: [],
 		category: null,
+		author: null,
 		calendar: null,
 	};
 
@@ -99,10 +101,56 @@ export function initArchiveFilter(): void {
 		return normalizeTagList(filter.tags);
 	}
 
+	function normalizeAuthorHandle(value: string): string {
+		return value.trim().replace(/^@+/, "").toLowerCase();
+	}
+
+	function cleanAuthorHandle(value: string): string {
+		return value.trim().replace(/^@+/, "");
+	}
+
+	function readItemAuthorHandleRaw(item: HTMLElement): string {
+		const selfHandle = cleanAuthorHandle(item.dataset.authorHandle || "");
+		if (selfHandle) {
+			return selfHandle;
+		}
+
+		const postCard = item.querySelector<HTMLElement>("[data-post-card]");
+		return cleanAuthorHandle(postCard?.dataset.authorHandle || "");
+	}
+
+	function readItemAuthorHandle(item: HTMLElement): string {
+		return normalizeAuthorHandle(readItemAuthorHandleRaw(item));
+	}
+
+	function resolveAuthorDisplayByNormalized(normalized: string): string {
+		if (!normalized) {
+			return "";
+		}
+		// 展示始终使用卡片上的原始作者名（保留大小写）
+		const matched = getAllPostItems().find(
+			(item) => readItemAuthorHandle(item) === normalized,
+		);
+		if (!matched) {
+			return "";
+		}
+		return readItemAuthorHandleRaw(matched);
+	}
+
+	function resolveAuthorDisplay(filter: FilterState): string {
+		if (!filter.author) {
+			return "";
+		}
+
+		const normalized = normalizeAuthorHandle(filter.author);
+		return resolveAuthorDisplayByNormalized(normalized) || filter.author;
+	}
+
 	function hasActiveFilters(filter: FilterState): boolean {
 		return (
 			getSelectedTags(filter).length > 0 ||
 			filter.category !== null ||
+			filter.author !== null ||
 			filter.calendar !== null
 		);
 	}
@@ -135,9 +183,18 @@ export function initArchiveFilter(): void {
 		const selectedTags = getSelectedTags(filter);
 		const hasTagFilter = selectedTags.length > 0;
 		const hasCategoryFilter = filter.category !== null;
+		const hasAuthorFilter = filter.author !== null;
+		const normalizedAuthor = hasAuthorFilter
+			? normalizeAuthorHandle(filter.author || "")
+			: "";
 		const hasCalendarFilter = filter.calendar !== null;
 
-		if (!hasTagFilter && !hasCategoryFilter && !hasCalendarFilter) {
+		if (
+			!hasTagFilter &&
+			!hasCategoryFilter &&
+			!hasAuthorFilter &&
+			!hasCalendarFilter
+		) {
 			return allItems;
 		}
 
@@ -153,6 +210,10 @@ export function initArchiveFilter(): void {
 					? isUncategorizedValue(filter.category!)
 						? !item.dataset.category
 						: item.dataset.category === filter.category
+					: true;
+
+				const authorMatched = hasAuthorFilter
+					? readItemAuthorHandle(item) === normalizedAuthor
 					: true;
 
 				let calendarMatched = true;
@@ -172,7 +233,11 @@ export function initArchiveFilter(): void {
 				return {
 					item,
 					score: tagScore,
-					matched: tagMatched && categoryMatched && calendarMatched,
+					matched:
+						tagMatched &&
+						categoryMatched &&
+						authorMatched &&
+						calendarMatched,
 				};
 			})
 			.filter(({ matched }) => matched);
@@ -344,6 +409,9 @@ export function initArchiveFilter(): void {
 					: `分类：${filter.category}`,
 			);
 		}
+		if (filter.author) {
+			segments.push(`作者：@${resolveAuthorDisplay(filter)}`);
+		}
 		if (filter.calendar) {
 			segments.push(`日期：${filter.calendar.label}`);
 		}
@@ -386,6 +454,7 @@ export function initArchiveFilter(): void {
 		currentFilter = {
 			tags: [],
 			category: null,
+			author: null,
 			calendar: null,
 		};
 		currentPage = 1;
@@ -564,6 +633,7 @@ export function initArchiveFilter(): void {
 	const params = new URLSearchParams(window.location.search);
 	const tag = params.get("tag");
 	const category = params.get("category");
+	const author = params.get("author") || params.get("author_handle");
 	const uncategorized = params.get("uncategorized");
 
 	const tagParams = params
@@ -583,6 +653,11 @@ export function initArchiveFilter(): void {
 		currentFilter.category = category;
 	} else if (uncategorized) {
 		currentFilter.category = "uncategorized";
+	}
+
+	if (author) {
+		const cleanedAuthor = cleanAuthorHandle(author);
+		currentFilter.author = cleanedAuthor || null;
 	}
 
 	if (hasActiveFilters(currentFilter)) {

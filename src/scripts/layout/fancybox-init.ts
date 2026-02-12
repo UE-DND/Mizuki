@@ -3,6 +3,24 @@ type FancyboxStatic = {
 	unbind: (selector: string) => void;
 };
 
+type FancyboxConfig = {
+	Thumbs?: object;
+	Toolbar?: object;
+	animated?: boolean;
+	dragToClose?: boolean;
+	keyboard?: object;
+	fitToView?: boolean;
+	preload?: number;
+	infinite?: boolean;
+	Panzoom?: object;
+	caption?: boolean;
+	groupAll?: boolean;
+	Carousel?: object;
+	source?: (el: Element) => string | null;
+};
+
+const ALBUM_PREVIEW_GROUP = "album-photo-preview";
+
 export type FancyboxController = {
 	initFancybox: () => Promise<void>;
 	cleanupFancybox: () => void;
@@ -21,11 +39,13 @@ export function createFancyboxController(): FancyboxController {
 		const albumImagesSelector =
 			".custom-md img, #post-cover img, .moment-images img";
 		const albumLinksSelector = ".moment-images a[data-fancybox]";
-		const singleFancyboxSelector = "[data-fancybox]:not(.moment-images a)";
+		const albumPhotoSelector = `.mzk-album-gallery [data-fancybox='${ALBUM_PREVIEW_GROUP}']`;
+		const singleFancyboxSelector = `[data-fancybox]:not(.moment-images a):not([data-fancybox='${ALBUM_PREVIEW_GROUP}'])`;
 
 		const hasImages =
 			document.querySelector(albumImagesSelector) ||
 			document.querySelector(albumLinksSelector) ||
+			document.querySelector(albumPhotoSelector) ||
 			document.querySelector(singleFancyboxSelector);
 
 		if (!hasImages) {
@@ -49,7 +69,7 @@ export function createFancyboxController(): FancyboxController {
 				return;
 			}
 
-			const commonConfig = {
+			const commonConfig: FancyboxConfig = {
 				Thumbs: { autoStart: true, showOnStart: "yes" },
 				Toolbar: {
 					display: {
@@ -86,6 +106,23 @@ export function createFancyboxController(): FancyboxController {
 				caption: false,
 			};
 
+			const albumConfig: FancyboxConfig = {
+				...commonConfig,
+				Toolbar: {
+					display: {
+						left: ["infobar"],
+						middle: [
+							"zoomOut",
+							"zoomIn",
+							"toggle1to1",
+							"rotateCCW",
+							"rotateCW",
+						],
+						right: ["close"],
+					},
+				},
+			};
+
 			fancybox.bind(albumImagesSelector, {
 				...commonConfig,
 				groupAll: true,
@@ -105,6 +142,9 @@ export function createFancyboxController(): FancyboxController {
 				},
 			});
 			fancyboxSelectors.push(albumLinksSelector);
+
+			fancybox.bind(albumPhotoSelector, albumConfig);
+			fancyboxSelectors.push(albumPhotoSelector);
 
 			fancybox.bind(singleFancyboxSelector, commonConfig);
 			fancyboxSelectors.push(singleFancyboxSelector);

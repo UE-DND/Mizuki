@@ -508,17 +508,13 @@ export function toErrorResponse(
 	}
 	if (message.includes("USERNAME_INVALID")) {
 		return fail(
-			"用户名仅支持中文、英文、数字、下划线和短横线",
+			"用户名仅支持英文、数字、下划线和短横线",
 			400,
 			"USERNAME_INVALID",
 		);
 	}
 	if (message.includes("USERNAME_TOO_LONG")) {
-		return fail(
-			"用户名最多 14 字符（中文按 2 字符计）",
-			400,
-			"USERNAME_TOO_LONG",
-		);
+		return fail("用户名最多 14 字符", 400, "USERNAME_TOO_LONG");
 	}
 	if (message.includes("PROFILE_BIO_TOO_LONG")) {
 		return fail(

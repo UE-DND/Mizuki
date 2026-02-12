@@ -2,6 +2,7 @@
 import ContentNotVisible from "@components/misc/ContentNotVisible.astro";
 import MainGridLayout from "@layouts/MainGridLayout.astro";
 import { buildDirectusAssetUrl } from "@/server/directus-auth";
+import { resolveAuthorIdentity } from "@/utils/author-identity";
 import {
   loadProfileForViewer,
   loadUserAlbumList,
@@ -28,8 +29,14 @@ type AlbumListItem = {
   location: string | null;
   tags: string[];
   category: string | null;
+  layout: "grid" | "masonry";
   author_id: string;
-  author?: { name?: string };
+  author?: {
+    id?: string;
+    name?: string;
+    display_name?: string;
+    username?: string;
+  };
 };
 
 let result: ContentLoadResult<PaginatedResult<AlbumListItem>> = {
@@ -92,11 +99,17 @@ const hasSidebarContent = tagList.length > 0 || categoryList.length > 0;
 function coverUrl(item: {
   cover_file: string | null;
   cover_url: string | null;
+  layout: "grid" | "masonry";
 }): string | null {
   if (item.cover_url) {
     return item.cover_url;
   }
   if (item.cover_file) {
+    if (item.layout === "masonry") {
+      return buildDirectusAssetUrl(item.cover_file, {
+        width: 960,
+      });
+    }
     return buildDirectusAssetUrl(item.cover_file, {
       width: 960,
       height: 640,
@@ -104,6 +117,23 @@ function coverUrl(item: {
     });
   }
   return null;
+}
+
+function formatAlbumDate(value: string | null | undefined): string {
+  const raw = String(value || "").trim();
+  if (!raw) {
+    return "";
+  }
+  const parsed = new Date(raw);
+  if (Number.isNaN(parsed.getTime())) {
+    return raw;
+  }
+  return `${parsed.getFullYear()}/${String(parsed.getMonth() + 1).padStart(2, "0")}/${String(parsed.getDate()).padStart(2, "0")}`;
+}
+
+function buildGoogleMapsSearchUrl(value: string | null | undefined): string {
+  const query = String(value || "").trim();
+  return `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(query)}`;
 }
 ---
 
@@ -145,7 +175,8 @@ function coverUrl(item: {
             </div>
             {isOwner && (
               <a
-                href={`/${username}/albums/publish`}
+                href={`/${username}/albums/new`}
+                data-no-swup
                 class="px-5 h-10 rounded-lg bg-(--primary) text-white font-medium
 							hover:opacity-90 active:opacity-80 transition
 							flex items-center gap-1.5 text-sm shrink-0"
@@ -173,76 +204,133 @@ function coverUrl(item: {
               暂无公开相册。
             </div>
           ) : (
-            <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
-              {items.map((item) => (
-                <article
-                  class="album-list-item card-base rounded-(--radius-large) overflow-hidden border border-(--line-divider) text-90"
-                  data-tags={JSON.stringify(item.tags)}
-                  data-category={item.category || ""}
-                >
-                  <a
-                    href={`/${username}/albums/${item.short_id || item.id}`}
-                    data-no-swup
-                    class="block h-full"
+            <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-2 2xl:grid-cols-3 gap-5">
+              {items.map((item) => {
+                const authorIdentity = resolveAuthorIdentity(
+                  {
+                    id: item.author?.id,
+                    name: item.author?.name,
+                    display_name: item.author?.display_name,
+                    username: item.author?.username,
+                  },
+                  item.author_id,
+                );
+                const authorHandle = String(
+                  authorIdentity.username || item.author_id || "",
+                )
+                  .trim()
+                  .replace(/^@+/, "");
+                return (
+                  <article
+                    class="album-list-item card-base rounded-(--radius-large) overflow-hidden border border-(--line-divider) text-90"
+                    data-tags={JSON.stringify(item.tags)}
+                    data-category={item.category || ""}
+                    data-author-id={item.author_id}
+                    data-author-handle={authorHandle}
                   >
-                    {coverUrl(item) && (
-                      <img
-                        src={coverUrl(item) || ""}
-                        alt={item.title}
-                        class="w-full h-48 object-cover"
-                        loading="lazy"
-                      />
-                    )}
-                    <div class="p-4 space-y-2">
-                      <h2 class="text-lg font-semibold line-clamp-1">
-                        {item.title}
-                      </h2>
-                      <div class="text-xs text-60 flex flex-wrap items-center gap-2">
-                        {item.author?.name && <span>{item.author.name}</span>}
-                        {item.date && <span>{item.date}</span>}
-                        {item.location && (
-                          <span class="inline-flex items-center gap-1">
-                            <svg
-                              xmlns="http://www.w3.org/2000/svg"
-                              class="w-3.5 h-3.5"
-                              viewBox="0 0 24 24"
-                              fill="none"
-                              stroke="currentColor"
-                              stroke-width="2"
-                              stroke-linecap="round"
-                              stroke-linejoin="round"
-                              aria-hidden="true"
-                            >
-                              <path d="M12 22s8-6.2 8-12a8 8 0 10-16 0c0 5.8 8 12 8 12z" />
-                              <circle cx="12" cy="10" r="3" />
-                            </svg>
-                            {item.location}
-                          </span>
+                    <a
+                      href={`/${username}/albums/${item.short_id || item.id}`}
+                      data-no-swup
+                      class="block h-full"
+                    >
+                      {coverUrl(item) &&
+                        (item.layout === "masonry" ? (
+                          <div class="w-full h-56 md:h-64 bg-black flex items-center justify-center">
+                            <img
+                              src={coverUrl(item) || ""}
+                              alt={item.title}
+                              class="w-full h-full object-contain"
+                              loading="lazy"
+                            />
+                          </div>
+                        ) : (
+                          <img
+                            src={coverUrl(item) || ""}
+                            alt={item.title}
+                            class="w-full h-56 md:h-64 object-cover"
+                            loading="lazy"
+                          />
+                        ))}
+                      <div class="p-5 space-y-2">
+                        <h2 class="text-lg md:text-xl font-semibold line-clamp-1">
+                          {item.title}
+                        </h2>
+                        {item.description && (
+                          <p class="text-sm text-75 line-clamp-1">
+                            {item.description}
+                          </p>
                         )}
-                        {item.category && (
-                          <span class="px-1.5 py-0.5 rounded bg-(--btn-plain-bg-hover)">
-                            {item.category}
+                        <div class="text-xs md:text-sm text-60 font-semibold flex items-center gap-1.5 min-w-0">
+                          <span class="truncate text-90 border-b border-transparent hover:border-current transition-colors">
+                            {authorIdentity.displayName}
                           </span>
+                          <span class="shrink-0 hover:text-(--primary) transition-colors">
+                            @{authorIdentity.username}
+                          </span>
+                          {formatAlbumDate(item.date) && (
+                            <>
+                              <span
+                                class="text-(--meta-divider)"
+                                aria-hidden="true"
+                              >
+                                ·
+                              </span>
+                              <span class="shrink-0 text-60">
+                                {formatAlbumDate(item.date)}
+                              </span>
+                            </>
+                          )}
+                        </div>
+                        <div class="text-xs md:text-sm text-60 flex flex-wrap items-center gap-2">
+                          {item.location && (
+                            <span
+                              class="inline-flex items-center gap-1 px-1.5 py-0.5 rounded transition-colors hover:bg-(--btn-plain-bg-hover) active:bg-(--btn-plain-bg-active) cursor-pointer"
+                              role="link"
+                              tabindex="0"
+                              data-map-url={buildGoogleMapsSearchUrl(
+                                item.location,
+                              )}
+                              onclick="event.preventDefault(); event.stopPropagation(); const url = this.getAttribute('data-map-url'); if (url) { window.open(url, '_blank', 'noopener,noreferrer'); }"
+                              onkeydown="if (event.key === 'Enter' || event.key === ' ') { event.preventDefault(); event.stopPropagation(); const url = this.getAttribute('data-map-url'); if (url) { window.open(url, '_blank', 'noopener,noreferrer'); } }"
+                              aria-label={`使用 Google 地图搜索地址：${item.location}`}
+                            >
+                              <svg
+                                xmlns="http://www.w3.org/2000/svg"
+                                class="w-3.5 h-3.5"
+                                viewBox="0 0 24 24"
+                                fill="none"
+                                stroke="currentColor"
+                                stroke-width="2"
+                                stroke-linecap="round"
+                                stroke-linejoin="round"
+                                aria-hidden="true"
+                              >
+                                <path d="M12 22s8-6.2 8-12a8 8 0 10-16 0c0 5.8 8 12 8 12z" />
+                                <circle cx="12" cy="10" r="3" />
+                              </svg>
+                              {item.location}
+                            </span>
+                          )}
+                          {item.category && (
+                            <span class="px-1.5 py-0.5 rounded bg-(--btn-plain-bg-hover)">
+                              {item.category}
+                            </span>
+                          )}
+                        </div>
+                        {item.tags.length > 0 && (
+                          <div class="flex flex-wrap gap-2 pt-1">
+                            {item.tags.slice(0, 4).map((tag) => (
+                              <span class="btn-regular h-6 text-xs px-2.5 rounded-lg">
+                                #{tag}
+                              </span>
+                            ))}
+                          </div>
                         )}
                       </div>
-                      {item.description && (
-                        <p class="text-sm text-75 line-clamp-2">
-                          {item.description}
-                        </p>
-                      )}
-                      {item.tags.length > 0 && (
-                        <div class="flex flex-wrap gap-2 pt-1">
-                          {item.tags.slice(0, 4).map((tag) => (
-                            <span class="btn-regular h-6 text-xs px-2 rounded-lg">
-                              #{tag}
-                            </span>
-                          ))}
-                        </div>
-                      )}
-                    </div>
-                  </a>
-                </article>
-              ))}
+                    </a>
+                  </article>
+                );
+              })}
             </div>
           )}
 
@@ -272,31 +360,31 @@ function coverUrl(item: {
             </div>
             <div class="md3-skeleton-block h-10 w-28 rounded-lg" />
           </section>
-          <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+          <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-2 2xl:grid-cols-3 gap-5">
             {Array.from({ length: 6 }).map(() => (
               <article class="album-list-item card-base rounded-(--radius-large) overflow-hidden border border-(--line-divider)">
-                <div class="md3-skeleton-block h-48 w-full rounded-none" />
-                <div class="p-4 space-y-2">
+                <div class="md3-skeleton-block h-56 md:h-64 w-full rounded-none" />
+                <div class="p-5 space-y-2">
                   <div
                     class="md3-skeleton-text"
-                    style="--skeleton-width: 64%; --skeleton-height: 1.65rem;"
+                    style="--skeleton-width: 66%; --skeleton-height: 1.7rem;"
                   />
                   <div
                     class="md3-skeleton-text"
-                    style="--skeleton-width: 86%; --skeleton-height: 1rem;"
+                    style="--skeleton-width: 82%; --skeleton-height: 0.95rem;"
                   />
                   <div
                     class="md3-skeleton-text"
-                    style="--skeleton-width: 82%; --skeleton-height: 2.45rem;"
+                    style="--skeleton-width: 72%; --skeleton-height: 0.9rem;"
                   />
                   <div
                     class="md3-skeleton-text"
-                    style="--skeleton-width: 58%; --skeleton-height: 0.85rem;"
+                    style="--skeleton-width: 78%; --skeleton-height: 2.2rem;"
                   />
                   <div class="flex gap-2 pt-1">
-                    <div class="md3-skeleton-block h-6 w-14 rounded-lg" />
                     <div class="md3-skeleton-block h-6 w-16 rounded-lg" />
-                    <div class="md3-skeleton-block h-6 w-12 rounded-lg" />
+                    <div class="md3-skeleton-block h-6 w-16 rounded-lg" />
+                    <div class="md3-skeleton-block h-6 w-14 rounded-lg" />
                   </div>
                 </div>
               </article>

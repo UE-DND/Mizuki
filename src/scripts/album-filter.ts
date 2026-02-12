@@ -10,6 +10,7 @@
 type FilterState = {
 	tags: string[];
 	category: string | null;
+	author: string | null;
 };
 
 type AlbumFilterRuntimeWindow = Window &
@@ -29,6 +30,7 @@ export function initAlbumFilter(): void {
 	let currentFilter: FilterState = {
 		tags: [],
 		category: null,
+		author: null,
 	};
 
 	function getAlbumItems(): HTMLElement[] {
@@ -56,8 +58,43 @@ export function initAlbumFilter(): void {
 		return normalizeTagList(filter.tags);
 	}
 
+	function normalizeAuthorHandle(value: string): string {
+		return value.trim().replace(/^@+/, "").toLowerCase();
+	}
+
+	function cleanAuthorHandle(value: string): string {
+		return value.trim().replace(/^@+/, "");
+	}
+
+	function readItemAuthorHandleRaw(item: HTMLElement): string {
+		return cleanAuthorHandle(item.dataset.authorHandle || "");
+	}
+
+	function readItemAuthorHandle(item: HTMLElement): string {
+		return normalizeAuthorHandle(readItemAuthorHandleRaw(item));
+	}
+
+	function resolveAuthorDisplay(filter: FilterState): string {
+		if (!filter.author) {
+			return "";
+		}
+
+		const normalized = normalizeAuthorHandle(filter.author);
+		const matched = getAlbumItems().find(
+			(item) => readItemAuthorHandle(item) === normalized,
+		);
+		if (!matched) {
+			return filter.author;
+		}
+		return readItemAuthorHandleRaw(matched) || filter.author;
+	}
+
 	function hasActiveFilters(filter: FilterState): boolean {
-		return getSelectedTags(filter).length > 0 || filter.category !== null;
+		return (
+			getSelectedTags(filter).length > 0 ||
+			filter.category !== null ||
+			filter.author !== null
+		);
 	}
 
 	function parseItemTags(item: HTMLElement): string[] {
@@ -76,8 +113,12 @@ export function initAlbumFilter(): void {
 		const selectedTags = getSelectedTags(filter);
 		const hasTagFilter = selectedTags.length > 0;
 		const hasCategoryFilter = filter.category !== null;
+		const hasAuthorFilter = filter.author !== null;
+		const normalizedAuthor = hasAuthorFilter
+			? normalizeAuthorHandle(filter.author || "")
+			: "";
 
-		if (!hasTagFilter && !hasCategoryFilter) {
+		if (!hasTagFilter && !hasCategoryFilter && !hasAuthorFilter) {
 			return new Set(allItems);
 		}
 
@@ -91,8 +132,11 @@ export function initAlbumFilter(): void {
 				})();
 			const categoryMatched =
 				!hasCategoryFilter || item.dataset.category === filter.category;
+			const authorMatched =
+				!hasAuthorFilter ||
+				readItemAuthorHandle(item) === normalizedAuthor;
 
-			if (tagMatched && categoryMatched) {
+			if (tagMatched && categoryMatched && authorMatched) {
 				matched.add(item);
 			}
 		}
@@ -137,6 +181,9 @@ export function initAlbumFilter(): void {
 		if (filter.category) {
 			segments.push(`分类：${filter.category}`);
 		}
+		if (filter.author) {
+			segments.push(`作者：@${resolveAuthorDisplay(filter)}`);
+		}
 
 		filterLabel.textContent = segments.join(" ｜ ");
 	}
@@ -170,7 +217,7 @@ export function initAlbumFilter(): void {
 	}
 
 	function clearAllFilters() {
-		currentFilter = { tags: [], category: null };
+		currentFilter = { tags: [], category: null, author: null };
 		render();
 		updateFilterStatus(currentFilter);
 		updateButtonStates(currentFilter);
@@ -234,12 +281,17 @@ export function initAlbumFilter(): void {
 		.map((value) => value.trim())
 		.filter(Boolean);
 	const category = params.get("category");
+	const author = params.get("author") || params.get("author_handle");
 
 	if (tagParams.length > 0) {
 		currentFilter.tags = normalizeTagList(tagParams);
 	}
 	if (category) {
 		currentFilter.category = category;
+	}
+	if (author) {
+		const cleanedAuthor = cleanAuthorHandle(author);
+		currentFilter.author = cleanedAuthor || null;
 	}
 
 	if (hasActiveFilters(currentFilter)) {

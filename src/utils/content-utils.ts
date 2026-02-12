@@ -14,6 +14,7 @@ import { getCategoryUrl } from "@utils/url-utils";
 type PostAuthor = {
 	id: string;
 	name: string;
+	display_name?: string;
 	username?: string;
 	avatar_url?: string;
 };
@@ -191,7 +192,11 @@ function buildAuthor(
 		: rawUsername;
 	const username =
 		usernameWithoutDomain || `user-${String(userId || "").slice(0, 8)}`;
-	const name = username || user?.name?.trim() || "Member";
+	const displayName =
+		String(profile?.display_name || "").trim() ||
+		user?.name?.trim() ||
+		username;
+	const name = displayName || username || "Member";
 
 	let avatarUrl: string | undefined;
 	if (profile?.avatar_url?.trim()) {
@@ -213,6 +218,7 @@ function buildAuthor(
 	return {
 		id: userId,
 		name,
+		display_name: displayName || username || "Member",
 		username,
 		avatar_url: avatarUrl,
 	};

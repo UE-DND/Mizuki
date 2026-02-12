@@ -811,15 +811,11 @@ export function initMePage(): void {
 		if (!raw) {
 			return "用户名不能为空";
 		}
-		if (
-			!/^[\u3400-\u4DBF\u4E00-\u9FFF\uF900-\uFAFFA-Za-z0-9_-]+$/u.test(
-				raw,
-			)
-		) {
-			return "用户名仅支持中文、英文、数字、下划线和短横线";
+		if (!/^[A-Za-z0-9_-]+$/.test(raw)) {
+			return "用户名仅支持英文、数字、下划线和短横线";
 		}
 		if (weightedCharLength(raw) > USERNAME_MAX_WEIGHT) {
-			return "用户名最多 14 字符（中文按 2 字符计）";
+			return "用户名最多 14 字符";
 		}
 		return null;
 	};

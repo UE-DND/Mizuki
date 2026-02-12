@@ -2,6 +2,7 @@
 import { Icon } from "astro-icon/components";
 
 import type { DirectusPostEntry } from "@/utils/content-utils";
+import { resolveAuthorIdentity } from "@/utils/author-identity";
 import { getPostUrl } from "@/utils/url-utils";
 
 interface Props {
@@ -36,7 +37,16 @@ const bodyText = String(entry.body || "")
   .replace(/\s+/g, " ")
   .trim();
 const excerpt = description || bodyText.slice(0, 140) || "";
-const authorHandle = String(author?.username || author?.id || "user").trim();
+const { displayName: authorDisplayName, username: authorHandle } =
+  resolveAuthorIdentity(
+    {
+      id: author?.id,
+      name: author?.name,
+      username: author?.username,
+      display_name: author?.display_name,
+    },
+    author_id,
+  );
 const publishedDate =
   published instanceof Date && !Number.isNaN(published.getTime())
     ? `${published.getFullYear()}/${String(published.getMonth() + 1).padStart(2, "0")}/${String(published.getDate()).padStart(2, "0")}`
@@ -105,11 +115,20 @@ const publishedDate =
       <div
         class="flex min-w-0 items-center gap-1.5 text-50 text-xs md:text-sm font-medium leading-none"
       >
-        <a
-          href={`/${authorHandle}`}
-          class="max-w-[10rem] truncate hover:text-(--primary) transition-colors"
-          >@{authorHandle}</a
-        >
+        <div class="max-w-[14rem] min-w-0 inline-flex items-baseline gap-1">
+          <a
+            href={`/${authorHandle}`}
+            class="truncate text-90 border-b border-transparent hover:border-current"
+          >
+            {authorDisplayName}
+          </a>
+          <a
+            href={`/${authorHandle}`}
+            class="shrink-0 text-60 hover:text-(--primary) transition-colors"
+          >
+            @{authorHandle}
+          </a>
+        </div>
         <span class="text-(--meta-divider)" aria-hidden="true">·</span>
         <span>{publishedDate}</span>
       </div>
@@ -242,45 +261,41 @@ const publishedDate =
         },
       ]}
     >
-      <div class="space-y-3">
-        <div
-          class="md3-skeleton-text"
-          style="--skeleton-width: 78%; --skeleton-height: 1.6rem;"
-        >
-        </div>
-        <div
-          class="md3-skeleton-text hidden md:block"
-          style="--skeleton-width: 48%; --skeleton-height: 1.6rem;"
-        >
-        </div>
-        <div
-          class="md3-skeleton-text md:hidden"
-          style="--skeleton-width: 56%; --skeleton-height: 1.35rem;"
-        >
-        </div>
-        <div class="pt-1.5 space-y-2">
-          <div class="md3-skeleton-text" style="--skeleton-width: 94%;"></div>
-          <div class="md3-skeleton-text" style="--skeleton-width: 72%;"></div>
-        </div>
-      </div>
-      <div class="mt-auto flex items-center justify-between gap-3 pt-3">
-        <div class="flex min-w-0 items-center gap-2">
+      <div class="space-y-4">
+        <div class="flex items-center gap-2.5">
+          <div class="hidden md:block md3-skeleton-block h-8 w-1 rounded-md">
+          </div>
           <div
-            class="md3-skeleton-text w-20 md:w-24"
-            style="--skeleton-height: 0.72rem;"
+            class="md3-skeleton-text"
+            style="--skeleton-width: 42%; --skeleton-height: 2.2rem;"
           >
           </div>
-          <div class="md3-skeleton-circle h-1.5 w-1.5"></div>
+        </div>
+
+        <div class="h-5" aria-hidden="true"></div>
+
+        <div class="-mt-3">
+          <div class="md3-skeleton-text" style="--skeleton-width: 48%;"></div>
+        </div>
+      </div>
+      <div class="mt-auto flex items-center justify-between gap-4 pt-2.5">
+        <div class="flex min-w-0 items-center gap-2">
           <div
-            class="md3-skeleton-text w-14 md:w-16"
-            style="--skeleton-height: 0.72rem;"
+            class="md3-skeleton-text"
+            style="--skeleton-width: 9.5rem; --skeleton-height: 1.45rem;"
+          >
+          </div>
+          <div class="md3-skeleton-circle h-1.5 w-1.5 shrink-0"></div>
+          <div
+            class="md3-skeleton-text"
+            style="--skeleton-width: 7.5rem; --skeleton-height: 1.45rem;"
           >
           </div>
         </div>
         <div class="ml-3 mr-2 flex shrink-0 items-center gap-2.5 md:gap-4">
-          <div class="md3-skeleton-block h-6 w-10 rounded-lg"></div>
-          <div class="md3-skeleton-block h-6 w-10 rounded-lg"></div>
-          <div class="md3-skeleton-circle h-8 w-8"></div>
+          <div class="md3-skeleton-block h-6 w-8 rounded-lg"></div>
+          <div class="md3-skeleton-block h-6 w-8 rounded-lg"></div>
+          <div class="md3-skeleton-circle h-6 w-6"></div>
         </div>
       </div>
     </div>
@@ -288,6 +303,9 @@ const publishedDate =
       hasCover ? (
         <div class="max-h-[20vh] md:max-h-none mx-4 mt-4 -mb-2 md:mb-0 md:mx-0 md:mt-0 md:w-(--coverWidth) relative md:absolute md:top-3 md:bottom-3 md:right-3 rounded-xl overflow-hidden">
           <div class="md3-skeleton-block h-full w-full rounded-xl" />
+          <div class="absolute inset-0 flex items-center justify-center">
+            <div class="md3-skeleton-circle h-10 w-10" />
+          </div>
         </div>
       ) : (
         <div class="hidden md:flex absolute right-3 top-3 bottom-3 w-[3.25rem] rounded-xl overflow-hidden">

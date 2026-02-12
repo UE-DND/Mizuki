@@ -87,6 +87,10 @@ async function loadProfileByUsername(
 	return rows[0] || null;
 }
 
+function normalizeAuthorHandle(value: string): string {
+	return value.trim().replace(/^@+/, "").toLowerCase();
+}
+
 /** Owner sees everything; non-owner sees published + public + show_on_profile */
 function itemFiltersApi(isOwner: boolean): JsonObject[] {
 	return isOwner
@@ -176,8 +180,23 @@ async function handlePublicArticles(
 			0,
 			200,
 		);
+		const authorHandle = normalizeAuthorHandle(
+			(context.url.searchParams.get("author") || "").slice(0, 100),
+		);
 
 		const andFilters: JsonObject[] = [filterPublicStatus()];
+		if (authorHandle) {
+			const profile = await loadProfileByUsername(authorHandle);
+			if (!profile?.user_id) {
+				return ok({
+					items: [],
+					page,
+					limit,
+					total: 0,
+				});
+			}
+			andFilters.push({ author_id: { _eq: profile.user_id } });
+		}
 		if (tag) {
 			andFilters.push({ tags: { _contains: tag } });
 		}
@@ -409,7 +428,23 @@ async function handlePublicAlbums(
 
 	if (segments.length === 2) {
 		const { page, limit, offset } = parsePagination(context.url);
-		const filter = filterPublicStatus();
+		const authorHandle = normalizeAuthorHandle(
+			(context.url.searchParams.get("author") || "").slice(0, 100),
+		);
+		const andFilters: JsonObject[] = [filterPublicStatus()];
+		if (authorHandle) {
+			const profile = await loadProfileByUsername(authorHandle);
+			if (!profile?.user_id) {
+				return ok({
+					items: [],
+					page,
+					limit,
+					total: 0,
+				});
+			}
+			andFilters.push({ author_id: { _eq: profile.user_id } });
+		}
+		const filter = { _and: andFilters } as JsonObject;
 		const [rows, total] = await Promise.all([
 			readMany("app_albums", {
 				filter,
