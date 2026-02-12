@@ -29,6 +29,54 @@ import type { CommentTreeNode } from "./shared";
 import { getAuthorBundle } from "./shared/author-cache";
 
 type CommentPermissionKey = "can_comment_articles" | "can_comment_diaries";
+type CommentCollection = "app_article_comments" | "app_diary_comments";
+
+async function collectDescendantCommentIds(
+	collection: CommentCollection,
+	rootId: string,
+): Promise<string[]> {
+	const visited = new Set<string>([rootId]);
+	const descendants: string[] = [];
+	let frontier: string[] = [rootId];
+
+	while (frontier.length > 0) {
+		const children = await readMany(collection, {
+			filter: {
+				parent_id: { _in: frontier },
+			} as JsonObject,
+			fields: ["id"],
+			limit: -1,
+		});
+
+		const nextFrontier: string[] = [];
+		for (const child of children) {
+			const childId = String(child.id || "");
+			if (!childId || visited.has(childId)) {
+				continue;
+			}
+			visited.add(childId);
+			descendants.push(childId);
+			nextFrontier.push(childId);
+		}
+		frontier = nextFrontier;
+	}
+
+	return descendants;
+}
+
+async function deleteCommentWithDescendants(
+	collection: CommentCollection,
+	commentId: string,
+): Promise<void> {
+	const descendants = await collectDescendantCommentIds(
+		collection,
+		commentId,
+	);
+	for (const descendantId of descendants.reverse()) {
+		await deleteOne(collection, descendantId);
+	}
+	await deleteOne(collection, commentId);
+}
 
 async function renderCommentBodyHtml(markdown: string): Promise<string> {
 	const source = String(markdown || "");
@@ -249,7 +297,10 @@ async function handleArticleComments(
 		}
 
 		if (context.request.method === "DELETE") {
-			await deleteOne("app_article_comments", commentId);
+			await deleteCommentWithDescendants(
+				"app_article_comments",
+				commentId,
+			);
 			return ok({ id: commentId });
 		}
 	}
@@ -419,7 +470,7 @@ async function handleDiaryComments(
 		}
 
 		if (context.request.method === "DELETE") {
-			await deleteOne("app_diary_comments", commentId);
+			await deleteCommentWithDescendants("app_diary_comments", commentId);
 			return ok({ id: commentId });
 		}
 	}

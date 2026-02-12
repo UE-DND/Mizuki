@@ -69,84 +69,93 @@ const hasDirectusTarget = Boolean(moduleName && contentId);
 							placeholder="期待你的神评..."
 						></textarea>
 
-						<div
-							id="comment-toolbar"
-							class="flex flex-wrap items-center gap-2"
-						>
-							<button
-								type="button"
-								class="comment-toolbar-btn btn-plain scale-animation w-9 h-9 rounded-lg border border-[var(--line-divider)] text-75 hover:text-90"
-								data-md-action="bold"
-								aria-label="加粗"
-								title="加粗"
+						<div class="flex w-full items-center gap-2">
+							<div
+								id="comment-toolbar"
+								class="flex flex-nowrap items-center gap-2 overflow-x-auto min-w-0 pr-1"
 							>
-								<Icon name="material-symbols:format-bold" class="text-[1.1rem]" />
-							</button>
+								<button
+									type="button"
+									class="comment-toolbar-btn btn-plain scale-animation w-9 h-9 rounded-lg border border-[var(--line-divider)] text-75 hover:text-90"
+									data-md-action="bold"
+									aria-label="加粗"
+									title="加粗"
+								>
+									<Icon name="material-symbols:format-bold" class="text-[1.1rem]" />
+								</button>
+								<button
+									type="button"
+									class="comment-toolbar-btn btn-plain scale-animation w-9 h-9 rounded-lg border border-[var(--line-divider)] text-75 hover:text-90"
+									data-md-action="italic"
+									aria-label="斜体"
+									title="斜体"
+								>
+									<Icon
+										name="material-symbols:format-italic"
+										class="text-[1.1rem]"
+									/>
+								</button>
+								<button
+									type="button"
+									class="comment-toolbar-btn btn-plain scale-animation w-9 h-9 rounded-lg border border-[var(--line-divider)] text-75 hover:text-90"
+									data-md-action="underline"
+									aria-label="下划线"
+									title="下划线"
+								>
+									<Icon
+										name="material-symbols:format-underlined"
+										class="text-[1.1rem]"
+									/>
+								</button>
+								<button
+									type="button"
+									class="comment-toolbar-btn btn-plain scale-animation w-9 h-9 rounded-lg border border-[var(--line-divider)] text-75 hover:text-90"
+									data-md-action="strike"
+									aria-label="删除线"
+									title="删除线"
+								>
+									<Icon
+										name="material-symbols:format-strikethrough"
+										class="text-[1.1rem]"
+									/>
+								</button>
+								<button
+									type="button"
+									class="comment-toolbar-btn btn-plain scale-animation w-9 h-9 rounded-lg border border-[var(--line-divider)] text-75 hover:text-90"
+									data-md-action="quote"
+									aria-label="引用"
+									title="引用"
+								>
+									<Icon
+										name="material-symbols:format-quote"
+										class="text-[1.1rem]"
+									/>
+								</button>
+								<button
+									type="button"
+									class="comment-toolbar-btn btn-plain scale-animation w-9 h-9 rounded-lg border border-[var(--line-divider)] text-75 hover:text-90"
+									data-md-action="inline-code"
+									aria-label="行内代码"
+									title="行内代码"
+								>
+									<Icon name="material-symbols:code" class="text-[1.1rem]" />
+								</button>
+								<button
+									type="button"
+									class="comment-toolbar-btn btn-plain scale-animation w-9 h-9 rounded-lg border border-[var(--line-divider)] text-75 hover:text-90"
+									data-md-action="code-block"
+									aria-label="代码块"
+									title="代码块"
+								>
+									<Icon name="material-symbols:terminal" class="text-[1.1rem]" />
+								</button>
+							</div>
 							<button
-								type="button"
-								class="comment-toolbar-btn btn-plain scale-animation w-9 h-9 rounded-lg border border-[var(--line-divider)] text-75 hover:text-90"
-								data-md-action="italic"
-								aria-label="斜体"
-								title="斜体"
+								type="submit"
+								id="comment-submit"
+								class="ml-auto shrink-0 px-4 py-2 rounded-lg bg-[var(--btn-regular-bg)] text-[var(--btn-content)] text-sm"
 							>
-								<Icon
-									name="material-symbols:format-italic"
-									class="text-[1.1rem]"
-								/>
-							</button>
-							<button
-								type="button"
-								class="comment-toolbar-btn btn-plain scale-animation w-9 h-9 rounded-lg border border-[var(--line-divider)] text-75 hover:text-90"
-								data-md-action="underline"
-								aria-label="下划线"
-								title="下划线"
-							>
-								<Icon
-									name="material-symbols:format-underlined"
-									class="text-[1.1rem]"
-								/>
-							</button>
-							<button
-								type="button"
-								class="comment-toolbar-btn btn-plain scale-animation w-9 h-9 rounded-lg border border-[var(--line-divider)] text-75 hover:text-90"
-								data-md-action="strike"
-								aria-label="删除线"
-								title="删除线"
-							>
-								<Icon
-									name="material-symbols:format-strikethrough"
-									class="text-[1.1rem]"
-								/>
-							</button>
-							<button
-								type="button"
-								class="comment-toolbar-btn btn-plain scale-animation w-9 h-9 rounded-lg border border-[var(--line-divider)] text-75 hover:text-90"
-								data-md-action="quote"
-								aria-label="引用"
-								title="引用"
-							>
-								<Icon
-									name="material-symbols:format-quote"
-									class="text-[1.1rem]"
-								/>
-							</button>
-							<button
-								type="button"
-								class="comment-toolbar-btn btn-plain scale-animation w-9 h-9 rounded-lg border border-[var(--line-divider)] text-75 hover:text-90"
-								data-md-action="inline-code"
-								aria-label="行内代码"
-								title="行内代码"
-							>
-								<Icon name="material-symbols:code" class="text-[1.1rem]" />
-							</button>
-							<button
-								type="button"
-								class="comment-toolbar-btn btn-plain scale-animation w-9 h-9 rounded-lg border border-[var(--line-divider)] text-75 hover:text-90"
-								data-md-action="code-block"
-								aria-label="代码块"
-								title="代码块"
-							>
-								<Icon name="material-symbols:terminal" class="text-[1.1rem]" />
+								发布评论
 							</button>
 						</div>
 					</div>
@@ -168,25 +177,18 @@ const hasDirectusTarget = Boolean(moduleName && contentId);
 						></div>
 					</div>
 
-					<div class="flex items-center justify-between gap-2">
-						<div class="text-xs text-60" id="comment-reply-hint"></div>
-						<div class="flex items-center gap-2">
-							<button
-								type="button"
-								id="comment-reply-cancel"
-								class="hidden px-3 py-2 rounded-lg border border-[var(--line-divider)] text-xs text-75"
-							>
-								取消回复
-							</button>
-							<button
-								type="submit"
-								id="comment-submit"
-								class="px-4 py-2 rounded-lg bg-[var(--btn-regular-bg)] text-[var(--btn-content)] text-sm"
-							>
-								发布评论
-							</button>
+						<div class="flex items-center justify-between gap-2">
+							<div class="text-xs text-60" id="comment-reply-hint"></div>
+							<div class="flex items-center gap-2">
+								<button
+									type="button"
+									id="comment-reply-cancel"
+									class="hidden px-3 py-2 rounded-lg border border-[var(--line-divider)] text-xs text-75"
+								>
+									取消回复
+								</button>
+							</div>
 						</div>
-					</div>
 					<p id="comment-form-error" class="hidden text-sm text-red-500"></p>
 				</form>
 
@@ -206,11 +208,17 @@ const hasDirectusTarget = Boolean(moduleName && contentId);
 	import { getAuthState, subscribeAuthState } from "@/scripts/auth-state";
 	import type { AuthState } from "@/scripts/auth-state";
 	import { setupCodeCopyDelegation } from "@/scripts/code-copy";
-	import { showAuthRequiredDialog } from "@/scripts/dialogs";
+	import {
+		showAuthRequiredDialog,
+		showConfirmDialog,
+		showNoticeDialog,
+	} from "@/scripts/dialogs";
 	import { refreshGithubCards } from "@/scripts/github-card-runtime";
 
 	type CommentAuthor = {
 		name?: string | null;
+		display_name?: string | null;
+		username?: string | null;
 		avatar_url?: string | null;
 	};
 
@@ -250,6 +258,10 @@ const hasDirectusTarget = Boolean(moduleName && contentId);
 			_directusCommentApplyAuth?: (state: AuthState) => void;
 			_directusCommentMenuOutsideBound?: boolean;
 			renderMermaidDiagrams?: () => Promise<void>;
+			codeBlockCollapser?: {
+				setupCodeBlocks?: () => void;
+				toggleCollapse?: (element: Element) => void;
+			};
 		};
 
 	function initComments() {
@@ -316,6 +328,24 @@ const hasDirectusTarget = Boolean(moduleName && contentId);
 			const time = new Date(iso);
 			if (Number.isNaN(time.getTime())) return "";
 			return time.toLocaleString();
+		};
+
+		const getAuthorName = (author: CommentAuthor | null | undefined): string => {
+			const displayName = String(author?.display_name || "").trim();
+			if (displayName) {
+				return displayName;
+			}
+			return String(author?.name || "").trim() || "匿名用户";
+		};
+
+		const getAuthorProfileHref = (
+			author: CommentAuthor | null | undefined,
+		): string | null => {
+			const username = String(author?.username || "").trim();
+			if (!username) {
+				return null;
+			}
+			return `/${encodeURIComponent(username)}`;
 		};
 
 		const isToolbarAction = (
@@ -398,6 +428,36 @@ const hasDirectusTarget = Boolean(moduleName && contentId);
 			}
 		};
 
+		const collapseCommentCodeBlocks = (): void => {
+			runtimeWindow.codeBlockCollapser?.setupCodeBlocks?.();
+
+			const collapseNow = (): void => {
+				const commentCodeBlocks = root.querySelectorAll<HTMLElement>(
+					".expressive-code.collapsible",
+				);
+				commentCodeBlocks.forEach((block) => {
+					if (block.dataset.commentDefaultCollapsed === "1") {
+						return;
+					}
+					const isCollapsed = block.classList.contains("collapsed");
+					if (!isCollapsed) {
+						if (runtimeWindow.codeBlockCollapser?.toggleCollapse) {
+							runtimeWindow.codeBlockCollapser.toggleCollapse(block);
+						} else {
+							block.classList.remove("expanded");
+							block.classList.add("collapsed");
+						}
+					}
+					block.dataset.commentDefaultCollapsed = "1";
+				});
+			};
+
+			requestAnimationFrame(() => {
+				collapseNow();
+				setTimeout(collapseNow, 80);
+			});
+		};
+
 		const closeAllCommentActionMenus = (): void => {
 			const openedMenus = document.querySelectorAll<HTMLDetailsElement>(
 				"details.comment-action-menu[open]",
@@ -467,6 +527,7 @@ const hasDirectusTarget = Boolean(moduleName && contentId);
 					previewContentEl.innerHTML = previewHtml;
 					renderedPreviewHtml = previewHtml;
 					void refreshMarkdownRuntime();
+					collapseCommentCodeBlocks();
 				}
 				previewContentEl.classList.remove("hidden");
 				previewEmptyEl.classList.add("hidden");
@@ -722,9 +783,17 @@ const hasDirectusTarget = Boolean(moduleName && contentId);
 		};
 
 		const renderCommentNode = (item: CommentItem, level: number): string => {
-			const avatar = item.author?.avatar_url
+			const authorName = getAuthorName(item.author);
+			const authorHref = getAuthorProfileHref(item.author);
+			const avatarContent = item.author?.avatar_url
 				? `<img src="${escapeHtml(item.author.avatar_url)}" alt="用户头像" class="w-8 h-8 rounded-full object-cover" loading="lazy" />`
 				: `<div class="w-8 h-8 rounded-full bg-black/10 dark:bg-white/10"></div>`;
+			const avatar = authorHref
+				? `<a href="${escapeHtml(authorHref)}" class="block rounded-full hover:opacity-90 transition-opacity">${avatarContent}</a>`
+				: avatarContent;
+			const authorNameHtml = authorHref
+				? `<a href="${escapeHtml(authorHref)}" class="truncate text-90 hover:text-[var(--primary)] transition-colors">${escapeHtml(authorName)}</a>`
+				: `<span class="truncate text-90">${escapeHtml(authorName)}</span>`;
 			const replies = Array.isArray(item.replies) ? item.replies : [];
 
 			return `
@@ -734,7 +803,7 @@ const hasDirectusTarget = Boolean(moduleName && contentId);
 							<div class="flex items-center gap-3 min-w-0">
 								${avatar}
 								<div class="min-w-0">
-									<div class="text-sm font-medium truncate text-90">${escapeHtml(item.author?.name || "匿名用户")}</div>
+									<div class="text-sm font-medium">${authorNameHtml}</div>
 									<div class="text-xs text-60">${escapeHtml(formatDate(item.date_created))}</div>
 								</div>
 							</div>
@@ -761,6 +830,7 @@ const hasDirectusTarget = Boolean(moduleName && contentId);
 				.map((item) => renderCommentNode(item, 0))
 				.join("");
 			void refreshMarkdownRuntime();
+			collapseCommentCodeBlocks();
 		};
 
 		const applyAuthState = (state: AuthState): void => {
@@ -859,7 +929,13 @@ const hasDirectusTarget = Boolean(moduleName && contentId);
 		};
 
 		const deleteComment = async (commentId: string): Promise<void> => {
-			const confirmed = window.confirm("确认删除该评论？");
+			const confirmed = await showConfirmDialog({
+				ariaLabel: "删除确认",
+				message: "确认删除这条评论？下方的回复也将一并删除。",
+				confirmText: "确认删除",
+				cancelText: "取消",
+				confirmVariant: "danger",
+			});
 			if (!confirmed) return;
 			const response = await fetch(commentItemApi(commentId), {
 				method: "DELETE",
@@ -868,7 +944,10 @@ const hasDirectusTarget = Boolean(moduleName && contentId);
 			});
 			const data = await response.json().catch(() => null);
 			if (!response.ok || !data?.ok) {
-				window.alert(data?.message || "删除失败");
+				await showNoticeDialog({
+					ariaLabel: "删除失败",
+					message: data?.message || "删除失败",
+				});
 				return;
 			}
 			await loadComments();

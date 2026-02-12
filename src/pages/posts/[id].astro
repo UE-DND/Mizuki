@@ -106,6 +106,25 @@ const coverUrl = article?.cover_url
 				fit: "cover",
 		  })
 		: null;
+
+function formatArticleMetaDate(input: string | null | undefined): string {
+	if (!input) {
+		return "";
+	}
+	const date = new Date(input);
+	if (Number.isNaN(date.getTime())) {
+		return "";
+	}
+	const timePart = new Intl.DateTimeFormat("zh-CN", {
+		hour: "numeric",
+		minute: "2-digit",
+		hour12: true,
+	}).format(date);
+	const datePart = `${date.getFullYear()}年${date.getMonth() + 1}月${date.getDate()}日`;
+	return `${timePart} · ${datePart}`;
+}
+
+const publishedMetaText = formatArticleMetaDate(article?.published_at);
 ---
 
 <MainGridLayout
@@ -132,9 +151,10 @@ const coverUrl = article?.cover_url
 					<header class="mb-6 space-y-3">
 						<h1 class="text-3xl md:text-4xl font-bold text-90">{article.title}</h1>
 						<div class="flex flex-wrap items-center gap-3 text-sm text-60">
-							{article.author?.name && <span>{article.author.name}</span>}
-							{article.published_at && <time datetime={article.published_at}>发布时间：{new Date(article.published_at).toLocaleString()}</time>}
-							{article.category && <span>分类：{article.category}</span>}
+							{article.published_at && publishedMetaText && (
+								<time datetime={article.published_at}>{publishedMetaText}</time>
+							)}
+							{article.category && <span>{article.category}</span>}
 						</div>
 						{article.summary && <p class="text-base text-75">{article.summary}</p>}
 						{article.tags.length > 0 && (

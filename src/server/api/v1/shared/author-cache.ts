@@ -13,6 +13,7 @@ type CachedAuthorBundle = {
 export type AuthorBundleItem = {
 	id: string;
 	name: string;
+	display_name?: string;
 	username?: string;
 	avatar_url?: string;
 };
@@ -95,10 +96,12 @@ function toAuthorBundle(
 	user: Partial<AppUser> | null,
 ): AuthorBundleItem {
 	const username = normalizeUsername(profile?.username, userId);
-	const displayName = computeDisplayName(user);
+	const displayName =
+		String(profile?.display_name || "").trim() || computeDisplayName(user);
 	return {
 		id: userId,
 		name: username || displayName || "Member",
+		display_name: displayName || username || "Member",
 		username,
 		avatar_url: resolveAvatarUrl(profile, user),
 	};
@@ -151,6 +154,7 @@ async function readProfiles(
 			fields: [
 				"user_id",
 				"username",
+				"display_name",
 				"avatar_url",
 				"avatar_file",
 				"user.id",
@@ -170,7 +174,13 @@ async function readProfiles(
 			filter: {
 				user_id: { _in: userIds },
 			} as JsonObject,
-			fields: ["user_id", "username", "avatar_url", "avatar_file"],
+			fields: [
+				"user_id",
+				"username",
+				"display_name",
+				"avatar_url",
+				"avatar_file",
+			],
 			limit: Math.max(userIds.length, 20),
 		})) as ProfileWithRelationUser[];
 	}
