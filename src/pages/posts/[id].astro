@@ -132,7 +132,7 @@ const coverUrl = article?.cover_url
 					<header class="mb-6 space-y-3">
 						<h1 class="text-3xl md:text-4xl font-bold text-90">{article.title}</h1>
 						<div class="flex flex-wrap items-center gap-3 text-sm text-60">
-							{article.author?.name && <span>作者：{article.author.name}</span>}
+							{article.author?.name && <span>{article.author.name}</span>}
 							{article.published_at && <time datetime={article.published_at}>发布时间：{new Date(article.published_at).toLocaleString()}</time>}
 							{article.category && <span>分类：{article.category}</span>}
 						</div>

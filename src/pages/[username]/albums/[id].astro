@@ -30,7 +30,7 @@ type AlbumPageData = {
 	category: string | null;
 	layout: "grid" | "masonry";
 	columns: number;
-	status: string;
+	status: "draft" | "published";
 	is_public: boolean;
 	show_on_profile: boolean;
 	author_id: string;
@@ -114,6 +114,7 @@ function photoUrl(photo: { file_id: string | null; image_url: string | null }): 
 		<AlbumDetailEditor
 			client:only="svelte"
 			albumId={album.id}
+			albumShortId={album.short_id}
 			username={username}
 			isOwner={true}
 			initialEditMode={autoEdit}
@@ -146,10 +147,10 @@ function photoUrl(photo: { file_id: string | null; image_url: string | null }): 
 	) : (
 		<>
 			<section class="card-base p-6 rounded-[var(--radius-large)] mb-4 space-y-3 text-90">
-				<a href={`/${username}/albums`} class="text-sm text-[var(--primary)] hover:underline">返回相册列表</a>
+				<a href={`/${username}/albums`} data-no-swup class="text-sm text-[var(--primary)] hover:underline">返回相册列表</a>
 				<h1 class="text-3xl font-bold">{album.title}</h1>
 				<div class="text-xs text-60 flex flex-wrap items-center gap-2">
-					{album.author?.name && <span>作者：{album.author.name}</span>}
+					{album.author?.name && <span>{album.author.name}</span>}
 					{album.date && <span>{album.date}</span>}
 					{album.location && <span>{album.location}</span>}
 					{album.category && <span class="px-2 py-0.5 rounded bg-[var(--btn-plain-bg-hover)] text-75">{album.category}</span>}

@@ -145,7 +145,7 @@ function coverUrl(item: {
 							data-tags={JSON.stringify(item.tags)}
 							data-category={item.category || ""}
 						>
-							<a href={`/${username}/albums/${item.short_id || item.id}`} class="block h-full">
+							<a href={`/${username}/albums/${item.short_id || item.id}`} data-no-swup class="block h-full">
 								{coverUrl(item) && (
 									<img
 										src={coverUrl(item) || ""}
@@ -157,9 +157,17 @@ function coverUrl(item: {
 								<div class="p-4 space-y-2">
 									<h2 class="text-lg font-semibold line-clamp-1">{item.title}</h2>
 									<div class="text-xs text-60 flex flex-wrap items-center gap-2">
-										{item.author?.name && <span>作者：{item.author.name}</span>}
+										{item.author?.name && <span>{item.author.name}</span>}
 										{item.date && <span>{item.date}</span>}
-										{item.location && <span>{item.location}</span>}
+										{item.location && (
+											<span class="inline-flex items-center gap-1">
+												<svg xmlns="http://www.w3.org/2000/svg" class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+													<path d="M12 22s8-6.2 8-12a8 8 0 10-16 0c0 5.8 8 12 8 12z" />
+													<circle cx="12" cy="10" r="3" />
+												</svg>
+												{item.location}
+											</span>
+										)}
 										{item.category && <span class="px-1.5 py-0.5 rounded bg-[var(--btn-plain-bg-hover)]">{item.category}</span>}
 									</div>
 									{item.description && <p class="text-sm text-75 line-clamp-2">{item.description}</p>}
