@@ -348,7 +348,7 @@ export async function handleAdminUsers(
 				email.split("@")[0] ||
 				"Member";
 			const requestedUsername = parseBodyTextField(body, "username");
-			let normalizedUsername = "";
+			let normalizedUsername: string;
 			if (requestedUsername) {
 				normalizedUsername =
 					normalizeRequestedUsername(requestedUsername);

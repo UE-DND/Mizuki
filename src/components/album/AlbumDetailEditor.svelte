@@ -12,6 +12,7 @@ import {
 /* Props                                                              */
 /* ------------------------------------------------------------------ */
 export let albumId: string;
+export let albumShortId: string | null = null;
 export let username: string;
 export let isOwner = false;
 export let initialEditMode = false;
@@ -25,12 +26,14 @@ export let album: {
 	location: string | null;
 	layout: "grid" | "masonry";
 	columns: number;
-	status: string;
+	status: "draft" | "published";
 	is_public: boolean;
 	show_on_profile: boolean;
 	cover_file: string | null;
 	cover_url: string | null;
 };
+
+type AlbumStatus = "draft" | "published";
 
 type PhotoItem = {
 	id: string;
@@ -62,9 +65,10 @@ let mTags = (album.tags || []).join(", ");
 let mDate = album.date || "";
 let mLocation = album.location || "";
 let mLayout: "grid" | "masonry" = album.layout || "grid";
-let mStatus = album.status || "draft";
+let mStatus: AlbumStatus = album.status as AlbumStatus;
 let mIsPublic = album.is_public;
 let mShowOnProfile = album.show_on_profile;
+let displayTags: string[] = [];
 
 // Photos (saved)
 let mPhotos = [...photos];
@@ -250,7 +254,7 @@ function getImageFileExt(file: File): string {
 function buildAlbumPhotoName(albumIdValue: string, index: number): string {
 	const normalizedAlbumId = String(albumIdValue || "").trim() || "album";
 	const normalizedIndex = String(index).padStart(2, "0");
-	return `${normalizedAlbumId}-${normalizedIndex}`;
+	return `Albums ${normalizedAlbumId}-${normalizedIndex}`;
 }
 
 function photoSrc(
@@ -269,6 +273,17 @@ function flash(msg: string): void {
 	setTimeout(() => {
 		saveMsg = "";
 	}, 2500);
+}
+
+function portal(node: HTMLElement): { destroy: () => void } {
+	document.body.appendChild(node);
+	return {
+		destroy: () => {
+			if (node.parentNode) {
+				node.parentNode.removeChild(node);
+			}
+		},
+	};
 }
 
 function revokePendingPreview(photoId: string): void {
@@ -405,6 +420,20 @@ async function saveAlbum(): Promise<void> {
 		if (!metadataRes.ok) {
 			throw new Error(`保存信息失败：${getApiMessage(metadataData, metadataRes.statusText || "未知错误")}`);
 		}
+		const updatedItem = metadataData?.item as Record<string, unknown> | undefined;
+		if (updatedItem) {
+			mTitle = toOptionalText(updatedItem.title) || "";
+			mDescription = toOptionalText(updatedItem.description) || "";
+			mCategory = toOptionalText(updatedItem.category) || "";
+			mDate = toOptionalText(updatedItem.date) || "";
+			mLocation = toOptionalText(updatedItem.location) || "";
+			mLayout = updatedItem.layout === "masonry" ? "masonry" : "grid";
+			mStatus =
+				updatedItem.status === "published" ? "published" : "draft";
+			mIsPublic = Boolean(updatedItem.is_public);
+			mShowOnProfile = Boolean(updatedItem.show_on_profile);
+			mTags = toTagsArray(updatedItem.tags).join(", ");
+		}
 		doneSteps += 1;
 		setSaveProgress(doneSteps, totalSteps, "相册信息已保存");
 
@@ -419,7 +448,10 @@ async function saveAlbum(): Promise<void> {
 			}
 			const pending = localQueue[i];
 			const fileIndex = currentPhotoCount + 1;
-			const fileBaseName = buildAlbumPhotoName(albumId, fileIndex);
+			const fileBaseName = buildAlbumPhotoName(
+				albumShortId || albumId,
+				fileIndex,
+			);
 			const fileExt = getImageFileExt(pending.file);
 
 			setSaveProgress(doneSteps, totalSteps, `上传图片 ${i + 1}/${localQueue.length}...`);
@@ -552,6 +584,11 @@ function addExternalPhoto(): void {
 	externalUrl = "";
 	flash("外链已加入待上传队列");
 }
+
+$: displayTags = mTags
+	.split(",")
+	.map((tag) => tag.trim())
+	.filter(Boolean);
 
 /* ------------------------------------------------------------------ */
 /* Photo actions (saved items)                                        */
@@ -693,10 +730,11 @@ onDestroy(() => {
 
 	<div class="space-y-4">
 		{#if isOwner}
-			<div class="card-base p-3 rounded-[var(--radius-large)] flex items-center justify-between gap-3 flex-wrap sticky top-[4.5rem] z-30">
+			<div class="card-base p-3 rounded-[var(--radius-large)] shadow-[0_6px_14px_rgba(15,23,42,0.08)] dark:shadow-[0_6px_14px_rgba(0,0,0,0.24)] flex items-center justify-between gap-3 flex-wrap sticky top-[4.5rem] z-30">
 				<div class="flex items-center gap-3 flex-wrap">
 				<a
 					href="/{username}/albums"
+					data-no-swup
 					aria-label="返回相册列表"
 					title="返回相册列表"
 					class="w-9 h-9 rounded-full bg-[var(--primary)] text-white hover:opacity-90 transition flex items-center justify-center"
@@ -733,7 +771,7 @@ onDestroy(() => {
 			{#if editing}
 				<div class="flex items-center gap-3">
 					<span class="text-xs text-50">
-						相册状态：{mStatus === "published" ? "已发布" : mStatus === "draft" ? "草稿" : "已归档"}
+						相册状态：{mStatus === "published" ? "已发布" : "草稿"}
 					</span>
 					<button
 						on:click={deleteAlbum}
@@ -796,7 +834,6 @@ onDestroy(() => {
 						<select id="ed-status" bind:value={mStatus} class="w-full h-10 px-3 rounded-lg border border-[var(--line-divider)] bg-[var(--card-bg)] text-90 focus:outline-none focus:ring-2 focus:ring-[var(--primary)] transition cursor-pointer">
 							<option value="draft">草稿</option>
 							<option value="published">已发布</option>
-							<option value="archived">已归档</option>
 						</select>
 					</div>
 					<div class="flex flex-col justify-end gap-2">
@@ -816,16 +853,24 @@ onDestroy(() => {
 		{:else}
 			<h1 class="text-3xl font-bold">{mTitle}</h1>
 			<div class="text-xs text-60 flex flex-wrap items-center gap-2">
-				{#if album.date}<span>{album.date}</span>{/if}
-				{#if album.location}<span>{album.location}</span>{/if}
-				{#if album.category}<span class="px-2 py-0.5 rounded bg-[var(--btn-plain-bg-hover)] text-75">{album.category}</span>{/if}
+				{#if mDate}<span>{mDate}</span>{/if}
+				{#if mLocation}
+					<span class="inline-flex items-center gap-1">
+						<svg xmlns="http://www.w3.org/2000/svg" class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+							<path d="M12 22s8-6.2 8-12a8 8 0 10-16 0c0 5.8 8 12 8 12z" />
+							<circle cx="12" cy="10" r="3" />
+						</svg>
+						{mLocation}
+					</span>
+				{/if}
+				{#if mCategory}<span class="px-2 py-0.5 rounded bg-[var(--btn-plain-bg-hover)] text-75">{mCategory}</span>{/if}
 			</div>
 			{#if mDescription}
 				<p class="text-75">{mDescription}</p>
 			{/if}
-			{#if album.tags && album.tags.length > 0}
+			{#if displayTags.length > 0}
 				<div class="flex flex-wrap gap-2">
-					{#each album.tags as tag}
+					{#each displayTags as tag}
 						<span class="btn-regular h-7 text-xs px-3 rounded-lg">#{tag}</span>
 					{/each}
 				</div>
@@ -835,7 +880,7 @@ onDestroy(() => {
 
 	{#if editing}
 		<section class="card-base p-5 rounded-[var(--radius-large)] space-y-3 text-90">
-			<h3 class="text-sm font-semibold text-75">添加照片（保存相册时统一上传）</h3>
+			<h3 class="text-sm font-semibold text-75">上传图片（上传后点击保存生效）</h3>
 			<div class="flex flex-wrap items-end gap-3">
 				<label class="px-4 h-9 rounded-lg text-sm font-medium cursor-pointer bg-[var(--primary)] text-white hover:opacity-90 transition flex items-center gap-1.5 {saving ? 'opacity-50 pointer-events-none' : ''}">
 					<svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
@@ -861,7 +906,7 @@ onDestroy(() => {
 			</div>
 
 			<div class="text-xs text-60">
-				当前已保存 {mPhotos.length} 张，待上传 {pendingCount()} 张（上限 {ALBUM_PHOTO_MAX}）
+				当前已保存 {mPhotos.length} 张，待上传 {pendingCount()} 张（相册总容量 {ALBUM_PHOTO_MAX} 张）
 			</div>
 
 			{#if pendingLocalPhotos.length > 0}
@@ -968,14 +1013,14 @@ onDestroy(() => {
 </div>
 
 {#if saveOverlayVisible}
-	<div class="fixed inset-0 z-[9999] bg-black/45 flex items-center justify-center px-4">
-		<div class="card-base w-full max-w-md p-5 rounded-[var(--radius-large)] border border-[var(--line-divider)] space-y-3">
-			<h3 class="text-base font-semibold text-90">正在保存相册</h3>
-			<p class="text-sm text-60">{saveProgressText}</p>
-			<div class="h-2 w-full rounded-full bg-black/10 dark:bg-white/10 overflow-hidden">
+	<div use:portal class="fixed inset-0 z-[9999] bg-black/45 flex items-center justify-center px-4">
+		<div class="card-base w-full max-w-xl p-7 rounded-[var(--radius-large)] border border-[var(--line-divider)] space-y-4">
+			<h3 class="text-xl font-semibold text-90">正在保存相册</h3>
+			<p class="text-base text-70">{saveProgressText}</p>
+			<div class="h-3 w-full rounded-full bg-black/10 dark:bg-white/10 overflow-hidden">
 				<div class="h-full bg-[var(--primary)] transition-all duration-200" style={`width: ${saveProgressPercent}%`}></div>
 			</div>
-			<div class="text-xs text-right text-60">{saveProgressPercent}%</div>
+			<div class="text-sm text-right text-60">{saveProgressPercent}%</div>
 		</div>
 	</div>
 {/if}

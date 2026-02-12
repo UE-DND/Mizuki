@@ -573,6 +573,9 @@ type PendingCropEntry = {
 	blob: Blob;
 	objectUrl: string;
 	titlePrefix: string;
+	useSequentialName: boolean;
+	useFixedName: boolean;
+	container: HTMLElement | null;
 	fileExt: string;
 	targetFormat?: "ico";
 	purpose?: UploadPurpose;
@@ -761,7 +764,7 @@ const normalizeBannerEditorList = (
 const uploadImageBlob = async (
 	blob: Blob,
 	messageTarget: string,
-	titlePrefix: string,
+	titleBase: string,
 	fileExt = "jpg",
 	targetFormat?: "ico",
 	purpose?: UploadPurpose,
@@ -769,12 +772,8 @@ const uploadImageBlob = async (
 	setMsg(messageTarget, "图片上传中...");
 	try {
 		const formData = new FormData();
-		formData.append(
-			"file",
-			blob,
-			`${titlePrefix}-${Date.now()}.${fileExt}`,
-		);
-		formData.append("title", `${titlePrefix}-${Date.now()}`);
+		formData.append("file", blob, `${titleBase}.${fileExt}`);
+		formData.append("title", titleBase);
 		if (targetFormat === "ico") {
 			formData.append("target_format", "ico");
 		}
@@ -1088,6 +1087,8 @@ export function initSiteSettingsPage(): void {
 		outputFileExt: "png" | "jpg" | "ico";
 		messageTarget: string;
 		titlePrefix: string;
+		useSequentialName: boolean;
+		useFixedName: boolean;
 		maxInputBytes: number;
 		purpose: UploadPurpose;
 		container: HTMLElement | null;
@@ -1105,7 +1106,9 @@ export function initSiteSettingsPage(): void {
 			outputMimeType: "image/png",
 			outputFileExt: "ico",
 			messageTarget: "ss-site-msg",
-			titlePrefix: "favicon",
+			titlePrefix: "Favicon",
+			useSequentialName: false,
+			useFixedName: true,
 			maxInputBytes: UPLOAD_LIMITS.favicon,
 			purpose: "favicon",
 			container: faviconListContainer,
@@ -1121,7 +1124,9 @@ export function initSiteSettingsPage(): void {
 			outputMimeType: "image/jpeg",
 			outputFileExt: "jpg",
 			messageTarget: "ss-home-msg",
-			titlePrefix: "banner-desktop",
+			titlePrefix: "Banner Desktop",
+			useSequentialName: true,
+			useFixedName: false,
 			maxInputBytes: UPLOAD_LIMITS.banner,
 			purpose: "banner",
 			container: bannerDesktopListContainer,
@@ -1145,7 +1150,9 @@ export function initSiteSettingsPage(): void {
 			outputMimeType: "image/jpeg",
 			outputFileExt: "jpg",
 			messageTarget: "ss-home-msg",
-			titlePrefix: "banner-mobile",
+			titlePrefix: "Banner Mobile",
+			useSequentialName: true,
+			useFixedName: false,
 			maxInputBytes: UPLOAD_LIMITS.banner,
 			purpose: "banner",
 			container: bannerMobileListContainer,
@@ -1541,6 +1548,9 @@ export function initSiteSettingsPage(): void {
 				blob: croppedBlob,
 				objectUrl: blobUrl,
 				titlePrefix: config.titlePrefix,
+				useSequentialName: config.useSequentialName,
+				useFixedName: config.useFixedName,
+				container: config.container,
 				fileExt: config.outputFileExt,
 				targetFormat:
 					activeCropTarget === "favicon" ? "ico" : undefined,
@@ -1601,10 +1611,26 @@ export function initSiteSettingsPage(): void {
 			// Upload any pending cropped images first
 			for (const [row, pending] of pendingCropBlobs) {
 				setMsg(msgId, "正在上传图片...");
+				const rowSiblings = pending.container
+					? [...pending.container.children].filter(
+							(child) =>
+								(child as HTMLElement).tagName !== "BUTTON",
+						)
+					: [];
+				const rowIndex = rowSiblings.indexOf(row);
+				const sequence = String(
+					rowIndex >= 0 ? rowIndex + 1 : Date.now(),
+				).padStart(2, "0");
+				const titleBase =
+					pending.useSequentialName && rowIndex >= 0
+						? `${pending.titlePrefix}-${sequence}`
+						: pending.useFixedName
+							? pending.titlePrefix
+							: `${pending.titlePrefix}-${Date.now()}`;
 				const fileId = await uploadImageBlob(
 					pending.blob,
 					msgId,
-					pending.titlePrefix,
+					titleBase,
 					pending.fileExt,
 					pending.targetFormat,
 					pending.purpose,

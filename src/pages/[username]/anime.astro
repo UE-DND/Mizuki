@@ -133,7 +133,7 @@ function statusLabel(status: string): string {
 							<h2 class="text-lg font-semibold line-clamp-2">{item.title}</h2>
 							<div class="text-xs text-60 flex flex-wrap gap-2">
 								<span>{statusLabel(item.watch_status)}</span>
-								{item.author?.name && <span>作者：{item.author.name}</span>}
+								{item.author?.name && <span>{item.author.name}</span>}
 								{item.year && <span>{item.year}</span>}
 							</div>
 							<div class="text-xs text-70">

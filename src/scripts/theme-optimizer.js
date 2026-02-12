@@ -172,7 +172,7 @@ class ThemeOptimizer {
 					configCarrier.dataset.hideCodeBlocksDuringTransition ===
 					"true";
 			}
-		} catch (error) {
+		} catch {
 			this.hideCodeBlocksDuringTransition = true; // 默认启用隐藏
 		}
 	}

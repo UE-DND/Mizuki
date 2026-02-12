@@ -569,10 +569,8 @@ async function handleMeArticleLikes(
 		});
 		const current = existing[0];
 
-		let liked = false;
-		let item: Awaited<
-			ReturnType<typeof createOne<"app_article_likes">>
-		> | null = null;
+		let liked: boolean;
+		let item: Awaited<ReturnType<typeof createOne<"app_article_likes">>>;
 		if (current && current.status === "published") {
 			item = await updateOne("app_article_likes", current.id, {
 				status: "archived",
@@ -683,10 +681,8 @@ async function handleMeDiaryLikes(
 		});
 		const current = existing[0];
 
-		let liked = false;
-		let item: Awaited<
-			ReturnType<typeof createOne<"app_diary_likes">>
-		> | null = null;
+		let liked: boolean;
+		let item: Awaited<ReturnType<typeof createOne<"app_diary_likes">>>;
 		if (current && current.status === "published") {
 			item = await updateOne("app_diary_likes", current.id, {
 				status: "archived",
@@ -1195,7 +1191,16 @@ async function handleMeAlbums(
 					400,
 				);
 			}
-			const status = parseBodyStatus(body, "status", "draft");
+			const statusValue = parseBodyTextField(body, "status");
+			if (
+				statusValue &&
+				statusValue !== "draft" &&
+				statusValue !== "published"
+			) {
+				return fail("相册状态不合法", 400);
+			}
+			const status: "draft" | "published" =
+				statusValue === "published" ? "published" : "draft";
 			const albumPayload = {
 				status,
 				author_id: access.user.id,
@@ -1315,7 +1320,22 @@ async function handleMeAlbums(
 					toNumberValue(body.columns, target.columns) ||
 					target.columns;
 			}
-			Object.assign(payload, parseVisibilityPatch(body));
+			if (hasOwn(body, "status")) {
+				const statusValue = parseBodyTextField(body, "status");
+				if (statusValue !== "draft" && statusValue !== "published") {
+					return fail("相册状态不合法", 400);
+				}
+				payload.status = statusValue;
+			}
+			if (hasOwn(body, "is_public")) {
+				payload.is_public = toBooleanValue(body.is_public, true);
+			}
+			if (hasOwn(body, "show_on_profile")) {
+				payload.show_on_profile = toBooleanValue(
+					body.show_on_profile,
+					true,
+				);
+			}
 			const updated = await updateOne("app_albums", id, payload);
 			return ok({ item: { ...updated, tags: safeCsv(updated.tags) } });
 		}

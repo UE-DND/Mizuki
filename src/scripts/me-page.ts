@@ -339,6 +339,7 @@ export function initMePage(): void {
 	};
 
 	// ---- mutable state ----
+	let currentLoginEmail = "";
 	let currentAvatarFileId = "";
 	let currentAvatarFallbackUrl = "";
 	let pendingAvatarUpload: { blob: Blob; previewUrl: string } | null = null;
@@ -367,6 +368,12 @@ export function initMePage(): void {
 		}
 		pendingAvatarUpload = null;
 	};
+
+	const toSafeFileLabel = (value: string): string =>
+		String(value || "")
+			.trim()
+			.replace(/[\\/:*?"<>|]/g, "-")
+			.replace(/\s+/g, " ");
 
 	const updateAvatarPreview = (): void => {
 		if (!avatarPreviewEl) {
@@ -1121,12 +1128,13 @@ export function initMePage(): void {
 		}
 		setProfileMessage("头像上传中...");
 		const formData = new FormData();
+		const avatarTitleBase = `Avatar-${toSafeFileLabel(currentLoginEmail || "unknown")}`;
 		formData.append(
 			"file",
 			pendingAvatarUpload.blob,
-			`avatar-${Date.now()}.jpg`,
+			`${avatarTitleBase}.jpg`,
 		);
-		formData.append("title", `avatar-${Date.now()}`);
+		formData.append("title", avatarTitleBase);
 		formData.append("purpose", "avatar");
 		const { response, data } = await api("/api/v1/uploads", {
 			method: "POST",
@@ -1669,6 +1677,7 @@ export function initMePage(): void {
 		const loginEmail = String(
 			(me.data.user as Record<string, unknown> | undefined)?.email || "",
 		).trim();
+		currentLoginEmail = loginEmail;
 		const fallbackAvatarUrl = String(
 			(me.data.user as Record<string, unknown> | undefined)?.avatarUrl ||
 				"",

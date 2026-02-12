@@ -72,6 +72,7 @@ class IconLoader {
 				if (attempt === retryCount) {
 					throw new Error(
 						`Failed to load Iconify after ${retryCount} attempts`,
+						{ cause: error },
 					);
 				}
 
