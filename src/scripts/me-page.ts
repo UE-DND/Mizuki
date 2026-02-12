@@ -9,6 +9,14 @@
 // Module-scope helpers (no DOM dependency)
 // ---------------------------------------------------------------------------
 
+import { UPLOAD_LIMITS, UPLOAD_LIMIT_LABELS } from "@/constants/upload-limits";
+import {
+	weightedCharLength,
+	USERNAME_MAX_WEIGHT,
+	DISPLAY_NAME_MAX_WEIGHT,
+	PROFILE_BIO_MAX_LENGTH,
+} from "@/constants/text-limits";
+
 const OUTSIDE_CLICK_KEY = "__mizuki_me_page_outside_click__";
 
 interface RuntimeWindow extends Window {
@@ -49,25 +57,6 @@ const api = async (url: string, init: RequestInit = {}): Promise<ApiResult> => {
 		.json()
 		.catch(() => null);
 	return { response, data };
-};
-
-const isHanCharacter = (char: string): boolean =>
-	/[\u3400-\u4DBF\u4E00-\u9FFF\uF900-\uFAFF]/u.test(char);
-
-const calculateUsernameWeight = (value: string): number => {
-	let total = 0;
-	for (const char of String(value || "")) {
-		total += isHanCharacter(char) ? 2 : 1;
-	}
-	return total;
-};
-
-const calculateTextWeight = (value: string): number => {
-	let total = 0;
-	for (const char of String(value || "")) {
-		total += isHanCharacter(char) ? 2 : 1;
-	}
-	return total;
 };
 
 const clamp = (value: number, min: number, max: number): number =>
@@ -111,9 +100,6 @@ const extractFileId = (value: unknown): string => {
 };
 
 const AUTH_ME_RETRY_DELAY_MS = 220;
-const USERNAME_MAX_WEIGHT = 14;
-const DISPLAY_NAME_MAX_WEIGHT = 20;
-const PROFILE_BIO_MAX_LENGTH = 30;
 const PROFILE_BIO_TYPEWRITER_SPEED_MIN = 10;
 const PROFILE_BIO_TYPEWRITER_SPEED_MAX = 500;
 const AVATAR_CROP_OUTPUT_SIZE = 512;
@@ -443,7 +429,7 @@ export function initMePage(): void {
 		if (!usernameInput || !usernameCounter) {
 			return;
 		}
-		const current = calculateUsernameWeight(
+		const current = weightedCharLength(
 			String(usernameInput.value || "").trim(),
 		);
 		usernameCounter.textContent = `${current}/${USERNAME_MAX_WEIGHT}`;
@@ -463,7 +449,7 @@ export function initMePage(): void {
 		if (!bioInput || !bioCounter) {
 			return;
 		}
-		const current = calculateTextWeight(String(bioInput.value || ""));
+		const current = weightedCharLength(String(bioInput.value || ""));
 		bioCounter.textContent = `${current}/${PROFILE_BIO_MAX_LENGTH}`;
 	};
 
@@ -499,7 +485,7 @@ export function initMePage(): void {
 		if (!displaynameInput || !displaynameCounter) {
 			return;
 		}
-		const current = calculateTextWeight(
+		const current = weightedCharLength(
 			String(displaynameInput.value || "").trim(),
 		);
 		displaynameCounter.textContent = `${current}/${DISPLAY_NAME_MAX_WEIGHT}`;
@@ -523,7 +509,7 @@ export function initMePage(): void {
 		if (!raw) {
 			return "昵称不能为空";
 		}
-		if (calculateTextWeight(raw) > DISPLAY_NAME_MAX_WEIGHT) {
+		if (weightedCharLength(raw) > DISPLAY_NAME_MAX_WEIGHT) {
 			return "昵称最多 20 字符（中文按 2 字符计）";
 		}
 		return null;
@@ -825,7 +811,7 @@ export function initMePage(): void {
 		) {
 			return "用户名仅支持中文、英文、数字、下划线和短横线";
 		}
-		if (calculateUsernameWeight(raw) > USERNAME_MAX_WEIGHT) {
+		if (weightedCharLength(raw) > USERNAME_MAX_WEIGHT) {
 			return "用户名最多 14 字符（中文按 2 字符计）";
 		}
 		return null;
@@ -836,7 +822,7 @@ export function initMePage(): void {
 			return null;
 		}
 		if (
-			calculateTextWeight(String(bioInput.value || "")) >
+			weightedCharLength(String(bioInput.value || "")) >
 			PROFILE_BIO_MAX_LENGTH
 		) {
 			return "个人简介最多 30 字符（中文按 2 字符计）";
@@ -1018,9 +1004,10 @@ export function initMePage(): void {
 			setCropMessage("请选择图片文件");
 			return;
 		}
-		const AVATAR_MAX_SIZE = 1.5 * 1024 * 1024;
-		if (file.size > AVATAR_MAX_SIZE) {
-			setCropMessage("图片文件过大，请选择不超过 1.5 MB 的图片");
+		if (file.size > UPLOAD_LIMITS.avatar) {
+			setCropMessage(
+				`图片文件过大，请选择不超过 ${UPLOAD_LIMIT_LABELS.avatar} 的图片`,
+			);
 			return;
 		}
 		setCropMessage("");
@@ -1140,6 +1127,7 @@ export function initMePage(): void {
 			`avatar-${Date.now()}.jpg`,
 		);
 		formData.append("title", `avatar-${Date.now()}`);
+		formData.append("purpose", "avatar");
 		const { response, data } = await api("/api/v1/uploads", {
 			method: "POST",
 			body: formData,

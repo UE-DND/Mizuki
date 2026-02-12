@@ -1,11 +1,15 @@
 import type { APIContext } from "astro";
 import sharp from "sharp";
 
+import type { UploadPurpose } from "@/constants/upload-limits";
+import { UPLOAD_LIMITS, UPLOAD_LIMIT_LABELS } from "@/constants/upload-limits";
 import { assertCan } from "@/server/auth/acl";
 import { uploadDirectusFile } from "@/server/directus/client";
 import { fail, ok } from "@/server/api/response";
 
 import { requireAccess } from "./shared";
+
+const VALID_PURPOSES = new Set<string>(Object.keys(UPLOAD_LIMITS));
 
 function toIcoBufferFromPngBuffer(pngBuffer: Buffer): Buffer {
 	const header = Buffer.alloc(6);
@@ -39,6 +43,13 @@ async function convertImageFileToIco(file: File): Promise<File> {
 	});
 }
 
+function resolvePurpose(raw: FormDataEntryValue | null): UploadPurpose {
+	if (typeof raw === "string" && VALID_PURPOSES.has(raw)) {
+		return raw as UploadPurpose;
+	}
+	return "general";
+}
+
 export async function handleUploads(context: APIContext): Promise<Response> {
 	if (context.request.method !== "POST") {
 		return fail("方法不允许", 405);
@@ -59,9 +70,12 @@ export async function handleUploads(context: APIContext): Promise<Response> {
 	const targetFormat =
 		typeof targetFormatRaw === "string" ? targetFormatRaw : "";
 
-	const UPLOAD_MAX_SIZE = 1.5 * 1024 * 1024; // 1.5 MB
-	if (file.size > UPLOAD_MAX_SIZE) {
-		return fail("文件过大，最大允许 1.5 MB", 413);
+	const purpose = resolvePurpose(formData.get("purpose"));
+	const maxSize = UPLOAD_LIMITS[purpose];
+	const label = UPLOAD_LIMIT_LABELS[purpose];
+
+	if (file.size > maxSize) {
+		return fail(`文件过大，最大允许 ${label}`, 413);
 	}
 
 	let uploadFile = file;
@@ -72,8 +86,8 @@ export async function handleUploads(context: APIContext): Promise<Response> {
 			console.error("[uploads] favicon ico conversion failed", error);
 			return fail("站点图标转换失败", 400);
 		}
-		if (uploadFile.size > UPLOAD_MAX_SIZE) {
-			return fail("站点图标过大，最大允许 1.5 MB", 413);
+		if (uploadFile.size > maxSize) {
+			return fail(`站点图标过大，最大允许 ${label}`, 413);
 		}
 	}
 

@@ -218,8 +218,8 @@ onDestroy(() => {
 
 <!-- search bar for desktop view (collapsed by default) -->
 <div class="hidden lg:block relative w-11 h-11 shrink-0">
-    <div
-        id="search-bar"
+	    <div
+	        id="search-bar"
         class="flex transition-all items-center h-11 rounded-lg absolute right-0 top-0 shrink-0
             {isDesktopSearchExpanded ? 'bg-black/[0.04] hover:bg-black/[0.06] focus-within:bg-black/[0.06] dark:bg-white/5 dark:hover:bg-white/10 dark:focus-within:bg-white/10' : 'btn-plain active:scale-90'}
             {isDesktopSearchExpanded ? 'w-48' : 'w-11'}"
@@ -227,12 +227,18 @@ onDestroy(() => {
         tabindex="0"
         aria-label="Search"
         onmouseenter={() => {if (!isDesktopSearchExpanded) toggleDesktopSearch()}}
-        onmouseleave={collapseDesktopSearch}
-        onclick={() => {
-            const input = document.getElementById("search-input-desktop") as HTMLInputElement;
-            input?.focus();
-        }}
-    >
+	        onmouseleave={collapseDesktopSearch}
+	        onclick={() => {
+	            const input = document.getElementById("search-input-desktop") as HTMLInputElement;
+	            input?.focus();
+	        }}
+	        onkeydown={(event) => {
+	            if (event.key !== "Enter" && event.key !== " ") return;
+	            event.preventDefault();
+	            const input = document.getElementById("search-input-desktop") as HTMLInputElement;
+	            input?.focus();
+	        }}
+	    >
         <Icon icon="material-symbols:search" class="absolute text-[1.25rem] pointer-events-none {isDesktopSearchExpanded ? 'left-3' : 'left-1/2 -translate-x-1/2'} transition top-1/2 -translate-y-1/2 {isDesktopSearchExpanded ? 'text-black/30 dark:text-white/30' : ''}"></Icon>
         <input id="search-input-desktop" placeholder={i18n(I18nKey.search)} bind:value={keywordDesktop}
             onfocus={() => {

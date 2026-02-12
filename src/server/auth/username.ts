@@ -1,21 +1,14 @@
+import {
+	weightedCharLength,
+	charWeight,
+	USERNAME_MAX_WEIGHT,
+	DISPLAY_NAME_MAX_WEIGHT,
+} from "@/constants/text-limits";
+
 const USERNAME_ALLOWED_PATTERN = /^[\p{Script=Han}A-Za-z0-9_-]+$/u;
-
-export const USERNAME_MAX_WEIGHT = 14;
-
-function isHanCharacter(char: string): boolean {
-	return /\p{Script=Han}/u.test(char);
-}
 
 function trimUsernameEdges(value: string): string {
 	return value.replace(/^[-_]+|[-_]+$/g, "");
-}
-
-export function calculateUsernameWeight(value: string): number {
-	let total = 0;
-	for (const char of value) {
-		total += isHanCharacter(char) ? 2 : 1;
-	}
-	return total;
 }
 
 export function truncateUsernameByWeight(
@@ -27,13 +20,13 @@ export function truncateUsernameByWeight(
 	}
 	let total = 0;
 	let output = "";
-	for (const char of value) {
-		const weight = isHanCharacter(char) ? 2 : 1;
-		if (total + weight > maxWeight) {
+	for (const ch of value) {
+		const w = charWeight(ch);
+		if (total + w > maxWeight) {
 			break;
 		}
-		output += char;
-		total += weight;
+		output += ch;
+		total += w;
 	}
 	return output;
 }
@@ -54,7 +47,7 @@ export function normalizeRequestedUsername(input: string): string {
 	if (!USERNAME_ALLOWED_PATTERN.test(normalized)) {
 		throw new Error("USERNAME_INVALID");
 	}
-	if (calculateUsernameWeight(normalized) > USERNAME_MAX_WEIGHT) {
+	if (weightedCharLength(normalized) > USERNAME_MAX_WEIGHT) {
 		throw new Error("USERNAME_TOO_LONG");
 	}
 	return normalized;
@@ -79,15 +72,13 @@ export function composeUsernameWithSuffix(
 	if (!suffix) {
 		return truncateUsernameByWeight(base, USERNAME_MAX_WEIGHT);
 	}
-	const suffixWeight = calculateUsernameWeight(suffix);
+	const suffixWeight = weightedCharLength(suffix);
 	const baseBudget = Math.max(1, USERNAME_MAX_WEIGHT - suffixWeight);
 	const trimmedBase = trimUsernameEdges(
 		truncateUsernameByWeight(base, baseBudget),
 	);
 	return `${trimmedBase || "u"}${suffix}`;
 }
-
-export const DISPLAY_NAME_MAX_WEIGHT = 20;
 
 // eslint-disable-next-line no-control-regex
 const DISPLAY_NAME_INVALID_PATTERN = /[\x00-\x1F\x7F]/;
@@ -100,7 +91,7 @@ export function validateDisplayName(input: string): string {
 	if (DISPLAY_NAME_INVALID_PATTERN.test(value)) {
 		throw new Error("DISPLAY_NAME_INVALID");
 	}
-	if (calculateUsernameWeight(value) > DISPLAY_NAME_MAX_WEIGHT) {
+	if (weightedCharLength(value) > DISPLAY_NAME_MAX_WEIGHT) {
 		throw new Error("DISPLAY_NAME_TOO_LONG");
 	}
 	return value;

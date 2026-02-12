@@ -66,7 +66,6 @@
 | `pnpm check`             | 运行 Astro 错误检查                    |
 | `pnpm format`            | 使用 Prettier 格式化代码               |
 | `pnpm lint`              | 检查并修复代码问题                     |
-| `pnpm new-post <文件名>` | 创建新博客文章                         |
 | `pnpm astro ...`         | 运行 Astro CLI 命令                  |
 
 ## 贡献

@@ -1,6 +1,11 @@
 import type { APIContext } from "astro";
 
 import type { AppAlbum, AppArticle, AppDiary } from "@/types/app";
+import {
+	ALBUM_PHOTO_MAX,
+	ALBUM_TITLE_MAX,
+	weightedCharLength,
+} from "@/constants/text-limits";
 import type { JsonObject } from "@/types/json";
 import {
 	assertCan,
@@ -704,7 +709,7 @@ async function handleMeArticles(
 	access: AppAccess,
 	segments: string[],
 ): Promise<Response> {
-	if (segments.length === 2) {
+	if (segments.length === 1) {
 		if (context.request.method === "GET") {
 			const { page, limit, offset } = parsePagination(context.url);
 			const rows = await readMany("app_articles", {
@@ -781,8 +786,8 @@ async function handleMeArticles(
 		}
 	}
 
-	if (segments.length === 3) {
-		const id = parseRouteId(segments[2]);
+	if (segments.length === 2) {
+		const id = parseRouteId(segments[1]);
 		if (!id) {
 			return fail("缺少文章 ID", 400);
 		}
@@ -858,7 +863,7 @@ async function handleMeDiaries(
 	access: AppAccess,
 	segments: string[],
 ): Promise<Response> {
-	if (segments.length === 2) {
+	if (segments.length === 1) {
 		if (context.request.method === "GET") {
 			const { page, limit, offset } = parsePagination(context.url);
 			const rows = await readMany("app_diaries", {
@@ -922,8 +927,8 @@ async function handleMeDiaries(
 		}
 	}
 
-	if (segments.length === 3) {
-		const id = parseRouteId(segments[2]);
+	if (segments.length === 2) {
+		const id = parseRouteId(segments[1]);
 		if (!id) {
 			return fail("缺少日记 ID", 400);
 		}
@@ -984,7 +989,7 @@ async function handleMeAnime(
 	access: AppAccess,
 	segments: string[],
 ): Promise<Response> {
-	if (segments.length === 2) {
+	if (segments.length === 1) {
 		if (context.request.method === "GET") {
 			const { page, limit, offset } = parsePagination(context.url);
 			const rows = await readMany("app_anime_entries", {
@@ -1041,8 +1046,8 @@ async function handleMeAnime(
 		}
 	}
 
-	if (segments.length === 3) {
-		const id = parseRouteId(segments[2]);
+	if (segments.length === 2) {
+		const id = parseRouteId(segments[1]);
 		if (!id) {
 			return fail("缺少番剧 ID", 400);
 		}
@@ -1118,7 +1123,7 @@ async function handleMeAlbums(
 	access: AppAccess,
 	segments: string[],
 ): Promise<Response> {
-	if (segments.length === 2) {
+	if (segments.length === 1) {
 		if (context.request.method === "GET") {
 			const { page, limit, offset } = parsePagination(context.url);
 			const rows = await readMany("app_albums", {
@@ -1144,6 +1149,12 @@ async function handleMeAlbums(
 			if (!title) {
 				return fail("相册标题必填", 400);
 			}
+			if (weightedCharLength(title) > ALBUM_TITLE_MAX) {
+				return fail(
+					`相册标题过长（最多 ${ALBUM_TITLE_MAX} 字符，中文算 2 字符）`,
+					400,
+				);
+			}
 			const status = parseBodyStatus(body, "status", "draft");
 			const albumPayload = {
 				status,
@@ -1156,6 +1167,7 @@ async function handleMeAlbums(
 				date: toOptionalString(body.date),
 				location: toOptionalString(body.location),
 				tags: toStringArray(body.tags),
+				category: toOptionalString(body.category),
 				layout: normalizeAlbumLayout(
 					parseBodyTextField(body, "layout"),
 				),
@@ -1188,8 +1200,8 @@ async function handleMeAlbums(
 		}
 	}
 
-	if (segments.length === 3) {
-		const id = parseRouteId(segments[2]);
+	if (segments.length === 2) {
+		const id = parseRouteId(segments[1]);
 		if (!id) {
 			return fail("缺少相册 ID", 400);
 		}
@@ -1220,7 +1232,14 @@ async function handleMeAlbums(
 			const body = await parseJsonBody(context.request);
 			const payload: JsonObject = {};
 			if (hasOwn(body, "title")) {
-				payload.title = parseBodyTextField(body, "title");
+				const t = parseBodyTextField(body, "title");
+				if (t && weightedCharLength(t) > ALBUM_TITLE_MAX) {
+					return fail(
+						`相册标题过长（最多 ${ALBUM_TITLE_MAX} 字符，中文算 2 字符）`,
+						400,
+					);
+				}
+				payload.title = t;
 			}
 			if (hasOwn(body, "slug")) {
 				payload.slug = sanitizeSlug(parseBodyTextField(body, "slug"));
@@ -1242,6 +1261,9 @@ async function handleMeAlbums(
 			}
 			if (hasOwn(body, "tags")) {
 				payload.tags = toStringArray(body.tags);
+			}
+			if (hasOwn(body, "category")) {
+				payload.category = toOptionalString(body.category);
 			}
 			if (hasOwn(body, "layout")) {
 				payload.layout = normalizeAlbumLayout(
@@ -1283,6 +1305,12 @@ async function handleMeAlbumPhotos(
 			return fail("相册不存在", 404);
 		}
 		assertOwnerOrAdmin(access, album.author_id);
+		const photoCount = await countItems("app_album_photos", {
+			album_id: { _eq: albumId },
+		} as JsonObject);
+		if (photoCount >= ALBUM_PHOTO_MAX) {
+			return fail(`相册最多 ${ALBUM_PHOTO_MAX} 张照片`, 400);
+		}
 		const body = await parseJsonBody(context.request);
 		const created = await createOne("app_album_photos", {
 			status: toBooleanValue(body.is_public, true)
@@ -1303,8 +1331,8 @@ async function handleMeAlbumPhotos(
 		return ok({ item: { ...created, tags: safeCsv(created.tags) } });
 	}
 
-	if (segments.length === 3) {
-		const photoId = parseRouteId(segments[2]);
+	if (segments.length === 4) {
+		const photoId = parseRouteId(segments[3]);
 		if (!photoId) {
 			return fail("缺少图片 ID", 400);
 		}
@@ -1412,8 +1440,8 @@ async function handleMeDiaryImages(
 		return ok({ item: created });
 	}
 
-	if (segments.length === 3) {
-		const imageId = parseRouteId(segments[2]);
+	if (segments.length === 4) {
+		const imageId = parseRouteId(segments[3]);
 		if (!imageId) {
 			return fail("缺少图片 ID", 400);
 		}

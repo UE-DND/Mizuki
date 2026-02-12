@@ -13,7 +13,6 @@
 		"submit": "node scripts/indexnow-submit.js",
 		"astro": "astro",
 		"type-check": "tsc --noEmit --isolatedDeclarations --skipLibCheck",
-		"new-post": "node scripts/new-post.js",
 		"format": "prettier --write ./src",
 		"lint": "eslint ./src --ext .js,.cjs,.mjs,.ts --fix",
 		"preinstall": "npx only-allow pnpm",

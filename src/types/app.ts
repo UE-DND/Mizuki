@@ -143,6 +143,7 @@ export type AppAlbum = {
 	date: string | null;
 	location: string | null;
 	tags: string[] | null;
+	category: string | null;
 	layout: "grid" | "masonry";
 	columns: number;
 	is_public: boolean;
