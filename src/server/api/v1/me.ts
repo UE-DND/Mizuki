@@ -23,6 +23,7 @@ import {
 	updateDirectusUser,
 	updateOne,
 } from "@/server/directus/client";
+import { renderMarkdown } from "@/server/markdown/render";
 import { fail, ok } from "@/server/api/response";
 import {
 	parseJsonBody,
@@ -57,6 +58,19 @@ import {
 import { invalidateAuthorCache } from "./shared/author-cache";
 import { invalidateOfficialSidebarCache } from "./public-data";
 import { generateShortId } from "@/server/utils/short-id";
+
+async function renderMeMarkdownPreview(markdown: string): Promise<string> {
+	const source = String(markdown || "");
+	if (!source.trim()) {
+		return "";
+	}
+	try {
+		return await renderMarkdown(source, { target: "page" });
+	} catch (error) {
+		console.error("[me] markdown preview failed:", error);
+		return "";
+	}
+}
 
 async function handleMeProfile(
 	context: APIContext,
@@ -709,6 +723,19 @@ async function handleMeArticles(
 	access: AppAccess,
 	segments: string[],
 ): Promise<Response> {
+	if (segments.length === 2 && segments[1] === "preview") {
+		if (context.request.method !== "POST") {
+			return fail("方法不允许", 405);
+		}
+		assertCan(access, "can_publish_articles");
+		const body = await parseJsonBody(context.request);
+		const markdown = parseBodyTextField(body, "body_markdown");
+		return ok({
+			body_markdown: markdown,
+			body_html: await renderMeMarkdownPreview(markdown),
+		});
+	}
+
 	if (segments.length === 1) {
 		if (context.request.method === "GET") {
 			const { page, limit, offset } = parsePagination(context.url);
@@ -863,6 +890,19 @@ async function handleMeDiaries(
 	access: AppAccess,
 	segments: string[],
 ): Promise<Response> {
+	if (segments.length === 2 && segments[1] === "preview") {
+		if (context.request.method !== "POST") {
+			return fail("方法不允许", 405);
+		}
+		assertCan(access, "can_manage_diaries");
+		const body = await parseJsonBody(context.request);
+		const markdown = parseBodyTextField(body, "content");
+		return ok({
+			content: markdown,
+			body_html: await renderMeMarkdownPreview(markdown),
+		});
+	}
+
 	if (segments.length === 1) {
 		if (context.request.method === "GET") {
 			const { page, limit, offset } = parsePagination(context.url);

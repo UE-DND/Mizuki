@@ -25,6 +25,12 @@ const { articleId, authorId } = Astro.props;
 	<div class="article-manage-panel">
 		<button
 			type="button"
+			class="article-manage-edit w-full text-left px-3 py-2 rounded-lg text-sm text-90 hover:bg-black/5 dark:hover:bg-white/10"
+		>
+			编辑文章
+		</button>
+		<button
+			type="button"
 			class="article-manage-delete w-full text-left px-3 py-2 rounded-lg text-sm text-red-500 hover:bg-black/5 dark:hover:bg-white/10"
 		>
 			删除文章
@@ -134,6 +140,9 @@ const { articleId, authorId } = Astro.props;
 		const deleteBtn = floatEl.querySelector<HTMLButtonElement>(
 			".article-manage-delete",
 		);
+		const editBtn = floatEl.querySelector<HTMLButtonElement>(
+			".article-manage-edit",
+		);
 
 		let isOpen = false;
 
@@ -225,6 +234,15 @@ const { articleId, authorId } = Astro.props;
 				} finally {
 					deleteBtn.disabled = false;
 				}
+			});
+		}
+
+		if (editBtn) {
+			editBtn.addEventListener("click", () => {
+				if (!articleId) {
+					return;
+				}
+				window.location.href = `/publish?type=article&id=${encodeURIComponent(articleId)}`;
 			});
 		}
 

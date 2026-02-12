@@ -87,6 +87,13 @@ const diary = result.status === "ok" ? result.data : null;
 						<div class="absolute right-0 top-10 z-10 min-w-[8rem] card-base rounded-xl border border-[var(--line-divider)] p-2">
 							<button
 								type="button"
+								id="diary-edit-trigger"
+								class="w-full text-left px-3 py-2 rounded-lg text-sm text-90 hover:bg-black/5 dark:hover:bg-white/10"
+							>
+								编辑日记
+							</button>
+							<button
+								type="button"
 								id="diary-delete-trigger"
 								class="w-full text-left px-3 py-2 rounded-lg text-sm text-red-500 hover:bg-black/5 dark:hover:bg-white/10"
 							>
@@ -153,6 +160,7 @@ const diary = result.status === "ok" ? result.data : null;
 		const diaryId = String(diaryManageRoot.dataset.diaryId || "");
 		const authorId = String(diaryManageRoot.dataset.authorId || "");
 		const deleteBtn = document.getElementById("diary-delete-trigger");
+		const editBtn = document.getElementById("diary-edit-trigger");
 		const applyManageMenuVisibility = (state: AuthState): void => {
 			const canDelete =
 				state.isLoggedIn &&
@@ -194,6 +202,13 @@ const diary = result.status === "ok" ? result.data : null;
 				} finally {
 					deleteBtn.disabled = false;
 				}
+			});
+		}
+
+		if (editBtn instanceof HTMLButtonElement) {
+			editBtn.addEventListener("click", () => {
+				if (!diaryId) return;
+				window.location.href = `/publish?type=diary&id=${encodeURIComponent(diaryId)}`;
 			});
 		}
 

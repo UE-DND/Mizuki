@@ -332,6 +332,9 @@ const runDynamicPageInit = async (): Promise<void> => {
 	if (path === "/me") {
 		const { initMePage } = await import("@/scripts/me-page");
 		initMePage();
+	} else if (path === "/publish") {
+		const { initPublishPage } = await import("@/scripts/publish-page");
+		initPublishPage();
 	} else if (path === "/archive") {
 		const { initArchiveFilter } = await import("@/scripts/archive-filter");
 		initArchiveFilter();

@@ -131,6 +131,11 @@ export const defaultSiteSettings: SiteSettingsPayload = {
 			LinkPreset.Home,
 			LinkPreset.Archive,
 			{
+				name: "发布",
+				url: "/publish",
+				icon: "material-symbols:edit-square",
+			},
+			{
 				name: "我的",
 				url: "/content",
 				icon: "material-symbols:person",

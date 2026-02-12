@@ -251,12 +251,50 @@ const links: NavBarLink[] = navBarConfig.links
     });
 
     document.addEventListener("click", (e) => {
-        const anchor = (e.target as Element).closest?.("a[data-needs-login]");
-        if (anchor) {
+        const target = e.target;
+        if (!(target instanceof Element)) {
+            return;
+        }
+        const anchor = target.closest<HTMLAnchorElement>("a[href]");
+        if (!anchor) {
+            return;
+        }
+        if (
+            e.defaultPrevented ||
+            e.button !== 0 ||
+            e.metaKey ||
+            e.ctrlKey ||
+            e.shiftKey ||
+            e.altKey
+        ) {
+            return;
+        }
+
+        const rawHref = anchor.getAttribute("href") || "";
+        const needsLogin = anchor.hasAttribute("data-needs-login");
+        const isPublishTarget = (() => {
+            if (!rawHref.startsWith("/")) {
+                return false;
+            }
+            try {
+                const parsed = new URL(rawHref, window.location.origin);
+                return parsed.pathname === "/publish";
+            } catch {
+                return false;
+            }
+        })();
+
+        if (isPublishTarget && !getAuthState().isLoggedIn) {
+            e.preventDefault();
+            showAuthRequiredDialog();
+            return;
+        }
+
+        if (needsLogin) {
             e.preventDefault();
             showAuthRequiredDialog();
         }
-    });
+    }, true);
 
 	if (searchContainer && navbarLinksContainer) {
 		// 鼠标移入/触摸开始时隐藏导航链接
