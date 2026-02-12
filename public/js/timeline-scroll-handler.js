@@ -75,7 +75,11 @@
 					mutation.addedNodes.forEach((node) => {
 						if (node.nodeType === 1) {
 							// 检查直接添加的节点
-							if (node.classList?.contains("timeline-horizontal-scroll")) {
+							if (
+								node.classList?.contains(
+									"timeline-horizontal-scroll",
+								)
+							) {
 								shouldInit = true;
 							}
 							// 检查节点内的子元素

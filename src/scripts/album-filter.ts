@@ -122,10 +122,12 @@ export function initAlbumFilter(): void {
 
 		if (!hasActiveFilters(filter)) {
 			filterStatus.classList.add("hidden");
+			filterStatus.classList.remove("flex");
 			return;
 		}
 
 		filterStatus.classList.remove("hidden");
+		filterStatus.classList.add("flex");
 
 		const segments: string[] = [];
 		const selectedTags = getSelectedTags(filter);

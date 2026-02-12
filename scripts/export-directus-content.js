@@ -64,10 +64,16 @@ function yamlInlineArray(values) {
 }
 
 function normalizeContentPath(p) {
-	const raw = String(p ?? "").replaceAll("\\", "/").trim();
+	const raw = String(p ?? "")
+		.replaceAll("\\", "/")
+		.trim();
 	const noLeading = raw.replace(/^\/+/, "");
-	const withIndex = noLeading.endsWith("/") ? `${noLeading}index.md` : noLeading;
-	const withExt = path.posix.extname(withIndex) ? withIndex : `${withIndex}.md`;
+	const withIndex = noLeading.endsWith("/")
+		? `${noLeading}index.md`
+		: noLeading;
+	const withExt = path.posix.extname(withIndex)
+		? withIndex
+		: `${withIndex}.md`;
 	const normalized = path.posix.normalize(withExt);
 
 	if (!normalized || normalized === "." || normalized.startsWith("../")) {
@@ -82,8 +88,13 @@ function safeResolveUnder(baseDir, relativePosixPath) {
 	const resolved = path.resolve(baseDir, rel);
 	const baseResolved = path.resolve(baseDir);
 
-	if (resolved !== baseResolved && !resolved.startsWith(`${baseResolved}${path.sep}`)) {
-		throw new Error(`Refusing to write outside content dir: ${relativePosixPath}`);
+	if (
+		resolved !== baseResolved &&
+		!resolved.startsWith(`${baseResolved}${path.sep}`)
+	) {
+		throw new Error(
+			`Refusing to write outside content dir: ${relativePosixPath}`,
+		);
 	}
 
 	return resolved;
@@ -125,7 +136,9 @@ function buildPostFrontmatter(post) {
 
 	const published = toYyyyMmDd(post.published);
 	if (!published) {
-		throw new Error(`Post is missing valid published date: ${post?.content_path ?? "(unknown)"}`);
+		throw new Error(
+			`Post is missing valid published date: ${post?.content_path ?? "(unknown)"}`,
+		);
 	}
 	lines.push(`published: ${published}`);
 
@@ -159,7 +172,11 @@ function buildPostFrontmatter(post) {
 		lines.push("tags: []");
 	}
 
-	if (post.category !== null && post.category !== undefined && String(post.category).trim()) {
+	if (
+		post.category !== null &&
+		post.category !== undefined &&
+		String(post.category).trim()
+	) {
 		lines.push(`category: ${yamlQuote(String(post.category).trim())}`);
 	}
 
@@ -173,7 +190,11 @@ function buildPostFrontmatter(post) {
 		lines.push(`comment: ${Boolean(post.comment)}`);
 	}
 
-	if (post.priority !== undefined && post.priority !== null && String(post.priority).trim() !== "") {
+	if (
+		post.priority !== undefined &&
+		post.priority !== null &&
+		String(post.priority).trim() !== ""
+	) {
 		const num = Number(post.priority);
 		if (!Number.isNaN(num)) {
 			lines.push(`priority: ${num}`);
@@ -264,8 +285,11 @@ export async function exportDirectusContent(options = {}) {
 		false,
 	);
 
-	const postsCollection = options.postsCollection ?? getEnv("DIRECTUS_POSTS_COLLECTION", "posts");
-	const specCollection = options.specCollection ?? getEnv("DIRECTUS_SPEC_COLLECTION", "spec_pages");
+	const postsCollection =
+		options.postsCollection ?? getEnv("DIRECTUS_POSTS_COLLECTION", "posts");
+	const specCollection =
+		options.specCollection ??
+		getEnv("DIRECTUS_SPEC_COLLECTION", "spec_pages");
 
 	console.log("Using Directus content export mode");
 	console.log(`Directus: ${baseUrl}`);

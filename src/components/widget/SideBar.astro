@@ -6,184 +6,197 @@ import SideBarComponentList from "./SideBarComponentList.astro";
 import { pathsEqual, url } from "@/utils/url-utils";
 
 interface Props {
-	class?: string;
-	headings?: MarkdownHeading[];
+  class?: string;
+  headings?: MarkdownHeading[];
 }
 
 const { class: className, headings } = Astro.props;
 const isHomePage = pathsEqual(Astro.url.pathname, url("/"));
 
 const filterCalendar = (components: WidgetComponentConfig[]) => {
-	if (isHomePage) {
-		return components;
-	}
-	return components.filter((component) => component.type !== "calendar");
+  if (isHomePage) {
+    return components;
+  }
+  return components.filter((component) => component.type !== "calendar");
 };
 
 // 获取不同设备下的组件列表
 const mobileTopComponents = filterCalendar(
-	widgetManager.getComponentsByPosition("top", "drawer", "mobile"),
+  widgetManager.getComponentsByPosition("top", "drawer", "mobile"),
 );
 const mobileStickyComponents = filterCalendar(
-	widgetManager.getComponentsByPosition("sticky", "drawer", "mobile"),
+  widgetManager.getComponentsByPosition("sticky", "drawer", "mobile"),
 );
 
 const tabletTopComponents = filterCalendar(
-	widgetManager.getComponentsByPosition("top", "left", "tablet"),
+  widgetManager.getComponentsByPosition("top", "left", "tablet"),
 );
 const tabletStickyComponents = filterCalendar(
-	widgetManager.getComponentsByPosition("sticky", "left", "tablet"),
+  widgetManager.getComponentsByPosition("sticky", "left", "tablet"),
 );
 
 const stickyContainerClass =
-	"flex flex-col w-full gap-4 sticky top-4 transition-[top] duration-[var(--layout-mode-transition-duration)] ease-[var(--layout-mode-transition-easing)]";
+  "flex flex-col w-full gap-4 sticky top-4 transition-[top] duration-[var(--layout-mode-transition-duration)] ease-[var(--layout-mode-transition-easing)]";
 
 const sidebarUid = Astro.locals.sidebarProfile?.username || "__official__";
 const sidebarLayoutKey = JSON.stringify({
-	mobileTop: mobileTopComponents.map((component) => component.type),
-	mobileSticky: mobileStickyComponents.map((component) => component.type),
-	tabletTop: tabletTopComponents.map((component) => component.type),
-	tabletSticky: tabletStickyComponents.map((component) => component.type),
+  mobileTop: mobileTopComponents.map((component) => component.type),
+  mobileSticky: mobileStickyComponents.map((component) => component.type),
+  tabletTop: tabletTopComponents.map((component) => component.type),
+  tabletSticky: tabletStickyComponents.map((component) => component.type),
 });
 const hasScrollableContent =
-	mobileStickyComponents.length > 0 || tabletStickyComponents.length > 0;
+  mobileStickyComponents.length > 0 || tabletStickyComponents.length > 0;
 ---
 
 <div
-	id="sidebar"
-	data-sidebar-uid={sidebarUid}
-	data-sidebar-layout-key={sidebarLayoutKey}
-	data-scrollable={hasScrollableContent ? "true" : "false"}
-	class:list={[className, "w-full sidebar-root"]}
+  id="sidebar"
+  data-sidebar-uid={sidebarUid}
+  data-sidebar-layout-key={sidebarLayoutKey}
+  data-scrollable={hasScrollableContent ? "true" : "false"}
+  class:list={[className, "w-full sidebar-root"]}
 >
-	<!-- 顶部组件区域 -->
-	<div class="flex flex-col w-full gap-4 mb-4">
-		<!-- 手机端顶部组件 -->
-		{mobileTopComponents.length > 0 && (
-			<div class="flex flex-col w-full gap-4 md:hidden">
-				<SideBarComponentList
-					components={mobileTopComponents}
-					headings={headings}
-				/>
-			</div>
-		)}
+  <!-- 顶部组件区域 -->
+  <div class="flex flex-col w-full gap-4 mb-4">
+    <!-- 手机端顶部组件 -->
+    {
+      mobileTopComponents.length > 0 && (
+        <div class="flex flex-col w-full gap-4 md:hidden">
+          <SideBarComponentList
+            components={mobileTopComponents}
+            headings={headings}
+          />
+        </div>
+      )
+    }
 
-		<!-- 平板和桌面端顶部组件 -->
-		{tabletTopComponents.length > 0 && (
-			<div class="hidden md:flex flex-col w-full gap-4">
-				<SideBarComponentList
-					components={tabletTopComponents}
-					headings={headings}
-				/>
-			</div>
-		)}
-	</div>
-	
-	<!-- 粘性组件区域 -->
-	<div id="sidebar-sticky" class={stickyContainerClass}>
-		<!-- 手机端粘性组件 -->
-		{mobileStickyComponents.length > 0 && (
-			<div class="flex flex-col w-full gap-4 md:hidden">
-				<SideBarComponentList
-					components={mobileStickyComponents}
-					headings={headings}
-				/>
-			</div>
-		)}
+    <!-- 平板和桌面端顶部组件 -->
+    {
+      tabletTopComponents.length > 0 && (
+        <div class="hidden md:flex flex-col w-full gap-4">
+          <SideBarComponentList
+            components={tabletTopComponents}
+            headings={headings}
+          />
+        </div>
+      )
+    }
+  </div>
 
-		<!-- 平板和桌面端粘性组件 -->
-		{tabletStickyComponents.length > 0 && (
-			<div class="hidden md:flex flex-col w-full gap-4">
-				<SideBarComponentList
-					components={tabletStickyComponents}
-					headings={headings}
-				/>
-			</div>
-		)}
-	</div>
+  <!-- 粘性组件区域 -->
+  <div id="sidebar-sticky" class={stickyContainerClass}>
+    <!-- 手机端粘性组件 -->
+    {
+      mobileStickyComponents.length > 0 && (
+        <div class="flex flex-col w-full gap-4 md:hidden">
+          <SideBarComponentList
+            components={mobileStickyComponents}
+            headings={headings}
+          />
+        </div>
+      )
+    }
+
+    <!-- 平板和桌面端粘性组件 -->
+    {
+      tabletStickyComponents.length > 0 && (
+        <div class="hidden md:flex flex-col w-full gap-4">
+          <SideBarComponentList
+            components={tabletStickyComponents}
+            headings={headings}
+          />
+        </div>
+      )
+    }
+  </div>
 </div>
 
 <!-- 响应式样式和JavaScript -->
 <style>
-	/* 响应式断点样式 */
-	@media (max-width: 1280px) {
-		#sidebar {
-			display: var(--sidebar-mobile-display, block);
-		}
-	}
-	
-	@media (min-width: 769px) and (max-width: 1279px) {
-		#sidebar {
-			display: var(--sidebar-tablet-display, block);
-		}
-	}
+  /* 响应式断点样式 */
+  @media (max-width: 1280px) {
+    #sidebar {
+      display: var(--sidebar-mobile-display, block);
+    }
+  }
 
-	@media (min-width: 1280px) {
-		#sidebar {
-			display: var(--sidebar-desktop-display, block);
-		}
-	}
+  @media (min-width: 769px) and (max-width: 1279px) {
+    #sidebar {
+      display: var(--sidebar-tablet-display, block);
+    }
+  }
+
+  @media (min-width: 1280px) {
+    #sidebar {
+      display: var(--sidebar-desktop-display, block);
+    }
+  }
 </style>
 
-<script is:inline define:vars={{
-	breakpoints: widgetManager.getBreakpoints(),
-	mobileShowSidebar: widgetManager.shouldShowSidebar('mobile'),
-	tabletShowSidebar: widgetManager.shouldShowSidebar('tablet'),
-	desktopShowSidebar: widgetManager.shouldShowSidebar('desktop'),
-	hasMobileComponents: mobileTopComponents.length > 0 || mobileStickyComponents.length > 0,
-	hasTabletComponents: tabletTopComponents.length > 0 || tabletStickyComponents.length > 0
-}}>
-	// 响应式布局管理
-	class SidebarManager {
-		constructor() {
-			this.init();
-		}
-		
-		init() {
-			this.updateResponsiveDisplay();
-			window.addEventListener('resize', () => this.updateResponsiveDisplay());
-			
-			// 监听SWUP内容替换事件
-			if (typeof window !== 'undefined' && window.swup) {
-				window.swup.hooks.on('content:replace', () => {
-					// 延迟执行以确保DOM已更新
-					setTimeout(() => {
-						this.updateResponsiveDisplay();
-					}, 100);
-				});
-			}
-		}
-		
-		updateResponsiveDisplay() {
-			const width = window.innerWidth;
-			
-			const isMobile = width < breakpoints.mobile;
-			const isTablet = width < breakpoints.tablet;
-			const deviceType = isMobile ? 'mobile' : isTablet ? 'tablet' : 'desktop';
-			const hasComponents = isMobile
-				? hasMobileComponents
-				: hasTabletComponents; // tablet + desktop 使用同一套组件列表（left）
-			const showConfig = isMobile
-				? mobileShowSidebar
-				: isTablet
-					? tabletShowSidebar
-					: desktopShowSidebar;
-			
-			// 根据设备类型判断是否显示侧边栏
-			// 只有在配置开启且该设备下有组件时才显示
-			const shouldShow = showConfig && hasComponents;
-			
-			const sidebar = document.getElementById('sidebar');
-			
-			if (sidebar) {
-				sidebar.style.setProperty(
-					`--sidebar-${deviceType}-display`, 
-					shouldShow ? 'block' : 'none'
-				);
-			}
-		}
-	}
-	
-	// 初始化侧边栏管理器
-	new SidebarManager();
+<script
+  is:inline
+  define:vars={{
+    breakpoints: widgetManager.getBreakpoints(),
+    mobileShowSidebar: widgetManager.shouldShowSidebar("mobile"),
+    tabletShowSidebar: widgetManager.shouldShowSidebar("tablet"),
+    desktopShowSidebar: widgetManager.shouldShowSidebar("desktop"),
+    hasMobileComponents:
+      mobileTopComponents.length > 0 || mobileStickyComponents.length > 0,
+    hasTabletComponents:
+      tabletTopComponents.length > 0 || tabletStickyComponents.length > 0,
+  }}
+>
+  // 响应式布局管理
+  class SidebarManager {
+    constructor() {
+      this.init();
+    }
+
+    init() {
+      this.updateResponsiveDisplay();
+      window.addEventListener("resize", () => this.updateResponsiveDisplay());
+
+      // 监听SWUP内容替换事件
+      if (typeof window !== "undefined" && window.swup) {
+        window.swup.hooks.on("content:replace", () => {
+          // 延迟执行以确保DOM已更新
+          setTimeout(() => {
+            this.updateResponsiveDisplay();
+          }, 100);
+        });
+      }
+    }
+
+    updateResponsiveDisplay() {
+      const width = window.innerWidth;
+
+      const isMobile = width < breakpoints.mobile;
+      const isTablet = width < breakpoints.tablet;
+      const deviceType = isMobile ? "mobile" : isTablet ? "tablet" : "desktop";
+      const hasComponents = isMobile
+        ? hasMobileComponents
+        : hasTabletComponents; // tablet + desktop 使用同一套组件列表（left）
+      const showConfig = isMobile
+        ? mobileShowSidebar
+        : isTablet
+          ? tabletShowSidebar
+          : desktopShowSidebar;
+
+      // 根据设备类型判断是否显示侧边栏
+      // 只有在配置开启且该设备下有组件时才显示
+      const shouldShow = showConfig && hasComponents;
+
+      const sidebar = document.getElementById("sidebar");
+
+      if (sidebar) {
+        sidebar.style.setProperty(
+          `--sidebar-${deviceType}-display`,
+          shouldShow ? "block" : "none",
+        );
+      }
+    }
+  }
+
+  // 初始化侧边栏管理器
+  new SidebarManager();
 </script>

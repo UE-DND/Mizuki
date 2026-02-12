@@ -2,7 +2,7 @@
 import { Icon } from "astro-icon/components";
 import { getResolvedSiteSettings } from "@/server/site-settings/service";
 import { LinkPresets } from "../constants/link-presets";
-import type { LinkPreset} from "../types/config";
+import type { LinkPreset } from "../types/config";
 import { type NavBarLink } from "../types/config";
 import { isAdminOnlyLink } from "../utils/nav-link-utils";
 import { url } from "../utils/url-utils";
@@ -15,391 +15,471 @@ import NavMenuPanel from "./widget/NavMenuPanel.astro";
 
 const className = Astro.props.class;
 const resolvedSiteSettings =
-	Astro.locals.siteSettings ?? (await getResolvedSiteSettings());
+  Astro.locals.siteSettings ?? (await getResolvedSiteSettings());
 const siteSettings = resolvedSiteSettings.settings;
 const navBarConfig = siteSettings.navBar;
 
 // 获取导航栏透明模式配置
 const navbarTransparentMode =
-	siteSettings.banner?.navbar?.transparentMode || "semi";
+  siteSettings.banner?.navbar?.transparentMode || "semi";
 
 // 检查是否为首页
 const isHomePage = Astro.url.pathname === "/" || Astro.url.pathname === "";
 
 function resolveLink(link: NavBarLink | LinkPreset): NavBarLink {
-	if (typeof link === "number") {
-		return LinkPresets[link];
-	}
-	return link;
+  if (typeof link === "number") {
+    return LinkPresets[link];
+  }
+  return link;
 }
 
 function withoutAdminChildren(link: NavBarLink): NavBarLink | null {
-	if (isAdminOnlyLink(link)) {
-		return null;
-	}
-	const childrenSource = Array.isArray(link.children) ? link.children : [];
-	if (childrenSource.length === 0) {
-		return link;
-	}
-	const children = childrenSource
-		.map((child) => resolveLink(child))
-		.filter((child) => !isAdminOnlyLink(child));
-	if (children.length === 0) {
-		const rawUrl = String(link.url || "").trim();
-		if (!rawUrl || rawUrl === "#") {
-			return null;
-		}
-	}
-	return { ...link, children };
+  if (isAdminOnlyLink(link)) {
+    return null;
+  }
+  const childrenSource = Array.isArray(link.children) ? link.children : [];
+  if (childrenSource.length === 0) {
+    return link;
+  }
+  const children = childrenSource
+    .map((child) => resolveLink(child))
+    .filter((child) => !isAdminOnlyLink(child));
+  if (children.length === 0) {
+    const rawUrl = String(link.url || "").trim();
+    if (!rawUrl || rawUrl === "#") {
+      return null;
+    }
+  }
+  return { ...link, children };
 }
 
 const links: NavBarLink[] = navBarConfig.links
-	.map((item) => resolveLink(item))
-	.map((item) => withoutAdminChildren(item))
-	.filter((item): item is NavBarLink => Boolean(item));
+  .map((item) => resolveLink(item))
+  .map((item) => withoutAdminChildren(item))
+  .filter((item): item is NavBarLink => Boolean(item));
+const pagefindScriptUrl = import.meta.env.PROD
+  ? url("/pagefind/pagefind.js")
+  : "";
 ---
-<div id="navbar" class="z-50 onload-animation group" data-transparent-mode={navbarTransparentMode} data-is-home={isHomePage}>
-    <div class="absolute h-8 left-0 right-0 -top-8 bg-[var(--card-bg)] transition"></div> <!-- used for onload animation -->
-    <div class:list={[className, "!overflow-visible w-full min-w-0 max-w-[var(--page-width)] h-[4.5rem] mx-auto flex items-center justify-between px-2 sm:px-4"]}>
-        <a id="navbar-logo" href={url('/')} class="btn-plain scale-animation rounded-lg h-[2.5rem] md:h-[3.25rem] md:[.enable-banner_&]:h-[2.5rem] md:[.enable-banner_&]:group-[.scrolled]:h-[3.25rem] px-3 sm:px-5 font-bold active:scale-95 min-w-0 max-w-[12rem] sm:max-w-[15rem] md:max-w-none transition-all duration-[920ms]">
-            <div class="flex flex-row items-center min-w-0 text-md">
-				{/* 使用navbarTitle配置或默认配置 */}
-                {siteSettings.navbarTitle ? (
-                    siteSettings.navbarTitle.mode === "logo" ? (
-					<img src={url(siteSettings.navbarTitle.logo || "/assets/home/default-logo.png")} alt={siteSettings.navbarTitle.text} class="h-[2.5rem] md:h-[3.25rem] md:[.enable-banner_&]:h-[2.5rem] md:[.enable-banner_&]:group-[.scrolled]:h-[3.25rem] max-w-full object-contain transition-all duration-[920ms]" loading="lazy" />
-                    ) : (
-                        <>
-							<img src={url(siteSettings.navbarTitle.icon || "/assets/home/home.png")} alt={siteSettings.navbarTitle.text} class="h-[1.75rem] w-[1.75rem] mr-2 object-contain" loading="lazy" />
-                            <span class="max-w-[8rem] sm:max-w-none truncate dark:text-white text-black">{siteSettings.navbarTitle.text}</span>
-                        </>
-                    )
-                ) : (
-                    <>
-						<Icon name="material-symbols:home-pin-outline" class="text-[1.75rem] mr-2" />
-                        <span class="max-w-[8rem] sm:max-w-none truncate dark:text-white text-black">{siteSettings.site.title}</span>
-                    </>
+
+<div
+  id="navbar"
+  class="z-50 onload-animation group"
+  data-transparent-mode={navbarTransparentMode}
+  data-is-home={isHomePage}
+>
+  <div
+    class="absolute h-8 left-0 right-0 -top-8 bg-[var(--card-bg)] transition"
+  >
+  </div>
+  <!-- used for onload animation -->
+  <div
+    class:list={[
+      className,
+      "!overflow-visible w-full min-w-0 max-w-[var(--page-width)] h-[4.5rem] mx-auto flex items-center justify-between px-2 sm:px-4",
+    ]}
+  >
+    <a
+      id="navbar-logo"
+      href={url("/")}
+      class="btn-plain scale-animation rounded-lg h-[2.5rem] md:h-[3.25rem] md:[.enable-banner_&]:h-[2.5rem] md:[.enable-banner_&]:group-[.scrolled]:h-[3.25rem] px-3 sm:px-5 font-bold active:scale-95 min-w-0 max-w-[12rem] sm:max-w-[15rem] md:max-w-none transition-all duration-[920ms]"
+    >
+      <div class="flex flex-row items-center min-w-0 text-md">
+        {/* 使用navbarTitle配置或默认配置 */}
+        {
+          siteSettings.navbarTitle ? (
+            siteSettings.navbarTitle.mode === "logo" ? (
+              <img
+                src={url(
+                  siteSettings.navbarTitle.logo ||
+                    "/assets/home/default-logo.png",
                 )}
-            </div>
-        </a>
-        <div id="navbar-links-container" class="hidden md:flex items-center space-x-1 transition-opacity duration-300">
-            {links.map((l) => {
-                return <DropdownMenu link={l} />;
-            })}
-        </div>
-        <div class="flex shrink-0 items-center gap-0.5 sm:gap-1">
-            <div id="search-container">
-                <Search client:only="svelte"></Search>
-            </div>
-            {siteSettings.toc.enable && <MobileTOC client:only="svelte"></MobileTOC>}
-            <LightDarkSwitch client:only="svelte"></LightDarkSwitch>
-            <button aria-label="Menu" name="Nav Menu" class="btn-plain scale-animation rounded-lg w-11 h-11 active:scale-90 md:!hidden" id="nav-menu-switch">
-                <Icon name="material-symbols:unfold-more" class="text-[1.25rem]"></Icon>
-            </button>
-			<AuthStatus />
-        </div>
-        <NavMenuPanel links={links}></NavMenuPanel>
+                alt={siteSettings.navbarTitle.text}
+                class="h-[2.5rem] md:h-[3.25rem] md:[.enable-banner_&]:h-[2.5rem] md:[.enable-banner_&]:group-[.scrolled]:h-[3.25rem] max-w-full object-contain transition-all duration-[920ms]"
+                loading="lazy"
+              />
+            ) : (
+              <>
+                <img
+                  src={url(
+                    siteSettings.navbarTitle.icon || "/assets/home/home.png",
+                  )}
+                  alt={siteSettings.navbarTitle.text}
+                  class="h-[1.75rem] w-[1.75rem] mr-2 object-contain"
+                  loading="lazy"
+                />
+                <span class="max-w-[8rem] sm:max-w-none truncate dark:text-white text-black">
+                  {siteSettings.navbarTitle.text}
+                </span>
+              </>
+            )
+          ) : (
+            <>
+              <Icon
+                name="material-symbols:home-pin-outline"
+                class="text-[1.75rem] mr-2"
+              />
+              <span class="max-w-[8rem] sm:max-w-none truncate dark:text-white text-black">
+                {siteSettings.site.title}
+              </span>
+            </>
+          )
+        }
+      </div>
+    </a>
+    <div
+      id="navbar-links-container"
+      class="hidden md:flex items-center space-x-1 transition-opacity duration-300"
+    >
+      {
+        links.map((l) => {
+          return <DropdownMenu link={l} />;
+        })
+      }
     </div>
+    <div class="flex shrink-0 items-center gap-0.5 sm:gap-1">
+      <div id="search-container">
+        <Search client:only="svelte" />
+      </div>
+      {siteSettings.toc.enable && <MobileTOC client:only="svelte" />}
+      <LightDarkSwitch client:only="svelte" />
+      <button
+        aria-label="Menu"
+        name="Nav Menu"
+        class="btn-plain scale-animation rounded-lg w-11 h-11 active:scale-90 md:!hidden"
+        id="nav-menu-switch"
+      >
+        <Icon name="material-symbols:unfold-more" class="text-[1.25rem]" />
+      </button>
+      <AuthStatus />
+    </div>
+    <NavMenuPanel links={links} />
+  </div>
 </div>
 
 <script>
-    import {
-        emitAuthState,
-        getAuthState,
-        subscribeAuthState,
-        type AuthState,
-    } from "@/scripts/auth-state";
-    import { showAuthRequiredDialog } from "@/scripts/dialogs";
+  import {
+    emitAuthState,
+    getAuthState,
+    subscribeAuthState,
+    type AuthState,
+  } from "@/scripts/auth-state";
+  import { showAuthRequiredDialog } from "@/scripts/dialogs";
 
-	const searchContainer = document.getElementById("search-container");
-	const navbarLinksContainer = document.getElementById("navbar-links-container");
+  const searchContainer = document.getElementById("search-container");
+  const navbarLinksContainer = document.getElementById(
+    "navbar-links-container",
+  );
 
-    const updateUserRouteLinks = (username: string, isLoggedIn: boolean): void => {
-        const cleanUsername = String(username || "").trim();
-        const anchors = Array.from(
-            document.querySelectorAll<HTMLAnchorElement>("a[href]"),
-        );
-        anchors.forEach((anchor) => {
-            const rawHref = anchor.getAttribute("href") || "";
-            if (!rawHref.startsWith("/")) return;
-            let pathname = rawHref;
-            let search = "";
-            let hash = "";
-            try {
-                const parsed = new URL(rawHref, window.location.origin);
-                pathname = parsed.pathname;
-                search = parsed.search;
-                hash = parsed.hash;
-            } catch {
-                // noop: keep rawHref fallback
-            }
+  const updateUserRouteLinks = (
+    username: string,
+    isLoggedIn: boolean,
+  ): void => {
+    const cleanUsername = String(username || "").trim();
+    const anchors = Array.from(
+      document.querySelectorAll<HTMLAnchorElement>("a[href]"),
+    );
+    anchors.forEach((anchor) => {
+      const rawHref = anchor.getAttribute("href") || "";
+      if (!rawHref.startsWith("/")) return;
+      let pathname = rawHref;
+      let search = "";
+      let hash = "";
+      try {
+        const parsed = new URL(rawHref, window.location.origin);
+        pathname = parsed.pathname;
+        search = parsed.search;
+        hash = parsed.hash;
+      } catch {
+        // noop: keep rawHref fallback
+      }
 
-            const hasUserPlaceholder = pathname
-                .split("/")
-                .filter(Boolean)
-                .includes("__user__");
+      const hasUserPlaceholder = pathname
+        .split("/")
+        .filter(Boolean)
+        .includes("__user__");
 
-            if (hasUserPlaceholder) {
-                if (cleanUsername) {
-                    const resolvedPath = `/${pathname
-                        .split("/")
-                        .filter(Boolean)
-                        .map((segment) =>
-                            segment === "__user__" ? cleanUsername : segment,
-                        )
-                        .join("/")}`;
-                    anchor.setAttribute(
-                        "href",
-                        `${resolvedPath}${search}${hash}`,
-                    );
-                    anchor.removeAttribute("data-needs-login");
-                } else if (!isLoggedIn) {
-                    anchor.setAttribute("href", "#");
-                    anchor.setAttribute("data-needs-login", "");
-                } else {
-                    anchor.setAttribute("href", "/me");
-                    anchor.removeAttribute("data-needs-login");
-                }
-                return;
-            }
-            let hashLower = "";
-            try {
-                const parsed = new URL(rawHref, window.location.origin);
-                pathname = parsed.pathname;
-                hashLower = parsed.hash.replace(/^#/, "").trim().toLowerCase();
-            } catch {
-                pathname = rawHref;
-            }
-            if (pathname === "/me") {
-                if (hashLower === "anime" || hashLower === "diary" || hashLower === "albums") {
-                    if (cleanUsername) {
-                        anchor.setAttribute("href", `/${cleanUsername}/${hashLower}`);
-                        anchor.removeAttribute("data-needs-login");
-                    } else if (!isLoggedIn) {
-                        anchor.setAttribute("href", "#");
-                        anchor.setAttribute("data-needs-login", "");
-                    }
-                }
-                return;
-            }
-            const legacyTarget = ["/anime", "/diary", "/albums"];
-            if (!legacyTarget.includes(pathname)) return;
-            const target = pathname.replace(/^\//, "");
-            if (cleanUsername) {
-                anchor.setAttribute("href", `/${cleanUsername}/${target}`);
-                anchor.removeAttribute("data-needs-login");
-            } else if (!isLoggedIn) {
-                anchor.setAttribute("href", "#");
-                anchor.setAttribute("data-needs-login", "");
-            } else {
-                anchor.setAttribute("href", "/me");
-                anchor.removeAttribute("data-needs-login");
-            }
-        });
-    };
-
-    const fetchAuthProfile = async () => {
-        try {
-            const response = await fetch("/api/auth/me", {
-                method: "GET",
-                credentials: "include",
-                headers: { Accept: "application/json" },
-                cache: "no-store",
-            });
-            const data = await response.json().catch(() => null);
-            if (!response.ok || !data?.ok) {
-                return { ok: false, username: "", isAdmin: false, userId: "" };
-            }
-            return {
-                ok: true,
-                username: String(data?.user?.username || "").trim(),
-                isAdmin: Boolean(data?.is_admin || data?.isAdmin),
-                userId: String(data?.user?.id || "").trim(),
-            };
-        } catch (error) {
-            console.warn("[navbar] failed to load username:", error);
-            return { ok: false, username: "", isAdmin: false, userId: "" };
+      if (hasUserPlaceholder) {
+        if (cleanUsername) {
+          const resolvedPath = `/${pathname
+            .split("/")
+            .filter(Boolean)
+            .map((segment) =>
+              segment === "__user__" ? cleanUsername : segment,
+            )
+            .join("/")}`;
+          anchor.setAttribute("href", `${resolvedPath}${search}${hash}`);
+          anchor.removeAttribute("data-needs-login");
+        } else if (!isLoggedIn) {
+          anchor.setAttribute("href", "#");
+          anchor.setAttribute("data-needs-login", "");
+        } else {
+          anchor.setAttribute("href", "/me");
+          anchor.removeAttribute("data-needs-login");
         }
-    };
-
-    const applyAuthRouting = async (state: AuthState | null | undefined): Promise<void> => {
-        let username = String(state?.username || "").trim();
-        let isLoggedIn = Boolean(state?.isLoggedIn);
-        if (!username) {
-            const profile = await fetchAuthProfile();
-            if (profile.ok) {
-                username = profile.username;
-                isLoggedIn = true;
-                emitAuthState({
-                    isLoggedIn: true,
-                    isAdmin: profile.isAdmin,
-                    userId: profile.userId,
-                    username,
-                });
-            }
-        }
-        updateUserRouteLinks(username, isLoggedIn);
-    };
-
-    const initialAuth = getAuthState();
-    applyAuthRouting(initialAuth);
-    subscribeAuthState((state) => {
-        applyAuthRouting(state);
-    });
-
-    document.addEventListener("astro:after-swap", () => {
-        applyAuthRouting(getAuthState());
-    });
-
-    document.addEventListener("click", (e) => {
-        const target = e.target;
-        if (!(target instanceof Element)) {
-            return;
-        }
-        const anchor = target.closest<HTMLAnchorElement>("a[href]");
-        if (!anchor) {
-            return;
-        }
+        return;
+      }
+      let hashLower = "";
+      try {
+        const parsed = new URL(rawHref, window.location.origin);
+        pathname = parsed.pathname;
+        hashLower = parsed.hash.replace(/^#/, "").trim().toLowerCase();
+      } catch {
+        pathname = rawHref;
+      }
+      if (pathname === "/me") {
         if (
-            e.defaultPrevented ||
-            e.button !== 0 ||
-            e.metaKey ||
-            e.ctrlKey ||
-            e.shiftKey ||
-            e.altKey
+          hashLower === "anime" ||
+          hashLower === "diary" ||
+          hashLower === "albums"
         ) {
-            return;
+          if (cleanUsername) {
+            anchor.setAttribute("href", `/${cleanUsername}/${hashLower}`);
+            anchor.removeAttribute("data-needs-login");
+          } else if (!isLoggedIn) {
+            anchor.setAttribute("href", "#");
+            anchor.setAttribute("data-needs-login", "");
+          }
         }
+        return;
+      }
+      const legacyTarget = ["/anime", "/diary", "/albums"];
+      if (!legacyTarget.includes(pathname)) return;
+      const target = pathname.replace(/^\//, "");
+      if (cleanUsername) {
+        anchor.setAttribute("href", `/${cleanUsername}/${target}`);
+        anchor.removeAttribute("data-needs-login");
+      } else if (!isLoggedIn) {
+        anchor.setAttribute("href", "#");
+        anchor.setAttribute("data-needs-login", "");
+      } else {
+        anchor.setAttribute("href", "/me");
+        anchor.removeAttribute("data-needs-login");
+      }
+    });
+  };
 
-        const rawHref = anchor.getAttribute("href") || "";
-        const needsLogin = anchor.hasAttribute("data-needs-login");
-        const isPublishTarget = (() => {
-            if (!rawHref.startsWith("/")) {
-                return false;
-            }
-            try {
-                const parsed = new URL(rawHref, window.location.origin);
-                return parsed.pathname === "/publish";
-            } catch {
-                return false;
-            }
-        })();
-
-        if (isPublishTarget && !getAuthState().isLoggedIn) {
-            e.preventDefault();
-            showAuthRequiredDialog();
-            return;
-        }
-
-        if (needsLogin) {
-            e.preventDefault();
-            showAuthRequiredDialog();
-        }
-    }, true);
-
-	if (searchContainer && navbarLinksContainer) {
-		// 鼠标移入/触摸开始时隐藏导航链接
-		const hideLinks = () => {
-			if (window.matchMedia("(min-width: 1280px)").matches && window.matchMedia("(hover: hover)").matches) {
-				navbarLinksContainer.style.opacity = "0";
-			}
-		};
-
-		// 鼠标移出/触摸结束时显示导航链接
-		const showLinks = () => {
-			const navbar = document.getElementById("navbar");
-			if (navbar && !navbar.classList.contains("is-searching")) {
-				navbarLinksContainer.style.opacity = "1";
-			}
-		};
-
-		searchContainer.addEventListener("mouseenter", hideLinks);
-		searchContainer.addEventListener("mouseleave", showLinks);
-
-		// 移动端/触摸屏支持
-		searchContainer.addEventListener("touchstart", hideLinks, { passive: true });
-		searchContainer.addEventListener("touchend", showLinks);
-
-		// 监听 navbar 的 class 变化，当搜索框折叠时确保链接显示
-		const navbar = document.getElementById("navbar");
-		if (navbar) {
-			const observer = new MutationObserver((mutations) => {
-				mutations.forEach((mutation) => {
-					if (mutation.type === "attributes" && mutation.attributeName === "class") {
-						if (!navbar.classList.contains("is-searching")) {
-							// 搜索框已折叠，如果此时鼠标不在搜索容器内，强制显示链接
-							if (!searchContainer.matches(':hover')) {
-								showLinks();
-							}
-						}
-					}
-				});
-			});
-			observer.observe(navbar, { attributes: true });
-		}
-	}
-
-async function loadButtonScript() {
+  const fetchAuthProfile = async () => {
     try {
-        // 导入面板管理器
-        const { panelManager } = await import('../utils/panel-manager.js');
-
-        const menuBtn = document.getElementById("nav-menu-switch");
-        if (menuBtn) {
-            menuBtn.onclick = async function () {
-                await panelManager.togglePanel('nav-menu-panel');
-            };
-        }
+      const response = await fetch("/api/auth/me", {
+        method: "GET",
+        credentials: "include",
+        headers: { Accept: "application/json" },
+        cache: "no-store",
+      });
+      const data = await response.json().catch(() => null);
+      if (!response.ok || !data?.ok) {
+        return { ok: false, username: "", isAdmin: false, userId: "" };
+      }
+      return {
+        ok: true,
+        username: String(data?.user?.username || "").trim(),
+        isAdmin: Boolean(data?.is_admin || data?.isAdmin),
+        userId: String(data?.user?.id || "").trim(),
+      };
     } catch (error) {
-        console.error('Failed to load panel manager:', error);
-        // 备用逻辑
-        const menuBtn = document.getElementById("nav-menu-switch");
-        if (menuBtn) {
-            menuBtn.onclick = function () {
-                const menuPanel = document.getElementById("nav-menu-panel");
-                if (menuPanel) {
-                    menuPanel.classList.toggle("float-panel-closed");
-                }
-            };
-        }
+      console.warn("[navbar] failed to load username:", error);
+      return { ok: false, username: "", isAdmin: false, userId: "" };
     }
-}
+  };
 
-loadButtonScript();
+  const applyAuthRouting = async (
+    state: AuthState | null | undefined,
+  ): Promise<void> => {
+    let username = String(state?.username || "").trim();
+    let isLoggedIn = Boolean(state?.isLoggedIn);
+    if (!username) {
+      const profile = await fetchAuthProfile();
+      if (profile.ok) {
+        username = profile.username;
+        isLoggedIn = true;
+        emitAuthState({
+          isLoggedIn: true,
+          isAdmin: profile.isAdmin,
+          userId: profile.userId,
+          username,
+        });
+      }
+    }
+    updateUserRouteLinks(username, isLoggedIn);
+  };
 
+  const initialAuth = getAuthState();
+  applyAuthRouting(initialAuth);
+  subscribeAuthState((state) => {
+    applyAuthRouting(state);
+  });
+
+  document.addEventListener("astro:after-swap", () => {
+    applyAuthRouting(getAuthState());
+  });
+
+  document.addEventListener(
+    "click",
+    (e) => {
+      const target = e.target;
+      if (!(target instanceof Element)) {
+        return;
+      }
+      const anchor = target.closest<HTMLAnchorElement>("a[href]");
+      if (!anchor) {
+        return;
+      }
+      if (
+        e.defaultPrevented ||
+        e.button !== 0 ||
+        e.metaKey ||
+        e.ctrlKey ||
+        e.shiftKey ||
+        e.altKey
+      ) {
+        return;
+      }
+
+      const rawHref = anchor.getAttribute("href") || "";
+      const needsLogin = anchor.hasAttribute("data-needs-login");
+      const isPublishTarget = (() => {
+        if (!rawHref.startsWith("/")) {
+          return false;
+        }
+        try {
+          const parsed = new URL(rawHref, window.location.origin);
+          return parsed.pathname === "/publish";
+        } catch {
+          return false;
+        }
+      })();
+
+      if (isPublishTarget && !getAuthState().isLoggedIn) {
+        e.preventDefault();
+        showAuthRequiredDialog();
+        return;
+      }
+
+      if (needsLogin) {
+        e.preventDefault();
+        showAuthRequiredDialog();
+      }
+    },
+    true,
+  );
+
+  if (searchContainer && navbarLinksContainer) {
+    // 鼠标移入/触摸开始时隐藏导航链接
+    const hideLinks = () => {
+      if (
+        window.matchMedia("(min-width: 1280px)").matches &&
+        window.matchMedia("(hover: hover)").matches
+      ) {
+        navbarLinksContainer.style.opacity = "0";
+      }
+    };
+
+    // 鼠标移出/触摸结束时显示导航链接
+    const showLinks = () => {
+      const navbar = document.getElementById("navbar");
+      if (navbar && !navbar.classList.contains("is-searching")) {
+        navbarLinksContainer.style.opacity = "1";
+      }
+    };
+
+    searchContainer.addEventListener("mouseenter", hideLinks);
+    searchContainer.addEventListener("mouseleave", showLinks);
+
+    // 移动端/触摸屏支持
+    searchContainer.addEventListener("touchstart", hideLinks, {
+      passive: true,
+    });
+    searchContainer.addEventListener("touchend", showLinks);
+
+    // 监听 navbar 的 class 变化，当搜索框折叠时确保链接显示
+    const navbar = document.getElementById("navbar");
+    if (navbar) {
+      const observer = new MutationObserver((mutations) => {
+        mutations.forEach((mutation) => {
+          if (
+            mutation.type === "attributes" &&
+            mutation.attributeName === "class"
+          ) {
+            if (!navbar.classList.contains("is-searching")) {
+              // 搜索框已折叠，如果此时鼠标不在搜索容器内，强制显示链接
+              if (!searchContainer.matches(":hover")) {
+                showLinks();
+              }
+            }
+          }
+        });
+      });
+      observer.observe(navbar, { attributes: true });
+    }
+  }
+
+  async function loadButtonScript() {
+    try {
+      // 导入面板管理器
+      const { panelManager } = await import("../utils/panel-manager.js");
+
+      const menuBtn = document.getElementById("nav-menu-switch");
+      if (menuBtn) {
+        menuBtn.onclick = async function () {
+          await panelManager.togglePanel("nav-menu-panel");
+        };
+      }
+    } catch (error) {
+      console.error("Failed to load panel manager:", error);
+      // 备用逻辑
+      const menuBtn = document.getElementById("nav-menu-switch");
+      if (menuBtn) {
+        menuBtn.onclick = function () {
+          const menuPanel = document.getElementById("nav-menu-panel");
+          if (menuPanel) {
+            menuPanel.classList.toggle("float-panel-closed");
+          }
+        };
+      }
+    }
+  }
+
+  loadButtonScript();
 </script>
 
-{import.meta.env.PROD && <script is:inline define:vars={{scriptUrl: url('/pagefind/pagefind.js')}}>
-async function loadPagefind() {
-    try {
-        const response = await fetch(scriptUrl, { method: 'HEAD' });
-        if (!response.ok) {
-            throw new Error(`Pagefind script not found: ${response.status}`);
-        }
-
-        const pagefind = await import(scriptUrl);
-
-        await pagefind.options({
-            excerptLength: 20
-        });
-
-        window.pagefind = pagefind;
-
-        document.dispatchEvent(new CustomEvent('pagefindready'));
-        console.log('Pagefind loaded and initialized successfully, event dispatched.');
-    } catch (error) {
-        console.error('Failed to load Pagefind:', error);
-        window.pagefind = {
-            search: () => Promise.resolve({ results: [] }),
-            options: () => Promise.resolve(),
-        };
-        document.dispatchEvent(new CustomEvent('pagefindloaderror'));
-        console.log('Pagefind load error, event dispatched.');
+<script is:inline define:vars={{ scriptUrl: pagefindScriptUrl }}>
+  async function loadPagefind() {
+    if (!scriptUrl) {
+      return;
     }
-}
+    try {
+      const response = await fetch(scriptUrl, { method: "HEAD" });
+      if (!response.ok) {
+        throw new Error(`Pagefind script not found: ${response.status}`);
+      }
 
-if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', loadPagefind);
-} else {
+      const pagefind = await import(scriptUrl);
+
+      await pagefind.options({
+        excerptLength: 20,
+      });
+
+      window.pagefind = pagefind;
+
+      document.dispatchEvent(new CustomEvent("pagefindready"));
+      console.log(
+        "Pagefind loaded and initialized successfully, event dispatched.",
+      );
+    } catch (error) {
+      console.error("Failed to load Pagefind:", error);
+      window.pagefind = {
+        search: () => Promise.resolve({ results: [] }),
+        options: () => Promise.resolve(),
+      };
+      document.dispatchEvent(new CustomEvent("pagefindloaderror"));
+      console.log("Pagefind load error, event dispatched.");
+    }
+  }
+
+  if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", loadPagefind);
+  } else {
     loadPagefind();
-}
-</script>}
+  }
+</script>

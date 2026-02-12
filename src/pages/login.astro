@@ -6,341 +6,359 @@ export const prerender = true;
 ---
 
 <MainGridLayout title="登录" description="前端用户登录">
-	<div class="card-base rounded-[var(--radius-large)] p-6 md:p-8 login-card">
-		<div class="flex items-center gap-3 mb-2">
-			<div class="w-12 h-12 rounded-2xl bg-[var(--btn-regular-bg)] flex items-center justify-center login-icon-box">
-				<Icon
-					name="material-symbols:login-rounded"
-					class="text-[var(--btn-content)] text-3xl"
-				/>
-			</div>
-			<div>
-				<h1 class="text-2xl font-bold text-90">登录</h1>
-				<p class="text-sm text-75">
-					账号需由管理员在后台创建或邀请。
-				</p>
-			</div>
-		</div>
+  <div class="card-base rounded-[var(--radius-large)] p-6 md:p-8 login-card">
+    <div class="flex items-center gap-3 mb-2">
+      <div
+        class="w-12 h-12 rounded-2xl bg-[var(--btn-regular-bg)] flex items-center justify-center login-icon-box"
+      >
+        <Icon
+          name="material-symbols:login-rounded"
+          class="text-[var(--btn-content)] text-3xl"
+        />
+      </div>
+      <div>
+        <h1 class="text-2xl font-bold text-90">登录</h1>
+        <p class="text-sm text-75">账号需由管理员在后台创建或邀请。</p>
+      </div>
+    </div>
 
-		<div class="mt-6">
-			<form id="login-form" class="login-fields">
-				<!-- 邮箱 -->
-				<div class="login-field-group">
-					<label for="login-email" class="login-field-label text-75">邮箱</label>
-					<div class="login-input-wrapper">
-						<Icon
-							name="material-symbols:mail-outline-rounded"
-							class="login-input-icon"
-						/>
-						<input
-							id="login-email"
-							type="email"
-							autocomplete="email"
-							required
-							class="login-input login-email-input"
-							placeholder="name@example.com"
-						/>
-					</div>
-				</div>
+    <div class="mt-6">
+      <form id="login-form" class="login-fields">
+        <!-- 邮箱 -->
+        <div class="login-field-group">
+          <label for="login-email" class="login-field-label text-75">邮箱</label
+          >
+          <div class="login-input-wrapper">
+            <Icon
+              name="material-symbols:mail-outline-rounded"
+              class="login-input-icon"
+            />
+            <input
+              id="login-email"
+              type="email"
+              autocomplete="email"
+              required
+              class="login-input login-email-input"
+              placeholder="name@example.com"
+            />
+          </div>
+        </div>
 
-				<!-- 密码 -->
-				<div class="login-field-group">
-					<label for="login-password" class="login-field-label text-75">密码</label>
-					<div class="login-input-wrapper">
-						<Icon
-							name="material-symbols:lock-outline"
-							class="login-input-icon"
-						/>
-						<input
-							id="login-password"
-							type="password"
-							autocomplete="current-password"
-							required
-							class="login-input login-password-input"
-							placeholder="在此输入密码喵～"
-						/>
-					</div>
-				</div>
+        <!-- 密码 -->
+        <div class="login-field-group">
+          <label for="login-password" class="login-field-label text-75"
+            >密码</label
+          >
+          <div class="login-input-wrapper">
+            <Icon
+              name="material-symbols:lock-outline"
+              class="login-input-icon"
+            />
+            <input
+              id="login-password"
+              type="password"
+              autocomplete="current-password"
+              required
+              class="login-input login-password-input"
+              placeholder="在此输入密码喵～"
+            />
+          </div>
+        </div>
 
-				<!-- 错误提示 -->
-				<div
-					id="login-error"
-					class="login-error hidden"
-					role="alert"
-				></div>
+        <!-- 错误提示 -->
+        <div id="login-error" class="login-error hidden" role="alert"></div>
 
-				<!-- 保持登录 toggle -->
-				<div class="login-remember-row">
-					<input
-						id="login-remember"
-						type="checkbox"
-						checked
-						class="toggle-checkbox"
-					/>
-					<label for="login-remember" class="toggle-track">
-						<span class="toggle-knob"></span>
-					</label>
-					<label for="login-remember" class="login-remember-label text-75">
-						保持登录状态
-					</label>
-				</div>
+        <!-- 保持登录 toggle -->
+        <div class="login-remember-row">
+          <input
+            id="login-remember"
+            type="checkbox"
+            checked
+            class="toggle-checkbox"
+          />
+          <label for="login-remember" class="toggle-track">
+            <span class="toggle-knob"></span>
+          </label>
+          <label for="login-remember" class="login-remember-label text-75">
+            保持登录状态
+          </label>
+        </div>
 
-				<!-- 提交按钮 -->
-				<button
-					id="login-submit"
-					type="submit"
-					class="login-submit-btn"
-				>
-					<span class="login-submit-text">登录</span>
-				</button>
-			</form>
-		</div>
-	</div>
+        <!-- 提交按钮 -->
+        <button id="login-submit" type="submit" class="login-submit-btn">
+          <span class="login-submit-text">登录</span>
+        </button>
+      </form>
+    </div>
+  </div>
 
-	<script is:inline>
-		const API_LOGIN = "/api/auth/login";
+  <script is:inline>
+    const API_LOGIN = "/api/auth/login";
 
-		function normalizeRedirectTarget(redirect) {
-			const candidate = String(redirect || "").trim();
-			if (!candidate || !candidate.startsWith("/") || candidate.startsWith("//")) {
-				return "/";
-			}
-			if (candidate === "/login") {
-				return "/";
-			}
-			return candidate;
-		}
+    function normalizeRedirectTarget(redirect) {
+      const candidate = String(redirect || "").trim();
+      if (
+        !candidate ||
+        !candidate.startsWith("/") ||
+        candidate.startsWith("//")
+      ) {
+        return "/";
+      }
+      if (candidate === "/login") {
+        return "/";
+      }
+      return candidate;
+    }
 
-		function getRedirectTarget() {
-			try {
-				const u = new URL(window.location.href);
-				return normalizeRedirectTarget(u.searchParams.get("redirect"));
-			} catch {
-				return "/";
-			}
-		}
+    function getRedirectTarget() {
+      try {
+        const u = new URL(window.location.href);
+        return normalizeRedirectTarget(u.searchParams.get("redirect"));
+      } catch {
+        return "/";
+      }
+    }
 
-		function setError(message) {
-			const errorEl = document.getElementById("login-error");
-			if (!errorEl) return;
-			if (message) {
-				errorEl.textContent = message;
-				errorEl.classList.remove("hidden");
-			} else {
-				errorEl.textContent = "";
-				errorEl.classList.add("hidden");
-			}
-		}
+    function setError(message) {
+      const errorEl = document.getElementById("login-error");
+      if (!errorEl) return;
+      if (message) {
+        errorEl.textContent = message;
+        errorEl.classList.remove("hidden");
+      } else {
+        errorEl.textContent = "";
+        errorEl.classList.add("hidden");
+      }
+    }
 
-		async function initLoginForm() {
-			const form = document.getElementById("login-form");
-			const emailEl = document.getElementById("login-email");
-			const pwdEl = document.getElementById("login-password");
-			const rememberEl = document.getElementById("login-remember");
-			const submitBtn = document.getElementById("login-submit");
+    async function initLoginForm() {
+      const form = document.getElementById("login-form");
+      const emailEl = document.getElementById("login-email");
+      const pwdEl = document.getElementById("login-password");
+      const rememberEl = document.getElementById("login-remember");
+      const submitBtn = document.getElementById("login-submit");
 
-			if (!form || !emailEl || !pwdEl || !rememberEl || !submitBtn) {
-				return;
-			}
+      if (!form || !emailEl || !pwdEl || !rememberEl || !submitBtn) {
+        return;
+      }
 
-			if (form.dataset.bound) {
-				return;
-			}
-			form.dataset.bound = "1";
+      if (form.dataset.bound) {
+        return;
+      }
+      form.dataset.bound = "1";
 
-			form.addEventListener("submit", async (e) => {
-				e.preventDefault();
-				setError("");
+      form.addEventListener("submit", async (e) => {
+        e.preventDefault();
+        setError("");
 
-				const email = String(emailEl.value || "").trim();
-				const password = String(pwdEl.value || "");
-				if (!email || !password) {
-					setError("请填写邮箱与密码！(＃｀д´)ﾉ");
-					return;
-				}
+        const email = String(emailEl.value || "").trim();
+        const password = String(pwdEl.value || "");
+        if (!email || !password) {
+          setError("请填写邮箱与密码！(＃｀д´)ﾉ");
+          return;
+        }
 
-				submitBtn.disabled = true;
-				submitBtn.classList.add("is-loading");
-				const textEl = submitBtn.querySelector(".login-submit-text");
-				if (textEl) textEl.textContent = "正在登录喵…";
+        submitBtn.disabled = true;
+        submitBtn.classList.add("is-loading");
+        const textEl = submitBtn.querySelector(".login-submit-text");
+        if (textEl) textEl.textContent = "正在登录喵…";
 
-				try {
-					const resp = await fetch(API_LOGIN, {
-						method: "POST",
-						credentials: "include",
-						headers: { "Content-Type": "application/json", Accept: "application/json" },
-						body: JSON.stringify({ email, password, remember: rememberEl.checked }),
-					});
+        try {
+          const resp = await fetch(API_LOGIN, {
+            method: "POST",
+            credentials: "include",
+            headers: {
+              "Content-Type": "application/json",
+              Accept: "application/json",
+            },
+            body: JSON.stringify({
+              email,
+              password,
+              remember: rememberEl.checked,
+            }),
+          });
 
-					const data = await resp.json().catch(() => null);
-					if (!resp.ok || !data?.ok) {
-						setError(data?.message || "登录失败");
-						return;
-					}
+          const data = await resp.json().catch(() => null);
+          if (!resp.ok || !data?.ok) {
+            setError(data?.message || "登录失败");
+            return;
+          }
 
-					window.location.href = getRedirectTarget();
-				} catch (err) {
-					console.error("Login failed:", err);
-					setError("登录失败，请稍后再试");
-				} finally {
-					submitBtn.disabled = false;
-					submitBtn.classList.remove("is-loading");
-					if (textEl) textEl.textContent = "登录";
-				}
-			});
-		}
+          window.location.href = getRedirectTarget();
+        } catch (err) {
+          console.error("Login failed:", err);
+          setError("登录失败，请稍后再试");
+        } finally {
+          submitBtn.disabled = false;
+          submitBtn.classList.remove("is-loading");
+          if (textEl) textEl.textContent = "登录";
+        }
+      });
+    }
 
-		initLoginForm();
-		document.addEventListener("astro:after-swap", initLoginForm);
-	</script>
+    initLoginForm();
+    document.addEventListener("astro:after-swap", initLoginForm);
+  </script>
 
-	<style>
-		/* ---- 卡片入场 ---- */
-		.login-card {
-			animation: loginCardIn 0.5s cubic-bezier(0.22, 1, 0.36, 1) both;
-		}
-		@keyframes loginCardIn {
-			from {
-				opacity: 0;
-				transform: translateY(12px) scale(0.98);
-			}
-		}
-		/* ---- 表单布局 ---- */
-		.login-fields {
-			display: flex;
-			flex-direction: column;
-			gap: 1.25rem;
-		}
-		.login-field-group {
-			display: flex;
-			flex-direction: column;
-			gap: 0.4rem;
-		}
-		.login-field-label {
-			font-size: 0.8125rem;
-			font-weight: 500;
-			padding-left: 0.125rem;
-		}
+  <style>
+    /* ---- 卡片入场 ---- */
+    .login-card {
+      animation: loginCardIn 0.5s cubic-bezier(0.22, 1, 0.36, 1) both;
+    }
+    @keyframes loginCardIn {
+      from {
+        opacity: 0;
+        transform: translateY(12px) scale(0.98);
+      }
+    }
+    /* ---- 表单布局 ---- */
+    .login-fields {
+      display: flex;
+      flex-direction: column;
+      gap: 1.25rem;
+    }
+    .login-field-group {
+      display: flex;
+      flex-direction: column;
+      gap: 0.4rem;
+    }
+    .login-field-label {
+      font-size: 0.8125rem;
+      font-weight: 500;
+      padding-left: 0.125rem;
+    }
 
-		/* ---- 输入框 ---- */
-		.login-input-wrapper {
-			position: relative;
-			display: flex;
-			align-items: center;
-		}
-		.login-input-icon {
-			position: absolute;
-			left: 0.875rem;
-			width: 1.25rem;
-			height: 1.25rem;
-			color: var(--primary);
-			opacity: 0.55;
-			transition: opacity 0.2s;
-			pointer-events: none;
-		}
-		.login-input-wrapper:focus-within .login-input-icon {
-			opacity: 1;
-		}
-		.login-input {
-			width: 100%;
-			padding: 0.75rem 1rem 0.75rem 2.75rem;
-			border-radius: 0.75rem;
-			border: 1.5px solid var(--line-divider);
-			background: transparent;
-			color: inherit;
-			font-size: 1rem;
-			outline: none;
-			transition:
-				border-color 0.2s,
-				box-shadow 0.2s;
-		}
-		.login-input::placeholder {
-			font-size: 0.9375rem;
-			opacity: 0.9;
-		}
-		.login-input:focus {
-			border-color: var(--primary);
-			box-shadow: 0 0 0 3px oklch(from var(--primary) l c h / 0.1);
-		}
-		.login-email-input {
-			font-size: 1.0625rem;
-		}
-		.login-password-input {
-			font-size: 1.0625rem;
-			letter-spacing: 0.12em;
-			-webkit-text-security: disc;
-			text-security: disc;
-		}
-		.login-password-input::placeholder {
-			letter-spacing: normal;
-		}
+    /* ---- 输入框 ---- */
+    .login-input-wrapper {
+      position: relative;
+      display: flex;
+      align-items: center;
+    }
+    .login-input-icon {
+      position: absolute;
+      left: 0.875rem;
+      width: 1.25rem;
+      height: 1.25rem;
+      color: var(--primary);
+      opacity: 0.55;
+      transition: opacity 0.2s;
+      pointer-events: none;
+    }
+    .login-input-wrapper:focus-within .login-input-icon {
+      opacity: 1;
+    }
+    .login-input {
+      width: 100%;
+      padding: 0.75rem 1rem 0.75rem 2.75rem;
+      border-radius: 0.75rem;
+      border: 1.5px solid var(--line-divider);
+      background: transparent;
+      color: inherit;
+      font-size: 1rem;
+      outline: none;
+      transition:
+        border-color 0.2s,
+        box-shadow 0.2s;
+    }
+    .login-input::placeholder {
+      font-size: 0.9375rem;
+      opacity: 0.9;
+    }
+    .login-input:focus {
+      border-color: var(--primary);
+      box-shadow: 0 0 0 3px oklch(from var(--primary) l c h / 0.1);
+    }
+    .login-email-input {
+      font-size: 1.0625rem;
+    }
+    .login-password-input {
+      font-size: 1.0625rem;
+      letter-spacing: 0.12em;
+      -webkit-text-security: disc;
+      text-security: disc;
+    }
+    .login-password-input::placeholder {
+      letter-spacing: normal;
+    }
 
-		/* ---- Toggle 开关 ---- */
-		.login-remember-row {
-			display: flex;
-			align-items: center;
-			gap: 0.5rem;
-		}
-		.login-remember-label {
-			font-size: 0.8125rem;
-			cursor: pointer;
-			user-select: none;
-			line-height: 1;
-		}
+    /* ---- Toggle 开关 ---- */
+    .login-remember-row {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+    .login-remember-label {
+      font-size: 0.8125rem;
+      cursor: pointer;
+      user-select: none;
+      line-height: 1;
+    }
 
-		/* ---- 错误提示 ---- */
-		.login-error {
-			font-size: 0.8125rem;
-			color: oklch(0.55 0.2 25);
-			background: oklch(0.55 0.2 25 / 0.08);
-			border-radius: 0.625rem;
-			padding: 0.625rem 0.875rem;
-			animation: loginShake 0.35s ease;
-		}
-		:root.dark .login-error {
-			color: oklch(0.75 0.18 25);
-			background: oklch(0.75 0.18 25 / 0.1);
-		}
-		@keyframes loginShake {
-			15%, 45%, 75% { transform: translateX(-3px); }
-			30%, 60% { transform: translateX(3px); }
-		}
+    /* ---- 错误提示 ---- */
+    .login-error {
+      font-size: 0.8125rem;
+      color: oklch(0.55 0.2 25);
+      background: oklch(0.55 0.2 25 / 0.08);
+      border-radius: 0.625rem;
+      padding: 0.625rem 0.875rem;
+      animation: loginShake 0.35s ease;
+    }
+    :root.dark .login-error {
+      color: oklch(0.75 0.18 25);
+      background: oklch(0.75 0.18 25 / 0.1);
+    }
+    @keyframes loginShake {
+      15%,
+      45%,
+      75% {
+        transform: translateX(-3px);
+      }
+      30%,
+      60% {
+        transform: translateX(3px);
+      }
+    }
 
-		/* ---- 提交按钮 ---- */
-		.login-submit-btn {
-			position: relative;
-			width: 100%;
-			padding: 0.8125rem 1rem;
-			border-radius: 0.75rem;
-			border: none;
-			background: var(--btn-regular-bg);
-			color: var(--btn-content);
-			font-size: 0.9375rem;
-			font-weight: 600;
-			letter-spacing: 0.02em;
-			cursor: pointer;
-			overflow: hidden;
-			transition:
-				background-color 0.15s,
-				transform 0.15s cubic-bezier(0.22, 1, 0.36, 1);
-		}
-		.login-submit-btn:hover:not(:disabled) {
-			background: var(--btn-regular-bg-hover);
-		}
-		.login-submit-btn:active:not(:disabled) {
-			background: var(--btn-regular-bg-active);
-			transform: scale(0.98);
-		}
-		.login-submit-btn:disabled {
-			cursor: not-allowed;
-			opacity: 0.7;
-		}
-		.login-submit-btn.is-loading .login-submit-text {
-			animation: loginPulseText 1.2s ease-in-out infinite;
-		}
-		@keyframes loginPulseText {
-			0%, 100% { opacity: 1; }
-			50% { opacity: 0.5; }
-		}
-	</style>
+    /* ---- 提交按钮 ---- */
+    .login-submit-btn {
+      position: relative;
+      width: 100%;
+      padding: 0.8125rem 1rem;
+      border-radius: 0.75rem;
+      border: none;
+      background: var(--btn-regular-bg);
+      color: var(--btn-content);
+      font-size: 0.9375rem;
+      font-weight: 600;
+      letter-spacing: 0.02em;
+      cursor: pointer;
+      overflow: hidden;
+      transition:
+        background-color 0.15s,
+        transform 0.15s cubic-bezier(0.22, 1, 0.36, 1);
+    }
+    .login-submit-btn:hover:not(:disabled) {
+      background: var(--btn-regular-bg-hover);
+    }
+    .login-submit-btn:active:not(:disabled) {
+      background: var(--btn-regular-bg-active);
+      transform: scale(0.98);
+    }
+    .login-submit-btn:disabled {
+      cursor: not-allowed;
+      opacity: 0.7;
+    }
+    .login-submit-btn.is-loading .login-submit-text {
+      animation: loginPulseText 1.2s ease-in-out infinite;
+    }
+    @keyframes loginPulseText {
+      0%,
+      100% {
+        opacity: 1;
+      }
+      50% {
+        opacity: 0.5;
+      }
+    }
+  </style>
 </MainGridLayout>

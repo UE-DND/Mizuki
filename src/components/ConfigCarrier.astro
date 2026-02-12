@@ -4,40 +4,39 @@ import { getResolvedSiteSettings } from "@/server/site-settings/service";
 import type { ResolvedSiteSettings } from "@/types/site-settings";
 
 interface Props {
-	resolvedSiteSettings?: ResolvedSiteSettings;
+  resolvedSiteSettings?: ResolvedSiteSettings;
 }
 
 const resolvedSiteSettings =
-	Astro.props.resolvedSiteSettings ??
-	Astro.locals.siteSettings ??
-	(await getResolvedSiteSettings());
+  Astro.props.resolvedSiteSettings ??
+  Astro.locals.siteSettings ??
+  (await getResolvedSiteSettings());
 const legacySiteConfig = buildLegacySiteConfig(
-	resolvedSiteSettings.system,
-	resolvedSiteSettings.settings,
+  resolvedSiteSettings.system,
+  resolvedSiteSettings.settings,
 );
 ---
 
 <!-- 全局配置载体 -->
 <div
-	id="config-carrier"
-	data-hue={resolvedSiteSettings.system.themeColor.hue}
-	data-hide-code-blocks-during-transition={
-		resolvedSiteSettings.system.expressiveCode.hideDuringThemeTransition
-			? "true"
-			: "false"
-	}
+  id="config-carrier"
+  data-hue={resolvedSiteSettings.system.themeColor.hue}
+  data-hide-code-blocks-during-transition={resolvedSiteSettings.system
+    .expressiveCode.hideDuringThemeTransition
+    ? "true"
+    : "false"}
 >
 </div>
 
 <script
-	is:inline
-	define:vars={{
-		runtimeSettings: resolvedSiteSettings,
-		legacySiteConfig,
-	}}
+  is:inline
+  define:vars={{
+    runtimeSettings: resolvedSiteSettings,
+    legacySiteConfig,
+  }}
 >
-	window.__MIZUKI_RUNTIME_SETTINGS__ = runtimeSettings;
-	window.siteConfig = legacySiteConfig;
+  window.__MIZUKI_RUNTIME_SETTINGS__ = runtimeSettings;
+  window.siteConfig = legacySiteConfig;
 </script>
 
 <!-- 引入Umami Share工具脚本 -->

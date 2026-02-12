@@ -13,18 +13,18 @@ import TOC from "../components/widget/TOC.astro";
 import { buildLegacySiteConfig } from "@/config";
 import { getResolvedSiteSettings } from "@/server/site-settings/service";
 import {
-	BANNER_HEIGHT_EXTEND,
-	BANNER_HEIGHT_HOME,
-	// MAIN_PANEL_OVERLAPS_BANNER_HEIGHT,
+  BANNER_HEIGHT_EXTEND,
+  BANNER_HEIGHT_HOME,
+  // MAIN_PANEL_OVERLAPS_BANNER_HEIGHT,
 } from "../constants/constants";
 import { widgetManager } from "../utils/widget-manager";
 import Layout from "./Layout.astro";
 
 const resolvedSiteSettings =
-	Astro.locals.siteSettings ?? (await getResolvedSiteSettings());
+  Astro.locals.siteSettings ?? (await getResolvedSiteSettings());
 const siteConfig = buildLegacySiteConfig(
-	resolvedSiteSettings.system,
-	resolvedSiteSettings.settings,
+  resolvedSiteSettings.system,
+  resolvedSiteSettings.settings,
 );
 widgetManager.updateConfig(resolvedSiteSettings.settings.sidebarLayout);
 
@@ -34,15 +34,15 @@ const isFloatTOC = tocMode === "float";
 const isSidebarTOC = tocMode === "sidebar";
 const isPostDetailPage = /^\/posts\/[^/]+\/?$/.test(Astro.url.pathname);
 const shouldShowPostTocSidebar =
-	siteConfig.toc.enable && isSidebarTOC && isPostDetailPage;
+  siteConfig.toc.enable && isSidebarTOC && isPostDetailPage;
 
 interface Props {
-	title?: string;
-	banner?: string;
-	description?: string;
-	lang?: string;
-	setOGTypeArticle?: boolean;
-	headings?: MarkdownHeading[];
+  title?: string;
+  banner?: string;
+  description?: string;
+  lang?: string;
+  setOGTypeArticle?: boolean;
+  headings?: MarkdownHeading[];
 }
 
 // 类型守卫函数
@@ -62,58 +62,58 @@ interface Props {
 
 // 获取banner图片的辅助函数
 const getBannerImages = async () => {
-	let bannerSrc = siteConfig.banner.src;
+  let bannerSrc = siteConfig.banner.src;
 
-	// 如果启用了图片API，获取API图片
-	if (siteConfig.banner.imageApi?.enable && siteConfig.banner.imageApi?.url) {
-		try {
-			const response = await fetch(siteConfig.banner.imageApi.url);
-			const text = await response.text();
-			const apiImages = text.split("\n").filter((line) => line.trim());
+  // 如果启用了图片API，获取API图片
+  if (siteConfig.banner.imageApi?.enable && siteConfig.banner.imageApi?.url) {
+    try {
+      const response = await fetch(siteConfig.banner.imageApi.url);
+      const text = await response.text();
+      const apiImages = text.split("\n").filter((line) => line.trim());
 
-			if (apiImages.length > 0) {
-				bannerSrc = apiImages;
-			}
-		} catch (error) {
-			console.warn("Failed to fetch images from API:", error);
-		}
-	}
+      if (apiImages.length > 0) {
+        bannerSrc = apiImages;
+      }
+    } catch (error) {
+      console.warn("Failed to fetch images from API:", error);
+    }
+  }
 
-	if (
-		typeof bannerSrc === "object" &&
-		bannerSrc !== null &&
-		!Array.isArray(bannerSrc) &&
-		("desktop" in bannerSrc || "mobile" in bannerSrc)
-	) {
-		const srcObj = bannerSrc as {
-			desktop?: string | string[];
-			mobile?: string | string[];
-		};
-		return {
-			desktop: srcObj.desktop || srcObj.mobile || "",
-			mobile: srcObj.mobile || srcObj.desktop || "",
-		};
-	}
-	// 如果是字符串或字符串数组，同时用于桌面端和移动端
-	return {
-		desktop: bannerSrc,
-		mobile: bannerSrc,
-	};
+  if (
+    typeof bannerSrc === "object" &&
+    bannerSrc !== null &&
+    !Array.isArray(bannerSrc) &&
+    ("desktop" in bannerSrc || "mobile" in bannerSrc)
+  ) {
+    const srcObj = bannerSrc as {
+      desktop?: string | string[];
+      mobile?: string | string[];
+    };
+    return {
+      desktop: srcObj.desktop || srcObj.mobile || "",
+      mobile: srcObj.mobile || srcObj.desktop || "",
+    };
+  }
+  // 如果是字符串或字符串数组，同时用于桌面端和移动端
+  return {
+    desktop: bannerSrc,
+    mobile: bannerSrc,
+  };
 };
 
 const bannerImages = await getBannerImages();
 
 const {
-	title,
-	banner,
-	description,
-	lang,
-	setOGTypeArticle,
-	headings = [],
+  title,
+  banner,
+  description,
+  lang,
+  setOGTypeArticle,
+  headings = [],
 } = Astro.props;
 
 // 检查是否有自定义右侧栏插槽（如归档页筛选面板）
-const hasCustomRightSidebar = Astro.slots.has('sidebar-right');
+const hasCustomRightSidebar = Astro.slots.has("sidebar-right");
 
 // 检查是否为首页
 const isHomePage = Astro.url.pathname === "/" || Astro.url.pathname === "";
@@ -129,65 +129,66 @@ const initialWallpaperMode = isHomePage ? configuredWallpaperMode : "none";
 // 当默认模式为 banner 时，使用完整 banner 高度（含 extend 段）；
 // 避免 main-panel 和 main-grid 同时位移导致折叠抽动。
 const mainPanelTop =
-	initialWallpaperMode === "banner"
-		? `${BANNER_HEIGHT_HOME}vh`
-		: "5.5rem";
+  initialWallpaperMode === "banner" ? `${BANNER_HEIGHT_HOME}vh` : "5.5rem";
 // const mobileNonHomeMainTop = !isHomePage ? "5.5rem" : mainPanelTop;
 
 // 当默认模式不是 banner 时，主内容区域应该始终从顶栏下面开始
 const finalMainPanelTop =
-	initialWallpaperMode === "banner" ? mainPanelTop : "5.5rem";
+  initialWallpaperMode === "banner" ? mainPanelTop : "5.5rem";
 
 // 检查左侧边栏是否有组件
 const hasLeftSidebarComponents =
-	widgetManager.getComponentsByPosition("top", "left", "desktop").length > 0 ||
-	widgetManager.getComponentsByPosition("sticky", "left", "desktop").length > 0;
+  widgetManager.getComponentsByPosition("top", "left", "desktop").length > 0 ||
+  widgetManager.getComponentsByPosition("sticky", "left", "desktop").length > 0;
 
 // 检查右侧边栏是否有组件
 const rightTopComponents = widgetManager.getComponentsByPosition(
-	"top",
-	"right",
-	"desktop",
+  "top",
+  "right",
+  "desktop",
 );
 const rightStickyComponents = widgetManager.getComponentsByPosition(
-	"sticky",
-	"right",
-	"desktop",
+  "sticky",
+  "right",
+  "desktop",
 );
 const hasRightSidebarComponents =
-	rightTopComponents.length > 0 || rightStickyComponents.length > 0;
+  rightTopComponents.length > 0 || rightStickyComponents.length > 0;
 const hasRightSidebarTocWidget = [
-	...rightTopComponents,
-	...rightStickyComponents,
+  ...rightTopComponents,
+  ...rightStickyComponents,
 ].some((component) => component.type === "toc");
 const shouldRenderDedicatedPostToc =
-	shouldShowPostTocSidebar && !hasRightSidebarTocWidget;
+  shouldShowPostTocSidebar && !hasRightSidebarTocWidget;
 const hasRightSidebarContent =
-	hasRightSidebarComponents || shouldRenderDedicatedPostToc;
+  hasRightSidebarComponents || shouldRenderDedicatedPostToc;
 const shouldFixRightSidebarSlot =
-	shouldRenderDedicatedPostToc || hasCustomRightSidebar;
+  shouldRenderDedicatedPostToc || hasCustomRightSidebar;
 
 // 检查手机端 drawer 是否有组件
 const hasMobileDrawerComponents =
-	widgetManager.getComponentsByPosition("top", "drawer", "mobile").length > 0 ||
-	widgetManager.getComponentsByPosition("sticky", "drawer", "mobile").length > 0;
+  widgetManager.getComponentsByPosition("top", "drawer", "mobile").length > 0 ||
+  widgetManager.getComponentsByPosition("sticky", "drawer", "mobile").length >
+    0;
 
 // 平板端是否有组件（考虑自动移动逻辑）
 const hasTabletLeftSidebarComponents =
-	widgetManager.getComponentsByPosition("top", "left", "tablet").length > 0 ||
-	widgetManager.getComponentsByPosition("sticky", "left", "tablet").length > 0;
+  widgetManager.getComponentsByPosition("top", "left", "tablet").length > 0 ||
+  widgetManager.getComponentsByPosition("sticky", "left", "tablet").length > 0;
 
 // 桌面端侧边栏最终显示状态（考虑是否有组件）
 const desktopShowLeftSidebar = hasLeftSidebarComponents;
 const desktopShowRightSidebar = hasRightSidebarContent;
 
 // 右侧栏有效显示：有 widget 组件 或 有自定义插槽（如归档页筛选面板）
-const effectiveShowRightSidebar = hasRightSidebarContent || hasCustomRightSidebar;
+const effectiveShowRightSidebar =
+  hasRightSidebarContent || hasCustomRightSidebar;
 
 // 检查侧边栏是否启用，动态调整网格布局
 const mobileShowSidebar = hasMobileDrawerComponents;
 const tabletShowSidebar = hasTabletLeftSidebarComponents;
-const desktopShowSidebar = hasLeftSidebarComponents || effectiveShowRightSidebar;
+const desktopShowSidebar =
+  hasLeftSidebarComponents || effectiveShowRightSidebar;
 
 // 平板端侧边栏最终显示状态
 const tabletShowLeftSidebar = hasTabletLeftSidebarComponents;
@@ -199,11 +200,11 @@ const tabletAnySidebar = tabletShowLeftSidebar;
 // 动态网格布局类名 - 根据侧边栏模式和是否有组件调整列宽
 let desktopGridCols = "lg:grid-cols-1";
 if (desktopShowLeftSidebar && effectiveShowRightSidebar) {
-	desktopGridCols = "lg:grid-cols-[17.5rem_1fr_17.5rem]";
+  desktopGridCols = "lg:grid-cols-[17.5rem_1fr_17.5rem]";
 } else if (desktopShowLeftSidebar) {
-	desktopGridCols = "lg:grid-cols-[17.5rem_1fr]";
+  desktopGridCols = "lg:grid-cols-[17.5rem_1fr]";
 } else if (effectiveShowRightSidebar) {
-	desktopGridCols = "lg:grid-cols-[1fr_17.5rem]";
+  desktopGridCols = "lg:grid-cols-[1fr_17.5rem]";
 }
 
 const gridCols = `
@@ -211,8 +212,8 @@ const gridCols = `
 	${tabletAnySidebar ? "md:grid-cols-[17.5rem_1fr]" : "md:grid-cols-1"}
 	${desktopGridCols}
 `
-	.trim()
-	.replace(/\s+/g, " ");
+  .trim()
+  .replace(/\s+/g, " ");
 
 // 侧边栏容器类名 - 始终在左侧
 const sidebarClass = `
@@ -221,42 +222,42 @@ const sidebarClass = `
 	${tabletShowLeftSidebar ? `md:block md:mb-4 md:max-w-[17.5rem]${hasCustomRightSidebar ? " md:row-span-2" : ""}` : "md:hidden"}
 	${desktopShowLeftSidebar ? "lg:block lg:mb-4 lg:row-start-1 lg:row-end-2 lg:max-w-[17.5rem] lg:col-start-1 lg:col-end-2" : "lg:hidden"}
 `
-	.trim()
-	.replace(/\s+/g, " ");
+  .trim()
+  .replace(/\s+/g, " ");
 
 // 右侧边栏容器类名
 let rightSidebarClass: string;
 if (hasCustomRightSidebar) {
-	// 自定义右侧栏（如归档筛选面板）：手机/平板可见，桌面端定位到右列
-	const tabletCol = tabletShowLeftSidebar
-		? "md:col-start-2 md:col-end-3"
-		: "md:col-start-1 md:col-end-2";
-	const desktopCol = desktopShowLeftSidebar
-		? "lg:col-start-3 lg:col-end-4"
-		: "lg:col-start-2 lg:col-end-3";
-	rightSidebarClass = `onload-animation block ${tabletCol} ${desktopCol} lg:row-start-1 lg:row-end-2 lg:max-w-[17.5rem]`;
+  // 自定义右侧栏（如归档筛选面板）：手机/平板可见，桌面端定位到右列
+  const tabletCol = tabletShowLeftSidebar
+    ? "md:col-start-2 md:col-end-3"
+    : "md:col-start-1 md:col-end-2";
+  const desktopCol = desktopShowLeftSidebar
+    ? "lg:col-start-3 lg:col-end-4"
+    : "lg:col-start-2 lg:col-end-3";
+  rightSidebarClass = `onload-animation block ${tabletCol} ${desktopCol} lg:row-start-1 lg:row-end-2 lg:max-w-[17.5rem]`;
 } else if (hasRightSidebarComponents) {
-	rightSidebarClass = `
+  rightSidebarClass = `
 	onload-animation
 	hidden
 	overflow-x-hidden
 	${tabletShowRightSidebar ? "md:block md:mb-4 md:max-w-[17.5rem]" : "md:hidden"}
 	${desktopShowRightSidebar ? `lg:block lg:mb-4 lg:row-start-1 lg:row-end-2 lg:max-w-[17.5rem] ${desktopShowLeftSidebar ? "lg:col-start-3 lg:col-end-4" : "lg:col-start-2 lg:col-end-3"} lg:col-span-1` : "lg:hidden"}
 `
-		.trim()
-		.replace(/\s+/g, " ");
+    .trim()
+    .replace(/\s+/g, " ");
 } else if (shouldRenderDedicatedPostToc) {
-	// 文章页侧栏 TOC：跟随主网格右列，避免浏览器对外侧绝对定位区域的可用宽度差异导致不显示
-	rightSidebarClass = `
+  // 文章页侧栏 TOC：跟随主网格右列，避免浏览器对外侧绝对定位区域的可用宽度差异导致不显示
+  rightSidebarClass = `
 	onload-animation
 	hidden
 	md:hidden
 	${desktopShowRightSidebar ? `lg:block lg:mb-4 lg:row-start-1 lg:row-end-2 lg:max-w-[17.5rem] ${desktopShowLeftSidebar ? "lg:col-start-3 lg:col-end-4" : "lg:col-start-2 lg:col-end-3"} lg:col-span-1` : "lg:hidden"}
 `
-		.trim()
-		.replace(/\s+/g, " ");
+    .trim()
+    .replace(/\s+/g, " ");
 } else {
-	rightSidebarClass = "hidden";
+  rightSidebarClass = "hidden";
 }
 
 // 主内容区域类名 - 根据侧边栏模式调整grid-column
@@ -264,17 +265,17 @@ if (hasCustomRightSidebar) {
 // 桌面端：主内容和侧边栏并排显示
 let desktopMainPos = "lg:col-span-1";
 if (desktopShowLeftSidebar && effectiveShowRightSidebar) {
-	desktopMainPos = "lg:col-start-2 lg:col-end-3";
+  desktopMainPos = "lg:col-start-2 lg:col-end-3";
 } else if (desktopShowLeftSidebar) {
-	desktopMainPos = "lg:col-start-2 lg:col-end-3";
+  desktopMainPos = "lg:col-start-2 lg:col-end-3";
 } else if (effectiveShowRightSidebar) {
-	desktopMainPos = "lg:col-start-1 lg:col-end-2";
+  desktopMainPos = "lg:col-start-1 lg:col-end-2";
 }
 
 // 当 hasCustomRightSidebar 时，手机/平板端不设 row-start-1，让筛选面板 auto-place 排在前面
 const rowStart = hasCustomRightSidebar
-	? "lg:row-start-1 lg:row-end-2"
-	: "row-start-1 row-end-2";
+  ? "lg:row-start-1 lg:row-end-2"
+  : "row-start-1 row-end-2";
 
 const mainContentClass = `
 	transition-swup-fade overflow-clip w-full
@@ -282,337 +283,445 @@ const mainContentClass = `
 	${tabletAnySidebar ? "md:col-start-2 md:col-end-3" : "md:col-start-1 md:col-end-2"}
 	${desktopShowSidebar ? desktopMainPos : "lg:col-span-1"}
 `
-	.trim()
-	.replace(/\s+/g, " ");
-
+  .trim()
+  .replace(/\s+/g, " ");
 ---
 
-<Layout title={title} banner={banner} description={description} lang={lang} setOGTypeArticle={setOGTypeArticle}>
-
-<!-- 全局图标加载器 -->
-<IconifyLoader />
-
-<!-- Navbar -->
-<slot slot="head" name="head"></slot>
-<div id="top-row" class="z-50 pointer-events-none fixed top-0 left-0 right-0" class:list={[""]}>
-    <div id="navbar-wrapper" class="pointer-events-auto">
-        <Navbar></Navbar>
-    </div>
-</div>
-
-<!-- Banner - 始终渲染，通过 JS 控制显示隐藏 -->
-<div
-	id="banner-wrapper"
-	class={`absolute z-10 w-full transition duration-700 overflow-hidden wallpaper-layer ${initialWallpaperMode !== 'banner' ? 'wallpaper-layer-hidden' : ''} ${mobileNonHomeBannerClass}`}
-	style={`top: -${BANNER_HEIGHT_EXTEND}vh`}
-	aria-hidden={initialWallpaperMode !== "banner" ? "true" : undefined}
-	inert={initialWallpaperMode !== "banner"}
+<Layout
+  title={title}
+  banner={banner}
+  description={description}
+  lang={lang}
+  setOGTypeArticle={setOGTypeArticle}
 >
+  <!-- 全局图标加载器 -->
+  <IconifyLoader />
 
-    {siteConfig.banner.carousel?.enable && ((bannerImages.desktop && Array.isArray(bannerImages.desktop) && bannerImages.desktop.length > 1) || (bannerImages.mobile && Array.isArray(bannerImages.mobile) && bannerImages.mobile.length > 1)) ? (
+  <!-- Navbar -->
+  <slot slot="head" name="head" />
+  <div
+    id="top-row"
+    class="z-50 pointer-events-none fixed top-0 left-0 right-0"
+    class:list={[""]}
+  >
+    <div id="navbar-wrapper" class="pointer-events-auto">
+      <Navbar />
+    </div>
+  </div>
+
+  <!-- Banner - 始终渲染，通过 JS 控制显示隐藏 -->
+  <div
+    id="banner-wrapper"
+    class={`absolute z-10 w-full transition duration-700 overflow-hidden wallpaper-layer ${initialWallpaperMode !== "banner" ? "wallpaper-layer-hidden" : ""} ${mobileNonHomeBannerClass}`}
+    style={`top: -${BANNER_HEIGHT_EXTEND}vh`}
+    aria-hidden={initialWallpaperMode !== "banner" ? "true" : undefined}
+    inert={initialWallpaperMode !== "banner"}
+  >
+    {
+      siteConfig.banner.carousel?.enable &&
+      ((bannerImages.desktop &&
+        Array.isArray(bannerImages.desktop) &&
+        bannerImages.desktop.length > 1) ||
+        (bannerImages.mobile &&
+          Array.isArray(bannerImages.mobile) &&
+          bannerImages.mobile.length > 1)) ? (
         <div id="banner-carousel" class="relative h-full w-full">
-            <ul class="carousel-list h-full w-full">
-                {Math.max(
-                    Array.isArray(bannerImages.desktop) ? bannerImages.desktop.length : 0,
-                    Array.isArray(bannerImages.mobile) ? bannerImages.mobile.length : 0
-                ) && Array.from({ length: Math.max(
-                    Array.isArray(bannerImages.desktop) ? bannerImages.desktop.length : 0,
-                    Array.isArray(bannerImages.mobile) ? bannerImages.mobile.length : 0
-                ) }).map((_, index) => {
-                    // 确保至少有一个平台有对应索引的图片
-                    const hasDesktopImage = Array.isArray(bannerImages.desktop) && bannerImages.desktop[index];
-                    const hasMobileImage = Array.isArray(bannerImages.mobile) && bannerImages.mobile[index];
-                    
-                    // 如果两个平台都没有对应索引的图片，跳过这个轮播项
-                    if (!hasDesktopImage && !hasMobileImage) {
-                        return null;
-                    }
-                    
-                    return (
-                        <li class={`carousel-item absolute inset-0 transition-all duration-500 ${index === 0 ? 'opacity-100 scale-100' : 'opacity-0 scale-110'}`}>
-                            <!-- Mobile: use mobile-specific images -->
-                            {hasMobileImage && (
-                                <ImageWrapper 
-                                    alt={`Mobile banner image ${index + 1}`} 
-                                    class:list={["block md:hidden object-cover h-full w-full transition-transform duration-500 ease-out"]}
-                                    src={Array.isArray(bannerImages.mobile) ? bannerImages.mobile[index] : (typeof bannerImages.mobile === 'string' ? bannerImages.mobile : '')} 
-                                    position={siteConfig.banner.position}
-                                    loading={index === 0 ? "eager" : "lazy"}
-                                />
-                            )}
-                            {hasDesktopImage && (
-                                <ImageWrapper 
-                                    alt={`Desktop banner image ${index + 1}`} 
-                                    class:list={["hidden md:block object-cover h-full w-full transition-transform duration-500 ease-out"]}
-                                    src={Array.isArray(bannerImages.desktop) ? bannerImages.desktop[index] : (typeof bannerImages.desktop === 'string' ? bannerImages.desktop : '')} 
-                                    position={siteConfig.banner.position}
-                                    loading={index === 0 ? "eager" : "lazy"}
-                                />
-                            )}
-                        </li>
-                    );
-                }).filter(Boolean)}
-            </ul>
+          <ul class="carousel-list h-full w-full">
+            {Math.max(
+              Array.isArray(bannerImages.desktop)
+                ? bannerImages.desktop.length
+                : 0,
+              Array.isArray(bannerImages.mobile)
+                ? bannerImages.mobile.length
+                : 0,
+            ) &&
+              Array.from({
+                length: Math.max(
+                  Array.isArray(bannerImages.desktop)
+                    ? bannerImages.desktop.length
+                    : 0,
+                  Array.isArray(bannerImages.mobile)
+                    ? bannerImages.mobile.length
+                    : 0,
+                ),
+              })
+                .map((_, index) => {
+                  // 确保至少有一个平台有对应索引的图片
+                  const hasDesktopImage =
+                    Array.isArray(bannerImages.desktop) &&
+                    bannerImages.desktop[index];
+                  const hasMobileImage =
+                    Array.isArray(bannerImages.mobile) &&
+                    bannerImages.mobile[index];
+
+                  // 如果两个平台都没有对应索引的图片，跳过这个轮播项
+                  if (!hasDesktopImage && !hasMobileImage) {
+                    return null;
+                  }
+
+                  return (
+                    <li
+                      class={`carousel-item absolute inset-0 transition-all duration-500 ${index === 0 ? "opacity-100 scale-100" : "opacity-0 scale-110"}`}
+                    >
+                      {/* Mobile: use mobile-specific images */}
+                      {hasMobileImage && (
+                        <ImageWrapper
+                          alt={`Mobile banner image ${index + 1}`}
+                          class:list={[
+                            "block md:hidden object-cover h-full w-full transition-transform duration-500 ease-out",
+                          ]}
+                          src={
+                            Array.isArray(bannerImages.mobile)
+                              ? bannerImages.mobile[index]
+                              : typeof bannerImages.mobile === "string"
+                                ? bannerImages.mobile
+                                : ""
+                          }
+                          position={siteConfig.banner.position}
+                          loading={index === 0 ? "eager" : "lazy"}
+                        />
+                      )}
+                      {hasDesktopImage && (
+                        <ImageWrapper
+                          alt={`Desktop banner image ${index + 1}`}
+                          class:list={[
+                            "hidden md:block object-cover h-full w-full transition-transform duration-500 ease-out",
+                          ]}
+                          src={
+                            Array.isArray(bannerImages.desktop)
+                              ? bannerImages.desktop[index]
+                              : typeof bannerImages.desktop === "string"
+                                ? bannerImages.desktop
+                                : ""
+                          }
+                          position={siteConfig.banner.position}
+                          loading={index === 0 ? "eager" : "lazy"}
+                        />
+                      )}
+                    </li>
+                  );
+                })
+                .filter(Boolean)}
+          </ul>
         </div>
-        ) : (
-        <div id="banner-single-container" class="relative h-full w-full">
-            <script is:inline define:vars={{ desktopImages: bannerImages.desktop, mobileImages: bannerImages.mobile, position: siteConfig.banner.position }}>
-                (function() {
-                    const getRandomImage = (images, storageKey) => {
-                        if (Array.isArray(images)) {
-                            if (images.length === 0) {return null;}
-                            if (images.length === 1) {return images[0];}
-                            
-                            const lastIndex = sessionStorage.getItem(storageKey);
-                            let newIndex;
-                            
-                            do {
-                                newIndex = Math.floor(Math.random() * images.length);
-                            } while (newIndex === parseInt(lastIndex || '-1'));
-                            
-                            sessionStorage.setItem(storageKey, newIndex.toString());
-                            return images[newIndex];
-                        }
-                        return images || null;
-                    };
-                    
-                    const desktopSrc = getRandomImage(desktopImages, 'banner_desktop_index');
-                    const mobileSrc = getRandomImage(mobileImages, 'banner_mobile_index');
-                    
-                    const container = document.getElementById('banner-single-container');
-                    
-                    if (mobileSrc) {
-                        const mobileImg = document.createElement('img');
-                        mobileImg.alt = 'Mobile banner image of the blog';
-                        mobileImg.className = 'block md:hidden object-cover h-full w-full transition duration-700 opacity-100';
-                        mobileImg.src = mobileSrc;
-                        mobileImg.loading = 'eager';
-                        mobileImg.dataset.position = position;
-                        container.appendChild(mobileImg);
-                    }
-                    
-                    if (desktopSrc) {
-                        const desktopImg = document.createElement('img');
-                        desktopImg.id = 'banner';
-                        desktopImg.alt = 'Desktop banner image of the blog';
-                        desktopImg.className = 'hidden md:block object-cover h-full w-full transition duration-700 opacity-100';
-                        desktopImg.src = desktopSrc;
-                        desktopImg.loading = 'eager';
-                        desktopImg.dataset.position = position;
-                        container.appendChild(desktopImg);
-                    }
-                })();
-            </script>
-        </div>
-    )}
+      ) : (
+        <div id="banner-single-container" class="relative h-full w-full" />
+      )
+    }
+
+    <script
+      is:inline
+      define:vars={{
+        desktopImages: bannerImages.desktop,
+        mobileImages: bannerImages.mobile,
+        position: siteConfig.banner.position,
+      }}
+    >
+      (function () {
+        const container = document.getElementById("banner-single-container");
+        if (!container) {
+          return;
+        }
+        if (container.children.length > 0) {
+          return;
+        }
+
+        const getRandomImage = (images, storageKey) => {
+          if (Array.isArray(images)) {
+            if (images.length === 0) {
+              return null;
+            }
+            if (images.length === 1) {
+              return images[0];
+            }
+
+            const lastIndex = sessionStorage.getItem(storageKey);
+            let newIndex;
+
+            do {
+              newIndex = Math.floor(Math.random() * images.length);
+            } while (newIndex === parseInt(lastIndex || "-1"));
+
+            sessionStorage.setItem(storageKey, newIndex.toString());
+            return images[newIndex];
+          }
+          return images || null;
+        };
+
+        const desktopSrc = getRandomImage(
+          desktopImages,
+          "banner_desktop_index",
+        );
+        const mobileSrc = getRandomImage(mobileImages, "banner_mobile_index");
+
+        if (mobileSrc) {
+          const mobileImg = document.createElement("img");
+          mobileImg.alt = "Mobile banner image of the blog";
+          mobileImg.className =
+            "block md:hidden object-cover h-full w-full transition duration-700 opacity-100";
+          mobileImg.src = mobileSrc;
+          mobileImg.loading = "eager";
+          mobileImg.dataset.position = position;
+          container.appendChild(mobileImg);
+        }
+
+        if (desktopSrc) {
+          const desktopImg = document.createElement("img");
+          desktopImg.id = "banner";
+          desktopImg.alt = "Desktop banner image of the blog";
+          desktopImg.className =
+            "hidden md:block object-cover h-full w-full transition duration-700 opacity-100";
+          desktopImg.src = desktopSrc;
+          desktopImg.loading = "eager";
+          desktopImg.dataset.position = position;
+          container.appendChild(desktopImg);
+        }
+      })();
+    </script>
 
     <!-- 导航区顶部遮罩层，提高图片背景下导航文字可读性 -->
     <div class="navbar-scrim" aria-hidden="true"></div>
-    
+
     <!-- Home page text overlay -->
-    {siteConfig.banner.homeText?.enable && (
-        <div class={`banner-text-overlay absolute inset-0 z-20 flex items-center justify-center ${!showHomeText ? 'hidden' : ''}`}>
-            <div class="w-4/5 lg:w-3/4 text-center mb-0">
-                <div class="flex flex-col">
-                    {siteConfig.banner.homeText?.title && (
-                        <h1 class="banner-title text-6xl lg:text-8xl text-white drop-shadow-lg mb-2 lg:mb-4">
-                            {siteConfig.banner.homeText.title}
-                        </h1>
+    {
+      siteConfig.banner.homeText?.enable && (
+        <div
+          class={`banner-text-overlay absolute inset-0 z-20 flex items-center justify-center ${!showHomeText ? "hidden" : ""}`}
+        >
+          <div class="w-4/5 lg:w-3/4 text-center mb-0">
+            <div class="flex flex-col">
+              {siteConfig.banner.homeText?.title && (
+                <h1 class="banner-title text-6xl lg:text-8xl text-white drop-shadow-lg mb-2 lg:mb-4">
+                  {siteConfig.banner.homeText.title}
+                </h1>
+              )}
+              {siteConfig.banner.homeText?.subtitle && (
+                <h2 class="banner-subtitle text-xl lg:text-3xl text-white/90 drop-shadow-md">
+                  <span class="inline-block min-h-[1.2em]">
+                    {siteConfig.banner.homeText.typewriter?.enable ? (
+                      <TypewriterText
+                        text={siteConfig.banner.homeText.subtitle}
+                        speed={siteConfig.banner.homeText.typewriter.speed}
+                        deleteSpeed={
+                          siteConfig.banner.homeText.typewriter.deleteSpeed
+                        }
+                        pauseTime={
+                          siteConfig.banner.homeText.typewriter.pauseTime
+                        }
+                      />
+                    ) : Array.isArray(siteConfig.banner.homeText.subtitle) ? (
+                      siteConfig.banner.homeText.subtitle[0]
+                    ) : (
+                      siteConfig.banner.homeText.subtitle
                     )}
-                    {siteConfig.banner.homeText?.subtitle && (
-                        <h2 class="banner-subtitle text-xl lg:text-3xl text-white/90 drop-shadow-md">
-                            <span class="inline-block min-h-[1.2em]">
-                                {siteConfig.banner.homeText.typewriter?.enable ? (
-                                    <TypewriterText 
-                                        text={siteConfig.banner.homeText.subtitle}
-                                        speed={siteConfig.banner.homeText.typewriter.speed}
-                                        deleteSpeed={siteConfig.banner.homeText.typewriter.deleteSpeed}
-                                        pauseTime={siteConfig.banner.homeText.typewriter.pauseTime}
-                                    />
-                                ) : (
-                                    Array.isArray(siteConfig.banner.homeText.subtitle) 
-                                        ? siteConfig.banner.homeText.subtitle[0] 
-                                        : siteConfig.banner.homeText.subtitle
-                                )}
-                            </span>
-                        </h2>
-                    )}
-                </div>
+                  </span>
+                </h2>
+              )}
             </div>
+          </div>
         </div>
-    )}
-    
+      )
+    }
+
     <!-- Water waves effect -->
-    {siteConfig.banner.waves?.enable && (
-        <div class="waves absolute -bottom-[1px] h-[10vh] max-h-[9.375rem] min-h-[3.125rem] w-full md:h-[15vh]" id="header-waves" style="transform: translateZ(0); will-change: fill;">
-            <svg
-                class="waves"
-                xmlns="http://www.w3.org/2000/svg"
-                xmlns:xlink="http://www.w3.org/1999/xlink"
-                viewBox="0 20 150 32"
-                preserveAspectRatio="none"
-                shape-rendering="auto"
-                style="transform: translateZ(0); backface-visibility: hidden;"
-            >
-                <defs>
-                    <path
-                        id="gentle-wave"
-                        d="M-160 44c30 0 58-18 88-18s 58 18 88 18 58-18 88-18 58 18 88 18 v48h-352z"
-                    >
-                    </path>
-                </defs>
-                <g class="parallax" style="transform: translateZ(0);">
-                    <use
-                        xlink:href="#gentle-wave"
-                        x="48"
-                        y="0"
-                        class="opacity-25 fill-[var(--page-bg)]"
-                        style="animation-delay: -2s; animation-duration: 7s; will-change: transform;"
-                    ></use>
-                    <use
-                        xlink:href="#gentle-wave"
-                        x="48"
-                        y="3"
-                        class="opacity-50 fill-[var(--page-bg)]"
-                        style="animation-delay: -3s; animation-duration: 10s; will-change: transform;"
-                    ></use>
-                    <use
-                        xlink:href="#gentle-wave"
-                        x="48"
-                        y="5"
-                        class="opacity-75 fill-[var(--page-bg)]"
-                        style="animation-delay: -4s; animation-duration: 13s; will-change: transform;"
-                    ></use>
-                    <use
-                        xlink:href="#gentle-wave"
-                        x="48"
-                        y="7"
-                        class="fill-[var(--page-bg)]"
-                        style="animation-delay: -5s; animation-duration: 20s; will-change: transform;"
-                    ></use>
-                </g>
-            </svg>
+    {
+      siteConfig.banner.waves?.enable && (
+        <div
+          class="waves absolute -bottom-[1px] h-[10vh] max-h-[9.375rem] min-h-[3.125rem] w-full md:h-[15vh]"
+          id="header-waves"
+          style="transform: translateZ(0); will-change: fill;"
+        >
+          <svg
+            class="waves"
+            xmlns="http://www.w3.org/2000/svg"
+            xmlns:xlink="http://www.w3.org/1999/xlink"
+            viewBox="0 20 150 32"
+            preserveAspectRatio="none"
+            shape-rendering="auto"
+            style="transform: translateZ(0); backface-visibility: hidden;"
+          >
+            <defs>
+              <path
+                id="gentle-wave"
+                d="M-160 44c30 0 58-18 88-18s 58 18 88 18 58-18 88-18 58 18 88 18 v48h-352z"
+              />
+            </defs>
+            <g class="parallax" style="transform: translateZ(0);">
+              <use
+                xlink:href="#gentle-wave"
+                x="48"
+                y="0"
+                class="opacity-25 fill-[var(--page-bg)]"
+                style="animation-delay: -2s; animation-duration: 7s; will-change: transform;"
+              />
+              <use
+                xlink:href="#gentle-wave"
+                x="48"
+                y="3"
+                class="opacity-50 fill-[var(--page-bg)]"
+                style="animation-delay: -3s; animation-duration: 10s; will-change: transform;"
+              />
+              <use
+                xlink:href="#gentle-wave"
+                x="48"
+                y="5"
+                class="opacity-75 fill-[var(--page-bg)]"
+                style="animation-delay: -4s; animation-duration: 13s; will-change: transform;"
+              />
+              <use
+                xlink:href="#gentle-wave"
+                x="48"
+                y="7"
+                class="fill-[var(--page-bg)]"
+                style="animation-delay: -5s; animation-duration: 20s; will-change: transform;"
+              />
+            </g>
+          </svg>
         </div>
-    )}
-    
+      )
+    }
+  </div>
 
-</div>
-
-<!-- Main content -->
-<div
-	class={`absolute w-full z-30 pointer-events-none main-panel-wrapper ${mobileNonHomeBannerClass ? 'mobile-main-no-banner' : ''} ${initialWallpaperMode === 'none' ? 'no-banner-layout' : ''}`}
-	style={`top: ${finalMainPanelTop}`}
->
+  <!-- Main content -->
+  <div
+    class={`absolute w-full z-30 pointer-events-none main-panel-wrapper ${mobileNonHomeBannerClass ? "mobile-main-no-banner" : ""} ${initialWallpaperMode === "none" ? "no-banner-layout" : ""}`}
+    style={`top: ${finalMainPanelTop}`}
+  >
     <!-- The pointer-events-none here prevent blocking the click event of the TOC -->
-	   <div class="relative max-w-[var(--page-width)] mx-auto pointer-events-auto">
-			<div id="main-grid" class={`transition duration-700 w-full left-0 right-0 grid ${gridCols} grid-rows-none md:grid-rows-[auto] mx-auto gap-4 px-2 md:px-4 ${!mobileShowSidebar || !hasMobileDrawerComponents ? 'mobile-no-sidebar' : ''} ${effectiveShowRightSidebar ? 'mobile-both-sidebar' : ''}`}>
-		            {/* 侧边栏和主内容区域 */}
-		            {(mobileShowSidebar || tabletShowSidebar || desktopShowSidebar) && (
-	                <SideBar class={sidebarClass} headings={headings}></SideBar>
-	            )}
+    <div class="relative max-w-[var(--page-width)] mx-auto pointer-events-auto">
+      <div
+        id="main-grid"
+        class={`transition duration-700 w-full left-0 right-0 grid ${gridCols} grid-rows-none md:grid-rows-[auto] mx-auto gap-4 px-2 md:px-4 ${!mobileShowSidebar || !hasMobileDrawerComponents ? "mobile-no-sidebar" : ""} ${effectiveShowRightSidebar ? "mobile-both-sidebar" : ""}`}
+      >
+        {/* 侧边栏和主内容区域 */}
+        {
+          (mobileShowSidebar || tabletShowSidebar || desktopShowSidebar) && (
+            <SideBar class={sidebarClass} headings={headings} />
+          )
+        }
 
-	            <div
-	                id="right-sidebar-slot"
-	                class={`right-sidebar-container lg:self-start ${shouldFixRightSidebarSlot ? "right-sidebar-toc-fixed" : ""} ${rightSidebarClass}`}
-	            >
-	                {hasCustomRightSidebar ? (
-	                    <slot name="sidebar-right" />
-	                ) : hasRightSidebarComponents ? (
-	                    <>
-	                        <RightSideBar headings={headings}></RightSideBar>
-	                        {shouldRenderDedicatedPostToc && (
-	                            <div id="toc-wrapper" class="w-full transition-swup-fade">
-	                                <div
-	                                    id="toc-inner-wrapper"
-	                                    class="w-full max-h-[calc(100vh_-_10rem)] overflow-hidden"
-	                                >
-	                                    <div id="toc-container" class="w-full transition-swup-fade">
-	                                        <TOC headings={headings}></TOC>
-	                                    </div>
-	                                </div>
-	                            </div>
-	                        )}
-	                    </>
-	                ) : shouldRenderDedicatedPostToc ? (
-	                    <div id="toc-wrapper" class="w-full transition-swup-fade">
-	                        <div
-	                            id="toc-inner-wrapper"
-	                            class="w-full max-h-[calc(100vh_-_10rem)] overflow-hidden"
-	                        >
-	                            <div id="toc-container" class="w-full transition-swup-fade">
-	                                <TOC headings={headings}></TOC>
-	                            </div>
-	                        </div>
-	                    </div>
-	                ) : null}
-	            </div>
-
-            <main
-                id="swup-container"
-                data-enter-skeleton-target="fallback"
-                class={`${mainContentClass} transition-main relative`}
-            >
-                <div
-                    id="content-wrapper"
-                    data-enter-skeleton-content
-                    class="onload-animation transition-leaving"
-                >
-                    <!-- the overflow-hidden here prevent long text break the layout-->
-                    <!-- make id different from windows.swup global property -->
-                    <slot></slot>
-                    <div class="footer col-span-full onload-animation hidden lg:block">
-                        <Footer></Footer>
+        <div
+          id="right-sidebar-slot"
+          class={`right-sidebar-container lg:self-start ${shouldFixRightSidebarSlot ? "right-sidebar-toc-fixed" : ""} ${rightSidebarClass}`}
+        >
+          {
+            hasCustomRightSidebar ? (
+              <slot name="sidebar-right" />
+            ) : hasRightSidebarComponents ? (
+              <>
+                <RightSideBar headings={headings} />
+                {shouldRenderDedicatedPostToc && (
+                  <div id="toc-wrapper" class="w-full transition-swup-fade">
+                    <div
+                      id="toc-inner-wrapper"
+                      class="w-full max-h-[calc(100vh_-_10rem)] overflow-hidden"
+                    >
+                      <div
+                        id="toc-container"
+                        class="w-full transition-swup-fade"
+                      >
+                        <TOC headings={headings} />
+                      </div>
                     </div>
-                </div>
+                  </div>
+                )}
+              </>
+            ) : shouldRenderDedicatedPostToc ? (
+              <div id="toc-wrapper" class="w-full transition-swup-fade">
                 <div
-                    data-enter-skeleton-placeholder
-                    aria-hidden="true"
-                    class="absolute inset-0 z-20 pointer-events-none p-1"
+                  id="toc-inner-wrapper"
+                  class="w-full max-h-[calc(100vh_-_10rem)] overflow-hidden"
                 >
-                    <div class="md3-skeleton-surface card-base h-full min-h-[16rem] rounded-[var(--radius-large)] p-6 md:p-8">
-                        <div class="space-y-4">
-                            <div class="md3-skeleton-text" style="--skeleton-width: 52%; --skeleton-height: 1.25rem;"></div>
-                            <div class="md3-skeleton-text" style="--skeleton-width: 36%;"></div>
-                            <div class="space-y-3 pt-3">
-                                <div class="md3-skeleton-text" style="--skeleton-width: 96%;"></div>
-                                <div class="md3-skeleton-text" style="--skeleton-width: 92%;"></div>
-                                <div class="md3-skeleton-text" style="--skeleton-width: 88%;"></div>
-                                <div class="md3-skeleton-text" style="--skeleton-width: 75%;"></div>
-                            </div>
-                            <div class="grid grid-cols-2 gap-4 pt-4">
-                                <div class="md3-skeleton-block h-20"></div>
-                                <div class="md3-skeleton-block h-20"></div>
-                            </div>
-                        </div>
-                    </div>
+                  <div id="toc-container" class="w-full transition-swup-fade">
+                    <TOC headings={headings} />
+                  </div>
                 </div>
-            </main>
-
-            <div class="footer col-span-full onload-animation block lg:hidden">
-                <Footer></Footer>
-            </div>
+              </div>
+            ) : null
+          }
         </div>
 
-        <BackToTop></BackToTop>
-        {siteConfig.toc.enable && isFloatTOC && <FloatingTOC />}
+        <main
+          id="swup-container"
+          data-enter-skeleton-target="fallback"
+          class={`${mainContentClass} transition-main relative`}
+        >
+          <div
+            id="content-wrapper"
+            data-enter-skeleton-content
+            class="onload-animation transition-leaving"
+          >
+            <!-- the overflow-hidden here prevent long text break the layout-->
+            <!-- make id different from windows.swup global property -->
+            <slot />
+            <div class="footer col-span-full onload-animation hidden lg:block">
+              <Footer />
+            </div>
+          </div>
+          <div
+            data-enter-skeleton-placeholder
+            aria-hidden="true"
+            class="absolute inset-0 z-20 pointer-events-none p-1"
+          >
+            <div
+              class="md3-skeleton-surface card-base h-full min-h-[16rem] rounded-[var(--radius-large)] p-6 md:p-8"
+            >
+              <div class="space-y-4">
+                <div
+                  class="md3-skeleton-text"
+                  style="--skeleton-width: 52%; --skeleton-height: 1.25rem;"
+                >
+                </div>
+                <div class="md3-skeleton-text" style="--skeleton-width: 36%;">
+                </div>
+                <div class="space-y-3 pt-3">
+                  <div class="md3-skeleton-text" style="--skeleton-width: 96%;">
+                  </div>
+                  <div class="md3-skeleton-text" style="--skeleton-width: 92%;">
+                  </div>
+                  <div class="md3-skeleton-text" style="--skeleton-width: 88%;">
+                  </div>
+                  <div class="md3-skeleton-text" style="--skeleton-width: 75%;">
+                  </div>
+                </div>
+                <div class="grid grid-cols-2 gap-4 pt-4">
+                  <div class="md3-skeleton-block h-20"></div>
+                  <div class="md3-skeleton-block h-20"></div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </main>
+
+        <div class="footer col-span-full onload-animation block lg:hidden">
+          <Footer />
+        </div>
+      </div>
+
+      <BackToTop />
+      {siteConfig.toc.enable && isFloatTOC && <FloatingTOC />}
     </div>
-</div>
+  </div>
 
-<!-- 保留此元素以确保Swup正常工作 -->
-{(!siteConfig.toc.enable || isFloatTOC || !shouldRenderDedicatedPostToc) && <div id="toc-container" class="hidden"></div>}
+  <!-- 保留此元素以确保Swup正常工作 -->
+  {
+    (!siteConfig.toc.enable || isFloatTOC || !shouldRenderDedicatedPostToc) && (
+      <div id="toc-container" class="hidden" />
+    )
+  }
 
-<!-- 全屏模态框插槽 -->
-<slot name="modal" />
+  <!-- 全屏模态框插槽 -->
+  <slot name="modal" />
 </Layout>
 
 <style>
-:root {
+  :root {
     --layout-mode-transition-duration: 0.98s;
     --layout-mode-transition-easing: cubic-bezier(0.16, 1, 0.4, 1);
-}
+  }
 
-/* 导航区顶部遮罩层 */
-.navbar-scrim {
+  /* 导航区顶部遮罩层 */
+  .navbar-scrim {
     position: absolute;
     top: 0;
     right: 0;
@@ -621,152 +730,171 @@ const mainContentClass = `
     pointer-events: none;
     z-index: 15;
     background: linear-gradient(
-        to bottom,
-        rgba(255, 255, 255, 0.78) 0%,
-        rgba(255, 255, 255, 0.42) 48%,
-        rgba(255, 255, 255, 0) 100%
+      to bottom,
+      rgba(255, 255, 255, 0.78) 0%,
+      rgba(255, 255, 255, 0.42) 48%,
+      rgba(255, 255, 255, 0) 100%
     );
-}
+  }
 
-:root.dark .navbar-scrim {
+  :root.dark .navbar-scrim {
     background: linear-gradient(
-        to bottom,
-        rgba(0, 0, 0, 0.7) 0%,
-        rgba(0, 0, 0, 0.38) 48%,
-        rgba(0, 0, 0, 0) 100%
+      to bottom,
+      rgba(0, 0, 0, 0.7) 0%,
+      rgba(0, 0, 0, 0.38) 48%,
+      rgba(0, 0, 0, 0) 100%
     );
-}
+  }
 
-/* Banner text styles */
-.banner-title {
+  /* Banner text styles */
+  .banner-title {
     text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.7);
     animation: fadeInUp 1s ease-out;
     font-weight: bold;
-}
+  }
 
-/* Prevent horizontal overflow during sidebar enter animations */
-:global(#sidebar) {
+  /* Prevent horizontal overflow during sidebar enter animations */
+  :global(#sidebar) {
     overflow-x: clip;
-}
+  }
 
-/*
+  /*
  * Keep right sidebar overflow visible so sticky TOC can stick to the viewport.
  * If overflow-x is hidden here, browsers compute overflow-y as auto and sticky breaks.
  */
-:global(#right-sidebar-slot) {
+  :global(#right-sidebar-slot) {
     overflow: visible;
-}
+  }
 
-/*
+  /*
  * Home banner -> spec page visit:
  * match upstream feel:
  * banner and main panel move up together like one page scroll.
  * navbar stays persistent and does not collapse/re-enter.
  */
-:global(html.layout-banner-to-spec-transition) #banner-wrapper,
-:global(html.layout-banner-to-spec-transition) .main-panel-wrapper {
+  :global(html.layout-banner-to-spec-transition) #banner-wrapper,
+  :global(html.layout-banner-to-spec-transition) .main-panel-wrapper {
     transition:
-        transform 920ms cubic-bezier(0.22, 1, 0.36, 1),
-        opacity 920ms cubic-bezier(0.22, 1, 0.36, 1);
+      transform 920ms cubic-bezier(0.22, 1, 0.36, 1),
+      opacity 920ms cubic-bezier(0.22, 1, 0.36, 1);
     will-change: transform;
-}
+  }
 
-:global(html.layout-banner-to-spec-transition.layout-banner-to-spec-transition-active) #banner-wrapper,
-:global(html.layout-banner-to-spec-transition.layout-banner-to-spec-transition-active) .main-panel-wrapper {
-    transform: translate3d(0, calc(var(--layout-banner-route-up-shift, 0px) * -1), 0);
-}
+  :global(
+      html.layout-banner-to-spec-transition.layout-banner-to-spec-transition-active
+    )
+    #banner-wrapper,
+  :global(
+      html.layout-banner-to-spec-transition.layout-banner-to-spec-transition-active
+    )
+    .main-panel-wrapper {
+    transform: translate3d(
+      0,
+      calc(var(--layout-banner-route-up-shift, 0px) * -1),
+      0
+    );
+  }
 
-/*
+  /*
  * Keep Swup timing in sync with the banner-route upward move.
  * This prevents cached/fast visits from truncating the upward transition.
  */
-:global(html.layout-banner-to-spec-transition .transition-main),
-:global(html.layout-banner-to-spec-transition .transition-leaving),
-:global(html.layout-banner-to-spec-transition .transition-swup-fade) {
+  :global(html.layout-banner-to-spec-transition .transition-main),
+  :global(html.layout-banner-to-spec-transition .transition-leaving),
+  :global(html.layout-banner-to-spec-transition .transition-swup-fade) {
     transition-duration: 280ms !important;
-}
+  }
 
-:global(html.layout-banner-to-spec-transition #content-wrapper) {
+  :global(html.layout-banner-to-spec-transition #content-wrapper) {
     transition: opacity 240ms cubic-bezier(0.22, 1, 0.36, 1) !important;
-}
+  }
 
-:global(html.layout-banner-to-spec-transition.is-animating) #swup-container,
-:global(html.layout-banner-to-spec-transition.is-animating.is-leaving) #content-wrapper {
+  :global(html.layout-banner-to-spec-transition.is-animating) #swup-container,
+  :global(html.layout-banner-to-spec-transition.is-animating.is-leaving)
+    #content-wrapper {
     transform: none !important;
-}
+  }
 
-/* Old content: fade out while the frame is moving upward. */
-:global(html.layout-banner-to-spec-transition.is-animating.is-leaving) #content-wrapper {
+  /* Old content: fade out while the frame is moving upward. */
+  :global(html.layout-banner-to-spec-transition.is-animating.is-leaving)
+    #content-wrapper {
     opacity: 1 !important;
-}
+  }
 
-/* New content: start at transparent, then fade to visible after replace. */
-:global(html.layout-banner-to-spec-transition.layout-banner-to-spec-transition-content-fade-in) #content-wrapper {
+  /* New content: start at transparent, then fade to visible after replace. */
+  :global(
+      html.layout-banner-to-spec-transition.layout-banner-to-spec-transition-content-fade-in
+    )
+    #content-wrapper {
     opacity: 0 !important;
-}
+  }
 
-/* Keep navbar persistent during page transition. */
-:global(html.layout-banner-to-spec-transition) #top-row,
-:global(html.layout-banner-to-spec-transition.layout-banner-to-spec-transition-active) #top-row {
+  /* Keep navbar persistent during page transition. */
+  :global(html.layout-banner-to-spec-transition) #top-row,
+  :global(
+      html.layout-banner-to-spec-transition.layout-banner-to-spec-transition-active
+    )
+    #top-row {
     transform: translate3d(0, 0, 0) !important;
-}
+  }
 
-/* Start logo resize at the exact same frame as banner->spec transition start. */
-@media (min-width: 768px) {
+  /* Start logo resize at the exact same frame as banner->spec transition start. */
+  @media (min-width: 768px) {
     :global(html.layout-banner-to-spec-transition #navbar-logo) {
-        height: 3.25rem !important;
-        transition-duration: 920ms !important;
-        transition-timing-function: cubic-bezier(0.22, 1, 0.36, 1) !important;
+      height: 3.25rem !important;
+      transition-duration: 920ms !important;
+      transition-timing-function: cubic-bezier(0.22, 1, 0.36, 1) !important;
     }
 
     :global(html.layout-banner-to-spec-transition #navbar-logo img) {
-        height: 3.25rem !important;
-        transition-duration: 920ms !important;
-        transition-timing-function: cubic-bezier(0.22, 1, 0.36, 1) !important;
+      height: 3.25rem !important;
+      transition-duration: 920ms !important;
+      transition-timing-function: cubic-bezier(0.22, 1, 0.36, 1) !important;
     }
-}
+  }
 
-@media (min-width: 1280px) {
+  @media (min-width: 1280px) {
     :global(#right-sidebar-slot.right-sidebar-toc-fixed) {
-        position: sticky;
-        top: 5.5rem;
-        align-self: start;
+      position: sticky;
+      top: 5.5rem;
+      align-self: start;
     }
-}
+  }
 
-.banner-subtitle {
+  .banner-subtitle {
     text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.6);
     animation: fadeInUp 1s ease-out 0.3s both;
     min-height: 1.5em; /* 确保副标题容器有最小高度 */
     line-height: 1.2; /* 确保一致的行高 */
-}
+  }
 
-@keyframes fadeInUp {
+  @keyframes fadeInUp {
     from {
-        opacity: 0;
-        transform: translateY(30px);
+      opacity: 0;
+      transform: translateY(30px);
     }
     to {
-        opacity: 1;
-        transform: translateY(0);
+      opacity: 1;
+      transform: translateY(0);
     }
-}
+  }
 
-/* 壁纸层淡入淡出过渡 */
-:global(.wallpaper-layer) {
+  /* 壁纸层淡入淡出过渡 */
+  :global(.wallpaper-layer) {
     opacity: 1;
-    transition: opacity var(--layout-mode-transition-duration) var(--layout-mode-transition-easing);
+    transition: opacity var(--layout-mode-transition-duration)
+      var(--layout-mode-transition-easing);
     will-change: opacity;
-}
+  }
 
-:global(.wallpaper-layer-hidden) {
+  :global(.wallpaper-layer-hidden) {
     opacity: 0 !important;
     pointer-events: none;
-}
+  }
 
-/* 非 banner 模式下强制即时隐藏，避免模式切换和路由切换时的底层闪现。 */
-body[data-layout-mode="none"] #banner-wrapper,
-body[data-layout-mode="collapsed"] #banner-wrapper {
+  /* 非 banner 模式下强制即时隐藏，避免模式切换和路由切换时的底层闪现。 */
+  body[data-layout-mode="none"] #banner-wrapper,
+  body[data-layout-mode="collapsed"] #banner-wrapper {
     display: none !important;
     height: 0 !important;
     min-height: 0 !important;
@@ -777,650 +905,663 @@ body[data-layout-mode="collapsed"] #banner-wrapper {
     visibility: hidden !important;
     transition: none !important;
     pointer-events: none !important;
-}
+  }
 
-/* 主内容区位移动画 */
-.main-panel-wrapper {
+  /* 主内容区位移动画 */
+  .main-panel-wrapper {
     transition:
-        top var(--layout-mode-transition-duration) var(--layout-mode-transition-easing),
-        min-height var(--layout-mode-transition-duration) var(--layout-mode-transition-easing);
+      top var(--layout-mode-transition-duration)
+        var(--layout-mode-transition-easing),
+      min-height var(--layout-mode-transition-duration)
+        var(--layout-mode-transition-easing);
     will-change: top;
-}
+  }
 
-#toc-inner-wrapper {
+  #toc-inner-wrapper {
     transition:
-        top var(--layout-mode-transition-duration) var(--layout-mode-transition-easing),
-        max-height var(--layout-mode-transition-duration) var(--layout-mode-transition-easing);
-}
+      top var(--layout-mode-transition-duration)
+        var(--layout-mode-transition-easing),
+      max-height var(--layout-mode-transition-duration)
+        var(--layout-mode-transition-easing);
+  }
 
-body[data-layout-mode="none"] #main-grid,
-body[data-layout-mode="collapsed"] #main-grid {
+  body[data-layout-mode="none"] #main-grid,
+  body[data-layout-mode="collapsed"] #main-grid {
     transition: none !important;
-}
+  }
 
-body[data-layout-mode="none"] .main-panel-wrapper,
-body[data-layout-mode="collapsed"] .main-panel-wrapper {
+  body[data-layout-mode="none"] .main-panel-wrapper,
+  body[data-layout-mode="collapsed"] .main-panel-wrapper {
     transition: none !important;
-}
+  }
 
-body[data-layout-mode="none"] #toc-inner-wrapper,
-body[data-layout-mode="collapsed"] #toc-inner-wrapper {
+  body[data-layout-mode="none"] #toc-inner-wrapper,
+  body[data-layout-mode="collapsed"] #toc-inner-wrapper {
     transition: none !important;
-}
+  }
 
-body[data-layout-mode="none"] #content-wrapper,
-body[data-layout-mode="collapsed"] #content-wrapper {
+  body[data-layout-mode="none"] #content-wrapper,
+  body[data-layout-mode="collapsed"] #content-wrapper {
     overflow-anchor: none;
-}
+  }
 
-/* 导航栏常驻固定：避免 banner/collapsed/路由切换时被顶走再出现 */
-#top-row {
+  /* 导航栏常驻固定：避免 banner/collapsed/路由切换时被顶走再出现 */
+  #top-row {
     position: fixed;
     top: 0;
     left: 0;
     right: 0;
     height: auto;
     z-index: 50;
-}
+  }
 
-/* 当没有 banner 时，主内容区域移到顶部 */
-body[data-layout-mode="none"] .absolute.w-full.z-30,
-body[data-layout-mode="collapsed"] .absolute.w-full.z-30 {
+  /* 当没有 banner 时，主内容区域移到顶部 */
+  body[data-layout-mode="none"] .absolute.w-full.z-30,
+  body[data-layout-mode="collapsed"] .absolute.w-full.z-30 {
     top: 5.5rem !important;
-}
+  }
 
-/* TOC 垂直对齐优化 */
-body[data-layout-mode="none"] #toc-inner-wrapper,
-body[data-layout-mode="collapsed"] #toc-inner-wrapper {
+  /* TOC 垂直对齐优化 */
+  body[data-layout-mode="none"] #toc-inner-wrapper,
+  body[data-layout-mode="collapsed"] #toc-inner-wrapper {
     top: 5.5rem !important;
     max-height: calc(100vh - 8rem) !important;
-}
+  }
 
-/* 桌面端 banner 模式下的主内容区域位置 */
-@media (min-width: 1280px) {
+  /* 桌面端 banner 模式下的主内容区域位置 */
+  @media (min-width: 1280px) {
     body[data-layout-mode="banner"] .absolute.w-full.z-30 {
-        top: var(--banner-height-home) !important;
+      top: var(--banner-height-home) !important;
     }
-}
+  }
 
-/* 移动端无侧边栏布局优化 */
-@media (max-width: 767px) {
+  /* 移动端无侧边栏布局优化 */
+  @media (max-width: 767px) {
     .mobile-no-sidebar {
-        display: block !important;
-        width: 100% !important;
+      display: block !important;
+      width: 100% !important;
     }
-    
+
     .mobile-no-sidebar main {
-        width: 100% !important;
-        max-width: 100% !important;
-        margin: 0 !important;
-        padding-left: 0 !important;
-        padding-right: 0 !important;
+      width: 100% !important;
+      max-width: 100% !important;
+      margin: 0 !important;
+      padding-left: 0 !important;
+      padding-right: 0 !important;
     }
-    
+
     .mobile-no-sidebar #content-wrapper {
-        width: 100% !important;
-        max-width: 100% !important;
-        margin: 0 !important;
+      width: 100% !important;
+      max-width: 100% !important;
+      margin: 0 !important;
     }
-    
+
     /* 修复双侧边栏模式在移动端的布局问题 */
     .mobile-both-sidebar {
-        /* 确保在移动端使用单列布局 */
-        grid-template-columns: 1fr !important;
-        /* 确保左右padding对称 */
-        padding-left: 0.5rem !important;
-        padding-right: 0.5rem !important;
+      /* 确保在移动端使用单列布局 */
+      grid-template-columns: 1fr !important;
+      /* 确保左右padding对称 */
+      padding-left: 0.5rem !important;
+      padding-right: 0.5rem !important;
     }
-    
+
     /* 确保移动端主内容区域居中且全宽 */
     .mobile-both-sidebar main {
-        grid-column: 1 / -1 !important;
-        width: 100% !important;
-        margin: 0 auto !important;
+      grid-column: 1 / -1 !important;
+      width: 100% !important;
+      margin: 0 auto !important;
     }
-    
+
     /* 移动端footer也要居中 */
     .mobile-both-sidebar .footer {
-        grid-column: 1 / -1 !important;
+      grid-column: 1 / -1 !important;
     }
-}
+  }
 
-/* 移动端首页：取消桌面专用的 main-grid 下移量，避免 banner 与正文之间出现空白 */
-@media (max-width: 1279px) {
+  /* 移动端首页：取消桌面专用的 main-grid 下移量，避免 banner 与正文之间出现空白 */
+  @media (max-width: 1279px) {
     body[data-layout-mode="banner"][data-route-home="true"] #main-grid {
-        transform: none !important;
-        -webkit-transform: none !important;
+      transform: none !important;
+      -webkit-transform: none !important;
     }
-}
+  }
 
-/* 移动端横幅优化 - 小屏手机 (320px - 479px) */
-@media (max-width: 479px) {
+  /* 移动端横幅优化 - 小屏手机 (320px - 479px) */
+  @media (max-width: 479px) {
     /* Banner wrapper 高度优化 - 优先保持banner显示 */
     body[data-layout-mode="banner"] #banner-wrapper:not(.mobile-hide-banner) {
-        height: 70vh !important; /* 保持较大高度优先显示banner */
-        min-height: 450px;
-        max-height: none; /* 移除最大高度限制 */
-        top: 0 !important; /* 移动端从顶部开始，避免被导航栏覆盖 */
-        transform: none !important;
-        -webkit-transform: none !important;
+      height: 70vh !important; /* 保持较大高度优先显示banner */
+      min-height: 450px;
+      max-height: none; /* 移除最大高度限制 */
+      top: 0 !important; /* 移动端从顶部开始，避免被导航栏覆盖 */
+      transform: none !important;
+      -webkit-transform: none !important;
     }
-    
+
     /* 主内容区域位置调整 - 确保在banner下面 */
-    body[data-layout-mode="banner"] .absolute.w-full.z-30:not(.mobile-main-no-banner) {
-        top: calc(70vh + 0.75rem) !important; /* 与banner高度对应并保留轻微留白 */
-        min-height: calc(100vh - 70vh - 0.75rem) !important;
+    body[data-layout-mode="banner"]
+      .absolute.w-full.z-30:not(.mobile-main-no-banner) {
+      top: calc(70vh + 0.75rem) !important; /* 与banner高度对应并保留轻微留白 */
+      min-height: calc(100vh - 70vh - 0.75rem) !important;
     }
-    
+
     /* 横幅文本覆盖层优化 */
     .banner-text-overlay {
-        align-items: center !important; /* 垂直居中 */
-        justify-content: center !important; /* 水平居中 */
-        padding: 1rem !important;
-        text-align: center !important; /* 文字居中对齐 */
+      align-items: center !important; /* 垂直居中 */
+      justify-content: center !important; /* 水平居中 */
+      padding: 1rem !important;
+      text-align: center !important; /* 文字居中对齐 */
     }
-    
+
     /* 文本容器优化 */
     .banner-text-overlay > div {
-        margin-bottom: 0 !important; /* 移除底部边距，保持居中 */
-        width: 95% !important; /* 增加文本宽度利用率 */
-        text-align: center !important; /* 确保文字居中 */
+      margin-bottom: 0 !important; /* 移除底部边距，保持居中 */
+      width: 95% !important; /* 增加文本宽度利用率 */
+      text-align: center !important; /* 确保文字居中 */
     }
-    
+
     /* 标题字体优化 */
     .banner-title {
-        font-size: 3.2rem !important; /* 增大字体大小 */
-        line-height: 1.1 !important;
-        margin-bottom: 0.5rem !important;
-        text-shadow: 2px 2px 8px rgba(0, 0, 0, 0.8) !important; /* 增强阴影 */
+      font-size: 3.2rem !important; /* 增大字体大小 */
+      line-height: 1.1 !important;
+      margin-bottom: 0.5rem !important;
+      text-shadow: 2px 2px 8px rgba(0, 0, 0, 0.8) !important; /* 增强阴影 */
     }
-    
+
     /* 副标题字体优化 */
     .banner-subtitle {
-        font-size: 1rem !important;
-        line-height: 1.3 !important;
-        text-shadow: 1px 1px 4px rgba(0, 0, 0, 0.7) !important;
+      font-size: 1rem !important;
+      line-height: 1.3 !important;
+      text-shadow: 1px 1px 4px rgba(0, 0, 0, 0.7) !important;
     }
-    
+
     /* 波浪效果高度调整 */
     .waves {
-        height: 8vh !important;
-        min-height: 60px !important;
-        max-height: 80px !important;
+      height: 8vh !important;
+      min-height: 60px !important;
+      max-height: 80px !important;
     }
-}
+  }
 
-/* 移动端横幅优化 - 大屏手机 (480px - 767px) */
-@media (min-width: 480px) and (max-width: 767px) {
+  /* 移动端横幅优化 - 大屏手机 (480px - 767px) */
+  @media (min-width: 480px) and (max-width: 767px) {
     /* Banner wrapper 高度优化 - 优先保持banner显示 */
     body[data-layout-mode="banner"] #banner-wrapper:not(.mobile-hide-banner) {
-        height: 75vh !important;
-        min-height: 500px;
-        max-height: none; /* 移除最大高度限制 */
-        top: 0 !important; /* 移动端从顶部开始，避免被导航栏覆盖 */
-        transform: none !important;
-        -webkit-transform: none !important;
+      height: 75vh !important;
+      min-height: 500px;
+      max-height: none; /* 移除最大高度限制 */
+      top: 0 !important; /* 移动端从顶部开始，避免被导航栏覆盖 */
+      transform: none !important;
+      -webkit-transform: none !important;
     }
-    
+
     /* 主内容区域位置调整 - 确保在banner下面 */
-    body[data-layout-mode="banner"] .absolute.w-full.z-30:not(.mobile-main-no-banner) {
-        top: calc(75vh + 0.75rem) !important; /* 与banner高度对应并保留轻微留白 */
-        min-height: calc(100vh - 75vh - 0.75rem) !important;
+    body[data-layout-mode="banner"]
+      .absolute.w-full.z-30:not(.mobile-main-no-banner) {
+      top: calc(75vh + 0.75rem) !important; /* 与banner高度对应并保留轻微留白 */
+      min-height: calc(100vh - 75vh - 0.75rem) !important;
     }
-    
+
     /* 横幅文本覆盖层优化 */
     .banner-text-overlay {
-        align-items: center !important; /* 垂直居中 */
-        justify-content: center !important; /* 水平居中 */
-        padding: 1.5rem !important;
-        text-align: center !important; /* 文字居中对齐 */
+      align-items: center !important; /* 垂直居中 */
+      justify-content: center !important; /* 水平居中 */
+      padding: 1.5rem !important;
+      text-align: center !important; /* 文字居中对齐 */
     }
-    
+
     /* 文本容器优化 */
     .banner-text-overlay > div {
-        margin-bottom: 0 !important; /* 移除底部边距，保持居中 */
-        width: 90% !important;
-        text-align: center !important; /* 确保文字居中 */
+      margin-bottom: 0 !important; /* 移除底部边距，保持居中 */
+      width: 90% !important;
+      text-align: center !important; /* 确保文字居中 */
     }
-    
+
     /* 标题字体优化 */
     .banner-title {
-        font-size: 3.8rem !important; /* 增大字体大小 */
-        line-height: 1.1 !important;
-        margin-bottom: 0.75rem !important;
-        text-shadow: 2px 2px 8px rgba(0, 0, 0, 0.8) !important;
+      font-size: 3.8rem !important; /* 增大字体大小 */
+      line-height: 1.1 !important;
+      margin-bottom: 0.75rem !important;
+      text-shadow: 2px 2px 8px rgba(0, 0, 0, 0.8) !important;
     }
-    
+
     /* 副标题字体优化 */
     .banner-subtitle {
-        font-size: 1.125rem !important;
-        line-height: 1.4 !important;
-        text-shadow: 1px 1px 4px rgba(0, 0, 0, 0.7) !important;
+      font-size: 1.125rem !important;
+      line-height: 1.4 !important;
+      text-shadow: 1px 1px 4px rgba(0, 0, 0, 0.7) !important;
     }
-    
+
     /* 波浪效果高度调整 */
     .waves {
-        height: 10vh !important;
-        min-height: 70px !important;
-        max-height: 100px !important;
+      height: 10vh !important;
+      min-height: 70px !important;
+      max-height: 100px !important;
     }
-}
+  }
 
-/* 平板设备横幅优化 (768px - 1279px) */
-@media (min-width: 768px) and (max-width: 1279px) {
+  /* 平板设备横幅优化 (768px - 1279px) */
+  @media (min-width: 768px) and (max-width: 1279px) {
     /* Banner wrapper 高度优化 */
     body[data-layout-mode="banner"] #banner-wrapper:not(.mobile-hide-banner) {
-        height: 70vh !important;
-        min-height: 500px;
-        top: 0 !important; /* 移动端从顶部开始，避免被导航栏覆盖 */
-        transform: none !important;
-        -webkit-transform: none !important;
+      height: 70vh !important;
+      min-height: 500px;
+      top: 0 !important; /* 移动端从顶部开始，避免被导航栏覆盖 */
+      transform: none !important;
+      -webkit-transform: none !important;
     }
-    
+
     /* 主内容区域位置调整 - 确保在banner下面 */
-    body[data-layout-mode="banner"] .absolute.w-full.z-30:not(.mobile-main-no-banner) {
-        top: calc(70vh + 0.75rem) !important; /* 与banner高度对应并保留轻微留白 */
-        min-height: calc(100vh - 70vh - 0.75rem) !important;
+    body[data-layout-mode="banner"]
+      .absolute.w-full.z-30:not(.mobile-main-no-banner) {
+      top: calc(70vh + 0.75rem) !important; /* 与banner高度对应并保留轻微留白 */
+      min-height: calc(100vh - 70vh - 0.75rem) !important;
     }
-    
+
     /* 横幅文本覆盖层优化 */
     .banner-text-overlay {
-        align-items: center !important; /* 垂直居中 */
-        justify-content: center !important; /* 水平居中 */
-        padding: 2rem !important;
-        text-align: center !important; /* 文字居中对齐 */
+      align-items: center !important; /* 垂直居中 */
+      justify-content: center !important; /* 水平居中 */
+      padding: 2rem !important;
+      text-align: center !important; /* 文字居中对齐 */
     }
-    
+
     /* 文本容器优化 */
     .banner-text-overlay > div {
-        margin-bottom: 0 !important; /* 移除底部边距，保持居中 */
-        width: 85% !important;
-        text-align: center !important; /* 确保文字居中 */
+      margin-bottom: 0 !important; /* 移除底部边距，保持居中 */
+      width: 85% !important;
+      text-align: center !important; /* 确保文字居中 */
     }
-    
+
     /* 标题字体优化 */
     .banner-title {
-        font-size: 4rem !important;
-        line-height: 1.1 !important;
-        margin-bottom: 1rem !important;
-        text-shadow: 2px 2px 8px rgba(0, 0, 0, 0.8) !important;
+      font-size: 4rem !important;
+      line-height: 1.1 !important;
+      margin-bottom: 1rem !important;
+      text-shadow: 2px 2px 8px rgba(0, 0, 0, 0.8) !important;
     }
-    
+
     /* 副标题字体优化 */
     .banner-subtitle {
-        font-size: 1.5rem !important;
-        line-height: 1.4 !important;
-        text-shadow: 1px 1px 4px rgba(0, 0, 0, 0.7) !important;
+      font-size: 1.5rem !important;
+      line-height: 1.4 !important;
+      text-shadow: 1px 1px 4px rgba(0, 0, 0, 0.7) !important;
     }
-    
+
     /* 波浪效果高度调整 */
     .waves {
-        height: 12vh !important;
-        min-height: 80px !important;
-        max-height: 120px !important;
+      height: 12vh !important;
+      min-height: 80px !important;
+      max-height: 120px !important;
     }
-    
+
     /* 修复双侧边栏模式在平板端的布局问题 */
     .mobile-both-sidebar {
-        /* 移除平板端的单列布局限制，让 Tailwind 的 gridCols 处理 */
-        /* grid-template-columns: 1fr !important; */
-        /* 确保左右padding对称 */
-        padding-left: 1rem !important;
-        padding-right: 1rem !important;
+      /* 移除平板端的单列布局限制，让 Tailwind 的 gridCols 处理 */
+      /* grid-template-columns: 1fr !important; */
+      /* 确保左右padding对称 */
+      padding-left: 1rem !important;
+      padding-right: 1rem !important;
     }
-    
+
     /* 确保平板端主内容区域正确显示 */
     .mobile-both-sidebar main {
-        /* grid-column: 1 / -1 !important; */
-        width: 100% !important;
-        margin: 0 auto !important;
+      /* grid-column: 1 / -1 !important; */
+      width: 100% !important;
+      margin: 0 auto !important;
     }
-    
+
     /* 平板端footer也要居中 */
     .mobile-both-sidebar .footer {
-        grid-column: 1 / -1 !important;
+      grid-column: 1 / -1 !important;
     }
-}
+  }
 
-/* 桌面端保持居中 (1280px+) */
-@media (min-width: 1280px) {
+  /* 桌面端保持居中 (1280px+) */
+  @media (min-width: 1280px) {
     .banner-text-overlay {
-        align-items: center !important; /* 垂直居中 */
-        justify-content: center !important; /* 水平居中 */
-        padding: 2rem !important;
-        text-align: center !important; /* 文字居中对齐 */
+      align-items: center !important; /* 垂直居中 */
+      justify-content: center !important; /* 水平居中 */
+      padding: 2rem !important;
+      text-align: center !important; /* 文字居中对齐 */
     }
-    
+
     .banner-text-overlay > div {
-        margin-bottom: 0 !important;
-        width: 75% !important;
-        text-align: center !important; /* 确保文字居中 */
+      margin-bottom: 0 !important;
+      width: 75% !important;
+      text-align: center !important; /* 确保文字居中 */
     }
-    
+
     /* 桌面端图片容器优化 */
     .carousel-item img,
     #banner img {
-        object-position: center center !important; /* 确保图片居中显示 */
-        transition: transform 1s ease-out !important; /* 与移动端保持一致的过渡时间 */
+      object-position: center center !important; /* 确保图片居中显示 */
+      transition: transform 1s ease-out !important; /* 与移动端保持一致的过渡时间 */
     }
-    
+
     /* 桌面端轮播图片过渡优化 - 与移动端保持一致 */
     .carousel-item {
-        transition: all 0.5s ease-out !important; /* 优化过渡时间，避免与轮播间隔冲突 */
-        transform-origin: center center !important; /* 确保缩放从中心开始 */
+      transition: all 0.5s ease-out !important; /* 优化过渡时间，避免与轮播间隔冲突 */
+      transform-origin: center center !important; /* 确保缩放从中心开始 */
     }
-    
+
     /* 桌面端当前图片缩放效果 */
     .carousel-item.opacity-100.scale-100 {
-        transform: scale(1) !important; /* 当前图片正常大小 */
-        opacity: 1 !important;
+      transform: scale(1) !important; /* 当前图片正常大小 */
+      opacity: 1 !important;
     }
-    
+
     /* 桌面端非当前图片缩放效果 */
     .carousel-item.opacity-0.scale-110 {
-        transform: scale(1.15) !important; /* 非当前图片明显放大 */
-        opacity: 0 !important;
+      transform: scale(1.15) !important; /* 非当前图片明显放大 */
+      opacity: 0 !important;
     }
-    
+
     /* 确保轮播容器有正确的overflow设置 */
     #banner-carousel {
-        overflow: hidden !important;
+      overflow: hidden !important;
     }
-    
+
     /* 波浪效果恢复默认 */
     .waves {
-        height: 15vh !important;
-        min-height: 80px !important;
-        max-height: 150px !important;
+      height: 15vh !important;
+      min-height: 80px !important;
+      max-height: 150px !important;
     }
-}
+  }
 
-/* 移动端图片优化 */
-@media (max-width: 1279px) {
+  /* 移动端图片优化 */
+  @media (max-width: 1279px) {
     /* 移动端图片容器优化 */
     .carousel-item img,
     #banner img {
-        object-position: center center !important; /* 确保图片居中显示 */
-        transition: transform 0.5s ease-out !important; /* 优化过渡时间，避免与轮播间隔冲突 */
+      object-position: center center !important; /* 确保图片居中显示 */
+      transition: transform 0.5s ease-out !important; /* 优化过渡时间，避免与轮播间隔冲突 */
     }
-    
+
     /* 轮播图片过渡优化 - 与电脑端保持一致 */
     .carousel-item {
-        transition: all 1s ease-out !important; /* 包含opacity和transform的过渡 */
-        transform-origin: center center !important; /* 确保缩放从中心开始 */
+      transition: all 1s ease-out !important; /* 包含opacity和transform的过渡 */
+      transform-origin: center center !important; /* 确保缩放从中心开始 */
     }
-    
+
     /* 移动端当前图片缩放效果 */
     .carousel-item.opacity-100.scale-100 {
-        transform: scale(1) !important; /* 当前图片正常大小 */
-        opacity: 1 !important;
+      transform: scale(1) !important; /* 当前图片正常大小 */
+      opacity: 1 !important;
     }
-    
+
     /* 移动端非当前图片缩放效果 */
     .carousel-item.opacity-0.scale-110 {
-        transform: scale(1.15) !important; /* 非当前图片明显放大 */
-        opacity: 0 !important;
+      transform: scale(1.15) !important; /* 非当前图片明显放大 */
+      opacity: 0 !important;
     }
-    
+
     /* 确保轮播容器有正确的overflow设置 */
     #banner-carousel {
-        overflow: hidden !important;
+      overflow: hidden !important;
     }
-    
+
     /* 移动端banner加载动画优化 */
     .onload-animation-fade-in {
-        animation: mobile-fade-in 0.8s ease-out forwards !important;
+      animation: mobile-fade-in 0.8s ease-out forwards !important;
     }
-}
+  }
 
-/* 移动端专用淡入动画 - 与电脑端保持一致 */
-@keyframes mobile-fade-in {
+  /* 移动端专用淡入动画 - 与电脑端保持一致 */
+  @keyframes mobile-fade-in {
     0% {
-        opacity: 0;
-        transform: scale(1.1);
+      opacity: 0;
+      transform: scale(1.1);
     }
     100% {
-        opacity: 1;
-        transform: scale(1); /* 与电脑端当前图片缩放保持一致 */
+      opacity: 1;
+      transform: scale(1); /* 与电脑端当前图片缩放保持一致 */
     }
-}
+  }
 
-@media (max-width: 1279px) {
+  @media (max-width: 1279px) {
     #banner-wrapper {
-        transition:
-            transform var(--layout-mode-transition-duration) var(--layout-mode-transition-easing),
-            opacity var(--layout-mode-transition-duration) var(--layout-mode-transition-easing);
-        transform-origin: top center;
-        /* 硬件加速优化 */
-        will-change: transform, opacity;
-        backface-visibility: hidden;
-        -webkit-backface-visibility: hidden;
-        transform: translateZ(0);
-        -webkit-transform: translateZ(0);
+      transition:
+        transform var(--layout-mode-transition-duration)
+          var(--layout-mode-transition-easing),
+        opacity var(--layout-mode-transition-duration)
+          var(--layout-mode-transition-easing);
+      transform-origin: top center;
+      /* 硬件加速优化 */
+      will-change: transform, opacity;
+      backface-visibility: hidden;
+      -webkit-backface-visibility: hidden;
+      transform: translateZ(0);
+      -webkit-transform: translateZ(0);
     }
-    
+
     .mobile-hide-banner {
-        transform: translateY(-100%) translateZ(0) !important;
-        opacity: 0 !important;
-        pointer-events: none !important;
-        /* 快速消失 */
-        transition:
-            transform var(--layout-mode-transition-duration) var(--layout-mode-transition-easing),
-            opacity var(--layout-mode-transition-duration) var(--layout-mode-transition-easing) !important;
+      transform: translateY(-100%) translateZ(0) !important;
+      opacity: 0 !important;
+      pointer-events: none !important;
+      /* 快速消失 */
+      transition:
+        transform var(--layout-mode-transition-duration)
+          var(--layout-mode-transition-easing),
+        opacity var(--layout-mode-transition-duration)
+          var(--layout-mode-transition-easing) !important;
     }
-    
+
     /* 手机端非首页时主内容区域从顶部开始 - 延迟出现的动画 */
     .absolute.w-full.z-30 {
-        transition: top var(--layout-mode-transition-duration) var(--layout-mode-transition-easing);
-        /* 硬件加速优化 */
-        will-change: top;
-        /* 禁用transform以保证back to top 按钮可以显示
+      transition: top var(--layout-mode-transition-duration)
+        var(--layout-mode-transition-easing);
+      /* 硬件加速优化 */
+      will-change: top;
+      /* 禁用transform以保证back to top 按钮可以显示
         transform: translateZ(0);
         -webkit-transform: translateZ(0);
         */
     }
-    
-    .absolute.w-full.z-30.mobile-main-no-banner {
-        top: 5.5rem !important;
-        min-height: calc(100vh - 5.5rem) !important;
-        /* 内容区域快速上移 */
-        transition: top var(--layout-mode-transition-duration) var(--layout-mode-transition-easing) !important;
-    }
-}
 
-/* 移动端导航栏与banner的协调 */
-@media (max-width: 1279px) {
-    #navbar-wrapper {
-        /* 移除覆盖样式，让Navbar.astro的圆角和半透明效果生效 */
+    .absolute.w-full.z-30.mobile-main-no-banner {
+      top: 5.5rem !important;
+      min-height: calc(100vh - 5.5rem) !important;
+      /* 内容区域快速上移 */
+      transition: top var(--layout-mode-transition-duration)
+        var(--layout-mode-transition-easing) !important;
     }
-    
+  }
+
+  /* 移动端导航栏与banner的协调 */
+  @media (max-width: 1279px) {
+    #navbar-wrapper {
+      /* 移除覆盖样式，让Navbar.astro的圆角和半透明效果生效 */
+    }
+
     /* 暗色主题下的导航栏 */
     :root.dark #navbar-wrapper {
-        /* 移除覆盖样式，让Navbar.astro的圆角和半透明效果生效 */
+      /* 移除覆盖样式，让Navbar.astro的圆角和半透明效果生效 */
     }
-}
+  }
 
-/* 移动端banner性能优化 */
-@media (max-width: 1279px) {
+  /* 移动端banner性能优化 */
+  @media (max-width: 1279px) {
     .banner-container {
-        /* 启用硬件加速 */
-        transform: translateZ(0);
-        -webkit-transform: translateZ(0);
-        will-change: transform, opacity;
-        
-        /* 优化渲染性能 */
-        contain: layout style paint;
-        
-        /* 减少重绘 */
-        backface-visibility: hidden;
-        -webkit-backface-visibility: hidden;
+      /* 启用硬件加速 */
+      transform: translateZ(0);
+      -webkit-transform: translateZ(0);
+      will-change: transform, opacity;
+
+      /* 优化渲染性能 */
+      contain: layout style paint;
+
+      /* 减少重绘 */
+      backface-visibility: hidden;
+      -webkit-backface-visibility: hidden;
     }
 
     .carousel-item {
-        /* 硬件加速 */
-        transform: translateZ(0);
-        -webkit-transform: translateZ(0);
-        will-change: transform, opacity;
-        
-        /* 优化触摸响应 */
-        touch-action: pan-y;
-        -webkit-touch-callout: none;
-        -webkit-user-select: none;
-        user-select: none;
+      /* 硬件加速 */
+      transform: translateZ(0);
+      -webkit-transform: translateZ(0);
+      will-change: transform, opacity;
+
+      /* 优化触摸响应 */
+      touch-action: pan-y;
+      -webkit-touch-callout: none;
+      -webkit-user-select: none;
+      user-select: none;
     }
 
     .banner-text-overlay {
-        /* 文字渲染优化 */
-        -webkit-font-smoothing: antialiased;
-        -moz-osx-font-smoothing: grayscale;
-        text-rendering: optimizeLegibility;
-        
-        /* 减少重排 */
-        contain: layout style;
+      /* 文字渲染优化 */
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+      text-rendering: optimizeLegibility;
+
+      /* 减少重排 */
+      contain: layout style;
     }
 
     /* 移动端图片优化 */
     .banner-container img {
-        /* 图片渲染优化 */
-        image-rendering: -webkit-optimize-contrast;
-        image-rendering: crisp-edges;
-        
-        /* 防止图片拖拽 */
-        -webkit-user-drag: none;
-        -khtml-user-drag: none;
-        -moz-user-drag: none;
-        -o-user-drag: none;
-        user-drag: none;
-        
-        /* 触摸优化 */
-        pointer-events: none;
+      /* 图片渲染优化 */
+      image-rendering: -webkit-optimize-contrast;
+      image-rendering: crisp-edges;
+
+      /* 防止图片拖拽 */
+      -webkit-user-drag: none;
+      -khtml-user-drag: none;
+      -moz-user-drag: none;
+      -o-user-drag: none;
+      user-drag: none;
+
+      /* 触摸优化 */
+      pointer-events: none;
     }
 
     /* 移动端轮播指示器 */
     .carousel-indicators {
-        position: absolute;
-        bottom: 20px;
-        left: 50%;
-        transform: translateX(-50%);
-        display: flex;
-        gap: 8px;
-        z-index: 10;
+      position: absolute;
+      bottom: 20px;
+      left: 50%;
+      transform: translateX(-50%);
+      display: flex;
+      gap: 8px;
+      z-index: 10;
     }
 
     .carousel-indicator {
-        width: 8px;
-        height: 8px;
-        border-radius: 50%;
-        background: rgba(255, 255, 255, 0.5);
-        transition: all 0.3s ease;
-        cursor: pointer;
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: rgba(255, 255, 255, 0.5);
+      transition: all 0.3s ease;
+      cursor: pointer;
     }
 
     .carousel-indicator.active {
-        background: rgba(255, 255, 255, 0.9);
-        transform: scale(1.2);
+      background: rgba(255, 255, 255, 0.9);
+      transform: scale(1.2);
     }
-}
+  }
 
-/* 当banner被禁用时的布局样式 */
-.no-banner-layout {
+  /* 当banner被禁用时的布局样式 */
+  .no-banner-layout {
     top: 5.5rem !important;
     min-height: calc(100vh - 5.5rem) !important;
-}
+  }
 
-/* 移动端当banner被禁用时的布局样式 */
-@media (max-width: 1279px) {
+  /* 移动端当banner被禁用时的布局样式 */
+  @media (max-width: 1279px) {
     .absolute.w-full.z-30.no-banner-layout {
-        top: 5.5rem !important;
-        min-height: calc(100vh - 5.5rem) !important;
+      top: 5.5rem !important;
+      min-height: calc(100vh - 5.5rem) !important;
     }
-}
+  }
 
-/* 小屏手机当banner被禁用时的布局样式 */
-@media (max-width: 479px) {
+  /* 小屏手机当banner被禁用时的布局样式 */
+  @media (max-width: 479px) {
     .absolute.w-full.z-30.no-banner-layout {
-        top: 5.5rem !important;
-        min-height: calc(100vh - 5.5rem) !important;
+      top: 5.5rem !important;
+      min-height: calc(100vh - 5.5rem) !important;
     }
-}
+  }
 
-/* 平板设备当banner被禁用时的布局样式 */
-@media (min-width: 768px) and (max-width: 1279px) {
+  /* 平板设备当banner被禁用时的布局样式 */
+  @media (min-width: 768px) and (max-width: 1279px) {
     .absolute.w-full.z-30.no-banner-layout {
-        top: 5.5rem !important;
-        min-height: calc(100vh - 5.5rem) !important;
+      top: 5.5rem !important;
+      min-height: calc(100vh - 5.5rem) !important;
     }
-}
+  }
 
-/* 移动端横屏优化 */
-@media (max-width: 1279px) and (orientation: landscape) {
+  /* 移动端横屏优化 */
+  @media (max-width: 1279px) and (orientation: landscape) {
     #banner-wrapper:not(.mobile-hide-banner) {
-        top: 0 !important; /* 横屏模式从顶部开始，避免被导航栏覆盖 */
-        height: 60vh !important;
-        transform: none !important;
-        -webkit-transform: none !important;
+      top: 0 !important; /* 横屏模式从顶部开始，避免被导航栏覆盖 */
+      height: 60vh !important;
+      transform: none !important;
+      -webkit-transform: none !important;
     }
-    
+
     /* 主内容区域位置调整 - 确保在banner下面，但不影响非首页 */
     .absolute.w-full.z-30:not(.mobile-main-no-banner) {
-        top: calc(60vh + 0.5rem) !important; /* 横屏下保留更小留白 */
-        min-height: calc(100vh - 60vh - 0.5rem) !important;
+      top: calc(60vh + 0.5rem) !important; /* 横屏下保留更小留白 */
+      min-height: calc(100vh - 60vh - 0.5rem) !important;
     }
-    
+
     .banner-container {
-        height: 60vh;
-        min-height: 300px;
+      height: 60vh;
+      min-height: 300px;
     }
 
     .banner-text-overlay {
-        padding: 1rem 1.5rem;
-        align-items: center !important; /* 垂直居中 */
-        justify-content: center !important; /* 水平居中 */
-        text-align: center !important; /* 文字居中对齐 */
+      padding: 1rem 1.5rem;
+      align-items: center !important; /* 垂直居中 */
+      justify-content: center !important; /* 水平居中 */
+      text-align: center !important; /* 文字居中对齐 */
     }
 
     .banner-title {
-        font-size: 2.2rem !important; /* 增大字体大小 */
-        line-height: 1.3;
+      font-size: 2.2rem !important; /* 增大字体大小 */
+      line-height: 1.3;
     }
 
     .banner-subtitle {
-        font-size: 0.9rem;
-        margin-top: 0.5rem;
+      font-size: 0.9rem;
+      margin-top: 0.5rem;
     }
-}
+  }
 
-/* 移动端暗色模式优化 */
-@media (max-width: 1279px) {
+  /* 移动端暗色模式优化 */
+  @media (max-width: 1279px) {
     :root.dark .banner-text-overlay {
-        background: linear-gradient(
-            to top,
-            rgba(0, 0, 0, 0.8) 0%,
-            rgba(0, 0, 0, 0.4) 50%,
-            transparent 100%
-        );
+      background: linear-gradient(
+        to top,
+        rgba(0, 0, 0, 0.8) 0%,
+        rgba(0, 0, 0, 0.4) 50%,
+        transparent 100%
+      );
     }
 
     :root.dark .banner-title {
-        text-shadow: 2px 2px 8px rgba(0, 0, 0, 0.8);
+      text-shadow: 2px 2px 8px rgba(0, 0, 0, 0.8);
     }
 
     :root.dark .banner-subtitle {
-        text-shadow: 1px 1px 4px rgba(0, 0, 0, 0.7);
+      text-shadow: 1px 1px 4px rgba(0, 0, 0, 0.7);
     }
 
     :root:not(.dark) .banner-text-overlay {
-        background: linear-gradient(
-            to top,
-            rgba(255, 255, 255, 0.26) 0%,
-            rgba(255, 255, 255, 0.12) 50%,
-            transparent 100%
-        );
+      background: linear-gradient(
+        to top,
+        rgba(255, 255, 255, 0.26) 0%,
+        rgba(255, 255, 255, 0.12) 50%,
+        transparent 100%
+      );
     }
-}
+  }
 
-/* 水波纹显示优化 */
-.waves {
+  /* 水波纹显示优化 */
+  .waves {
     /* 确保水波纹完整显示 */
     overflow: visible;
     z-index: 5;
@@ -1429,9 +1570,9 @@ body[data-layout-mode="collapsed"] #toc-inner-wrapper {
     will-change: transform;
     /* 确保与页面背景在同一合成层 */
     contain: layout style paint;
-}
+  }
 
-.waves svg {
+  .waves svg {
     /* 确保SVG完整渲染 */
     width: 100%;
     height: 100%;
@@ -1439,224 +1580,245 @@ body[data-layout-mode="collapsed"] #toc-inner-wrapper {
     /* SVG硬件加速 */
     transform: translateZ(0);
     backface-visibility: hidden;
-}
+  }
 
-/* 波浪填充色主题切换优化 */
-.waves use {
+  /* 波浪填充色主题切换优化 */
+  .waves use {
     /* 确保填充色与页面背景同步更新 */
     will-change: fill;
-}
+  }
 
-/* 非 banner 模式下，暂停波浪动画 */
-body[data-layout-mode="none"] .waves > .parallax use,
-body[data-layout-mode="collapsed"] .waves > .parallax use {
+  /* 非 banner 模式下，暂停波浪动画 */
+  body[data-layout-mode="none"] .waves > .parallax use,
+  body[data-layout-mode="collapsed"] .waves > .parallax use {
     animation-play-state: paused;
-}
+  }
 
-/* 移动端水波纹特殊优化 */
-@media (max-width: 1279px) {
+  /* 移动端水波纹特殊优化 */
+  @media (max-width: 1279px) {
     #header-waves {
-        /* 确保水波纹容器不被裁剪 */
-        overflow: visible;
-        z-index: 5;
-        /* 水波纹快速消失动画 */
-        transition: transform 0.3s ease-in, opacity 0.2s ease-in;
+      /* 确保水波纹容器不被裁剪 */
+      overflow: visible;
+      z-index: 5;
+      /* 水波纹快速消失动画 */
+      transition:
+        transform 0.3s ease-in,
+        opacity 0.2s ease-in;
     }
-    
+
     /* 当banner隐藏时，水波纹快速消失 */
     .mobile-hide-banner #header-waves {
-        transform: translateY(-100%);
-        opacity: 0;
-        /* 水波纹比banner更快消失 */
-        transition: transform 0.25s ease-in, opacity 0.15s ease-in;
+      transform: translateY(-100%);
+      opacity: 0;
+      /* 水波纹比banner更快消失 */
+      transition:
+        transform 0.25s ease-in,
+        opacity 0.15s ease-in;
     }
-    
+
     .waves svg {
-        /* 移动端SVG优化 */
-        min-height: 60px;
+      /* 移动端SVG优化 */
+      min-height: 60px;
     }
-    
+
     /* 确保水波纹在banner底部正确定位 */
     .waves {
-        bottom: -1px !important;
-        position: absolute !important;
+      bottom: -1px !important;
+      position: absolute !important;
     }
-}
+  }
 
-/* 超小屏幕水波纹优化 */
-@media (max-width: 360px) {
+  /* 超小屏幕水波纹优化 */
+  @media (max-width: 360px) {
     .waves {
-        height: 6vh !important;
-        min-height: 50px !important;
-        max-height: 70px !important;
+      height: 6vh !important;
+      min-height: 50px !important;
+      max-height: 70px !important;
     }
-}
+  }
 
-/* 基于屏幕高度的banner优化 - 优先显示banner */
-/* 极小高度屏幕 (高度 ≤ 500px) */
-@media (max-height: 500px) {
+  /* 基于屏幕高度的banner优化 - 优先显示banner */
+  /* 极小高度屏幕 (高度 ≤ 500px) */
+  @media (max-height: 500px) {
     #banner-wrapper {
-        height: 85vh !important; /* 占用更多高度确保banner显示 */
-        min-height: 350px !important;
+      height: 85vh !important; /* 占用更多高度确保banner显示 */
+      min-height: 350px !important;
     }
-    
-    .banner-text-overlay {
-        padding: 1rem !important;
-        align-items: center !important; /* 垂直居中 */
-        justify-content: center !important; /* 水平居中 */
-        text-align: center !important; /* 文字居中对齐 */
-    }
-    
-    .banner-title {
-        font-size: 2.8rem !important; /* 增大字体大小 */
-        line-height: 1.1 !important;
-        margin-bottom: 0.5rem !important;
-    }
-    
-    .banner-subtitle {
-        font-size: 0.9rem !important;
-        line-height: 1.2 !important;
-    }
-    
-    .waves {
-        height: 5vh !important;
-        min-height: 40px !important;
-        max-height: 50px !important;
-    }
-}
 
-/* 小高度屏幕 (高度 501px - 600px) */
-@media (min-height: 501px) and (max-height: 600px) {
+    .banner-text-overlay {
+      padding: 1rem !important;
+      align-items: center !important; /* 垂直居中 */
+      justify-content: center !important; /* 水平居中 */
+      text-align: center !important; /* 文字居中对齐 */
+    }
+
+    .banner-title {
+      font-size: 2.8rem !important; /* 增大字体大小 */
+      line-height: 1.1 !important;
+      margin-bottom: 0.5rem !important;
+    }
+
+    .banner-subtitle {
+      font-size: 0.9rem !important;
+      line-height: 1.2 !important;
+    }
+
+    .waves {
+      height: 5vh !important;
+      min-height: 40px !important;
+      max-height: 50px !important;
+    }
+  }
+
+  /* 小高度屏幕 (高度 501px - 600px) */
+  @media (min-height: 501px) and (max-height: 600px) {
     #banner-wrapper {
-        height: 80vh !important;
-        min-height: 400px !important;
+      height: 80vh !important;
+      min-height: 400px !important;
     }
-    
-    .banner-text-overlay {
-        padding: 1.5rem !important;
-        align-items: center !important; /* 垂直居中 */
-        justify-content: center !important; /* 水平居中 */
-        text-align: center !important; /* 文字居中对齐 */
-    }
-    
-    .banner-title {
-        font-size: 3.2rem !important; /* 增大字体大小 */
-        line-height: 1.1 !important;
-        margin-bottom: 0.75rem !important;
-    }
-    
-    .banner-subtitle {
-        font-size: 1rem !important;
-        line-height: 1.3 !important;
-    }
-    
-    .waves {
-        height: 6vh !important;
-        min-height: 50px !important;
-        max-height: 60px !important;
-    }
-}
 
-/* 中等高度屏幕 (高度 601px - 700px) */
-@media (min-height: 601px) and (max-height: 700px) {
+    .banner-text-overlay {
+      padding: 1.5rem !important;
+      align-items: center !important; /* 垂直居中 */
+      justify-content: center !important; /* 水平居中 */
+      text-align: center !important; /* 文字居中对齐 */
+    }
+
+    .banner-title {
+      font-size: 3.2rem !important; /* 增大字体大小 */
+      line-height: 1.1 !important;
+      margin-bottom: 0.75rem !important;
+    }
+
+    .banner-subtitle {
+      font-size: 1rem !important;
+      line-height: 1.3 !important;
+    }
+
+    .waves {
+      height: 6vh !important;
+      min-height: 50px !important;
+      max-height: 60px !important;
+    }
+  }
+
+  /* 中等高度屏幕 (高度 601px - 700px) */
+  @media (min-height: 601px) and (max-height: 700px) {
     #banner-wrapper {
-        height: 75vh !important;
-        min-height: 450px !important;
+      height: 75vh !important;
+      min-height: 450px !important;
     }
-    
-    .banner-text-overlay {
-        padding: 2rem !important;
-        align-items: center !important; /* 垂直居中 */
-        justify-content: center !important; /* 水平居中 */
-        text-align: center !important; /* 文字居中对齐 */
-    }
-    
-    .banner-title {
-        font-size: 3.8rem !important; /* 增大字体大小 */
-        line-height: 1.1 !important;
-        margin-bottom: 1rem !important;
-    }
-    
-    .banner-subtitle {
-        font-size: 1.125rem !important;
-        line-height: 1.4 !important;
-    }
-    
-    .waves {
-        height: 8vh !important;
-        min-height: 60px !important;
-        max-height: 80px !important;
-    }
-}
 
-/* 横屏模式特殊处理 - 优先显示banner */
-@media (orientation: landscape) and (max-height: 500px) {
+    .banner-text-overlay {
+      padding: 2rem !important;
+      align-items: center !important; /* 垂直居中 */
+      justify-content: center !important; /* 水平居中 */
+      text-align: center !important; /* 文字居中对齐 */
+    }
+
+    .banner-title {
+      font-size: 3.8rem !important; /* 增大字体大小 */
+      line-height: 1.1 !important;
+      margin-bottom: 1rem !important;
+    }
+
+    .banner-subtitle {
+      font-size: 1.125rem !important;
+      line-height: 1.4 !important;
+    }
+
+    .waves {
+      height: 8vh !important;
+      min-height: 60px !important;
+      max-height: 80px !important;
+    }
+  }
+
+  /* 横屏模式特殊处理 - 优先显示banner */
+  @media (orientation: landscape) and (max-height: 500px) {
     #banner-wrapper {
-        height: 90vh !important; /* 横屏时占用更多高度 */
-        min-height: 300px !important;
+      height: 90vh !important; /* 横屏时占用更多高度 */
+      min-height: 300px !important;
     }
-    
-    .banner-text-overlay {
-        padding: 1rem 2rem !important;
-        align-items: center !important; /* 垂直居中 */
-        justify-content: center !important; /* 水平居中 */
-        text-align: center !important; /* 文字居中对齐 */
-    }
-    
-    .banner-title {
-        font-size: 2.8rem !important; /* 增大字体大小 */
-        line-height: 1.1 !important;
-        margin-bottom: 0.5rem !important;
-    }
-    
-    .banner-subtitle {
-        font-size: 1rem !important;
-        line-height: 1.2 !important;
-    }
-    
-    .waves {
-        height: 4vh !important;
-        min-height: 30px !important;
-        max-height: 40px !important;
-    }
-}
 
-/* 桌面端侧边栏固定：首页 banner 态与 collapsed/none 态保持同一停靠位 */
-@media (min-width: 1280px) {
+    .banner-text-overlay {
+      padding: 1rem 2rem !important;
+      align-items: center !important; /* 垂直居中 */
+      justify-content: center !important; /* 水平居中 */
+      text-align: center !important; /* 文字居中对齐 */
+    }
+
+    .banner-title {
+      font-size: 2.8rem !important; /* 增大字体大小 */
+      line-height: 1.1 !important;
+      margin-bottom: 0.5rem !important;
+    }
+
+    .banner-subtitle {
+      font-size: 1rem !important;
+      line-height: 1.2 !important;
+    }
+
+    .waves {
+      height: 4vh !important;
+      min-height: 30px !important;
+      max-height: 40px !important;
+    }
+  }
+
+  /* 桌面端侧边栏固定：首页 banner 态与 collapsed/none 态保持同一停靠位 */
+  @media (min-width: 1280px) {
     :global(body[data-layout-mode="banner"][data-route-home="true"] #sidebar),
     :global(body[data-layout-mode="none"] #sidebar),
     :global(body[data-layout-mode="none"] #right-sidebar),
     :global(body[data-layout-mode="collapsed"] #sidebar),
     :global(body[data-layout-mode="collapsed"] #right-sidebar) {
-        position: sticky;
-        top: 5.5rem;
-        align-self: start;
+      position: sticky;
+      top: 5.5rem;
+      align-self: start;
     }
 
-    :global(body[data-layout-mode="banner"][data-route-home="true"] #sidebar[data-scrollable="true"]),
+    :global(
+      body[data-layout-mode="banner"][data-route-home="true"]
+        #sidebar[data-scrollable="true"]
+    ),
     :global(body[data-layout-mode="none"] #sidebar[data-scrollable="true"]),
     :global(body[data-layout-mode="none"] #right-sidebar),
-    :global(body[data-layout-mode="collapsed"] #sidebar[data-scrollable="true"]),
+    :global(
+      body[data-layout-mode="collapsed"] #sidebar[data-scrollable="true"]
+    ),
     :global(body[data-layout-mode="collapsed"] #right-sidebar) {
-        max-height: calc(100vh - 6.5rem);
-        overflow-y: auto;
-        scrollbar-width: thin;
+      max-height: calc(100vh - 6.5rem);
+      overflow-y: auto;
+      scrollbar-width: thin;
     }
 
     /* 不可滚动时禁止溢出 */
-    :global(body[data-layout-mode="banner"][data-route-home="true"] #sidebar[data-scrollable="false"]),
+    :global(
+      body[data-layout-mode="banner"][data-route-home="true"]
+        #sidebar[data-scrollable="false"]
+    ),
     :global(body[data-layout-mode="none"] #sidebar[data-scrollable="false"]),
-    :global(body[data-layout-mode="collapsed"] #sidebar[data-scrollable="false"]) {
-        overflow-y: hidden;
+    :global(
+      body[data-layout-mode="collapsed"] #sidebar[data-scrollable="false"]
+    ) {
+      overflow-y: hidden;
     }
 
     /* 内部 sticky 区域在外层已 sticky 时改为 relative */
-    :global(body[data-layout-mode="banner"][data-route-home="true"] #sidebar #sidebar-sticky),
+    :global(
+      body[data-layout-mode="banner"][data-route-home="true"]
+        #sidebar
+        #sidebar-sticky
+    ),
     :global(body[data-layout-mode="none"] #sidebar #sidebar-sticky),
     :global(body[data-layout-mode="none"] #right-sidebar #right-sidebar-sticky),
     :global(body[data-layout-mode="collapsed"] #sidebar #sidebar-sticky),
-    :global(body[data-layout-mode="collapsed"] #right-sidebar #right-sidebar-sticky) {
-        position: relative;
-        top: auto;
+    :global(
+      body[data-layout-mode="collapsed"] #right-sidebar #right-sidebar-sticky
+    ) {
+      position: relative;
+      top: auto;
     }
-}
+  }
+</style>

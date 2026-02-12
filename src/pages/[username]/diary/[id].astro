@@ -6,11 +6,14 @@ import MainGridLayout from "@layouts/MainGridLayout.astro";
 import { renderMarkdown } from "@/server/markdown/render";
 import { buildDirectusAssetUrl } from "@/server/directus-auth";
 import {
-	loadProfileForViewer,
-	loadUserDiaryDetail,
-	profileToSidebarData,
+  loadProfileForViewer,
+  loadUserDiaryDetail,
+  profileToSidebarData,
 } from "@/server/api/v1/public-data";
-import type { ContentLoadResult, DiaryDetail } from "@/server/api/v1/public-data";
+import type {
+  ContentLoadResult,
+  DiaryDetail,
+} from "@/server/api/v1/public-data";
 import { getSessionUser } from "@/server/auth/session";
 
 export const prerender = false;
@@ -22,199 +25,224 @@ let result: ContentLoadResult<DiaryDetail> = { status: "not_found" };
 let html = "";
 
 if (!username || !id) {
-	Astro.response.status = 404;
+  Astro.response.status = 404;
 } else {
-	try {
-		const sessionUser = await getSessionUser(Astro);
-		const viewerId = sessionUser?.id ?? null;
-		result = await loadUserDiaryDetail(username, id, { viewerId });
-		if (result.status === "ok") {
-			html = await renderMarkdown(String(result.data.content || ""), {
-				target: "page",
-			});
-			const sidebarProfile = await loadProfileForViewer(username, viewerId);
-			if (sidebarProfile) {
-				Astro.locals.sidebarProfile = profileToSidebarData(sidebarProfile);
-			}
-		} else if (result.status === "permission_denied") {
-			Astro.response.status = 403;
-		} else {
-			Astro.response.status = 404;
-		}
-	} catch (error) {
-		console.error("[diary] failed to load detail:", error);
-		Astro.response.status = 500;
-	}
+  try {
+    const sessionUser = await getSessionUser(Astro);
+    const viewerId = sessionUser?.id ?? null;
+    result = await loadUserDiaryDetail(username, id, { viewerId });
+    if (result.status === "ok") {
+      html = await renderMarkdown(String(result.data.content || ""), {
+        target: "page",
+      });
+      const sidebarProfile = await loadProfileForViewer(username, viewerId);
+      if (sidebarProfile) {
+        Astro.locals.sidebarProfile = profileToSidebarData(sidebarProfile);
+      }
+    } else if (result.status === "permission_denied") {
+      Astro.response.status = 403;
+    } else {
+      Astro.response.status = 404;
+    }
+  } catch (error) {
+    console.error("[diary] failed to load detail:", error);
+    Astro.response.status = 500;
+  }
 }
 
 const diary = result.status === "ok" ? result.data : null;
 ---
 
 <MainGridLayout title="日记详情" description={diary?.content || ""}>
-	{result.status === "permission_denied" ? (
-		<ContentNotVisible
-			mode="permission_denied"
-			title="日记不可见"
-			description="由于用户权限设置，该日记内容不可见。"
-			backHref={`/${username}/diary`}
-			backLabel="返回日记列表"
-		/>
-	) : !diary ? (
-		<ContentNotVisible
-			mode="not_found"
-			title="日记不存在"
-			description="该日记可能未公开或已删除。"
-			backHref={`/${username}/diary`}
-			backLabel="返回日记列表"
-		/>
-	) : (
-		<>
-			<article
-				id="post-container"
-				class="card-base p-6 md:p-8 rounded-[var(--radius-large)] mb-4 text-90"
-			>
-				<a href={`/${username}/diary`} class="inline-block text-sm text-[var(--primary)] hover:underline mb-4">返回日记列表</a>
-				<div
-					id="diary-manage-root"
-					class="hidden mb-4 flex items-center justify-end"
-					data-diary-id={diary.id}
-					data-author-id={diary.author?.id || ""}
-				>
-					<details class="relative">
-						<summary class="list-none cursor-pointer btn-plain scale-animation w-9 h-9 rounded-lg flex items-center justify-center text-lg select-none" aria-label="更多操作">
-							...
-						</summary>
-						<div class="absolute right-0 top-10 z-10 min-w-[8rem] card-base rounded-xl border border-[var(--line-divider)] p-2">
-							<button
-								type="button"
-								id="diary-edit-trigger"
-								class="w-full text-left px-3 py-2 rounded-lg text-sm text-90 hover:bg-black/5 dark:hover:bg-white/10"
-							>
-								编辑日记
-							</button>
-							<button
-								type="button"
-								id="diary-delete-trigger"
-								class="w-full text-left px-3 py-2 rounded-lg text-sm text-red-500 hover:bg-black/5 dark:hover:bg-white/10"
-							>
-								删除日记
-							</button>
-						</div>
-					</details>
-				</div>
-				<header class="mb-4 space-y-2">
-					<h1 class="text-2xl md:text-3xl font-bold text-90">日记详情</h1>
-					<div class="text-xs text-60 flex flex-wrap items-center gap-3">
-						{diary.author?.name && <span>{diary.author.name}</span>}
-						{diary.happened_at && <time datetime={diary.happened_at}>{new Date(diary.happened_at).toLocaleString()}</time>}
-						{diary.location && <span>地点：{diary.location}</span>}
-						{diary.mood && <span>心情：{diary.mood}</span>}
-					</div>
-				</header>
+  {
+    result.status === "permission_denied" ? (
+      <ContentNotVisible
+        mode="permission_denied"
+        title="日记不可见"
+        description="由于用户权限设置，该日记内容不可见。"
+        backHref={`/${username}/diary`}
+        backLabel="返回日记列表"
+      />
+    ) : !diary ? (
+      <ContentNotVisible
+        mode="not_found"
+        title="日记不存在"
+        description="该日记可能未公开或已删除。"
+        backHref={`/${username}/diary`}
+        backLabel="返回日记列表"
+      />
+    ) : (
+      <>
+        <article
+          id="post-container"
+          class="card-base p-6 md:p-8 rounded-[var(--radius-large)] mb-4 text-90"
+        >
+          <a
+            href={`/${username}/diary`}
+            class="inline-block text-sm text-[var(--primary)] hover:underline mb-4"
+          >
+            返回日记列表
+          </a>
+          <div
+            id="diary-manage-root"
+            class="hidden mb-4 flex items-center justify-end"
+            data-diary-id={diary.id}
+            data-author-id={diary.author?.id || ""}
+          >
+            <details class="relative">
+              <summary
+                class="list-none cursor-pointer btn-plain scale-animation w-9 h-9 rounded-lg flex items-center justify-center text-lg select-none"
+                aria-label="更多操作"
+              >
+                ...
+              </summary>
+              <div class="absolute right-0 top-10 z-10 min-w-[8rem] card-base rounded-xl border border-[var(--line-divider)] p-2">
+                <button
+                  type="button"
+                  id="diary-edit-trigger"
+                  class="w-full text-left px-3 py-2 rounded-lg text-sm text-90 hover:bg-black/5 dark:hover:bg-white/10"
+                >
+                  编辑日记
+                </button>
+                <button
+                  type="button"
+                  id="diary-delete-trigger"
+                  class="w-full text-left px-3 py-2 rounded-lg text-sm text-red-500 hover:bg-black/5 dark:hover:bg-white/10"
+                >
+                  删除日记
+                </button>
+              </div>
+            </details>
+          </div>
+          <header class="mb-4 space-y-2">
+            <h1 class="text-2xl md:text-3xl font-bold text-90">日记详情</h1>
+            <div class="text-xs text-60 flex flex-wrap items-center gap-3">
+              {diary.author?.name && <span>{diary.author.name}</span>}
+              {diary.happened_at && (
+                <time datetime={diary.happened_at}>
+                  {new Date(diary.happened_at).toLocaleString()}
+                </time>
+              )}
+              {diary.location && <span>地点：{diary.location}</span>}
+              {diary.mood && <span>心情：{diary.mood}</span>}
+            </div>
+          </header>
 
-				<Markdown class="markdown-content mb-6">
-					<Fragment set:html={html} />
-				</Markdown>
+          <Markdown class="markdown-content mb-6">
+            <Fragment set:html={html} />
+          </Markdown>
 
-				{Array.isArray(diary.images) && diary.images.length > 0 && (
-					<div class="grid grid-cols-2 md:grid-cols-3 gap-3">
-						{diary.images
-							.filter((image) => image.image_url || image.file_id)
-							.map((image) => (
-								<figure class="space-y-2">
-									<img
-										src={
-											image.image_url ||
-											(image.file_id
-												? buildDirectusAssetUrl(image.file_id, {
-														width: 960,
-														height: 960,
-														fit: "cover",
-													  })
-												: "")
-										}
-										alt={image.caption || "diary image"}
-										class="w-full h-36 md:h-44 object-cover rounded-xl border border-[var(--line-divider)]"
-										loading="lazy"
-									/>
-									{image.caption && <figcaption class="text-xs text-60">{image.caption}</figcaption>}
-								</figure>
-							))}
-					</div>
-				)}
-			</article>
+          {Array.isArray(diary.images) && diary.images.length > 0 && (
+            <div class="grid grid-cols-2 md:grid-cols-3 gap-3">
+              {diary.images
+                .filter((image) => image.image_url || image.file_id)
+                .map((image) => (
+                  <figure class="space-y-2">
+                    <img
+                      src={
+                        image.image_url ||
+                        (image.file_id
+                          ? buildDirectusAssetUrl(image.file_id, {
+                              width: 960,
+                              height: 960,
+                              fit: "cover",
+                            })
+                          : "")
+                      }
+                      alt={image.caption || "diary image"}
+                      class="w-full h-36 md:h-44 object-cover rounded-xl border border-[var(--line-divider)]"
+                      loading="lazy"
+                    />
+                    {image.caption && (
+                      <figcaption class="text-xs text-60">
+                        {image.caption}
+                      </figcaption>
+                    )}
+                  </figure>
+                ))}
+            </div>
+          )}
+        </article>
 
-			<Comment module="diaries" contentId={diary.id} allowComments={diary.allow_comments} />
-		</>
-	)}
+        <Comment
+          module="diaries"
+          contentId={diary.id}
+          allowComments={diary.allow_comments}
+        />
+      </>
+    )
+  }
 </MainGridLayout>
 
 <script>
-	import { getAuthState, subscribeAuthState } from "@/scripts/auth-state";
-	import type { AuthState } from "@/scripts/auth-state";
+  import { getAuthState, subscribeAuthState } from "@/scripts/auth-state";
+  import type { AuthState } from "@/scripts/auth-state";
 
-	const diaryManageRoot = document.getElementById("diary-manage-root");
+  const diaryManageRoot = document.getElementById("diary-manage-root");
 
-	if (diaryManageRoot instanceof HTMLElement && !diaryManageRoot.dataset.bound) {
-		diaryManageRoot.dataset.bound = "1";
-		const diaryId = String(diaryManageRoot.dataset.diaryId || "");
-		const authorId = String(diaryManageRoot.dataset.authorId || "");
-		const deleteBtn = document.getElementById("diary-delete-trigger");
-		const editBtn = document.getElementById("diary-edit-trigger");
-		const applyManageMenuVisibility = (state: AuthState): void => {
-			const canDelete =
-				state.isLoggedIn &&
-				Boolean(state.userId) &&
-				(state.isAdmin || state.userId === authorId);
-			diaryManageRoot.classList.toggle("hidden", !canDelete);
-		};
+  if (
+    diaryManageRoot instanceof HTMLElement &&
+    !diaryManageRoot.dataset.bound
+  ) {
+    diaryManageRoot.dataset.bound = "1";
+    const diaryId = String(diaryManageRoot.dataset.diaryId || "");
+    const authorId = String(diaryManageRoot.dataset.authorId || "");
+    const deleteBtn = document.getElementById("diary-delete-trigger");
+    const editBtn = document.getElementById("diary-edit-trigger");
+    const applyManageMenuVisibility = (state: AuthState): void => {
+      const canDelete =
+        state.isLoggedIn &&
+        Boolean(state.userId) &&
+        (state.isAdmin || state.userId === authorId);
+      diaryManageRoot.classList.toggle("hidden", !canDelete);
+    };
 
-		if (deleteBtn instanceof HTMLButtonElement) {
-			deleteBtn.addEventListener("click", async () => {
-				if (!diaryId) return;
-				const confirmed = window.confirm("确认删除这篇日记？删除后不可恢复。");
-				if (!confirmed) return;
+    if (deleteBtn instanceof HTMLButtonElement) {
+      deleteBtn.addEventListener("click", async () => {
+        if (!diaryId) return;
+        const confirmed = window.confirm("确认删除这篇日记？删除后不可恢复。");
+        if (!confirmed) return;
 
-				deleteBtn.disabled = true;
-				try {
-					const response = await fetch(
-						`/api/v1/me/diaries/${encodeURIComponent(diaryId)}`,
-						{
-							method: "DELETE",
-							credentials: "include",
-							headers: { Accept: "application/json" },
-						},
-					);
-					const data = await response.json().catch(() => null);
-					if (!response.ok || !data?.ok) {
-						window.alert(data?.message || "删除失败");
-						return;
-					}
-					const authState = getAuthState();
-					if (authState.username) {
-						window.location.href = `/${authState.username}/diary`;
-						return;
-					}
-					window.location.href = "/me";
-				} catch (error) {
-					console.error("[diary] delete failed:", error);
-					window.alert("删除失败，请稍后重试");
-				} finally {
-					deleteBtn.disabled = false;
-				}
-			});
-		}
+        deleteBtn.disabled = true;
+        try {
+          const response = await fetch(
+            `/api/v1/me/diaries/${encodeURIComponent(diaryId)}`,
+            {
+              method: "DELETE",
+              credentials: "include",
+              headers: { Accept: "application/json" },
+            },
+          );
+          const data = await response.json().catch(() => null);
+          if (!response.ok || !data?.ok) {
+            window.alert(data?.message || "删除失败");
+            return;
+          }
+          const authState = getAuthState();
+          if (authState.username) {
+            window.location.href = `/${authState.username}/diary`;
+            return;
+          }
+          window.location.href = "/me";
+        } catch (error) {
+          console.error("[diary] delete failed:", error);
+          window.alert("删除失败，请稍后重试");
+        } finally {
+          deleteBtn.disabled = false;
+        }
+      });
+    }
 
-		if (editBtn instanceof HTMLButtonElement) {
-			editBtn.addEventListener("click", () => {
-				if (!diaryId) return;
-				window.location.href = `/publish?type=diary&id=${encodeURIComponent(diaryId)}`;
-			});
-		}
+    if (editBtn instanceof HTMLButtonElement) {
+      editBtn.addEventListener("click", () => {
+        if (!diaryId) return;
+        window.location.href = `/publish?type=diary&id=${encodeURIComponent(diaryId)}`;
+      });
+    }
 
-		applyManageMenuVisibility(getAuthState());
-		subscribeAuthState((state) => {
-			applyManageMenuVisibility(state);
-		});
-	}
+    applyManageMenuVisibility(getAuthState());
+    subscribeAuthState((state) => {
+      applyManageMenuVisibility(state);
+    });
+  }
 </script>

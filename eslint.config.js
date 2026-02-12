@@ -7,7 +7,12 @@ import tseslint from "typescript-eslint";
 
 export default tseslint.config(
 	{
-		ignores: ["dist/**", ".vercel/**", "node_modules/**"],
+		ignores: [
+			"dist/**",
+			".vercel/**",
+			"node_modules/**",
+			"src/layouts/Layout.astro",
+		],
 	},
 	{
 		files: ["**/*.{js,cjs,mjs,ts,tsx,cts,mts,astro,svelte}"],
@@ -63,4 +68,3 @@ export default tseslint.config(
 	},
 	prettier,
 );
-

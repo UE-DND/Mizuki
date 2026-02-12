@@ -11,7 +11,10 @@ import icon from "astro-icon";
 import { systemSiteConfig } from "./src/config.ts";
 import { pluginCustomCopyButton } from "./src/plugins/expressive-code/custom-copy-button.js";
 import { pluginLanguageBadge } from "./src/plugins/expressive-code/language-badge.ts";
-import { rehypePlugins, remarkPlugins } from "./src/server/markdown/pipeline.ts";
+import {
+	rehypePlugins,
+	remarkPlugins,
+} from "./src/server/markdown/pipeline.ts";
 
 // https://astro.build/config
 export default defineConfig({
@@ -105,8 +108,12 @@ export default defineConfig({
 				output: {
 					manualChunks(id) {
 						if (
-							id.includes("astro/dist/core/middleware/index.js") ||
-							id.includes("astro/dist/core/middleware/sequence.js")
+							id.includes(
+								"astro/dist/core/middleware/index.js",
+							) ||
+							id.includes(
+								"astro/dist/core/middleware/sequence.js",
+							)
 						) {
 							return "astro-middleware-core";
 						}

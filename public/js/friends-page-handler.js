@@ -53,7 +53,11 @@
 				window.friendsPageState.eventListeners.length,
 				"old listeners",
 			);
-			for (var i = 0; i < window.friendsPageState.eventListeners.length; i++) {
+			for (
+				var i = 0;
+				i < window.friendsPageState.eventListeners.length;
+				i++
+			) {
 				var listener = window.friendsPageState.eventListeners[i];
 				var element = listener[0];
 				var type = listener[1];
@@ -73,7 +77,9 @@
 			var visibleCount = 0;
 			for (var i = 0; i < friendCards.length; i++) {
 				var card = friendCards[i];
-				var title = (card.getAttribute("data-title") || "").toLowerCase();
+				var title = (
+					card.getAttribute("data-title") || ""
+				).toLowerCase();
 				var desc = (card.getAttribute("data-desc") || "").toLowerCase();
 				var tags = card.getAttribute("data-tags") || "";
 
@@ -82,7 +88,8 @@
 					title.indexOf(searchTerm) >= 0 ||
 					desc.indexOf(searchTerm) >= 0;
 				var matchesTag =
-					currentTag === "all" || tags.split(",").indexOf(currentTag) >= 0;
+					currentTag === "all" ||
+					tags.split(",").indexOf(currentTag) >= 0;
 
 				if (matchesSearch && matchesTag) {
 					card.style.display = "";
@@ -159,7 +166,10 @@
 								}, 2000);
 							})
 							.catch((err) => {
-								console.error("[Friends Global] Copy failed:", err);
+								console.error(
+									"[Friends Global] Copy failed:",
+									err,
+								);
 							});
 					}
 				};
@@ -213,7 +223,8 @@
 								if (
 									node.id === "friends-grid" ||
 									node.id === "friend-search" ||
-									(node.querySelector && node.querySelector("#friends-grid"))
+									(node.querySelector &&
+										node.querySelector("#friends-grid"))
 								) {
 									shouldInit = true;
 									break;

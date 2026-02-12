@@ -13,38 +13,42 @@ const title = i18n(I18nKey.about);
 let html = "";
 
 try {
-	const article = await loadPublicArticleBySlug("about");
-	if (article?.body_markdown) {
-		html = await renderMarkdown(String(article.body_markdown), {
-			target: "page",
-		});
-	}
+  const article = await loadPublicArticleBySlug("about");
+  if (article?.body_markdown) {
+    html = await renderMarkdown(String(article.body_markdown), {
+      target: "page",
+    });
+  }
 } catch (error) {
-	console.error("[about] failed to load content:", error);
+  console.error("[about] failed to load content:", error);
 }
 
 if (!html) {
-	html = "<p>关于页内容暂未配置。</p>";
+  html = "<p>关于页内容暂未配置。</p>";
 }
 ---
 
 <MainGridLayout title={title}>
-	<script>
-		import("../scripts/right-sidebar-layout.js");
-	</script>
-	<div class="flex w-full rounded-[var(--radius-large)] overflow-hidden relative min-h-32">
-		<div id="post-container" class="card-base z-10 px-9 py-6 relative w-full">
-			<div class="flex flex-col items-start justify-center mb-8">
-				<h1 class="text-4xl font-bold text-black/90 dark:text-white/90 mb-2 relative
+  <script>
+    import("../scripts/right-sidebar-layout.js");
+  </script>
+  <div
+    class="flex w-full rounded-[var(--radius-large)] overflow-hidden relative min-h-32"
+  >
+    <div id="post-container" class="card-base z-10 px-9 py-6 relative w-full">
+      <div class="flex flex-col items-start justify-center mb-8">
+        <h1
+          class="text-4xl font-bold text-black/90 dark:text-white/90 mb-2 relative
                           before:w-1 before:h-8 before:rounded-md before:bg-[var(--primary)]
-                          before:absolute before:top-1/2 before:-translate-y-1/2 before:-left-4">
-					{title}
-				</h1>
-			</div>
+                          before:absolute before:top-1/2 before:-translate-y-1/2 before:-left-4"
+        >
+          {title}
+        </h1>
+      </div>
 
-			<Markdown class="mt-2">
-				<Fragment set:html={html} />
-			</Markdown>
-		</div>
-	</div>
+      <Markdown class="mt-2">
+        <Fragment set:html={html} />
+      </Markdown>
+    </div>
+  </div>
 </MainGridLayout>

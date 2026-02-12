@@ -605,7 +605,7 @@ async function fetchBangumiAnimeText() {
 
 				const data = await response.json();
 				return Array.isArray(data) ? data : [];
-			} catch (_error) {
+			} catch {
 				return [];
 			}
 		}

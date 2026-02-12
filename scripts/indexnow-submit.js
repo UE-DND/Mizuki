@@ -156,13 +156,16 @@ async function main() {
 		const host = process.env.INDEXNOW_HOST;
 		const filteredUrls = urls.filter(
 			(url) =>
-				url.startsWith(`https://${host}/`) || url.startsWith(`http://${host}/`),
+				url.startsWith(`https://${host}/`) ||
+				url.startsWith(`http://${host}/`),
 		);
 
 		console.log(`✓ Filtered to ${filteredUrls.length} valid URLs`);
 
 		if (filteredUrls.length === 0) {
-			console.log("⚠ No URLs matching the host found, skipping submission");
+			console.log(
+				"⚠ No URLs matching the host found, skipping submission",
+			);
 			return;
 		}
 

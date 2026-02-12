@@ -124,7 +124,9 @@
 							// 检查直接添加的节点
 							if (
 								node.classList &&
-								(node.classList.contains("timeline-horizontal-scroll") ||
+								(node.classList.contains(
+									"timeline-horizontal-scroll",
+								) ||
 									node.classList.contains("timeline-node"))
 							) {
 								shouldInit = true;

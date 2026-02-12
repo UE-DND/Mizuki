@@ -4,9 +4,9 @@ import MainGridLayout from "@layouts/MainGridLayout.astro";
 import AlbumDetailEditor from "@components/album/AlbumDetailEditor.svelte";
 import { buildDirectusAssetUrl } from "@/server/directus-auth";
 import {
-	loadProfileForViewer,
-	loadUserAlbumDetail,
-	profileToSidebarData,
+  loadProfileForViewer,
+  loadUserAlbumDetail,
+  profileToSidebarData,
 } from "@/server/api/v1/public-data";
 import type { ContentLoadResult } from "@/server/api/v1/public-data";
 import { getSessionUser } from "@/server/auth/session";
@@ -17,34 +17,34 @@ const username = (Astro.params.username || "").trim();
 const id = (Astro.params.id || "").trim();
 
 type AlbumPageData = {
-	id: string;
-	short_id: string | null;
-	title: string;
-	slug: string;
-	description: string | null;
-	cover_file: string | null;
-	cover_url: string | null;
-	date: string | null;
-	location: string | null;
-	tags: string[];
-	category: string | null;
-	layout: "grid" | "masonry";
-	columns: number;
-	status: "draft" | "published";
-	is_public: boolean;
-	show_on_profile: boolean;
-	author_id: string;
-	author?: { name?: string; username?: string };
-	photos: Array<{
-		id: string;
-		file_id: string | null;
-		image_url: string | null;
-		title: string | null;
-		description: string | null;
-		tags: string[];
-		location: string | null;
-		sort: number | null;
-	}>;
+  id: string;
+  short_id: string | null;
+  title: string;
+  slug: string;
+  description: string | null;
+  cover_file: string | null;
+  cover_url: string | null;
+  date: string | null;
+  location: string | null;
+  tags: string[];
+  category: string | null;
+  layout: "grid" | "masonry";
+  columns: number;
+  status: "draft" | "published";
+  is_public: boolean;
+  show_on_profile: boolean;
+  author_id: string;
+  author?: { name?: string; username?: string };
+  photos: Array<{
+    id: string;
+    file_id: string | null;
+    image_url: string | null;
+    title: string | null;
+    description: string | null;
+    tags: string[];
+    location: string | null;
+    sort: number | null;
+  }>;
 };
 
 let result: ContentLoadResult<AlbumPageData> = { status: "not_found" };
@@ -52,143 +52,183 @@ let isOwner = false;
 let autoEdit = false;
 
 if (!username || !id) {
-	Astro.response.status = 404;
+  Astro.response.status = 404;
 } else {
-	try {
-		const sessionUser = await getSessionUser(Astro);
-		const viewerId = sessionUser?.id ?? null;
-		result = await loadUserAlbumDetail(username, id, { viewerId }) as ContentLoadResult<AlbumPageData>;
-		if (result.status === "not_found") {
-			Astro.response.status = 404;
-		} else if (result.status === "permission_denied") {
-			Astro.response.status = 403;
-		} else {
-			const profile = await loadProfileForViewer(username, viewerId);
-			if (profile) {
-				Astro.locals.sidebarProfile = profileToSidebarData(profile);
-				isOwner = Boolean(viewerId) && viewerId === profile.user_id;
-			}
-			autoEdit = isOwner && Astro.url.searchParams.get("edit") === "1";
-		}
-	} catch (error) {
-		console.error("[albums] failed to load detail:", error);
-		Astro.response.status = 500;
-	}
+  try {
+    const sessionUser = await getSessionUser(Astro);
+    const viewerId = sessionUser?.id ?? null;
+    result = (await loadUserAlbumDetail(username, id, {
+      viewerId,
+    })) as ContentLoadResult<AlbumPageData>;
+    if (result.status === "not_found") {
+      Astro.response.status = 404;
+    } else if (result.status === "permission_denied") {
+      Astro.response.status = 403;
+    } else {
+      const profile = await loadProfileForViewer(username, viewerId);
+      if (profile) {
+        Astro.locals.sidebarProfile = profileToSidebarData(profile);
+        isOwner = Boolean(viewerId) && viewerId === profile.user_id;
+      }
+      autoEdit = isOwner && Astro.url.searchParams.get("edit") === "1";
+    }
+  } catch (error) {
+    console.error("[albums] failed to load detail:", error);
+    Astro.response.status = 500;
+  }
 }
 
 const album = result.status === "ok" ? result.data : null;
 
-function photoUrl(photo: { file_id: string | null; image_url: string | null }): string | null {
-	if (photo.image_url) {
-		return photo.image_url;
-	}
-	if (photo.file_id) {
-		return buildDirectusAssetUrl(photo.file_id, {
-			width: 1200,
-			height: 900,
-			fit: "cover",
-		});
-	}
-	return null;
+function photoUrl(photo: {
+  file_id: string | null;
+  image_url: string | null;
+}): string | null {
+  if (photo.image_url) {
+    return photo.image_url;
+  }
+  if (photo.file_id) {
+    return buildDirectusAssetUrl(photo.file_id, {
+      width: 1200,
+      height: 900,
+      fit: "cover",
+    });
+  }
+  return null;
 }
 ---
 
-<MainGridLayout title={album?.title || "相册不存在"} description={album?.description || ""}>
-	{result.status === "permission_denied" ? (
-		<ContentNotVisible
-			mode="permission_denied"
-			title="相册不可见"
-			description="由于用户权限设置，该用户的相册内容不可见。"
-			backHref={`/${username}/albums`}
-			backLabel="返回相册列表"
-		/>
-	) : !album ? (
-		<ContentNotVisible
-			mode="not_found"
-			title="相册不存在"
-			description="该相册可能未公开或已删除。"
-			backHref={`/${username}/albums`}
-			backLabel="返回相册列表"
-		/>
-	) : isOwner ? (
-		<AlbumDetailEditor
-			client:only="svelte"
-			albumId={album.id}
-			albumShortId={album.short_id}
-			username={username}
-			isOwner={true}
-			initialEditMode={autoEdit}
-			album={{
-				title: album.title,
-				description: album.description,
-				category: album.category,
-				tags: album.tags,
-				date: album.date,
-				location: album.location,
-				layout: album.layout,
-				columns: album.columns,
-				status: album.status,
-				is_public: album.is_public,
-				show_on_profile: album.show_on_profile,
-				cover_file: album.cover_file,
-				cover_url: album.cover_url,
-			}}
-			photos={album.photos.map((p) => ({
-				id: p.id,
-				file_id: p.file_id,
-				image_url: p.image_url,
-				title: p.title,
-				description: p.description,
-				tags: p.tags,
-				location: p.location,
-				sort: p.sort,
-			}))}
-		/>
-	) : (
-		<>
-			<section class="card-base p-6 rounded-[var(--radius-large)] mb-4 space-y-3 text-90">
-				<a href={`/${username}/albums`} data-no-swup class="text-sm text-[var(--primary)] hover:underline">返回相册列表</a>
-				<h1 class="text-3xl font-bold">{album.title}</h1>
-				<div class="text-xs text-60 flex flex-wrap items-center gap-2">
-					{album.author?.name && <span>{album.author.name}</span>}
-					{album.date && <span>{album.date}</span>}
-					{album.location && <span>{album.location}</span>}
-					{album.category && <span class="px-2 py-0.5 rounded bg-[var(--btn-plain-bg-hover)] text-75">{album.category}</span>}
-				</div>
-				{album.description && <p class="text-75">{album.description}</p>}
-				{album.tags.length > 0 && (
-					<div class="flex flex-wrap gap-2">
-						{album.tags.map((tag) => (
-							<span class="btn-regular h-7 text-xs px-3 rounded-lg">#{tag}</span>
-						))}
-					</div>
-				)}
-			</section>
+<MainGridLayout
+  title={album?.title || "相册不存在"}
+  description={album?.description || ""}
+>
+  {
+    result.status === "permission_denied" ? (
+      <ContentNotVisible
+        mode="permission_denied"
+        title="相册不可见"
+        description="由于用户权限设置，该用户的相册内容不可见。"
+        backHref={`/${username}/albums`}
+        backLabel="返回相册列表"
+      />
+    ) : !album ? (
+      <ContentNotVisible
+        mode="not_found"
+        title="相册不存在"
+        description="该相册可能未公开或已删除。"
+        backHref={`/${username}/albums`}
+        backLabel="返回相册列表"
+      />
+    ) : isOwner ? (
+      <AlbumDetailEditor
+        client:only="svelte"
+        albumId={album.id}
+        albumShortId={album.short_id}
+        username={username}
+        isOwner={true}
+        initialEditMode={autoEdit}
+        album={{
+          title: album.title,
+          description: album.description,
+          category: album.category,
+          tags: album.tags,
+          date: album.date,
+          location: album.location,
+          layout: album.layout,
+          columns: album.columns,
+          status: album.status,
+          is_public: album.is_public,
+          show_on_profile: album.show_on_profile,
+          cover_file: album.cover_file,
+          cover_url: album.cover_url,
+        }}
+        photos={album.photos.map((p) => ({
+          id: p.id,
+          file_id: p.file_id,
+          image_url: p.image_url,
+          title: p.title,
+          description: p.description,
+          tags: p.tags,
+          location: p.location,
+          sort: p.sort,
+        }))}
+      />
+    ) : (
+      <>
+        <section class="card-base p-6 rounded-[var(--radius-large)] mb-4 space-y-3 text-90">
+          <a
+            href={`/${username}/albums`}
+            data-no-swup
+            class="text-sm text-[var(--primary)] hover:underline"
+          >
+            返回相册列表
+          </a>
+          <h1 class="text-3xl font-bold">{album.title}</h1>
+          <div class="text-xs text-60 flex flex-wrap items-center gap-2">
+            {album.author?.name && <span>{album.author.name}</span>}
+            {album.date && <span>{album.date}</span>}
+            {album.location && <span>{album.location}</span>}
+            {album.category && (
+              <span class="px-2 py-0.5 rounded bg-[var(--btn-plain-bg-hover)] text-75">
+                {album.category}
+              </span>
+            )}
+          </div>
+          {album.description && <p class="text-75">{album.description}</p>}
+          {album.tags.length > 0 && (
+            <div class="flex flex-wrap gap-2">
+              {album.tags.map((tag) => (
+                <span class="btn-regular h-7 text-xs px-3 rounded-lg">
+                  #{tag}
+                </span>
+              ))}
+            </div>
+          )}
+        </section>
 
-			{album.photos.length === 0 ? (
-				<div class="card-base p-8 rounded-[var(--radius-large)] text-70">该相册暂无可展示照片。</div>
-			) : (
-				<div
-					class:list={[
-						"gap-3",
-						album.layout === "masonry" ? "columns-2 md:columns-3" : "grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4",
-					]}
-				>
-					{album.photos.map((photo) => (
-						<figure class:list={["rounded-xl overflow-hidden border border-[var(--line-divider)] bg-[var(--card-bg)]", album.layout === "masonry" ? "mb-3 break-inside-avoid" : ""]}>
-							{photoUrl(photo) && (
-								<img src={photoUrl(photo) || ""} alt={photo.title || "album photo"} class="w-full h-auto object-cover" loading="lazy" />
-							)}
-							{(photo.title || photo.description) && (
-								<figcaption class="p-3 space-y-1 text-90">
-									{photo.title && <div class="text-sm font-medium">{photo.title}</div>}
-									{photo.description && <div class="text-xs text-60">{photo.description}</div>}
-								</figcaption>
-							)}
-						</figure>
-					))}
-				</div>
-			)}
-		</>
-	)}
+        {album.photos.length === 0 ? (
+          <div class="card-base p-8 rounded-[var(--radius-large)] text-70">
+            该相册暂无可展示照片。
+          </div>
+        ) : (
+          <div
+            class:list={[
+              "gap-3",
+              album.layout === "masonry"
+                ? "columns-2 md:columns-3"
+                : "grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4",
+            ]}
+          >
+            {album.photos.map((photo) => (
+              <figure
+                class:list={[
+                  "rounded-xl overflow-hidden border border-[var(--line-divider)] bg-[var(--card-bg)]",
+                  album.layout === "masonry" ? "mb-3 break-inside-avoid" : "",
+                ]}
+              >
+                {photoUrl(photo) && (
+                  <img
+                    src={photoUrl(photo) || ""}
+                    alt={photo.title || "album photo"}
+                    class="w-full h-auto object-cover"
+                    loading="lazy"
+                  />
+                )}
+                {(photo.title || photo.description) && (
+                  <figcaption class="p-3 space-y-1 text-90">
+                    {photo.title && (
+                      <div class="text-sm font-medium">{photo.title}</div>
+                    )}
+                    {photo.description && (
+                      <div class="text-xs text-60">{photo.description}</div>
+                    )}
+                  </figcaption>
+                )}
+              </figure>
+            ))}
+          </div>
+        )}
+      </>
+    )
+  }
 </MainGridLayout>

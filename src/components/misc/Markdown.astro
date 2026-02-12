@@ -5,18 +5,22 @@ import "../../styles/markdown.css";
 import "../../styles/markdown-extend.styl";
 
 interface Props {
-	class: string;
+  class: string;
 }
 const className = Astro.props.class;
 ---
-<div data-pagefind-body class={`prose prose-sm md:prose-base dark:prose-invert !max-w-none custom-md ${className}`}>
-    <!--<div class="prose dark:prose-invert max-w-none custom-md">-->
-    <!--<div class="max-w-none custom-md">-->
-    <slot/>
+
+<div
+  data-pagefind-body
+  class={`prose prose-sm md:prose-base dark:prose-invert !max-w-none custom-md ${className}`}
+>
+  <!--<div class="prose dark:prose-invert max-w-none custom-md">-->
+  <!--<div class="max-w-none custom-md">-->
+  <slot />
 </div>
 
 <script>
-	import { setupCodeCopyDelegation } from "@/scripts/code-copy";
+  import { setupCodeCopyDelegation } from "@/scripts/code-copy";
 
-	setupCodeCopyDelegation();
+  setupCodeCopyDelegation();
 </script>

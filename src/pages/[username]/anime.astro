@@ -3,11 +3,14 @@ import ContentNotVisible from "@components/misc/ContentNotVisible.astro";
 import MainGridLayout from "@layouts/MainGridLayout.astro";
 import { buildDirectusAssetUrl } from "@/server/directus-auth";
 import {
-	loadProfileForViewer,
-	loadUserAnimeList,
-	profileToSidebarData,
+  loadProfileForViewer,
+  loadUserAnimeList,
+  profileToSidebarData,
 } from "@/server/api/v1/public-data";
-import type { ContentLoadResult, PaginatedResult } from "@/server/api/v1/public-data";
+import type {
+  ContentLoadResult,
+  PaginatedResult,
+} from "@/server/api/v1/public-data";
 import { getSessionUser } from "@/server/auth/session";
 
 export const prerender = false;
@@ -15,150 +18,183 @@ export const prerender = false;
 const username = (Astro.params.username || "").trim();
 
 type AnimeListItem = {
-	id: string;
-	title: string;
-	watch_status: string;
-	rating: number | null;
-	progress: number | null;
-	total_episodes: number | null;
-	year: string | null;
-	studio: string | null;
-	genres: string[];
-	description: string | null;
-	link: string | null;
-	cover_file: string | null;
-	cover_url: string | null;
-	author?: { name?: string };
+  id: string;
+  title: string;
+  watch_status: string;
+  rating: number | null;
+  progress: number | null;
+  total_episodes: number | null;
+  year: string | null;
+  studio: string | null;
+  genres: string[];
+  description: string | null;
+  link: string | null;
+  cover_file: string | null;
+  cover_url: string | null;
+  author?: { name?: string };
 };
 
-let result: ContentLoadResult<PaginatedResult<AnimeListItem>> = { status: "not_found" };
+let result: ContentLoadResult<PaginatedResult<AnimeListItem>> = {
+  status: "not_found",
+};
 
 try {
-	if (!username) {
-		Astro.response.status = 404;
-	} else {
-		const sessionUser = await getSessionUser(Astro);
-		const viewerId = sessionUser?.id ?? null;
-		result = await loadUserAnimeList(username, { limit: 200, viewerId }) as ContentLoadResult<PaginatedResult<AnimeListItem>>;
-		if (result.status === "not_found") {
-			Astro.response.status = 404;
-		} else if (result.status === "permission_denied") {
-			Astro.response.status = 403;
-		} else {
-			const sidebarProfile = await loadProfileForViewer(username, viewerId);
-			if (sidebarProfile) {
-				Astro.locals.sidebarProfile = profileToSidebarData(sidebarProfile);
-			}
-		}
-	}
+  if (!username) {
+    Astro.response.status = 404;
+  } else {
+    const sessionUser = await getSessionUser(Astro);
+    const viewerId = sessionUser?.id ?? null;
+    result = (await loadUserAnimeList(username, {
+      limit: 200,
+      viewerId,
+    })) as ContentLoadResult<PaginatedResult<AnimeListItem>>;
+    if (result.status === "not_found") {
+      Astro.response.status = 404;
+    } else if (result.status === "permission_denied") {
+      Astro.response.status = 403;
+    } else {
+      const sidebarProfile = await loadProfileForViewer(username, viewerId);
+      if (sidebarProfile) {
+        Astro.locals.sidebarProfile = profileToSidebarData(sidebarProfile);
+      }
+    }
+  }
 } catch (error) {
-	console.error("[anime] failed to load entries:", error);
-	Astro.response.status = 500;
+  console.error("[anime] failed to load entries:", error);
+  Astro.response.status = 500;
 }
 
 const items = result.status === "ok" ? result.data.items : [];
 
 function coverUrl(item: {
-	cover_file: string | null;
-	cover_url: string | null;
+  cover_file: string | null;
+  cover_url: string | null;
 }): string | null {
-	if (item.cover_url) {
-		return item.cover_url;
-	}
-	if (item.cover_file) {
-		return buildDirectusAssetUrl(item.cover_file, {
-			width: 640,
-			height: 900,
-			fit: "cover",
-		});
-	}
-	return null;
+  if (item.cover_url) {
+    return item.cover_url;
+  }
+  if (item.cover_file) {
+    return buildDirectusAssetUrl(item.cover_file, {
+      width: 640,
+      height: 900,
+      fit: "cover",
+    });
+  }
+  return null;
 }
 
 function statusLabel(status: string): string {
-	switch (status) {
-		case "watching":
-			return "在看";
-		case "completed":
-			return "看完";
-		case "planned":
-			return "计划看";
-		case "onhold":
-			return "搁置";
-		case "dropped":
-			return "弃番";
-		default:
-			return status || "未知";
-	}
+  switch (status) {
+    case "watching":
+      return "在看";
+    case "completed":
+      return "看完";
+    case "planned":
+      return "计划看";
+    case "onhold":
+      return "搁置";
+    case "dropped":
+      return "弃番";
+    default:
+      return status || "未知";
+  }
 }
 ---
 
 <MainGridLayout title="番剧" description="用户公开番剧列表">
-	{result.status === "permission_denied" ? (
-		<ContentNotVisible
-			mode="permission_denied"
-			title="番剧不可见"
-			description="由于用户权限设置，该用户的番剧内容不可见。"
-			backHref={`/${username}`}
-			backLabel="返回用户主页"
-		/>
-	) : result.status === "not_found" ? (
-		<ContentNotVisible
-			mode="not_found"
-			title="用户不存在"
-			description="该用户不存在或链接错误。"
-			backHref="/"
-			backLabel="返回首页"
-		/>
-	) : (
-		<>
-			<section class="card-base px-9 py-6 rounded-[var(--radius-large)] mb-4 text-90">
-				<h1 class="text-4xl font-bold text-black/90 dark:text-white/90 mb-2 relative
+  {
+    result.status === "permission_denied" ? (
+      <ContentNotVisible
+        mode="permission_denied"
+        title="番剧不可见"
+        description="由于用户权限设置，该用户的番剧内容不可见。"
+        backHref={`/${username}`}
+        backLabel="返回用户主页"
+      />
+    ) : result.status === "not_found" ? (
+      <ContentNotVisible
+        mode="not_found"
+        title="用户不存在"
+        description="该用户不存在或链接错误。"
+        backHref="/"
+        backLabel="返回首页"
+      />
+    ) : (
+      <>
+        <section class="card-base px-9 py-6 rounded-[var(--radius-large)] mb-4 text-90">
+          <h1
+            class="text-4xl font-bold text-black/90 dark:text-white/90 mb-2 relative
 					before:w-1 before:h-8 before:rounded-md before:bg-[var(--primary)]
-					before:absolute before:top-1/2 before:-translate-y-1/2 before:-left-4">番剧</h1>
-				<p class="text-base text-70">用户公开的番剧条目。</p>
-			</section>
+					before:absolute before:top-1/2 before:-translate-y-1/2 before:-left-4"
+          >
+            番剧
+          </h1>
+          <p class="text-base text-70">用户公开的番剧条目。</p>
+        </section>
 
-			{items.length === 0 ? (
-				<div class="card-base p-8 rounded-[var(--radius-large)] text-70">暂无公开番剧条目。</div>
-			) : (
-		<div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
-			{items.map((item) => (
-				<article class="card-base p-4 rounded-[var(--radius-large)] border border-[var(--line-divider)] h-full text-90">
-					<div class="flex gap-4 h-full">
-						{coverUrl(item) && (
-							<img src={coverUrl(item) || ""} alt={item.title} class="w-24 h-32 rounded-lg object-cover border border-[var(--line-divider)] shrink-0" loading="lazy" />
-						)}
-						<div class="min-w-0 space-y-2 flex-1">
-							<h2 class="text-lg font-semibold line-clamp-2">{item.title}</h2>
-							<div class="text-xs text-60 flex flex-wrap gap-2">
-								<span>{statusLabel(item.watch_status)}</span>
-								{item.author?.name && <span>{item.author.name}</span>}
-								{item.year && <span>{item.year}</span>}
-							</div>
-							<div class="text-xs text-70">
-								进度：{item.progress ?? 0}/{item.total_episodes ?? "?"}
-								{typeof item.rating === "number" && <span class="ml-2">评分：{item.rating}</span>}
-							</div>
-							{item.description && <p class="text-sm text-75 line-clamp-3">{item.description}</p>}
-							{item.genres.length > 0 && (
-								<div class="flex flex-wrap gap-2">
-									{item.genres.slice(0, 4).map((genre) => (
-										<span class="btn-regular h-6 text-xs px-2 rounded-lg">{genre}</span>
-									))}
-								</div>
-							)}
-							{item.link && (
-								<a href={item.link} target="_blank" rel="noopener noreferrer" class="text-xs text-[var(--primary)] hover:underline">
-									查看链接
-								</a>
-							)}
-						</div>
-					</div>
-				</article>
-			))}
-		</div>
-	)}
-		</>
-	)}
+        {items.length === 0 ? (
+          <div class="card-base p-8 rounded-[var(--radius-large)] text-70">
+            暂无公开番剧条目。
+          </div>
+        ) : (
+          <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+            {items.map((item) => (
+              <article class="card-base p-4 rounded-[var(--radius-large)] border border-[var(--line-divider)] h-full text-90">
+                <div class="flex gap-4 h-full">
+                  {coverUrl(item) && (
+                    <img
+                      src={coverUrl(item) || ""}
+                      alt={item.title}
+                      class="w-24 h-32 rounded-lg object-cover border border-[var(--line-divider)] shrink-0"
+                      loading="lazy"
+                    />
+                  )}
+                  <div class="min-w-0 space-y-2 flex-1">
+                    <h2 class="text-lg font-semibold line-clamp-2">
+                      {item.title}
+                    </h2>
+                    <div class="text-xs text-60 flex flex-wrap gap-2">
+                      <span>{statusLabel(item.watch_status)}</span>
+                      {item.author?.name && <span>{item.author.name}</span>}
+                      {item.year && <span>{item.year}</span>}
+                    </div>
+                    <div class="text-xs text-70">
+                      进度：{item.progress ?? 0}/{item.total_episodes ?? "?"}
+                      {typeof item.rating === "number" && (
+                        <span class="ml-2">评分：{item.rating}</span>
+                      )}
+                    </div>
+                    {item.description && (
+                      <p class="text-sm text-75 line-clamp-3">
+                        {item.description}
+                      </p>
+                    )}
+                    {item.genres.length > 0 && (
+                      <div class="flex flex-wrap gap-2">
+                        {item.genres.slice(0, 4).map((genre) => (
+                          <span class="btn-regular h-6 text-xs px-2 rounded-lg">
+                            {genre}
+                          </span>
+                        ))}
+                      </div>
+                    )}
+                    {item.link && (
+                      <a
+                        href={item.link}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        class="text-xs text-[var(--primary)] hover:underline"
+                      >
+                        查看链接
+                      </a>
+                    )}
+                  </div>
+                </div>
+              </article>
+            ))}
+          </div>
+        )}
+      </>
+    )
+  }
 </MainGridLayout>
