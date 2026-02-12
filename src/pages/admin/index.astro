@@ -5,39 +5,74 @@ export const prerender = false;
 ---
 
 <AdminLayout title="管理台" description="站内管理员工作台入口">
-  <div class="space-y-4 text-75">
-    <section class="card-base px-9 py-6 rounded-(--radius-large)">
-      <h1
-        class="text-4xl font-bold text-90 mb-2 relative
+  <div
+    data-enter-skeleton-page="admin-dashboard"
+    data-enter-skeleton-target="admin-dashboard"
+  >
+    <div data-enter-skeleton-inline-content class="space-y-4 text-75">
+      <section class="card-base px-9 py-6 rounded-(--radius-large)">
+        <h1
+          class="text-4xl font-bold text-90 mb-2 relative
 				before:w-1 before:h-8 before:rounded-md before:bg-(--primary)
 				before:absolute before:top-1/2 before:-translate-y-1/2 before:-left-4"
-      >
-        管理台
-      </h1>
-      <p class="text-base text-70">
-        管理员可以创建账号、调整权限、重置密码和启停账户。
-      </p>
-    </section>
+        >
+          管理台
+        </h1>
+        <p class="text-base text-70">
+          管理员可以创建账号、调整权限、重置密码和启停账户。
+        </p>
+      </section>
 
-    <section class="grid grid-cols-1 gap-4">
-      <a
-        href="/admin/users"
-        class="card-base p-6 rounded-(--radius-large) border border-(--line-divider) hover:border-(--primary) transition-colors"
-      >
-        <h2 class="text-xl font-semibold text-90 mb-2">用户管理</h2>
-        <p class="text-sm text-70">
-          创建账号、修改权限、重置密码、启用或禁用账号。
-        </p>
-      </a>
-      <a
-        href="/admin/settings/site"
-        class="card-base p-6 rounded-(--radius-large) border border-(--line-divider) hover:border-(--primary) transition-colors"
-      >
-        <h2 class="text-xl font-semibold text-90 mb-2">站点设置</h2>
-        <p class="text-sm text-70">
-          管理站点信息、导航栏、壁纸、首页与文章等配置。
-        </p>
-      </a>
-    </section>
+      <section class="grid grid-cols-1 gap-4">
+        <a
+          href="/admin/users"
+          class="card-base p-6 rounded-(--radius-large) border border-(--line-divider) hover:border-(--primary) transition-colors"
+        >
+          <h2 class="text-xl font-semibold text-90 mb-2">用户管理</h2>
+          <p class="text-sm text-70">
+            创建账号、修改权限、重置密码、启用或禁用账号。
+          </p>
+        </a>
+        <a
+          href="/admin/settings/site"
+          class="card-base p-6 rounded-(--radius-large) border border-(--line-divider) hover:border-(--primary) transition-colors"
+        >
+          <h2 class="text-xl font-semibold text-90 mb-2">站点设置</h2>
+          <p class="text-sm text-70">
+            管理站点信息、导航栏、壁纸、首页与文章等配置。
+          </p>
+        </a>
+      </section>
+    </div>
+    <div
+      data-enter-skeleton-inline-placeholder
+      aria-hidden="true"
+      class="space-y-4"
+    >
+      <section class="card-base px-9 py-6 rounded-(--radius-large) space-y-3">
+        <div
+          class="md3-skeleton-text"
+          style="--skeleton-width: 30%; --skeleton-height: 2rem;"
+        >
+        </div>
+        <div class="md3-skeleton-text" style="--skeleton-width: 58%;"></div>
+      </section>
+      <section class="grid grid-cols-1 gap-4">
+        {
+          Array.from({ length: 2 }).map(() => (
+            <div class="card-base p-6 rounded-(--radius-large) border border-(--line-divider) space-y-3">
+              <div
+                class="md3-skeleton-text"
+                style="--skeleton-width: 36%; --skeleton-height: 1.25rem;"
+              />
+              <div class="space-y-2">
+                <div class="md3-skeleton-text" style="--skeleton-width: 90%;" />
+                <div class="md3-skeleton-text" style="--skeleton-width: 74%;" />
+              </div>
+            </div>
+          ))
+        }
+      </section>
+    </div>
   </div>
 </AdminLayout>

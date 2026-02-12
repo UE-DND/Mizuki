@@ -527,7 +527,7 @@ const mainContentClass = `
     {
       siteConfig.banner.waves?.enable && (
         <div
-          class="waves absolute -bottom-[1px] h-[10vh] max-h-[9.375rem] min-h-[3.125rem] w-full md:h-[15vh]"
+          class="waves absolute -bottom-px h-[10vh] max-h-[9.375rem] min-h-[3.125rem] w-full md:h-[15vh]"
           id="header-waves"
           style="transform: translateZ(0); will-change: fill;"
         >
@@ -614,7 +614,7 @@ const mainContentClass = `
                   <div id="toc-wrapper" class="w-full transition-swup-fade">
                     <div
                       id="toc-inner-wrapper"
-                      class="w-full max-h-[calc(100vh_-_10rem)] overflow-hidden"
+                      class="w-full max-h-[calc(100vh-10rem)] overflow-hidden"
                     >
                       <div
                         id="toc-container"
@@ -630,7 +630,7 @@ const mainContentClass = `
               <div id="toc-wrapper" class="w-full transition-swup-fade">
                 <div
                   id="toc-inner-wrapper"
-                  class="w-full max-h-[calc(100vh_-_10rem)] overflow-hidden"
+                  class="w-full max-h-[calc(100vh-10rem)] overflow-hidden"
                 >
                   <div id="toc-container" class="w-full transition-swup-fade">
                     <TOC headings={headings} />
@@ -661,32 +661,49 @@ const mainContentClass = `
           <div
             data-enter-skeleton-placeholder
             aria-hidden="true"
-            class="absolute inset-0 z-20 pointer-events-none p-1"
+            class="absolute inset-0 z-20 pointer-events-none"
           >
             <div
-              class="md3-skeleton-surface card-base h-full min-h-[16rem] rounded-(--radius-large) p-6 md:p-8"
+              data-enter-skeleton-template="fallback"
+              class="space-y-4 md:space-y-5"
             >
-              <div class="space-y-4">
-                <div
-                  class="md3-skeleton-text"
-                  style="--skeleton-width: 52%; --skeleton-height: 1.25rem;"
-                >
+              <div
+                class="md3-skeleton-surface rounded-(--radius-large) p-6 md:p-8"
+              >
+                <div class="flex items-start justify-between gap-4">
+                  <div class="w-full space-y-3">
+                    <div
+                      class="md3-skeleton-text"
+                      style="--skeleton-width: 42%; --skeleton-height: 1.5rem;"
+                    >
+                    </div>
+                    <div
+                      class="md3-skeleton-text"
+                      style="--skeleton-width: 68%;"
+                    >
+                    </div>
+                  </div>
+                  <div class="md3-skeleton-block h-12 w-36 rounded-xl"></div>
                 </div>
-                <div class="md3-skeleton-text" style="--skeleton-width: 36%;">
+              </div>
+
+              <div
+                class="md3-skeleton-surface rounded-(--radius-large) p-5 md:p-6"
+              >
+                <div class="space-y-3">
+                  <div class="md3-skeleton-text" style="--skeleton-width: 94%;">
+                  </div>
+                  <div class="md3-skeleton-text" style="--skeleton-width: 90%;">
+                  </div>
+                  <div class="md3-skeleton-text" style="--skeleton-width: 86%;">
+                  </div>
+                  <div class="md3-skeleton-text" style="--skeleton-width: 72%;">
+                  </div>
                 </div>
-                <div class="space-y-3 pt-3">
-                  <div class="md3-skeleton-text" style="--skeleton-width: 96%;">
-                  </div>
-                  <div class="md3-skeleton-text" style="--skeleton-width: 92%;">
-                  </div>
-                  <div class="md3-skeleton-text" style="--skeleton-width: 88%;">
-                  </div>
-                  <div class="md3-skeleton-text" style="--skeleton-width: 75%;">
-                  </div>
-                </div>
-                <div class="grid grid-cols-2 gap-4 pt-4">
-                  <div class="md3-skeleton-block h-20"></div>
-                  <div class="md3-skeleton-block h-20"></div>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 pt-4">
+                  <div class="md3-skeleton-block h-24 rounded-xl"></div>
+                  <div class="md3-skeleton-block h-24 rounded-xl"></div>
                 </div>
               </div>
             </div>

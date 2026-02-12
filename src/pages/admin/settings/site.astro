@@ -5,508 +5,566 @@ export const prerender = false;
 ---
 
 <AdminLayout title="站点设置" description="管理员配置站点运行时设置">
-  <div class="space-y-4 text-75">
-    <section class="card-base px-9 py-6 rounded-(--radius-large)">
-      <h1
-        class="text-4xl font-bold text-black/90 dark:text-white/90 mb-2 relative
+  <div
+    data-enter-skeleton-page="admin-site-settings"
+    data-enter-skeleton-target="admin-site-settings"
+  >
+    <div data-enter-skeleton-inline-content class="space-y-4 text-75">
+      <section class="card-base px-9 py-6 rounded-(--radius-large)">
+        <h1
+          class="text-4xl font-bold text-black/90 dark:text-white/90 mb-2 relative
 				before:w-1 before:h-8 before:rounded-md before:bg-(--primary)
 				before:absolute before:top-1/2 before:-translate-y-1/2 before:-left-4"
-      >
-        站点设置
-      </h1>
-      <p class="text-base text-70">
-        管理站点运行时配置，保存后在缓存周期内自动生效。
-      </p>
-    </section>
-
-    <div id="ss-authenticated" class="space-y-4">
-      <!-- ===== Section 1: 站点信息 ===== -->
-      <section class="card-base p-8 rounded-(--radius-large) space-y-4">
-        <h2 class="text-2xl font-semibold text-90">站点信息</h2>
-        <form id="ss-site-form" class="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <label class="space-y-1.5">
-            <span class="text-sm text-60">站点标题</span>
-            <input
-              id="ss-title"
-              class="w-full rounded-lg border border-(--line-divider) px-3.5 py-2.5 bg-transparent text-75 placeholder:text-50"
-              placeholder="My Blog"
-            />
-          </label>
-          <label class="space-y-1.5">
-            <span class="text-sm text-60">站点副标题</span>
-            <input
-              id="ss-subtitle"
-              class="w-full rounded-lg border border-(--line-divider) px-3.5 py-2.5 bg-transparent text-75 placeholder:text-50"
-              placeholder="A place for stories"
-            />
-          </label>
-          <label class="space-y-1.5">
-            <span class="text-sm text-60">站点关键词（用逗号分隔）</span>
-            <input
-              id="ss-keywords"
-              class="w-full rounded-lg border border-(--line-divider) px-3.5 py-2.5 bg-transparent text-75 placeholder:text-50"
-              placeholder="blog, tech, life"
-            />
-          </label>
-          <label class="space-y-1.5">
-            <span class="text-sm text-60">建站日期</span>
-            <input
-              id="ss-start-date"
-              type="date"
-              onkeydown="return false"
-              inputmode="none"
-              class="date-picker-input w-full rounded-lg border border-(--line-divider) px-3.5 py-2.5 bg-transparent text-75"
-            />
-          </label>
-          <hr class="border-(--line-divider) md:col-span-2" />
-          <h3 class="text-lg font-medium text-75 md:col-span-2">站点图标</h3>
-          <div class="md:col-span-2 space-y-2">
-            <div class="flex flex-wrap items-center gap-2">
-              <button
-                type="button"
-                id="ss-favicon-upload-btn"
-                class="px-4 h-9 rounded-lg text-sm font-medium cursor-pointer bg-(--primary) text-white hover:opacity-90 transition flex items-center gap-1.5"
-                ><svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  class="w-4 h-4"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  stroke-width="2"
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                  ><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"
-                  ></path><polyline points="17 8 12 3 7 8"></polyline><line
-                    x1="12"
-                    y1="3"
-                    x2="12"
-                    y2="15"></line></svg
-                >上传图片</button
-              >
-              <span class="text-xs text-50">支持 PNG/JPG/ICO，最大 500KB</span>
-            </div>
-            <div id="ss-favicon-list" class="space-y-2"></div>
-          </div>
-          <hr class="border-(--line-divider) md:col-span-2" />
-          <h3 class="text-lg font-medium text-75 md:col-span-2">
-            统计（Umami）
-          </h3>
-          <label
-            class="flex items-center gap-3 text-75 cursor-pointer select-none md:col-span-2"
-          >
-            <input
-              type="checkbox"
-              id="ss-umami-enabled"
-              class="toggle-checkbox"
-            />
-            <span class="toggle-track"><span class="toggle-knob"></span></span>
-            启用 Umami
-          </label>
-          <label class="space-y-1.5">
-            <span class="text-sm text-60">Umami Base URL</span>
-            <input
-              id="ss-umami-url"
-              class="w-full rounded-lg border border-(--line-divider) px-3.5 py-2.5 bg-transparent text-75 placeholder:text-50"
-              placeholder="https://umami.example.com"
-            />
-          </label>
-          <label class="space-y-1.5 md:col-span-2">
-            <span class="text-sm text-60">Umami Scripts</span>
-            <textarea
-              id="ss-umami-scripts"
-              class="w-full min-h-24 rounded-lg border border-(--line-divider) px-3.5 py-2.5 bg-transparent text-75 font-mono text-xs placeholder:text-50"
-              placeholder="<script ...></script>"></textarea>
-          </label>
-          <div class="md:col-span-2 flex items-center gap-2 pt-2">
-            <button
-              type="submit"
-              class="px-4 py-2 rounded-lg bg-(--btn-regular-bg) text-(--btn-content) text-sm"
-              >保存站点信息</button
-            >
-            <span id="ss-site-msg" class="text-sm text-60"></span>
-          </div>
-        </form>
-      </section>
-
-      <!-- ===== Section 2: 导航栏 ===== -->
-      <section class="card-base p-8 rounded-(--radius-large) space-y-4">
-        <h2 class="text-2xl font-semibold text-90">导航栏</h2>
-        <form id="ss-nav-form" class="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <label class="space-y-1.5">
-            <span class="text-sm text-60">导航模式</span>
-            <select
-              id="ss-navbar-mode"
-              class="w-full rounded-lg border border-(--line-divider) px-3.5 py-2.5 bg-transparent text-75"
-            >
-              <option value="logo">Logo</option>
-              <option value="text-icon">文字+图标</option>
-            </select>
-          </label>
-          <label class="space-y-1.5">
-            <span class="text-sm text-60">导航标题文本</span>
-            <input
-              id="ss-navbar-text"
-              class="w-full rounded-lg border border-(--line-divider) px-3.5 py-2.5 bg-transparent text-75 placeholder:text-50"
-              placeholder="Site Title"
-            />
-          </label>
-          <div class="md:col-span-2 space-y-1.5">
-            <span class="text-sm text-60">导航链接</span>
-            <div id="ss-nav-links-list" class="space-y-2"></div>
-          </div>
-          <div class="md:col-span-2 flex items-center gap-2 pt-2">
-            <button
-              type="submit"
-              class="px-4 py-2 rounded-lg bg-(--btn-regular-bg) text-(--btn-content) text-sm"
-              >保存导航设置</button
-            >
-            <span id="ss-nav-msg" class="text-sm text-60"></span>
-          </div>
-        </form>
-      </section>
-
-      <!-- ===== Section 3: 首页设置 ===== -->
-      <section class="card-base p-8 rounded-(--radius-large) space-y-4">
-        <h2 class="text-2xl font-semibold text-90">首页设置</h2>
-        <form id="ss-home-form" class="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <h3 class="text-lg font-medium text-75 md:col-span-2">轮播壁纸</h3>
-          <label class="space-y-1.5">
-            <span class="text-sm text-60">壁纸模式</span>
-            <select
-              id="ss-wallpaper-mode"
-              class="w-full rounded-lg border border-(--line-divider) px-3.5 py-2.5 bg-transparent text-75"
-            >
-              <option value="banner">banner</option>
-              <option value="none">none</option>
-            </select>
-          </label>
-          <label
-            class="flex items-center gap-3 text-75 cursor-pointer select-none md:col-span-2"
-          >
-            <input
-              type="checkbox"
-              id="ss-banner-carousel-enable"
-              class="toggle-checkbox"
-            />
-            <span class="toggle-track"><span class="toggle-knob"></span></span>
-            启用 Banner 轮播
-          </label>
-          <label class="space-y-1.5">
-            <span class="text-sm text-60">轮播间隔（秒）</span>
-            <input
-              id="ss-banner-carousel-interval"
-              type="number"
-              min="1"
-              max="120"
-              class="w-full rounded-lg border border-(--line-divider) px-3.5 py-2.5 bg-transparent text-75"
-              placeholder="5"
-            />
-          </label>
-          <div class="md:col-span-2 space-y-2">
-            <h4 class="text-base font-medium text-75">桌面端壁纸</h4>
-            <div class="flex flex-wrap items-center gap-2">
-              <button
-                type="button"
-                id="ss-banner-desktop-upload-btn"
-                class="px-4 h-9 rounded-lg text-sm font-medium cursor-pointer bg-(--primary) text-white hover:opacity-90 transition flex items-center gap-1.5"
-                ><svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  class="w-4 h-4"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  stroke-width="2"
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                  ><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"
-                  ></path><polyline points="17 8 12 3 7 8"></polyline><line
-                    x1="12"
-                    y1="3"
-                    x2="12"
-                    y2="15"></line></svg
-                >上传图片</button
-              >
-              <span class="text-xs text-50">拖拽调整顺序</span>
-            </div>
-            <div id="ss-banner-desktop-list" class="space-y-2"></div>
-          </div>
-          <div class="md:col-span-2 space-y-2">
-            <h4 class="text-base font-medium text-75">移动端壁纸</h4>
-            <div class="flex flex-wrap items-center gap-2">
-              <button
-                type="button"
-                id="ss-banner-mobile-upload-btn"
-                class="px-4 h-9 rounded-lg text-sm font-medium cursor-pointer bg-(--primary) text-white hover:opacity-90 transition flex items-center gap-1.5"
-                ><svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  class="w-4 h-4"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  stroke-width="2"
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                  ><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"
-                  ></path><polyline points="17 8 12 3 7 8"></polyline><line
-                    x1="12"
-                    y1="3"
-                    x2="12"
-                    y2="15"></line></svg
-                >上传图片</button
-              >
-              <span class="text-xs text-50">拖拽调整顺序</span>
-            </div>
-            <div id="ss-banner-mobile-list" class="space-y-2"></div>
-          </div>
-          <div class="md:col-span-2 flex items-center gap-2 pt-2">
-            <button
-              type="submit"
-              class="px-4 py-2 rounded-lg bg-(--btn-regular-bg) text-(--btn-content) text-sm"
-              >保存首页设置</button
-            >
-            <span id="ss-home-msg" class="text-sm text-60"></span>
-          </div>
-        </form>
-      </section>
-
-      <!-- ===== Section 4: 文章设置 ===== -->
-      <section class="card-base p-8 rounded-(--radius-large) space-y-4">
-        <h2 class="text-2xl font-semibold text-90">文章设置</h2>
-        <form
-          id="ss-feature-form"
-          class="grid grid-cols-1 md:grid-cols-2 gap-4 text-base"
         >
-          <label
-            class="flex items-center gap-3 text-75 cursor-pointer select-none"
-          >
-            <input type="checkbox" id="ss-toc-enable" class="toggle-checkbox" />
-            <span class="toggle-track"><span class="toggle-knob"></span></span>
-            启用 TOC
-          </label>
-          <label
-            class="flex items-center gap-3 text-75 cursor-pointer select-none"
-          >
-            <input type="checkbox" id="ss-toc-jp" class="toggle-checkbox" />
-            <span class="toggle-track"><span class="toggle-knob"></span></span>
-            使用日文序号
-          </label>
-          <label class="space-y-1.5">
-            <span class="text-sm text-60">TOC 模式</span>
-            <select
-              id="ss-toc-mode"
-              class="w-full rounded-lg border border-(--line-divider) px-3.5 py-2.5 bg-transparent text-75"
-            >
-              <option value="sidebar">sidebar</option>
-              <option value="float">float</option>
-            </select>
-          </label>
-          <label class="space-y-1.5">
-            <span class="text-sm text-60">TOC 深度</span>
-            <select
-              id="ss-toc-depth"
-              class="w-full rounded-lg border border-(--line-divider) px-3.5 py-2.5 bg-transparent text-75"
-            >
-              <option value="1">1</option>
-              <option value="2">2</option>
-              <option value="3">3</option>
-            </select>
-          </label>
-          <div class="md:col-span-2 flex items-center gap-2 pt-2">
-            <button
-              type="submit"
-              class="px-4 py-2 rounded-lg bg-(--btn-regular-bg) text-(--btn-content) text-sm"
-              >保存文章设置</button
-            >
-            <span id="ss-feature-msg" class="text-sm text-60"></span>
-          </div>
-        </form>
+          站点设置
+        </h1>
+        <p class="text-base text-70">
+          管理站点运行时配置，保存后在缓存周期内自动生效。
+        </p>
       </section>
 
-      <!-- ===== Section 5: 公告与页脚 ===== -->
-      <section class="card-base p-8 rounded-(--radius-large) space-y-4">
-        <h2 class="text-2xl font-semibold text-90">公告与页脚</h2>
-        <form
-          id="ss-announce-form"
-          class="grid grid-cols-1 md:grid-cols-2 gap-4"
+      <div id="ss-authenticated" class="space-y-4">
+        <!-- ===== Section 1: 站点信息 ===== -->
+        <section class="card-base p-8 rounded-(--radius-large) space-y-4">
+          <h2 class="text-2xl font-semibold text-90">站点信息</h2>
+          <form id="ss-site-form" class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <label class="space-y-1.5">
+              <span class="text-sm text-60">站点标题</span>
+              <input
+                id="ss-title"
+                class="w-full rounded-lg border border-(--line-divider) px-3.5 py-2.5 bg-transparent text-75 placeholder:text-50"
+                placeholder="My Blog"
+              />
+            </label>
+            <label class="space-y-1.5">
+              <span class="text-sm text-60">站点副标题</span>
+              <input
+                id="ss-subtitle"
+                class="w-full rounded-lg border border-(--line-divider) px-3.5 py-2.5 bg-transparent text-75 placeholder:text-50"
+                placeholder="A place for stories"
+              />
+            </label>
+            <label class="space-y-1.5">
+              <span class="text-sm text-60">站点关键词（用逗号分隔）</span>
+              <input
+                id="ss-keywords"
+                class="w-full rounded-lg border border-(--line-divider) px-3.5 py-2.5 bg-transparent text-75 placeholder:text-50"
+                placeholder="blog, tech, life"
+              />
+            </label>
+            <label class="space-y-1.5">
+              <span class="text-sm text-60">建站日期</span>
+              <input
+                id="ss-start-date"
+                type="date"
+                onkeydown="return false"
+                inputmode="none"
+                class="date-picker-input w-full rounded-lg border border-(--line-divider) px-3.5 py-2.5 bg-transparent text-75"
+              />
+            </label>
+            <hr class="border-(--line-divider) md:col-span-2" />
+            <h3 class="text-lg font-medium text-75 md:col-span-2">站点图标</h3>
+            <div class="md:col-span-2 space-y-2">
+              <div class="flex flex-wrap items-center gap-2">
+                <button
+                  type="button"
+                  id="ss-favicon-upload-btn"
+                  class="px-4 h-9 rounded-lg text-sm font-medium cursor-pointer bg-(--primary) text-white hover:opacity-90 transition flex items-center gap-1.5"
+                  ><svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    class="w-4 h-4"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="2"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    ><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"
+                    ></path><polyline points="17 8 12 3 7 8"></polyline><line
+                      x1="12"
+                      y1="3"
+                      x2="12"
+                      y2="15"></line></svg
+                  >上传图片</button
+                >
+                <span class="text-xs text-50">支持 PNG/JPG/ICO，最大 500KB</span
+                >
+              </div>
+              <div id="ss-favicon-list" class="space-y-2"></div>
+            </div>
+            <hr class="border-(--line-divider) md:col-span-2" />
+            <h3 class="text-lg font-medium text-75 md:col-span-2">
+              统计（Umami）
+            </h3>
+            <label
+              class="flex items-center gap-3 text-75 cursor-pointer select-none md:col-span-2"
+            >
+              <input
+                type="checkbox"
+                id="ss-umami-enabled"
+                class="toggle-checkbox"
+              />
+              <span class="toggle-track"><span class="toggle-knob"></span></span
+              >
+              启用 Umami
+            </label>
+            <label class="space-y-1.5">
+              <span class="text-sm text-60">Umami Base URL</span>
+              <input
+                id="ss-umami-url"
+                class="w-full rounded-lg border border-(--line-divider) px-3.5 py-2.5 bg-transparent text-75 placeholder:text-50"
+                placeholder="https://umami.example.com"
+              />
+            </label>
+            <label class="space-y-1.5 md:col-span-2">
+              <span class="text-sm text-60">Umami Scripts</span>
+              <textarea
+                id="ss-umami-scripts"
+                class="w-full min-h-24 rounded-lg border border-(--line-divider) px-3.5 py-2.5 bg-transparent text-75 font-mono text-xs placeholder:text-50"
+                placeholder="<script ...></script>"></textarea>
+            </label>
+            <div class="md:col-span-2 flex items-center gap-2 pt-2">
+              <button
+                type="submit"
+                class="px-4 py-2 rounded-lg bg-(--btn-regular-bg) text-(--btn-content) text-sm"
+                >保存站点信息</button
+              >
+              <span id="ss-site-msg" class="text-sm text-60"></span>
+            </div>
+          </form>
+        </section>
+
+        <!-- ===== Section 2: 导航栏 ===== -->
+        <section class="card-base p-8 rounded-(--radius-large) space-y-4">
+          <h2 class="text-2xl font-semibold text-90">导航栏</h2>
+          <form id="ss-nav-form" class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <label class="space-y-1.5">
+              <span class="text-sm text-60">导航模式</span>
+              <select
+                id="ss-navbar-mode"
+                class="w-full rounded-lg border border-(--line-divider) px-3.5 py-2.5 bg-transparent text-75"
+              >
+                <option value="logo">Logo</option>
+                <option value="text-icon">文字+图标</option>
+              </select>
+            </label>
+            <label class="space-y-1.5">
+              <span class="text-sm text-60">导航标题文本</span>
+              <input
+                id="ss-navbar-text"
+                class="w-full rounded-lg border border-(--line-divider) px-3.5 py-2.5 bg-transparent text-75 placeholder:text-50"
+                placeholder="Site Title"
+              />
+            </label>
+            <div class="md:col-span-2 space-y-1.5">
+              <span class="text-sm text-60">导航链接</span>
+              <div id="ss-nav-links-list" class="space-y-2"></div>
+            </div>
+            <div class="md:col-span-2 flex items-center gap-2 pt-2">
+              <button
+                type="submit"
+                class="px-4 py-2 rounded-lg bg-(--btn-regular-bg) text-(--btn-content) text-sm"
+                >保存导航设置</button
+              >
+              <span id="ss-nav-msg" class="text-sm text-60"></span>
+            </div>
+          </form>
+        </section>
+
+        <!-- ===== Section 3: 首页设置 ===== -->
+        <section class="card-base p-8 rounded-(--radius-large) space-y-4">
+          <h2 class="text-2xl font-semibold text-90">首页设置</h2>
+          <form id="ss-home-form" class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <h3 class="text-lg font-medium text-75 md:col-span-2">轮播壁纸</h3>
+            <label class="space-y-1.5">
+              <span class="text-sm text-60">壁纸模式</span>
+              <select
+                id="ss-wallpaper-mode"
+                class="w-full rounded-lg border border-(--line-divider) px-3.5 py-2.5 bg-transparent text-75"
+              >
+                <option value="banner">banner</option>
+                <option value="none">none</option>
+              </select>
+            </label>
+            <label
+              class="flex items-center gap-3 text-75 cursor-pointer select-none md:col-span-2"
+            >
+              <input
+                type="checkbox"
+                id="ss-banner-carousel-enable"
+                class="toggle-checkbox"
+              />
+              <span class="toggle-track"><span class="toggle-knob"></span></span
+              >
+              启用 Banner 轮播
+            </label>
+            <label class="space-y-1.5">
+              <span class="text-sm text-60">轮播间隔（秒）</span>
+              <input
+                id="ss-banner-carousel-interval"
+                type="number"
+                min="1"
+                max="120"
+                class="w-full rounded-lg border border-(--line-divider) px-3.5 py-2.5 bg-transparent text-75"
+                placeholder="5"
+              />
+            </label>
+            <div class="md:col-span-2 space-y-2">
+              <h4 class="text-base font-medium text-75">桌面端壁纸</h4>
+              <div class="flex flex-wrap items-center gap-2">
+                <button
+                  type="button"
+                  id="ss-banner-desktop-upload-btn"
+                  class="px-4 h-9 rounded-lg text-sm font-medium cursor-pointer bg-(--primary) text-white hover:opacity-90 transition flex items-center gap-1.5"
+                  ><svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    class="w-4 h-4"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="2"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    ><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"
+                    ></path><polyline points="17 8 12 3 7 8"></polyline><line
+                      x1="12"
+                      y1="3"
+                      x2="12"
+                      y2="15"></line></svg
+                  >上传图片</button
+                >
+                <span class="text-xs text-50">拖拽调整顺序</span>
+              </div>
+              <div id="ss-banner-desktop-list" class="space-y-2"></div>
+            </div>
+            <div class="md:col-span-2 space-y-2">
+              <h4 class="text-base font-medium text-75">移动端壁纸</h4>
+              <div class="flex flex-wrap items-center gap-2">
+                <button
+                  type="button"
+                  id="ss-banner-mobile-upload-btn"
+                  class="px-4 h-9 rounded-lg text-sm font-medium cursor-pointer bg-(--primary) text-white hover:opacity-90 transition flex items-center gap-1.5"
+                  ><svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    class="w-4 h-4"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="2"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    ><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"
+                    ></path><polyline points="17 8 12 3 7 8"></polyline><line
+                      x1="12"
+                      y1="3"
+                      x2="12"
+                      y2="15"></line></svg
+                  >上传图片</button
+                >
+                <span class="text-xs text-50">拖拽调整顺序</span>
+              </div>
+              <div id="ss-banner-mobile-list" class="space-y-2"></div>
+            </div>
+            <div class="md:col-span-2 flex items-center gap-2 pt-2">
+              <button
+                type="submit"
+                class="px-4 py-2 rounded-lg bg-(--btn-regular-bg) text-(--btn-content) text-sm"
+                >保存首页设置</button
+              >
+              <span id="ss-home-msg" class="text-sm text-60"></span>
+            </div>
+          </form>
+        </section>
+
+        <!-- ===== Section 4: 文章设置 ===== -->
+        <section class="card-base p-8 rounded-(--radius-large) space-y-4">
+          <h2 class="text-2xl font-semibold text-90">文章设置</h2>
+          <form
+            id="ss-feature-form"
+            class="grid grid-cols-1 md:grid-cols-2 gap-4 text-base"
+          >
+            <label
+              class="flex items-center gap-3 text-75 cursor-pointer select-none"
+            >
+              <input
+                type="checkbox"
+                id="ss-toc-enable"
+                class="toggle-checkbox"
+              />
+              <span class="toggle-track"><span class="toggle-knob"></span></span
+              >
+              启用 TOC
+            </label>
+            <label
+              class="flex items-center gap-3 text-75 cursor-pointer select-none"
+            >
+              <input type="checkbox" id="ss-toc-jp" class="toggle-checkbox" />
+              <span class="toggle-track"><span class="toggle-knob"></span></span
+              >
+              使用日文序号
+            </label>
+            <label class="space-y-1.5">
+              <span class="text-sm text-60">TOC 模式</span>
+              <select
+                id="ss-toc-mode"
+                class="w-full rounded-lg border border-(--line-divider) px-3.5 py-2.5 bg-transparent text-75"
+              >
+                <option value="sidebar">sidebar</option>
+                <option value="float">float</option>
+              </select>
+            </label>
+            <label class="space-y-1.5">
+              <span class="text-sm text-60">TOC 深度</span>
+              <select
+                id="ss-toc-depth"
+                class="w-full rounded-lg border border-(--line-divider) px-3.5 py-2.5 bg-transparent text-75"
+              >
+                <option value="1">1</option>
+                <option value="2">2</option>
+                <option value="3">3</option>
+              </select>
+            </label>
+            <div class="md:col-span-2 flex items-center gap-2 pt-2">
+              <button
+                type="submit"
+                class="px-4 py-2 rounded-lg bg-(--btn-regular-bg) text-(--btn-content) text-sm"
+                >保存文章设置</button
+              >
+              <span id="ss-feature-msg" class="text-sm text-60"></span>
+            </div>
+          </form>
+        </section>
+
+        <!-- ===== Section 5: 公告与页脚 ===== -->
+        <section class="card-base p-8 rounded-(--radius-large) space-y-4">
+          <h2 class="text-2xl font-semibold text-90">公告与页脚</h2>
+          <form
+            id="ss-announce-form"
+            class="grid grid-cols-1 md:grid-cols-2 gap-4"
+          >
+            <h3 class="text-lg font-medium text-75 md:col-span-2">公告</h3>
+            <label
+              class="flex items-center gap-3 text-75 cursor-pointer select-none md:col-span-2"
+            >
+              <input
+                type="checkbox"
+                id="ss-ann-closable"
+                class="toggle-checkbox"
+              />
+              <span class="toggle-track"><span class="toggle-knob"></span></span
+              >
+              公告可关闭
+            </label>
+            <label class="space-y-1.5">
+              <span class="text-sm text-60">公告标题</span>
+              <input
+                id="ss-ann-title"
+                class="w-full rounded-lg border border-(--line-divider) px-3.5 py-2.5 bg-transparent text-75 placeholder:text-50"
+                placeholder="Welcome!"
+              />
+            </label>
+            <label class="space-y-1.5">
+              <span class="text-sm text-60">公告内容</span>
+              <textarea
+                id="ss-ann-content"
+                class="w-full min-h-24 rounded-lg border border-(--line-divider) px-3.5 py-2.5 bg-transparent text-75 placeholder:text-50"
+                placeholder="公告正文..."></textarea>
+            </label>
+            <label
+              class="flex items-center gap-3 text-75 cursor-pointer select-none md:col-span-2"
+            >
+              <input
+                type="checkbox"
+                id="ss-ann-link-enable"
+                class="toggle-checkbox"
+              />
+              <span class="toggle-track"><span class="toggle-knob"></span></span
+              >
+              启用公告链接
+            </label>
+            <label class="space-y-1.5">
+              <span class="text-sm text-60">公告链接文本</span>
+              <input
+                id="ss-ann-link-text"
+                class="w-full rounded-lg border border-(--line-divider) px-3.5 py-2.5 bg-transparent text-75 placeholder:text-50"
+                placeholder="了解更多"
+              />
+            </label>
+            <label class="space-y-1.5">
+              <span class="text-sm text-60">公告链接 URL</span>
+              <input
+                id="ss-ann-link-url"
+                class="w-full rounded-lg border border-(--line-divider) px-3.5 py-2.5 bg-transparent text-75 placeholder:text-50"
+                placeholder="https://..."
+              />
+            </label>
+            <hr class="border-(--line-divider) md:col-span-2" />
+            <h3 class="text-lg font-medium text-75 md:col-span-2">页脚</h3>
+            <label
+              class="flex items-center gap-3 text-75 cursor-pointer select-none md:col-span-2"
+            >
+              <input
+                type="checkbox"
+                id="ss-footer-enable"
+                class="toggle-checkbox"
+              />
+              <span class="toggle-track"><span class="toggle-knob"></span></span
+              >
+              启用页脚自定义 HTML
+            </label>
+            <label class="space-y-1.5 md:col-span-2">
+              <span class="text-sm text-60"
+                >页脚 HTML（保存时会服务端 sanitize）</span
+              >
+              <textarea
+                id="ss-footer-html"
+                class="w-full min-h-32 rounded-lg border border-(--line-divider) px-3.5 py-2.5 bg-transparent text-75 font-mono text-xs placeholder:text-50"
+                placeholder="<p>ICP 备案号</p>"></textarea>
+            </label>
+            <div class="md:col-span-2 flex items-center gap-2 pt-2">
+              <button
+                type="submit"
+                class="px-4 py-2 rounded-lg bg-(--btn-regular-bg) text-(--btn-content) text-sm"
+                >保存公告与页脚</button
+              >
+              <span id="ss-announce-msg" class="text-sm text-60"></span>
+            </div>
+          </form>
+        </section>
+
+        <!-- ===== Section 6: 其它设置 ===== -->
+        <section class="card-base p-8 rounded-(--radius-large) space-y-4">
+          <h2 class="text-2xl font-semibold text-90">其它设置</h2>
+          <form
+            id="ss-other-form"
+            class="grid grid-cols-1 md:grid-cols-2 gap-4"
+          >
+            <h3 class="text-lg font-medium text-75 md:col-span-2">
+              音乐播放器
+            </h3>
+            <label
+              class="flex items-center gap-3 text-75 cursor-pointer select-none md:col-span-2"
+            >
+              <input
+                type="checkbox"
+                id="ss-music-enable"
+                class="toggle-checkbox"
+              />
+              <span class="toggle-track"><span class="toggle-knob"></span></span
+              >
+              启用音乐播放器
+            </label>
+            <label class="space-y-1.5">
+              <span class="text-sm text-60">模式</span>
+              <select
+                id="ss-music-mode"
+                class="w-full rounded-lg border border-(--line-divider) px-3.5 py-2.5 bg-transparent text-75"
+              >
+                <option value="meting">meting</option>
+                <option value="local">local</option>
+              </select>
+            </label>
+            <label class="space-y-1.5">
+              <span class="text-sm text-60">Meting API</span>
+              <input
+                id="ss-music-api"
+                class="w-full rounded-lg border border-(--line-divider) px-3.5 py-2.5 bg-transparent text-75 placeholder:text-50"
+                placeholder="https://api.injahow.cn/meting/"
+              />
+            </label>
+            <label class="space-y-1.5">
+              <span class="text-sm text-60">歌单 ID</span>
+              <input
+                id="ss-music-id"
+                class="w-full rounded-lg border border-(--line-divider) px-3.5 py-2.5 bg-transparent text-75 placeholder:text-50"
+              />
+            </label>
+            <label class="space-y-1.5">
+              <span class="text-sm text-60">服务器</span>
+              <input
+                id="ss-music-server"
+                class="w-full rounded-lg border border-(--line-divider) px-3.5 py-2.5 bg-transparent text-75 placeholder:text-50"
+                placeholder="netease"
+              />
+            </label>
+            <label class="space-y-1.5">
+              <span class="text-sm text-60">类型</span>
+              <input
+                id="ss-music-type"
+                class="w-full rounded-lg border border-(--line-divider) px-3.5 py-2.5 bg-transparent text-75 placeholder:text-50"
+                placeholder="playlist"
+              />
+            </label>
+            <label class="space-y-1.5">
+              <span class="text-sm text-60">歌曲名滚动速度</span>
+              <input
+                id="ss-music-marquee"
+                type="number"
+                min="0"
+                max="200"
+                class="w-full rounded-lg border border-(--line-divider) px-3.5 py-2.5 bg-transparent text-75"
+                placeholder="30"
+              />
+            </label>
+            <hr class="border-(--line-divider) md:col-span-2" />
+            <h3 class="text-lg font-medium text-75 md:col-span-2">樱花特效</h3>
+            <label
+              class="flex items-center gap-3 text-75 cursor-pointer select-none"
+            >
+              <input
+                type="checkbox"
+                id="ss-sakura-enable"
+                class="toggle-checkbox"
+              />
+              <span class="toggle-track"><span class="toggle-knob"></span></span
+              >
+              启用樱花特效
+            </label>
+            <div class="md:col-span-2 flex items-center gap-2 pt-2">
+              <button
+                type="submit"
+                class="px-4 py-2 rounded-lg bg-(--btn-regular-bg) text-(--btn-content) text-sm"
+                >保存其它设置</button
+              >
+              <span id="ss-other-msg" class="text-sm text-60"></span>
+            </div>
+          </form>
+        </section>
+      </div>
+    </div>
+    <div
+      data-enter-skeleton-inline-placeholder
+      aria-hidden="true"
+      class="space-y-4"
+    >
+      <section class="card-base px-9 py-6 rounded-(--radius-large) space-y-3">
+        <div
+          class="md3-skeleton-text"
+          style="--skeleton-width: 30%; --skeleton-height: 2rem;"
         >
-          <h3 class="text-lg font-medium text-75 md:col-span-2">公告</h3>
-          <label
-            class="flex items-center gap-3 text-75 cursor-pointer select-none md:col-span-2"
-          >
-            <input
-              type="checkbox"
-              id="ss-ann-closable"
-              class="toggle-checkbox"
-            />
-            <span class="toggle-track"><span class="toggle-knob"></span></span>
-            公告可关闭
-          </label>
-          <label class="space-y-1.5">
-            <span class="text-sm text-60">公告标题</span>
-            <input
-              id="ss-ann-title"
-              class="w-full rounded-lg border border-(--line-divider) px-3.5 py-2.5 bg-transparent text-75 placeholder:text-50"
-              placeholder="Welcome!"
-            />
-          </label>
-          <label class="space-y-1.5">
-            <span class="text-sm text-60">公告内容</span>
-            <textarea
-              id="ss-ann-content"
-              class="w-full min-h-24 rounded-lg border border-(--line-divider) px-3.5 py-2.5 bg-transparent text-75 placeholder:text-50"
-              placeholder="公告正文..."></textarea>
-          </label>
-          <label
-            class="flex items-center gap-3 text-75 cursor-pointer select-none md:col-span-2"
-          >
-            <input
-              type="checkbox"
-              id="ss-ann-link-enable"
-              class="toggle-checkbox"
-            />
-            <span class="toggle-track"><span class="toggle-knob"></span></span>
-            启用公告链接
-          </label>
-          <label class="space-y-1.5">
-            <span class="text-sm text-60">公告链接文本</span>
-            <input
-              id="ss-ann-link-text"
-              class="w-full rounded-lg border border-(--line-divider) px-3.5 py-2.5 bg-transparent text-75 placeholder:text-50"
-              placeholder="了解更多"
-            />
-          </label>
-          <label class="space-y-1.5">
-            <span class="text-sm text-60">公告链接 URL</span>
-            <input
-              id="ss-ann-link-url"
-              class="w-full rounded-lg border border-(--line-divider) px-3.5 py-2.5 bg-transparent text-75 placeholder:text-50"
-              placeholder="https://..."
-            />
-          </label>
-          <hr class="border-(--line-divider) md:col-span-2" />
-          <h3 class="text-lg font-medium text-75 md:col-span-2">页脚</h3>
-          <label
-            class="flex items-center gap-3 text-75 cursor-pointer select-none md:col-span-2"
-          >
-            <input
-              type="checkbox"
-              id="ss-footer-enable"
-              class="toggle-checkbox"
-            />
-            <span class="toggle-track"><span class="toggle-knob"></span></span>
-            启用页脚自定义 HTML
-          </label>
-          <label class="space-y-1.5 md:col-span-2">
-            <span class="text-sm text-60"
-              >页脚 HTML（保存时会服务端 sanitize）</span
-            >
-            <textarea
-              id="ss-footer-html"
-              class="w-full min-h-32 rounded-lg border border-(--line-divider) px-3.5 py-2.5 bg-transparent text-75 font-mono text-xs placeholder:text-50"
-              placeholder="<p>ICP 备案号</p>"></textarea>
-          </label>
-          <div class="md:col-span-2 flex items-center gap-2 pt-2">
-            <button
-              type="submit"
-              class="px-4 py-2 rounded-lg bg-(--btn-regular-bg) text-(--btn-content) text-sm"
-              >保存公告与页脚</button
-            >
-            <span id="ss-announce-msg" class="text-sm text-60"></span>
-          </div>
-        </form>
+        </div>
+        <div class="md3-skeleton-text" style="--skeleton-width: 56%;"></div>
       </section>
-
-      <!-- ===== Section 6: 其它设置 ===== -->
-      <section class="card-base p-8 rounded-(--radius-large) space-y-4">
-        <h2 class="text-2xl font-semibold text-90">其它设置</h2>
-        <form id="ss-other-form" class="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <h3 class="text-lg font-medium text-75 md:col-span-2">音乐播放器</h3>
-          <label
-            class="flex items-center gap-3 text-75 cursor-pointer select-none md:col-span-2"
-          >
-            <input
-              type="checkbox"
-              id="ss-music-enable"
-              class="toggle-checkbox"
+      {
+        Array.from({ length: 6 }).map((_, index) => (
+          <section class="card-base p-8 rounded-(--radius-large) space-y-4">
+            <div
+              class="md3-skeleton-text"
+              style="--skeleton-width: 22%; --skeleton-height: 1.6rem;"
             />
-            <span class="toggle-track"><span class="toggle-knob"></span></span>
-            启用音乐播放器
-          </label>
-          <label class="space-y-1.5">
-            <span class="text-sm text-60">模式</span>
-            <select
-              id="ss-music-mode"
-              class="w-full rounded-lg border border-(--line-divider) px-3.5 py-2.5 bg-transparent text-75"
-            >
-              <option value="meting">meting</option>
-              <option value="local">local</option>
-            </select>
-          </label>
-          <label class="space-y-1.5">
-            <span class="text-sm text-60">Meting API</span>
-            <input
-              id="ss-music-api"
-              class="w-full rounded-lg border border-(--line-divider) px-3.5 py-2.5 bg-transparent text-75 placeholder:text-50"
-              placeholder="https://api.injahow.cn/meting/"
-            />
-          </label>
-          <label class="space-y-1.5">
-            <span class="text-sm text-60">歌单 ID</span>
-            <input
-              id="ss-music-id"
-              class="w-full rounded-lg border border-(--line-divider) px-3.5 py-2.5 bg-transparent text-75 placeholder:text-50"
-            />
-          </label>
-          <label class="space-y-1.5">
-            <span class="text-sm text-60">服务器</span>
-            <input
-              id="ss-music-server"
-              class="w-full rounded-lg border border-(--line-divider) px-3.5 py-2.5 bg-transparent text-75 placeholder:text-50"
-              placeholder="netease"
-            />
-          </label>
-          <label class="space-y-1.5">
-            <span class="text-sm text-60">类型</span>
-            <input
-              id="ss-music-type"
-              class="w-full rounded-lg border border-(--line-divider) px-3.5 py-2.5 bg-transparent text-75 placeholder:text-50"
-              placeholder="playlist"
-            />
-          </label>
-          <label class="space-y-1.5">
-            <span class="text-sm text-60">歌曲名滚动速度</span>
-            <input
-              id="ss-music-marquee"
-              type="number"
-              min="0"
-              max="200"
-              class="w-full rounded-lg border border-(--line-divider) px-3.5 py-2.5 bg-transparent text-75"
-              placeholder="30"
-            />
-          </label>
-          <hr class="border-(--line-divider) md:col-span-2" />
-          <h3 class="text-lg font-medium text-75 md:col-span-2">樱花特效</h3>
-          <label
-            class="flex items-center gap-3 text-75 cursor-pointer select-none"
-          >
-            <input
-              type="checkbox"
-              id="ss-sakura-enable"
-              class="toggle-checkbox"
-            />
-            <span class="toggle-track"><span class="toggle-knob"></span></span>
-            启用樱花特效
-          </label>
-          <div class="md:col-span-2 flex items-center gap-2 pt-2">
-            <button
-              type="submit"
-              class="px-4 py-2 rounded-lg bg-(--btn-regular-bg) text-(--btn-content) text-sm"
-              >保存其它设置</button
-            >
-            <span id="ss-other-msg" class="text-sm text-60"></span>
-          </div>
-        </form>
-      </section>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {Array.from({ length: index === 0 ? 6 : 4 }).map(() => (
+                <div class="md3-skeleton-block h-10 rounded-lg" />
+              ))}
+              <div class="md3-skeleton-block h-24 rounded-lg md:col-span-2" />
+            </div>
+            <div class="flex items-center gap-2 pt-2">
+              <div class="md3-skeleton-block h-10 w-28 rounded-lg" />
+              <div class="md3-skeleton-text w-24" />
+            </div>
+          </section>
+        ))
+      }
     </div>
   </div>
 

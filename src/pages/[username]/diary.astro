@@ -78,32 +78,108 @@ const items = result.status === "ok" ? result.data.items : [];
         backLabel="返回首页"
       />
     ) : (
-      <>
-        <section class="card-base px-9 py-6 rounded-(--radius-large) mb-4 text-90">
-          <h1
-            class="text-4xl font-bold text-black/90 dark:text-white/90 mb-2 relative
+      <div
+        data-enter-skeleton-page="user-diary"
+        data-enter-skeleton-target="user-diary"
+      >
+        <div data-enter-skeleton-inline-content>
+          <section class="card-base px-9 py-6 rounded-(--radius-large) mb-4 text-90">
+            <h1
+              class="text-4xl font-bold text-black/90 dark:text-white/90 mb-2 relative
 					before:w-1 before:h-8 before:rounded-md before:bg-(--primary)
 					before:absolute before:top-1/2 before:-translate-y-1/2 before:-left-4"
-          >
-            日记
-          </h1>
-          <p class="text-base text-70">用户公开的日记内容。</p>
-        </section>
+            >
+              日记
+            </h1>
+            <p class="text-base text-70">用户公开的日记内容。</p>
+          </section>
 
-        {items.length === 0 ? (
-          <div class="card-base p-8 rounded-(--radius-large) text-70">
-            暂无公开日记。
-          </div>
-        ) : (
+          {items.length === 0 ? (
+            <div class="card-base p-8 rounded-(--radius-large) text-70">
+              暂无公开日记。
+            </div>
+          ) : (
+            <div class="space-y-4">
+              {items.map((item) => (
+                <div class="diary-list-item">
+                  <DiaryCard entry={item} username={username} />
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+        <div
+          data-enter-skeleton-inline-placeholder
+          aria-hidden="true"
+          class="space-y-4"
+        >
+          <section class="card-base px-9 py-6 rounded-(--radius-large) mb-4">
+            <div class="space-y-3">
+              <div
+                class="md3-skeleton-text"
+                style="--skeleton-width: 24%; --skeleton-height: 2rem;"
+              />
+              <div
+                class="md3-skeleton-text"
+                style="--skeleton-width: 44%; --skeleton-height: 0.92rem;"
+              />
+            </div>
+          </section>
           <div class="space-y-4">
-            {items.map((item) => (
-              <div class="diary-list-item">
-                <DiaryCard entry={item} username={username} />
-              </div>
+            {Array.from({ length: 3 }).map(() => (
+              <article class="card-base flex flex-col w-full rounded-(--radius-large) overflow-hidden">
+                <div class="pl-6 md:pl-9 pr-6 md:pr-2 pt-6 md:pt-7 pb-6 space-y-3">
+                  <div
+                    class="md3-skeleton-text"
+                    style="--skeleton-width: 36%; --skeleton-height: 0.72rem;"
+                  />
+                  <div class="space-y-2">
+                    <div
+                      class="md3-skeleton-text"
+                      style="--skeleton-width: 94%;"
+                    />
+                    <div
+                      class="md3-skeleton-text"
+                      style="--skeleton-width: 86%;"
+                    />
+                    <div
+                      class="md3-skeleton-text"
+                      style="--skeleton-width: 72%;"
+                    />
+                  </div>
+                  <div class="grid grid-cols-3 md:grid-cols-4 gap-2">
+                    <div class="md3-skeleton-block h-20 md:h-24 rounded-lg" />
+                    <div class="md3-skeleton-block h-20 md:h-24 rounded-lg" />
+                    <div class="md3-skeleton-block h-20 md:h-24 rounded-lg" />
+                    <div class="hidden md:block md3-skeleton-block h-20 md:h-24 rounded-lg" />
+                  </div>
+                  <div class="flex items-center justify-between gap-3 mt-4">
+                    <div class="flex items-center gap-1.5 w-1/2">
+                      <div
+                        class="md3-skeleton-text"
+                        style="--skeleton-width: 42%; --skeleton-height: 0.72rem;"
+                      />
+                      <div
+                        class="md3-skeleton-text"
+                        style="--skeleton-width: 10%; --skeleton-height: 0.38rem;"
+                      />
+                      <div
+                        class="md3-skeleton-text"
+                        style="--skeleton-width: 48%; --skeleton-height: 0.72rem;"
+                      />
+                    </div>
+                    <div class="flex items-center gap-3 md:gap-4">
+                      <div class="md3-skeleton-block h-6 w-10 rounded-lg" />
+                      <div class="md3-skeleton-block h-6 w-10 rounded-lg" />
+                      <div class="md3-skeleton-circle h-8 w-8 rounded-lg" />
+                    </div>
+                  </div>
+                </div>
+              </article>
             ))}
           </div>
-        )}
-      </>
+        </div>
+      </div>
     )
   }
 </MainGridLayout>

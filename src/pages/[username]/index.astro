@@ -88,110 +88,164 @@ function shortDiary(text: string): string {
       />
     ) : (
       <>
-        <section class="card-base p-6 rounded-(--radius-large) mb-4">
-          <div class="flex items-center gap-4">
-            {payload!.owner?.avatar_url ? (
-              <img
-                src={payload!.owner.avatar_url}
-                alt="avatar"
-                class="w-16 h-16 rounded-full object-cover border border-(--line-divider)"
-                loading="lazy"
-              />
-            ) : (
-              <div class="w-16 h-16 rounded-full bg-black/10 dark:bg-white/10" />
+        <div
+          data-enter-skeleton-page="user-home"
+          data-enter-skeleton-target="user-home"
+        >
+          <div data-enter-skeleton-inline-content>
+            <section class="card-base p-6 rounded-(--radius-large) mb-4">
+              <div class="flex items-center gap-4">
+                {payload!.owner?.avatar_url ? (
+                  <img
+                    src={payload!.owner.avatar_url}
+                    alt="avatar"
+                    class="w-16 h-16 rounded-full object-cover border border-(--line-divider)"
+                    loading="lazy"
+                  />
+                ) : (
+                  <div class="w-16 h-16 rounded-full bg-black/10 dark:bg-white/10" />
+                )}
+                <div>
+                  <h1 class="text-2xl font-bold text-90">
+                    {payload!.owner?.name || "用户"}
+                  </h1>
+                  <p class="text-xs text-60">
+                    @{payload!.owner?.username || username}
+                  </p>
+                </div>
+              </div>
+              {payload!.profile?.bio && (
+                <p class="mt-4 text-sm text-75 leading-7">
+                  {payload!.profile.bio}
+                </p>
+              )}
+            </section>
+
+            {Array.isArray(payload!.articles) &&
+              payload!.articles.length > 0 && (
+                <section class="card-base p-6 rounded-(--radius-large) mb-4 space-y-3">
+                  <h2 class="text-xl font-semibold text-90">文章</h2>
+                  <ul class="space-y-2 text-75">
+                    {payload!.articles.map((item) => (
+                      <li>
+                        <a
+                          href={`/posts/${item.short_id || item.id}`}
+                          class="hover:text-(--primary) transition-colors"
+                        >
+                          {item.title}
+                        </a>
+                      </li>
+                    ))}
+                  </ul>
+                </section>
+              )}
+
+            {Array.isArray(payload!.diaries) && payload!.diaries.length > 0 && (
+              <section class="card-base p-6 rounded-(--radius-large) mb-4 space-y-3">
+                <h2 class="text-xl font-semibold text-90">日记</h2>
+                <ul class="space-y-2 text-sm text-75">
+                  {payload!.diaries.map((item) => (
+                    <li>
+                      <a
+                        href={`/${payload!.owner?.username || username}/diary/${item.short_id || item.id}`}
+                        class="hover:text-(--primary) transition-colors"
+                      >
+                        {shortDiary(item.content)}
+                      </a>
+                    </li>
+                  ))}
+                </ul>
+              </section>
             )}
-            <div>
-              <h1 class="text-2xl font-bold text-90">
-                {payload!.owner?.name || "用户"}
-              </h1>
-              <p class="text-xs text-60">
-                @{payload!.owner?.username || username}
-              </p>
-            </div>
+
+            {Array.isArray(payload!.anime) && payload!.anime.length > 0 && (
+              <section class="card-base p-6 rounded-(--radius-large) mb-4 space-y-3">
+                <h2 class="text-xl font-semibold text-90">番剧</h2>
+                <ul class="space-y-2 text-sm text-75">
+                  {payload!.anime.map((item) => (
+                    <li>
+                      {item.title} · {item.watch_status}
+                    </li>
+                  ))}
+                </ul>
+              </section>
+            )}
+
+            {Array.isArray(payload!.albums) && payload!.albums.length > 0 && (
+              <section class="card-base p-6 rounded-(--radius-large) mb-4 space-y-3">
+                <h2 class="text-xl font-semibold text-90">相册</h2>
+                <ul class="space-y-2 text-75">
+                  {payload!.albums.map((item) => (
+                    <li>
+                      <a
+                        href={`/${payload!.owner?.username || username}/albums/${item.short_id || item.id}`}
+                        class="hover:text-(--primary) transition-colors"
+                      >
+                        {item.title}
+                      </a>
+                    </li>
+                  ))}
+                </ul>
+              </section>
+            )}
+
+            {payload!.comments && (
+              <section class="card-base p-6 rounded-(--radius-large) space-y-3">
+                <h2 class="text-xl font-semibold text-90">评论</h2>
+                <div class="text-sm text-75">
+                  文章评论：{payload!.comments.article_comments?.length || 0} 条
+                </div>
+                <div class="text-sm text-75">
+                  日记评论：{payload!.comments.diary_comments?.length || 0} 条
+                </div>
+              </section>
+            )}
           </div>
-          {payload!.profile?.bio && (
-            <p class="mt-4 text-sm text-75 leading-7">{payload!.profile.bio}</p>
-          )}
-        </section>
+          <div
+            data-enter-skeleton-inline-placeholder
+            aria-hidden="true"
+            class="space-y-4"
+          >
+            <section class="card-base p-6 rounded-(--radius-large)">
+              <div class="flex items-center gap-4">
+                <div class="md3-skeleton-circle h-16 w-16" />
+                <div class="flex-1 space-y-3">
+                  <div
+                    class="md3-skeleton-text"
+                    style="--skeleton-width: 34%; --skeleton-height: 1.4rem;"
+                  />
+                  <div
+                    class="md3-skeleton-text"
+                    style="--skeleton-width: 24%; --skeleton-height: 0.78rem;"
+                  />
+                </div>
+              </div>
+              <div class="space-y-2 pt-4">
+                <div class="md3-skeleton-text" style="--skeleton-width: 92%;" />
+                <div class="md3-skeleton-text" style="--skeleton-width: 76%;" />
+              </div>
+            </section>
 
-        {Array.isArray(payload!.articles) && payload!.articles.length > 0 && (
-          <section class="card-base p-6 rounded-(--radius-large) mb-4 space-y-3">
-            <h2 class="text-xl font-semibold text-90">文章</h2>
-            <ul class="space-y-2 text-75">
-              {payload!.articles.map((item) => (
-                <li>
-                  <a
-                    href={`/posts/${item.short_id || item.id}`}
-                    class="hover:text-(--primary) transition-colors"
-                  >
-                    {item.title}
-                  </a>
-                </li>
-              ))}
-            </ul>
-          </section>
-        )}
-
-        {Array.isArray(payload!.diaries) && payload!.diaries.length > 0 && (
-          <section class="card-base p-6 rounded-(--radius-large) mb-4 space-y-3">
-            <h2 class="text-xl font-semibold text-90">日记</h2>
-            <ul class="space-y-2 text-sm text-75">
-              {payload!.diaries.map((item) => (
-                <li>
-                  <a
-                    href={`/${payload!.owner?.username || username}/diary/${item.short_id || item.id}`}
-                    class="hover:text-(--primary) transition-colors"
-                  >
-                    {shortDiary(item.content)}
-                  </a>
-                </li>
-              ))}
-            </ul>
-          </section>
-        )}
-
-        {Array.isArray(payload!.anime) && payload!.anime.length > 0 && (
-          <section class="card-base p-6 rounded-(--radius-large) mb-4 space-y-3">
-            <h2 class="text-xl font-semibold text-90">番剧</h2>
-            <ul class="space-y-2 text-sm text-75">
-              {payload!.anime.map((item) => (
-                <li>
-                  {item.title} · {item.watch_status}
-                </li>
-              ))}
-            </ul>
-          </section>
-        )}
-
-        {Array.isArray(payload!.albums) && payload!.albums.length > 0 && (
-          <section class="card-base p-6 rounded-(--radius-large) mb-4 space-y-3">
-            <h2 class="text-xl font-semibold text-90">相册</h2>
-            <ul class="space-y-2 text-75">
-              {payload!.albums.map((item) => (
-                <li>
-                  <a
-                    href={`/${payload!.owner?.username || username}/albums/${item.short_id || item.id}`}
-                    class="hover:text-(--primary) transition-colors"
-                  >
-                    {item.title}
-                  </a>
-                </li>
-              ))}
-            </ul>
-          </section>
-        )}
-
-        {payload!.comments && (
-          <section class="card-base p-6 rounded-(--radius-large) space-y-3">
-            <h2 class="text-xl font-semibold text-90">评论</h2>
-            <div class="text-sm text-75">
-              文章评论：{payload!.comments.article_comments?.length || 0} 条
-            </div>
-            <div class="text-sm text-75">
-              日记评论：{payload!.comments.diary_comments?.length || 0} 条
-            </div>
-          </section>
-        )}
+            {Array.from({ length: 4 }).map(() => (
+              <section class="card-base p-6 rounded-(--radius-large) space-y-3">
+                <div
+                  class="md3-skeleton-text"
+                  style="--skeleton-width: 20%; --skeleton-height: 1.2rem;"
+                />
+                <div class="space-y-2">
+                  <div
+                    class="md3-skeleton-text"
+                    style="--skeleton-width: 90%;"
+                  />
+                  <div
+                    class="md3-skeleton-text"
+                    style="--skeleton-width: 74%;"
+                  />
+                </div>
+              </section>
+            ))}
+          </div>
+        </div>
       </>
     )
   }

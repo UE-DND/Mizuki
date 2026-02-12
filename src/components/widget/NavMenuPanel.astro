@@ -15,16 +15,29 @@ interface Props {
 // 国际化标题映射
 const navTitleMap: Record<string, string> = {
   Links: I18nKey.navLinks,
+  链接: I18nKey.navLinks,
   My: I18nKey.navMy,
+  我的: I18nKey.navMy,
   About: I18nKey.navAbout,
+  关于: I18nKey.navAbout,
   Others: I18nKey.navOthers,
+  其他: I18nKey.navOthers,
   Anime: I18nKey.anime,
+  番剧: I18nKey.anime,
   Diary: I18nKey.diary,
+  日记: I18nKey.diary,
   Gallery: I18nKey.albums,
+  相册: I18nKey.albums,
   Projects: I18nKey.projects,
+  项目: I18nKey.projects,
   Skills: I18nKey.skills,
+  技能: I18nKey.skills,
   Timeline: I18nKey.timeline,
+  时间线: I18nKey.timeline,
   Friends: I18nKey.friends,
+  友情链接: I18nKey.friends,
+  关于我们: I18nKey.about,
+  站点统计: I18nKey.siteStats,
 };
 
 // 获取国际化的标题
@@ -63,18 +76,71 @@ const processedLinks: ProcessedNavBarLink[] = Astro.props.links.map(
   ]}
 >
   {
-    processedLinks.map((link) => (
-      <div
-        class:list={["mobile-menu-item", isAdminOnlyLink(link) && "hidden"]}
-        data-admin-only={isAdminOnlyLink(link) ? "true" : undefined}
-      >
-        {link.children && link.children.length > 0 ? (
-          <div class="mobile-dropdown" data-mobile-dropdown>
-            <button
-              class="group flex justify-between items-center py-2 pl-3 pr-1 rounded-lg gap-4 w-full text-left
-                            hover:bg-(--btn-plain-bg-hover) active:bg-(--btn-plain-bg-active) transition"
-              data-mobile-dropdown-trigger
-              aria-expanded="false"
+    processedLinks.map((link) => {
+      const hasChildren = Boolean(link.children && link.children.length > 0);
+
+      return (
+        <div
+          class:list={["mobile-menu-item", isAdminOnlyLink(link) && "hidden"]}
+          data-admin-only={isAdminOnlyLink(link) ? "true" : undefined}
+        >
+          {hasChildren ? (
+            <div class="mobile-dropdown" data-mobile-dropdown>
+              <button
+                class="group flex justify-between items-center py-2 pl-3 pr-1 rounded-lg gap-4 w-full text-left hover:bg-(--btn-plain-bg-hover) active:bg-(--btn-plain-bg-active) transition"
+                data-mobile-dropdown-trigger
+                aria-expanded="false"
+              >
+                <div class="flex items-center transition text-black/75 dark:text-white/75 font-bold group-hover:text-(--primary) group-active:text-(--primary)">
+                  {link.icon && (
+                    <Icon name={link.icon} class="text-[1.1rem] mr-2" />
+                  )}
+                  {getLocalizedName(link.name)}
+                </div>
+                <Icon
+                  name="material-symbols:keyboard-arrow-down-rounded"
+                  class="transition text-[1.25rem] text-(--primary) mobile-dropdown-arrow duration-200"
+                />
+              </button>
+
+              <div class="mobile-submenu" data-mobile-submenu>
+                {link.children?.map((child) => (
+                  <a
+                    href={child.external ? child.url : url(child.url)}
+                    class:list={[
+                      "group flex justify-between items-center py-2 pl-6 pr-1 rounded-lg gap-4 hover:bg-(--btn-plain-bg-hover) active:bg-(--btn-plain-bg-active) transition",
+                      isAdminOnlyLink(child) && "hidden",
+                    ]}
+                    data-admin-only={
+                      isAdminOnlyLink(child) ? "true" : undefined
+                    }
+                    target={child.external ? "_blank" : null}
+                  >
+                    <div class="flex items-center transition text-black/60 dark:text-white/60 font-medium group-hover:text-(--primary) group-active:text-(--primary)">
+                      {child.icon && (
+                        <Icon name={child.icon} class="text-[1.1rem] mr-2" />
+                      )}
+                      {getLocalizedName(child.name)}
+                    </div>
+                    {child.external && (
+                      <Icon
+                        name="fa7-solid:arrow-up-right-from-square"
+                        class="transition text-[0.75rem] text-black/25 dark:text-white/25 -translate-x-1"
+                      />
+                    )}
+                  </a>
+                ))}
+              </div>
+            </div>
+          ) : (
+            <a
+              href={link.external ? link.url : url(link.url)}
+              class:list={[
+                "group flex justify-between items-center py-2 pl-3 pr-1 rounded-lg gap-4 hover:bg-(--btn-plain-bg-hover) active:bg-(--btn-plain-bg-active) transition",
+                isAdminOnlyLink(link) && "hidden",
+              ]}
+              data-admin-only={isAdminOnlyLink(link) ? "true" : undefined}
+              target={link.external ? "_blank" : null}
             >
               <div class="flex items-center transition text-black/75 dark:text-white/75 font-bold group-hover:text-(--primary) group-active:text-(--primary)">
                 {link.icon && (
@@ -82,70 +148,23 @@ const processedLinks: ProcessedNavBarLink[] = Astro.props.links.map(
                 )}
                 {getLocalizedName(link.name)}
               </div>
-              <Icon
-                name="material-symbols:keyboard-arrow-down-rounded"
-                class="transition text-[1.25rem] text-(--primary) mobile-dropdown-arrow duration-200"
-              />
-            </button>
-            <div class="mobile-submenu" data-mobile-submenu>
-              {link.children.map((child) => (
-                <a
-                  href={child.external ? child.url : url(child.url)}
-                  class:list={[
-                    "group flex justify-between items-center py-2 pl-6 pr-1 rounded-lg gap-4 hover:bg-(--btn-plain-bg-hover) active:bg-(--btn-plain-bg-active) transition",
-                    isAdminOnlyLink(child) && "hidden",
-                  ]}
-                  data-admin-only={isAdminOnlyLink(child) ? "true" : undefined}
-                  target={child.external ? "_blank" : null}
-                >
-                  <div class="flex items-center transition text-black/60 dark:text-white/60 font-medium group-hover:text-(--primary) group-active:text-(--primary)">
-                    {child.icon && (
-                      <Icon name={child.icon} class="text-[1.1rem] mr-2" />
-                    )}
-                    {getLocalizedName(child.name)}
-                  </div>
-                  {child.external && (
-                    <Icon
-                      name="fa7-solid:arrow-up-right-from-square"
-                      class="transition text-[0.75rem] text-black/25 dark:text-white/25 -translate-x-1"
-                    />
-                  )}
-                </a>
-              ))}
-            </div>
-          </div>
-        ) : (
-          <a
-            href={link.external ? link.url : url(link.url)}
-            class:list={[
-              "group flex justify-between items-center py-2 pl-3 pr-1 rounded-lg gap-4 hover:bg-(--btn-plain-bg-hover) active:bg-(--btn-plain-bg-active) transition",
-              isAdminOnlyLink(link) && "hidden",
-            ]}
-            data-admin-only={isAdminOnlyLink(link) ? "true" : undefined}
-            target={link.external ? "_blank" : null}
-          >
-            <div class="flex items-center transition text-black/75 dark:text-white/75 font-bold group-hover:text-(--primary) group-active:text-(--primary)">
-              {link.icon && (
-                <Icon name={link.icon} class="text-[1.1rem] mr-2" />
+              {!link.external && (
+                <Icon
+                  name="material-symbols:chevron-right-rounded"
+                  class="transition text-[1.25rem] text-(--primary)"
+                />
               )}
-              {getLocalizedName(link.name)}
-            </div>
-            {!link.external && (
-              <Icon
-                name="material-symbols:chevron-right-rounded"
-                class="transition text-[1.25rem] text-(--primary)"
-              />
-            )}
-            {link.external && (
-              <Icon
-                name="fa7-solid:arrow-up-right-from-square"
-                class="transition text-[0.75rem] text-black/25 dark:text-white/25 -translate-x-1"
-              />
-            )}
-          </a>
-        )}
-      </div>
-    ))
+              {link.external && (
+                <Icon
+                  name="fa7-solid:arrow-up-right-from-square"
+                  class="transition text-[0.75rem] text-black/25 dark:text-white/25 -translate-x-1"
+                />
+              )}
+            </a>
+          )}
+        </div>
+      );
+    })
   }
 </div>
 

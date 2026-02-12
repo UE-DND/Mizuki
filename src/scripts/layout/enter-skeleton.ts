@@ -1,4 +1,18 @@
-type EnterSkeletonMode = "post-card" | "post-detail" | "fallback";
+type EnterSkeletonMode =
+	| "post-card"
+	| "post-detail"
+	| "user-home"
+	| "user-anime"
+	| "user-albums"
+	| "user-diary"
+	| "admin-dashboard"
+	| "admin-users"
+	| "admin-site-settings"
+	| "me-settings"
+	| "about-page"
+	| "friends-page"
+	| "stats-page"
+	| "fallback";
 
 const ACTIVE_CLASS = "enter-skeleton-active";
 const MODE_ATTR = "data-enter-skeleton-mode";
@@ -28,6 +42,45 @@ function detectEnterSkeletonMode(): EnterSkeletonMode {
 	}
 	if (document.querySelector('[data-enter-skeleton-target="post-card"]')) {
 		return "post-card";
+	}
+	if (document.querySelector('[data-enter-skeleton-page="user-home"]')) {
+		return "user-home";
+	}
+	if (document.querySelector('[data-enter-skeleton-page="user-anime"]')) {
+		return "user-anime";
+	}
+	if (document.querySelector('[data-enter-skeleton-page="user-albums"]')) {
+		return "user-albums";
+	}
+	if (document.querySelector('[data-enter-skeleton-page="user-diary"]')) {
+		return "user-diary";
+	}
+	if (
+		document.querySelector('[data-enter-skeleton-page="admin-dashboard"]')
+	) {
+		return "admin-dashboard";
+	}
+	if (document.querySelector('[data-enter-skeleton-page="admin-users"]')) {
+		return "admin-users";
+	}
+	if (
+		document.querySelector(
+			'[data-enter-skeleton-page="admin-site-settings"]',
+		)
+	) {
+		return "admin-site-settings";
+	}
+	if (document.querySelector('[data-enter-skeleton-page="me-settings"]')) {
+		return "me-settings";
+	}
+	if (document.querySelector('[data-enter-skeleton-page="about-page"]')) {
+		return "about-page";
+	}
+	if (document.querySelector('[data-enter-skeleton-page="friends-page"]')) {
+		return "friends-page";
+	}
+	if (document.querySelector('[data-enter-skeleton-page="stats-page"]')) {
+		return "stats-page";
 	}
 	return "fallback";
 }

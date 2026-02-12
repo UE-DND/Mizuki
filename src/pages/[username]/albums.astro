@@ -126,127 +126,182 @@ function coverUrl(item: {
         backLabel="返回首页"
       />
     ) : (
-      <div class="album-list-root">
-        <section class="card-base px-9 py-6 rounded-(--radius-large) mb-4 text-90 flex items-center justify-between gap-4 flex-wrap">
-          <div>
-            <h1
-              class="text-4xl font-bold text-black/90 dark:text-white/90 mb-2 relative
+      <div
+        class="album-list-root"
+        data-enter-skeleton-page="user-albums"
+        data-enter-skeleton-target="user-albums"
+      >
+        <div data-enter-skeleton-inline-content>
+          <section class="card-base px-9 py-6 rounded-(--radius-large) mb-4 text-90 flex items-center justify-between gap-4 flex-wrap">
+            <div>
+              <h1
+                class="text-4xl font-bold text-black/90 dark:text-white/90 mb-2 relative
             before:w-1 before:h-8 before:rounded-md before:bg-(--primary)
 						before:absolute before:top-1/2 before:-translate-y-1/2 before:-left-4"
-            >
-              相册
-            </h1>
-            <p class="text-base text-70">用户公开的相册内容。</p>
-          </div>
-          {isOwner && (
-            <a
-              href={`/${username}/albums/publish`}
-              class="px-5 h-10 rounded-lg bg-(--primary) text-white font-medium
+              >
+                相册
+              </h1>
+              <p class="text-base text-70">用户公开的相册内容。</p>
+            </div>
+            {isOwner && (
+              <a
+                href={`/${username}/albums/publish`}
+                class="px-5 h-10 rounded-lg bg-(--primary) text-white font-medium
 							hover:opacity-90 active:opacity-80 transition
 							flex items-center gap-1.5 text-sm shrink-0"
-            >
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                class="w-4 h-4"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                stroke-width="2"
-                stroke-linecap="round"
-                stroke-linejoin="round"
               >
-                <line x1="12" y1="5" x2="12" y2="19" />
-                <line x1="5" y1="12" x2="19" y2="12" />
-              </svg>
-              新建相册
-            </a>
-          )}
-        </section>
-
-        {items.length === 0 ? (
-          <div class="card-base p-8 rounded-(--radius-large) text-70">
-            暂无公开相册。
-          </div>
-        ) : (
-          <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
-            {items.map((item) => (
-              <article
-                class="album-list-item card-base rounded-(--radius-large) overflow-hidden border border-(--line-divider) text-90"
-                data-tags={JSON.stringify(item.tags)}
-                data-category={item.category || ""}
-              >
-                <a
-                  href={`/${username}/albums/${item.short_id || item.id}`}
-                  data-no-swup
-                  class="block h-full"
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  class="w-4 h-4"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
                 >
-                  {coverUrl(item) && (
-                    <img
-                      src={coverUrl(item) || ""}
-                      alt={item.title}
-                      class="w-full h-48 object-cover"
-                      loading="lazy"
-                    />
-                  )}
-                  <div class="p-4 space-y-2">
-                    <h2 class="text-lg font-semibold line-clamp-1">
-                      {item.title}
-                    </h2>
-                    <div class="text-xs text-60 flex flex-wrap items-center gap-2">
-                      {item.author?.name && <span>{item.author.name}</span>}
-                      {item.date && <span>{item.date}</span>}
-                      {item.location && (
-                        <span class="inline-flex items-center gap-1">
-                          <svg
-                            xmlns="http://www.w3.org/2000/svg"
-                            class="w-3.5 h-3.5"
-                            viewBox="0 0 24 24"
-                            fill="none"
-                            stroke="currentColor"
-                            stroke-width="2"
-                            stroke-linecap="round"
-                            stroke-linejoin="round"
-                            aria-hidden="true"
-                          >
-                            <path d="M12 22s8-6.2 8-12a8 8 0 10-16 0c0 5.8 8 12 8 12z" />
-                            <circle cx="12" cy="10" r="3" />
-                          </svg>
-                          {item.location}
-                        </span>
+                  <line x1="12" y1="5" x2="12" y2="19" />
+                  <line x1="5" y1="12" x2="19" y2="12" />
+                </svg>
+                新建相册
+              </a>
+            )}
+          </section>
+
+          {items.length === 0 ? (
+            <div class="card-base p-8 rounded-(--radius-large) text-70">
+              暂无公开相册。
+            </div>
+          ) : (
+            <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+              {items.map((item) => (
+                <article
+                  class="album-list-item card-base rounded-(--radius-large) overflow-hidden border border-(--line-divider) text-90"
+                  data-tags={JSON.stringify(item.tags)}
+                  data-category={item.category || ""}
+                >
+                  <a
+                    href={`/${username}/albums/${item.short_id || item.id}`}
+                    data-no-swup
+                    class="block h-full"
+                  >
+                    {coverUrl(item) && (
+                      <img
+                        src={coverUrl(item) || ""}
+                        alt={item.title}
+                        class="w-full h-48 object-cover"
+                        loading="lazy"
+                      />
+                    )}
+                    <div class="p-4 space-y-2">
+                      <h2 class="text-lg font-semibold line-clamp-1">
+                        {item.title}
+                      </h2>
+                      <div class="text-xs text-60 flex flex-wrap items-center gap-2">
+                        {item.author?.name && <span>{item.author.name}</span>}
+                        {item.date && <span>{item.date}</span>}
+                        {item.location && (
+                          <span class="inline-flex items-center gap-1">
+                            <svg
+                              xmlns="http://www.w3.org/2000/svg"
+                              class="w-3.5 h-3.5"
+                              viewBox="0 0 24 24"
+                              fill="none"
+                              stroke="currentColor"
+                              stroke-width="2"
+                              stroke-linecap="round"
+                              stroke-linejoin="round"
+                              aria-hidden="true"
+                            >
+                              <path d="M12 22s8-6.2 8-12a8 8 0 10-16 0c0 5.8 8 12 8 12z" />
+                              <circle cx="12" cy="10" r="3" />
+                            </svg>
+                            {item.location}
+                          </span>
+                        )}
+                        {item.category && (
+                          <span class="px-1.5 py-0.5 rounded bg-(--btn-plain-bg-hover)">
+                            {item.category}
+                          </span>
+                        )}
+                      </div>
+                      {item.description && (
+                        <p class="text-sm text-75 line-clamp-2">
+                          {item.description}
+                        </p>
                       )}
-                      {item.category && (
-                        <span class="px-1.5 py-0.5 rounded bg-(--btn-plain-bg-hover)">
-                          {item.category}
-                        </span>
+                      {item.tags.length > 0 && (
+                        <div class="flex flex-wrap gap-2 pt-1">
+                          {item.tags.slice(0, 4).map((tag) => (
+                            <span class="btn-regular h-6 text-xs px-2 rounded-lg">
+                              #{tag}
+                            </span>
+                          ))}
+                        </div>
                       )}
                     </div>
-                    {item.description && (
-                      <p class="text-sm text-75 line-clamp-2">
-                        {item.description}
-                      </p>
-                    )}
-                    {item.tags.length > 0 && (
-                      <div class="flex flex-wrap gap-2 pt-1">
-                        {item.tags.slice(0, 4).map((tag) => (
-                          <span class="btn-regular h-6 text-xs px-2 rounded-lg">
-                            #{tag}
-                          </span>
-                        ))}
-                      </div>
-                    )}
+                  </a>
+                </article>
+              ))}
+            </div>
+          )}
+
+          {/* No results hint */}
+          <div
+            id="album-no-results"
+            class="hidden card-base p-8 rounded-(--radius-large) text-70 mt-4"
+          >
+            没有匹配的相册。
+          </div>
+        </div>
+        <div
+          data-enter-skeleton-inline-placeholder
+          aria-hidden="true"
+          class="space-y-4"
+        >
+          <section class="card-base px-9 py-6 rounded-(--radius-large) mb-4 flex items-center justify-between gap-4 flex-wrap">
+            <div class="space-y-3 flex-1">
+              <div
+                class="md3-skeleton-text"
+                style="--skeleton-width: 26%; --skeleton-height: 2rem;"
+              />
+              <div
+                class="md3-skeleton-text"
+                style="--skeleton-width: 42%; --skeleton-height: 0.92rem;"
+              />
+            </div>
+            <div class="md3-skeleton-block h-10 w-28 rounded-lg" />
+          </section>
+          <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+            {Array.from({ length: 6 }).map(() => (
+              <article class="album-list-item card-base rounded-(--radius-large) overflow-hidden border border-(--line-divider)">
+                <div class="md3-skeleton-block h-48 w-full rounded-none" />
+                <div class="p-4 space-y-2">
+                  <div
+                    class="md3-skeleton-text"
+                    style="--skeleton-width: 64%; --skeleton-height: 1.65rem;"
+                  />
+                  <div
+                    class="md3-skeleton-text"
+                    style="--skeleton-width: 86%; --skeleton-height: 1rem;"
+                  />
+                  <div
+                    class="md3-skeleton-text"
+                    style="--skeleton-width: 82%; --skeleton-height: 2.45rem;"
+                  />
+                  <div
+                    class="md3-skeleton-text"
+                    style="--skeleton-width: 58%; --skeleton-height: 0.85rem;"
+                  />
+                  <div class="flex gap-2 pt-1">
+                    <div class="md3-skeleton-block h-6 w-14 rounded-lg" />
+                    <div class="md3-skeleton-block h-6 w-16 rounded-lg" />
+                    <div class="md3-skeleton-block h-6 w-12 rounded-lg" />
                   </div>
-                </a>
+                </div>
               </article>
             ))}
           </div>
-        )}
-
-        {/* No results hint */}
-        <div
-          id="album-no-results"
-          class="hidden card-base p-8 rounded-(--radius-large) text-70 mt-4"
-        >
-          没有匹配的相册。
         </div>
       </div>
     )

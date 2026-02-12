@@ -16,16 +16,29 @@ const { link, class: className } = Astro.props;
 
 const navTitleMap: Record<string, I18nKey> = {
   Links: I18nKey.navLinks,
+  链接: I18nKey.navLinks,
   My: I18nKey.navMy,
+  我的: I18nKey.navMy,
   About: I18nKey.navAbout,
+  关于: I18nKey.navAbout,
   Others: I18nKey.navOthers,
+  其他: I18nKey.navOthers,
   Anime: I18nKey.anime,
+  番剧: I18nKey.anime,
   Diary: I18nKey.diary,
+  日记: I18nKey.diary,
   Gallery: I18nKey.albums,
+  相册: I18nKey.albums,
   Projects: I18nKey.projects,
+  项目: I18nKey.projects,
   Skills: I18nKey.skills,
+  技能: I18nKey.skills,
   Timeline: I18nKey.timeline,
+  时间线: I18nKey.timeline,
   Friends: I18nKey.friends,
+  友情链接: I18nKey.friends,
+  关于我们: I18nKey.about,
+  站点统计: I18nKey.siteStats,
 };
 
 const getLocalizedName = (name: string): string => {

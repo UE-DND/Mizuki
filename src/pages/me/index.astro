@@ -22,296 +22,368 @@ try {
 ---
 
 <MainGridLayout title="账户设置" description="管理个人资料与隐私设置">
-  <div class="space-y-4 text-75">
-    <section class="card-base px-9 py-6 rounded-(--radius-large)">
-      <h1
-        class="text-4xl font-bold text-black/90 dark:text-white/90 mb-2 relative
+  <div
+    data-enter-skeleton-page="me-settings"
+    data-enter-skeleton-target="me-settings"
+  >
+    <div data-enter-skeleton-inline-content class="space-y-4 text-75">
+      <section class="card-base px-9 py-6 rounded-(--radius-large)">
+        <h1
+          class="text-4xl font-bold text-black/90 dark:text-white/90 mb-2 relative
 				before:w-1 before:h-8 before:rounded-md before:bg-(--primary)
 				before:absolute before:top-1/2 before:-translate-y-1/2 before:-left-4"
-      >
-        账户设置
-      </h1>
-      <p class="text-base text-70">管理个人资料与隐私设置。</p>
-    </section>
-
-    <div id="me-authenticated-sections" class="hidden space-y-4">
-      <section class="card-base p-8 rounded-(--radius-large) space-y-4">
-        <h2 class="text-2xl font-semibold text-90">个人资料</h2>
-        <form
-          id="me-profile-form"
-          class="grid grid-cols-1 md:grid-cols-2 gap-4"
         >
-          <label class="space-y-1.5">
-            <span class="text-sm text-60">邮箱</span>
-            <input
-              id="me-email"
-              class="w-full rounded-lg border border-(--line-divider) px-3.5 py-2.5 bg-black/5 dark:bg-white/5 text-70"
-              disabled
-            />
-          </label>
-          <label class="space-y-1.5">
-            <span class="text-sm text-60">用户名</span>
-            <button
-              type="button"
-              id="me-username-display-btn"
-              class="w-full appearance-none rounded-lg border border-(--line-divider) px-3.5 py-2.5 text-left text-70 bg-black/5 dark:bg-white/5 leading-normal"
-            >
-              <span
-                id="me-username-display"
-                class="block truncate leading-7 text-70">点击编辑用户名</span
-              >
-            </button>
-            <div id="me-username-editor" class="relative hidden">
-              <input
-                id="me-username"
-                class="w-full rounded-lg border border-(--line-divider) px-3.5 py-2.5 pr-16 text-70 bg-transparent"
-              />
-              <span
-                id="me-username-counter"
-                class="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-sm text-60 tabular-nums"
-                >0/14</span
-              >
-            </div>
-          </label>
-          <label class="space-y-1.5">
-            <span class="text-sm text-60">昵称</span>
-            <button
-              type="button"
-              id="me-displayname-display-btn"
-              class="w-full appearance-none rounded-lg border border-(--line-divider) px-3.5 py-2.5 text-left text-70 bg-black/5 dark:bg-white/5 leading-normal"
-            >
-              <span
-                id="me-displayname-display"
-                class="block truncate leading-7 text-70">点击编辑昵称</span
-              >
-            </button>
-            <div id="me-displayname-editor" class="relative hidden">
-              <input
-                id="me-displayname"
-                class="w-full rounded-lg border border-(--line-divider) px-3.5 py-2.5 pr-16 text-70 bg-transparent"
-              />
-              <span
-                id="me-displayname-counter"
-                class="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-sm text-60 tabular-nums"
-                >0/20</span
-              >
-            </div>
-          </label>
-          <div class="space-y-2 md:col-span-2">
-            <span class="text-sm text-60">头像</span>
-            <div class="flex flex-col sm:flex-row sm:items-center gap-4">
-              <img
-                id="me-avatar-preview"
-                class="w-20 h-20 rounded-full object-cover border border-(--line-divider) bg-black/10 dark:bg-white/10"
-                alt="avatar"
-                loading="lazy"
-              />
-              <div class="flex-1 space-y-2">
-                <input
-                  id="me-avatar-url"
-                  placeholder="头像 URL 或上传图片"
-                  class="w-full rounded-lg border border-(--line-divider) px-3.5 py-2.5 bg-transparent text-75 placeholder:text-50"
-                />
-                <div class="flex flex-wrap items-center gap-2">
-                  <button
-                    type="button"
-                    id="me-avatar-upload-btn"
-                    class="px-4 h-9 rounded-lg text-sm font-medium cursor-pointer bg-(--primary) text-white hover:opacity-90 transition flex items-center gap-1.5"
-                    ><svg
-                      xmlns="http://www.w3.org/2000/svg"
-                      class="w-4 h-4"
-                      viewBox="0 0 24 24"
-                      fill="none"
-                      stroke="currentColor"
-                      stroke-width="2"
-                      stroke-linecap="round"
-                      stroke-linejoin="round"
-                      ><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"
-                      ></path><polyline points="17 8 12 3 7 8"></polyline><line
-                        x1="12"
-                        y1="3"
-                        x2="12"
-                        y2="15"></line></svg
-                    >上传图片</button
-                  >
-                  <button
-                    type="button"
-                    id="me-avatar-clear-btn"
-                    class="px-4 py-2.5 rounded-lg border border-(--line-divider) text-sm text-75"
-                  >
-                    清空头像
-                  </button>
-                </div>
-              </div>
-            </div>
-          </div>
-          <label class="space-y-1.5 md:col-span-2">
-            <span class="text-sm text-60">简介</span>
-            <button
-              type="button"
-              id="me-bio-display-btn"
-              class="w-full h-28 rounded-lg border border-(--line-divider) text-left bg-black/5 dark:bg-white/5"
-            >
-              <span
-                id="me-bio-display"
-                class="block h-full w-full overflow-y-auto px-3.5 py-2.5 pr-16 text-base leading-7 text-60 whitespace-pre-wrap break-words"
-                >点击编辑简介</span
-              >
-            </button>
-            <div id="me-bio-editor" class="hidden">
-              <div class="relative">
-                <textarea
-                  id="me-bio"
-                  rows="3"
-                  class="w-full h-28 resize-none rounded-lg border border-(--line-divider) px-3.5 py-2.5 pr-16 text-base leading-7 bg-transparent text-75 placeholder:text-50"
-                ></textarea>
-                <div
-                  id="me-bio-counter"
-                  class="pointer-events-none absolute right-3 bottom-2 text-sm text-60 tabular-nums"
-                >
-                  0/30
-                </div>
-              </div>
-            </div>
-          </label>
-          <h3 class="text-lg font-medium text-75 md:col-span-2">简介打字机</h3>
-          <label
-            class="flex items-center gap-3 text-75 cursor-pointer select-none"
-          >
-            <input
-              type="checkbox"
-              id="me-bio-typewriter-enable"
-              class="toggle-checkbox"
-            />
-            <span class="toggle-track"><span class="toggle-knob"></span></span>
-            启用打字机效果
-          </label>
-          <label class="space-y-1.5">
-            <span class="text-sm text-60">打字速度（ms）</span>
-            <input
-              id="me-bio-typewriter-speed"
-              type="number"
-              min="10"
-              max="500"
-              class="w-full rounded-lg border border-(--line-divider) px-3.5 py-2.5 bg-transparent text-75"
-              placeholder="80"
-            />
-          </label>
-          <div class="md:col-span-2 flex items-center gap-2">
-            <button
-              type="submit"
-              class="px-4 py-2 rounded-lg bg-(--btn-regular-bg) text-(--btn-content) text-sm"
-              >保存资料</button
-            >
-            <span id="me-profile-msg" class="text-sm text-60"></span>
-          </div>
-        </form>
+          账户设置
+        </h1>
+        <p class="text-base text-70">管理个人资料与隐私设置。</p>
       </section>
 
-      <section class="card-base p-8 rounded-(--radius-large) space-y-4">
-        <h2 class="text-2xl font-semibold text-90">社交链接</h2>
-        <div id="me-social-links-list" class="space-y-4"></div>
-        <div class="flex items-center gap-2">
-          <button
-            type="button"
-            id="me-social-save-btn"
-            class="px-4 py-2 rounded-lg bg-(--btn-regular-bg) text-(--btn-content) text-sm"
-          >
-            保存社交链接
-          </button>
-          <span id="me-social-msg" class="text-sm text-60"></span>
-        </div>
-      </section>
-
-      <section class="card-base p-8 rounded-(--radius-large) space-y-4">
-        <h2 class="text-2xl font-semibold text-90">隐私设置</h2>
-        <div class="space-y-4">
-          <h3 class="text-xl font-medium text-75">内容展示</h3>
+      <div id="me-authenticated-sections" class="hidden space-y-4">
+        <section class="card-base p-8 rounded-(--radius-large) space-y-4">
+          <h2 class="text-2xl font-semibold text-90">个人资料</h2>
           <form
-            id="me-privacy-form"
-            class="grid grid-cols-1 md:grid-cols-2 gap-4 text-base"
+            id="me-profile-form"
+            class="grid grid-cols-1 md:grid-cols-2 gap-4"
           >
+            <label class="space-y-1.5">
+              <span class="text-sm text-60">邮箱</span>
+              <input
+                id="me-email"
+                class="w-full rounded-lg border border-(--line-divider) px-3.5 py-2.5 bg-black/5 dark:bg-white/5 text-70"
+                disabled
+              />
+            </label>
+            <label class="space-y-1.5">
+              <span class="text-sm text-60">用户名</span>
+              <button
+                type="button"
+                id="me-username-display-btn"
+                class="w-full appearance-none rounded-lg border border-(--line-divider) px-3.5 py-2.5 text-left text-70 bg-black/5 dark:bg-white/5 leading-normal"
+              >
+                <span
+                  id="me-username-display"
+                  class="block truncate leading-7 text-70">点击编辑用户名</span
+                >
+              </button>
+              <div id="me-username-editor" class="relative hidden">
+                <input
+                  id="me-username"
+                  class="w-full rounded-lg border border-(--line-divider) px-3.5 py-2.5 pr-16 text-70 bg-transparent"
+                />
+                <span
+                  id="me-username-counter"
+                  class="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-sm text-60 tabular-nums"
+                  >0/14</span
+                >
+              </div>
+            </label>
+            <label class="space-y-1.5">
+              <span class="text-sm text-60">昵称</span>
+              <button
+                type="button"
+                id="me-displayname-display-btn"
+                class="w-full appearance-none rounded-lg border border-(--line-divider) px-3.5 py-2.5 text-left text-70 bg-black/5 dark:bg-white/5 leading-normal"
+              >
+                <span
+                  id="me-displayname-display"
+                  class="block truncate leading-7 text-70">点击编辑昵称</span
+                >
+              </button>
+              <div id="me-displayname-editor" class="relative hidden">
+                <input
+                  id="me-displayname"
+                  class="w-full rounded-lg border border-(--line-divider) px-3.5 py-2.5 pr-16 text-70 bg-transparent"
+                />
+                <span
+                  id="me-displayname-counter"
+                  class="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-sm text-60 tabular-nums"
+                  >0/20</span
+                >
+              </div>
+            </label>
+            <div class="space-y-2 md:col-span-2">
+              <span class="text-sm text-60">头像</span>
+              <div class="flex flex-col sm:flex-row sm:items-center gap-4">
+                <img
+                  id="me-avatar-preview"
+                  class="w-20 h-20 rounded-full object-cover border border-(--line-divider) bg-black/10 dark:bg-white/10"
+                  alt="avatar"
+                  loading="lazy"
+                />
+                <div class="flex-1 space-y-2">
+                  <input
+                    id="me-avatar-url"
+                    placeholder="头像 URL 或上传图片"
+                    class="w-full rounded-lg border border-(--line-divider) px-3.5 py-2.5 bg-transparent text-75 placeholder:text-50"
+                  />
+                  <div class="flex flex-wrap items-center gap-2">
+                    <button
+                      type="button"
+                      id="me-avatar-upload-btn"
+                      class="px-4 h-9 rounded-lg text-sm font-medium cursor-pointer bg-(--primary) text-white hover:opacity-90 transition flex items-center gap-1.5"
+                      ><svg
+                        xmlns="http://www.w3.org/2000/svg"
+                        class="w-4 h-4"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        stroke-width="2"
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                        ><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"
+                        ></path><polyline points="17 8 12 3 7 8"
+                        ></polyline><line x1="12" y1="3" x2="12" y2="15"
+                        ></line></svg
+                      >上传图片</button
+                    >
+                    <button
+                      type="button"
+                      id="me-avatar-clear-btn"
+                      class="px-4 py-2.5 rounded-lg border border-(--line-divider) text-sm text-75"
+                    >
+                      清空头像
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <label class="space-y-1.5 md:col-span-2">
+              <span class="text-sm text-60">简介</span>
+              <button
+                type="button"
+                id="me-bio-display-btn"
+                class="w-full h-28 rounded-lg border border-(--line-divider) text-left bg-black/5 dark:bg-white/5"
+              >
+                <span
+                  id="me-bio-display"
+                  class="block h-full w-full overflow-y-auto px-3.5 py-2.5 pr-16 text-base leading-7 text-60 whitespace-pre-wrap break-words"
+                  >点击编辑简介</span
+                >
+              </button>
+              <div id="me-bio-editor" class="hidden">
+                <div class="relative">
+                  <textarea
+                    id="me-bio"
+                    rows="3"
+                    class="w-full h-28 resize-none rounded-lg border border-(--line-divider) px-3.5 py-2.5 pr-16 text-base leading-7 bg-transparent text-75 placeholder:text-50"
+                  ></textarea>
+                  <div
+                    id="me-bio-counter"
+                    class="pointer-events-none absolute right-3 bottom-2 text-sm text-60 tabular-nums"
+                  >
+                    0/30
+                  </div>
+                </div>
+              </div>
+            </label>
+            <h3 class="text-lg font-medium text-75 md:col-span-2">
+              简介打字机
+            </h3>
             <label
               class="flex items-center gap-3 text-75 cursor-pointer select-none"
             >
               <input
                 type="checkbox"
-                id="pv-profile-public"
+                id="me-bio-typewriter-enable"
                 class="toggle-checkbox"
               />
               <span class="toggle-track"><span class="toggle-knob"></span></span
               >
-              公开主页
+              启用打字机效果
             </label>
-            <label
-              class="flex items-center gap-3 text-75 cursor-pointer select-none"
-            >
+            <label class="space-y-1.5">
+              <span class="text-sm text-60">打字速度（ms）</span>
               <input
-                type="checkbox"
-                id="pv-show-articles"
-                class="toggle-checkbox"
+                id="me-bio-typewriter-speed"
+                type="number"
+                min="10"
+                max="500"
+                class="w-full rounded-lg border border-(--line-divider) px-3.5 py-2.5 bg-transparent text-75"
+                placeholder="80"
               />
-              <span class="toggle-track"><span class="toggle-knob"></span></span
-              >
-              公开文章
             </label>
-            <label
-              class="flex items-center gap-3 text-75 cursor-pointer select-none"
-            >
-              <input
-                type="checkbox"
-                id="pv-show-diaries"
-                class="toggle-checkbox"
-              />
-              <span class="toggle-track"><span class="toggle-knob"></span></span
-              >
-              公开日记
-            </label>
-            <label
-              class="flex items-center gap-3 text-75 cursor-pointer select-none"
-            >
-              <input
-                type="checkbox"
-                id="pv-show-anime"
-                class="toggle-checkbox"
-              />
-              <span class="toggle-track"><span class="toggle-knob"></span></span
-              >
-              公开番剧
-            </label>
-            <label
-              class="flex items-center gap-3 text-75 cursor-pointer select-none"
-            >
-              <input
-                type="checkbox"
-                id="pv-show-albums"
-                class="toggle-checkbox"
-              />
-              <span class="toggle-track"><span class="toggle-knob"></span></span
-              >
-              公开相册
-            </label>
-            <label
-              class="flex items-center gap-3 text-75 cursor-pointer select-none"
-            >
-              <input
-                type="checkbox"
-                id="pv-show-comments"
-                class="toggle-checkbox"
-              />
-              <span class="toggle-track"><span class="toggle-knob"></span></span
-              >
-              公开评论
-            </label>
-            <div class="md:col-span-2 flex items-center gap-2 pt-4">
+            <div class="md:col-span-2 flex items-center gap-2">
               <button
                 type="submit"
                 class="px-4 py-2 rounded-lg bg-(--btn-regular-bg) text-(--btn-content) text-sm"
-                >保存隐私设置</button
+                >保存资料</button
               >
-              <span id="me-privacy-msg" class="text-sm text-60"></span>
+              <span id="me-profile-msg" class="text-sm text-60"></span>
             </div>
           </form>
+        </section>
+
+        <section class="card-base p-8 rounded-(--radius-large) space-y-4">
+          <h2 class="text-2xl font-semibold text-90">社交链接</h2>
+          <div id="me-social-links-list" class="space-y-4"></div>
+          <div class="flex items-center gap-2">
+            <button
+              type="button"
+              id="me-social-save-btn"
+              class="px-4 py-2 rounded-lg bg-(--btn-regular-bg) text-(--btn-content) text-sm"
+            >
+              保存社交链接
+            </button>
+            <span id="me-social-msg" class="text-sm text-60"></span>
+          </div>
+        </section>
+
+        <section class="card-base p-8 rounded-(--radius-large) space-y-4">
+          <h2 class="text-2xl font-semibold text-90">隐私设置</h2>
+          <div class="space-y-4">
+            <h3 class="text-xl font-medium text-75">内容展示</h3>
+            <form
+              id="me-privacy-form"
+              class="grid grid-cols-1 md:grid-cols-2 gap-4 text-base"
+            >
+              <label
+                class="flex items-center gap-3 text-75 cursor-pointer select-none"
+              >
+                <input
+                  type="checkbox"
+                  id="pv-profile-public"
+                  class="toggle-checkbox"
+                />
+                <span class="toggle-track"
+                  ><span class="toggle-knob"></span></span
+                >
+                公开主页
+              </label>
+              <label
+                class="flex items-center gap-3 text-75 cursor-pointer select-none"
+              >
+                <input
+                  type="checkbox"
+                  id="pv-show-articles"
+                  class="toggle-checkbox"
+                />
+                <span class="toggle-track"
+                  ><span class="toggle-knob"></span></span
+                >
+                公开文章
+              </label>
+              <label
+                class="flex items-center gap-3 text-75 cursor-pointer select-none"
+              >
+                <input
+                  type="checkbox"
+                  id="pv-show-diaries"
+                  class="toggle-checkbox"
+                />
+                <span class="toggle-track"
+                  ><span class="toggle-knob"></span></span
+                >
+                公开日记
+              </label>
+              <label
+                class="flex items-center gap-3 text-75 cursor-pointer select-none"
+              >
+                <input
+                  type="checkbox"
+                  id="pv-show-anime"
+                  class="toggle-checkbox"
+                />
+                <span class="toggle-track"
+                  ><span class="toggle-knob"></span></span
+                >
+                公开番剧
+              </label>
+              <label
+                class="flex items-center gap-3 text-75 cursor-pointer select-none"
+              >
+                <input
+                  type="checkbox"
+                  id="pv-show-albums"
+                  class="toggle-checkbox"
+                />
+                <span class="toggle-track"
+                  ><span class="toggle-knob"></span></span
+                >
+                公开相册
+              </label>
+              <label
+                class="flex items-center gap-3 text-75 cursor-pointer select-none"
+              >
+                <input
+                  type="checkbox"
+                  id="pv-show-comments"
+                  class="toggle-checkbox"
+                />
+                <span class="toggle-track"
+                  ><span class="toggle-knob"></span></span
+                >
+                公开评论
+              </label>
+              <div class="md:col-span-2 flex items-center gap-2 pt-4">
+                <button
+                  type="submit"
+                  class="px-4 py-2 rounded-lg bg-(--btn-regular-bg) text-(--btn-content) text-sm"
+                  >保存隐私设置</button
+                >
+                <span id="me-privacy-msg" class="text-sm text-60"></span>
+              </div>
+            </form>
+          </div>
+        </section>
+      </div>
+    </div>
+    <div
+      data-enter-skeleton-inline-placeholder
+      aria-hidden="true"
+      class="space-y-4"
+    >
+      <section class="card-base px-9 py-6 rounded-(--radius-large) space-y-3">
+        <div
+          class="md3-skeleton-text"
+          style="--skeleton-width: 26%; --skeleton-height: 2rem;"
+        >
+        </div>
+        <div class="md3-skeleton-text" style="--skeleton-width: 48%;"></div>
+      </section>
+      <section class="card-base p-8 rounded-(--radius-large) space-y-4">
+        <div
+          class="md3-skeleton-text"
+          style="--skeleton-width: 22%; --skeleton-height: 1.6rem;"
+        >
+        </div>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+          {
+            Array.from({ length: 6 }).map(() => (
+              <div class="md3-skeleton-block h-10 rounded-lg" />
+            ))
+          }
+          <div class="md3-skeleton-block h-28 rounded-lg md:col-span-2"></div>
+          <div class="md3-skeleton-block h-10 rounded-lg md:col-span-2"></div>
+        </div>
+      </section>
+      <section class="card-base p-8 rounded-(--radius-large) space-y-4">
+        <div
+          class="md3-skeleton-text"
+          style="--skeleton-width: 20%; --skeleton-height: 1.6rem;"
+        >
+        </div>
+        <div class="space-y-3">
+          {
+            Array.from({ length: 4 }).map(() => (
+              <div class="md3-skeleton-block h-10 rounded-lg" />
+            ))
+          }
+          <div class="md3-skeleton-block h-10 w-32 rounded-lg"></div>
+        </div>
+      </section>
+      <section class="card-base p-8 rounded-(--radius-large) space-y-4">
+        <div
+          class="md3-skeleton-text"
+          style="--skeleton-width: 18%; --skeleton-height: 1.6rem;"
+        >
+        </div>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+          {
+            Array.from({ length: 6 }).map(() => (
+              <div class="md3-skeleton-block h-10 rounded-lg" />
+            ))
+          }
+          <div class="md3-skeleton-block h-10 rounded-lg md:col-span-2"></div>
         </div>
       </section>
     </div>

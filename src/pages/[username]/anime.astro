@@ -120,81 +120,139 @@ function statusLabel(status: string): string {
         backLabel="返回首页"
       />
     ) : (
-      <>
-        <section class="card-base px-9 py-6 rounded-(--radius-large) mb-4 text-90">
-          <h1
-            class="text-4xl font-bold text-black/90 dark:text-white/90 mb-2 relative
+      <div
+        data-enter-skeleton-page="user-anime"
+        data-enter-skeleton-target="user-anime"
+      >
+        <div data-enter-skeleton-inline-content>
+          <section class="card-base px-9 py-6 rounded-(--radius-large) mb-4 text-90">
+            <h1
+              class="text-4xl font-bold text-black/90 dark:text-white/90 mb-2 relative
 					before:w-1 before:h-8 before:rounded-md before:bg-(--primary)
 					before:absolute before:top-1/2 before:-translate-y-1/2 before:-left-4"
-          >
-            番剧
-          </h1>
-          <p class="text-base text-70">用户公开的番剧条目。</p>
-        </section>
+            >
+              番剧
+            </h1>
+            <p class="text-base text-70">用户公开的番剧条目。</p>
+          </section>
 
-        {items.length === 0 ? (
-          <div class="card-base p-8 rounded-(--radius-large) text-70">
-            暂无公开番剧条目。
-          </div>
-        ) : (
-          <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
-            {items.map((item) => (
-              <article class="card-base p-4 rounded-(--radius-large) border border-(--line-divider) h-full text-90">
-                <div class="flex gap-4 h-full">
-                  {coverUrl(item) && (
-                    <img
-                      src={coverUrl(item) || ""}
-                      alt={item.title}
-                      class="w-24 h-32 rounded-lg object-cover border border-(--line-divider) shrink-0"
-                      loading="lazy"
-                    />
-                  )}
-                  <div class="min-w-0 space-y-2 flex-1">
-                    <h2 class="text-lg font-semibold line-clamp-2">
-                      {item.title}
-                    </h2>
-                    <div class="text-xs text-60 flex flex-wrap gap-2">
-                      <span>{statusLabel(item.watch_status)}</span>
-                      {item.author?.name && <span>{item.author.name}</span>}
-                      {item.year && <span>{item.year}</span>}
-                    </div>
-                    <div class="text-xs text-70">
-                      进度：{item.progress ?? 0}/{item.total_episodes ?? "?"}
-                      {typeof item.rating === "number" && (
-                        <span class="ml-2">评分：{item.rating}</span>
+          {items.length === 0 ? (
+            <div class="card-base p-8 rounded-(--radius-large) text-70">
+              暂无公开番剧条目。
+            </div>
+          ) : (
+            <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+              {items.map((item) => (
+                <article class="card-base p-4 rounded-(--radius-large) border border-(--line-divider) h-full text-90">
+                  <div class="flex gap-4 h-full">
+                    {coverUrl(item) && (
+                      <img
+                        src={coverUrl(item) || ""}
+                        alt={item.title}
+                        class="w-24 h-32 rounded-lg object-cover border border-(--line-divider) shrink-0"
+                        loading="lazy"
+                      />
+                    )}
+                    <div class="min-w-0 space-y-2 flex-1">
+                      <h2 class="text-lg font-semibold line-clamp-2">
+                        {item.title}
+                      </h2>
+                      <div class="text-xs text-60 flex flex-wrap gap-2">
+                        <span>{statusLabel(item.watch_status)}</span>
+                        {item.author?.name && <span>{item.author.name}</span>}
+                        {item.year && <span>{item.year}</span>}
+                      </div>
+                      <div class="text-xs text-70">
+                        进度：{item.progress ?? 0}/{item.total_episodes ?? "?"}
+                        {typeof item.rating === "number" && (
+                          <span class="ml-2">评分：{item.rating}</span>
+                        )}
+                      </div>
+                      {item.description && (
+                        <p class="text-sm text-75 line-clamp-3">
+                          {item.description}
+                        </p>
+                      )}
+                      {item.genres.length > 0 && (
+                        <div class="flex flex-wrap gap-2">
+                          {item.genres.slice(0, 4).map((genre) => (
+                            <span class="btn-regular h-6 text-xs px-2 rounded-lg">
+                              {genre}
+                            </span>
+                          ))}
+                        </div>
+                      )}
+                      {item.link && (
+                        <a
+                          href={item.link}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          class="text-xs text-(--primary) hover:underline"
+                        >
+                          查看链接
+                        </a>
                       )}
                     </div>
-                    {item.description && (
-                      <p class="text-sm text-75 line-clamp-3">
-                        {item.description}
-                      </p>
-                    )}
-                    {item.genres.length > 0 && (
-                      <div class="flex flex-wrap gap-2">
-                        {item.genres.slice(0, 4).map((genre) => (
-                          <span class="btn-regular h-6 text-xs px-2 rounded-lg">
-                            {genre}
-                          </span>
-                        ))}
-                      </div>
-                    )}
-                    {item.link && (
-                      <a
-                        href={item.link}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        class="text-xs text-(--primary) hover:underline"
-                      >
-                        查看链接
-                      </a>
-                    )}
+                  </div>
+                </article>
+              ))}
+            </div>
+          )}
+        </div>
+        <div
+          data-enter-skeleton-inline-placeholder
+          aria-hidden="true"
+          class="space-y-4"
+        >
+          <section class="card-base px-9 py-6 rounded-(--radius-large) mb-4">
+            <div class="space-y-3">
+              <div
+                class="md3-skeleton-text"
+                style="--skeleton-width: 28%; --skeleton-height: 2rem;"
+              />
+              <div
+                class="md3-skeleton-text"
+                style="--skeleton-width: 46%; --skeleton-height: 0.92rem;"
+              />
+            </div>
+          </section>
+          <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+            {Array.from({ length: 6 }).map(() => (
+              <article class="card-base p-4 rounded-(--radius-large) border border-(--line-divider) h-full">
+                <div class="flex gap-4 h-full">
+                  <div class="md3-skeleton-block h-32 w-24 rounded-lg shrink-0" />
+                  <div class="flex-1 space-y-2.5 pt-1">
+                    <div
+                      class="md3-skeleton-text"
+                      style="--skeleton-width: 82%; --skeleton-height: 2.45rem;"
+                    />
+                    <div
+                      class="md3-skeleton-text"
+                      style="--skeleton-width: 62%; --skeleton-height: 0.9rem;"
+                    />
+                    <div
+                      class="md3-skeleton-text"
+                      style="--skeleton-width: 68%; --skeleton-height: 0.9rem;"
+                    />
+                    <div
+                      class="md3-skeleton-text"
+                      style="--skeleton-width: 90%; --skeleton-height: 2.9rem;"
+                    />
+                    <div class="flex gap-2 pt-1">
+                      <div class="md3-skeleton-block h-6 w-16 rounded-lg" />
+                      <div class="md3-skeleton-block h-6 w-[4.5rem] rounded-lg" />
+                    </div>
+                    <div
+                      class="md3-skeleton-text"
+                      style="--skeleton-width: 34%; --skeleton-height: 0.85rem;"
+                    />
                   </div>
                 </div>
               </article>
             ))}
           </div>
-        )}
-      </>
+        </div>
+      </div>
     )
   }
 </MainGridLayout>
