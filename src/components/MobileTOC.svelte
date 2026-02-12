@@ -339,7 +339,7 @@ if (typeof window !== "undefined") {
 			</div>
 		{:else}
 			<div class="post-content">
-				{#each postItems as post}
+				{#each postItems as post (post.url)}
 					<button
 						on:click={() => navigateToPost(post.url)}
 						class="post-item"
@@ -364,7 +364,7 @@ if (typeof window !== "undefined") {
 			</div>
 		{:else}
 			<div class="toc-content">
-				{#each tocItems as item}
+				{#each tocItems as item (item.id)}
 					<button
 						on:click={() => scrollToHeading(item.id)}
 						class="toc-item level-{item.level} {activeId === item.id ? 'active' : ''}"

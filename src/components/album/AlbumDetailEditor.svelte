@@ -68,7 +68,7 @@ let mLayout: "grid" | "masonry" = album.layout || "grid";
 let mStatus: AlbumStatus = album.status as AlbumStatus;
 let mIsPublic = album.is_public;
 let mShowOnProfile = album.show_on_profile;
-let displayTags: string[] = [];
+const displayTags: string[] = [];
 
 // Photos (saved)
 let mPhotos = [...photos];
@@ -585,10 +585,14 @@ function addExternalPhoto(): void {
 	flash("外链已加入待上传队列");
 }
 
-$: displayTags = mTags
-	.split(",")
-	.map((tag) => tag.trim())
-	.filter(Boolean);
+$: {
+	const nextTags = mTags
+		.split(",")
+		.map((tag) => tag.trim())
+		.filter(Boolean);
+	displayTags.length = 0;
+	displayTags.push(...nextTags);
+}
 
 /* ------------------------------------------------------------------ */
 /* Photo actions (saved items)                                        */
@@ -870,7 +874,7 @@ onDestroy(() => {
 			{/if}
 			{#if displayTags.length > 0}
 				<div class="flex flex-wrap gap-2">
-					{#each displayTags as tag}
+							{#each displayTags as tag (tag)}
 						<span class="btn-regular h-7 text-xs px-3 rounded-lg">#{tag}</span>
 					{/each}
 				</div>

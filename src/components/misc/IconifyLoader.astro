@@ -69,7 +69,10 @@ const { preloadIcons = [], timeout = 10000, retryCount = 3 } = Astro.props;
             console.warn(`Iconify load attempt ${attempt} failed:`, error);
             
             if (attempt === retryCount) {
-              throw new Error(`Failed to load Iconify after ${retryCount} attempts`);
+              throw new Error(
+                `Failed to load Iconify after ${retryCount} attempts`,
+                { cause: error },
+              );
             }
             
             await new Promise(resolve => setTimeout(resolve, 1000));

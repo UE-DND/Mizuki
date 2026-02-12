@@ -3,7 +3,8 @@ import { Icon } from "astro-icon/components";
 import { LinkPresets } from "../../constants/link-presets";
 import I18nKey from "../../i18n/i18nKey";
 import { i18n } from "../../i18n/translation";
-import { LinkPreset, type NavBarLink } from "../../types/config";
+import type { LinkPreset} from "../../types/config";
+import { type NavBarLink } from "../../types/config";
 import { isAdminOnlyLink } from "../../utils/nav-link-utils";
 import { url } from "../../utils/url-utils";
 
@@ -54,14 +55,13 @@ const processedLinks: ProcessedNavBarLink[] = Astro.props.links.map(
 	}),
 );
 ---
-<div id="nav-menu-panel" class:list={["float-panel float-panel-closed absolute transition-all fixed right-4 px-2 py-2 max-h-[80vh] overflow-y-auto"]}>
+<div id="nav-menu-panel" class:list={["float-panel float-panel-closed transition-all fixed right-4 px-2 py-2 max-h-[80vh] overflow-y-auto"]}>
     {processedLinks.map((link) => (
         <div
             class:list={["mobile-menu-item", isAdminOnlyLink(link) && "hidden"]}
             data-admin-only={isAdminOnlyLink(link) ? "true" : undefined}
         >
-            {link.children && link.children.length > 0 ? (
-                <!-- 有子菜单的项目 -->
+                    {link.children && link.children.length > 0 ? (
                 <div class="mobile-dropdown" data-mobile-dropdown>
                     <button 
                         class="group flex justify-between items-center py-2 pl-3 pr-1 rounded-lg gap-4 w-full text-left
@@ -98,8 +98,7 @@ const processedLinks: ProcessedNavBarLink[] = Astro.props.links.map(
                         ))}
                     </div>
                 </div>
-            ) : (
-                <!-- 普通链接项目 -->
+                ) : (
                 <a href={link.external ? link.url : url(link.url)} class:list={[
                     "group flex justify-between items-center py-2 pl-3 pr-1 rounded-lg gap-4 hover:bg-[var(--btn-plain-bg-hover)] active:bg-[var(--btn-plain-bg-active)] transition",
                     isAdminOnlyLink(link) && "hidden",

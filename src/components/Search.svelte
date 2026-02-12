@@ -7,6 +7,11 @@ import { url } from "@utils/url-utils";
 import { onMount, onDestroy } from "svelte";
 import type { SearchResult } from "@/global";
 
+type ExcerptPart = {
+	text: string;
+	marked: boolean;
+};
+
 let keywordDesktop = $state("");
 let keywordMobile = $state("");
 let result: SearchResult[] = $state([]);
@@ -17,6 +22,52 @@ let debounceTimer: NodeJS.Timeout;
 let windowJustFocused = false;
 let focusTimer: NodeJS.Timeout;
 let blurTimer: NodeJS.Timeout;
+
+const stripTags = (value: string): string => value.replaceAll(/<\/?[^>]+>/gu, "");
+
+const parseExcerpt = (excerpt: string): ExcerptPart[] => {
+	const raw = typeof excerpt === "string" ? excerpt : "";
+	if (!raw) {
+		return [];
+	}
+
+	const openTag = "<mark>";
+	const closeTag = "</mark>";
+	const parts: ExcerptPart[] = [];
+	let index = 0;
+
+	while (index < raw.length) {
+		const openIndex = raw.indexOf(openTag, index);
+		if (openIndex === -1) {
+			const tail = stripTags(raw.slice(index));
+			if (tail) {
+				parts.push({ text: tail, marked: false });
+			}
+			break;
+		}
+		if (openIndex > index) {
+			const chunk = stripTags(raw.slice(index, openIndex));
+			if (chunk) {
+				parts.push({ text: chunk, marked: false });
+			}
+		}
+		const closeIndex = raw.indexOf(closeTag, openIndex + openTag.length);
+		if (closeIndex === -1) {
+			const rest = stripTags(raw.slice(openIndex));
+			if (rest) {
+				parts.push({ text: rest, marked: false });
+			}
+			break;
+		}
+		const marked = stripTags(raw.slice(openIndex + openTag.length, closeIndex));
+		if (marked) {
+			parts.push({ text: marked, marked: true });
+		}
+		index = closeIndex + closeTag.length;
+	}
+
+	return parts;
+};
 
 const fakeResult: SearchResult[] = [
 	{
@@ -133,7 +184,7 @@ onMount(() => {
 		initialized = true;
 		pagefindLoaded =
 			typeof window !== "undefined" &&
-			!!window.pagefind &&
+			Boolean(window.pagefind) &&
 			typeof window.pagefind.search === "function";
 		console.log("Pagefind status on init:", pagefindLoaded);
 	};
@@ -181,7 +232,7 @@ onMount(() => {
 $effect(() => {
 	if (initialized) {
 		const keyword = keywordDesktop || keywordMobile;
-		const isDesktop = !!keywordDesktop || isDesktopSearchExpanded;
+		const isDesktop = Boolean(keywordDesktop) || isDesktopSearchExpanded;
 
 		clearTimeout(debounceTimer);
 		if (keyword) {
@@ -273,7 +324,7 @@ onDestroy(() => {
         >
     </div>
     <!-- search results -->
-    {#each result as item}
+	{#each result as item (item.url)}
         <a href={item.url}
            onclick={(e) => handleResultClick(e, item.url)}
            class="transition first-of-type:mt-2 lg:first-of-type:mt-0 group block
@@ -282,7 +333,13 @@ onDestroy(() => {
                 {item.meta.title}<Icon icon="fa7-solid:chevron-right" class="transition text-[0.75rem] translate-x-1 my-auto text-[var(--primary)]"></Icon>
             </div>
             <div class="transition text-sm text-50">
-                {@html item.excerpt}
+				{#each parseExcerpt(item.excerpt) as part, index (item.url + ':' + index)}
+					{#if part.marked}
+						<mark>{part.text}</mark>
+					{:else}
+						{part.text}
+					{/if}
+				{/each}
             </div>
         </a>
     {/each}

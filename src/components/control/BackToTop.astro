@@ -58,8 +58,8 @@ import { Icon } from "astro-icon/components";
 </style>
 
 <script is:raw is:inline>
-    function backToTop() {
+  window.backToTop = function () {
         // 直接使用原生滚动，避免OverlayScrollbars冲突
         window.scroll({top: 0, behavior: 'smooth'});
-    }
+  };
 </script>

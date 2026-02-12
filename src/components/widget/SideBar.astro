@@ -157,23 +157,17 @@ const hasScrollableContent =
 		updateResponsiveDisplay() {
 			const width = window.innerWidth;
 			
-			let deviceType;
-			let hasComponents = false;
-			let showConfig = false;
-
-			if (width < breakpoints.mobile) {
-				deviceType = 'mobile';
-				hasComponents = hasMobileComponents;
-				showConfig = mobileShowSidebar;
-			} else if (width < breakpoints.tablet) {
-				deviceType = 'tablet';
-				hasComponents = hasTabletComponents;
-				showConfig = tabletShowSidebar;
-			} else {
-				deviceType = 'desktop';
-				hasComponents = hasTabletComponents; // 桌面端也使用 tablet 的组件列表（left）
-				showConfig = desktopShowSidebar;
-			}
+			const isMobile = width < breakpoints.mobile;
+			const isTablet = width < breakpoints.tablet;
+			const deviceType = isMobile ? 'mobile' : isTablet ? 'tablet' : 'desktop';
+			const hasComponents = isMobile
+				? hasMobileComponents
+				: hasTabletComponents; // tablet + desktop 使用同一套组件列表（left）
+			const showConfig = isMobile
+				? mobileShowSidebar
+				: isTablet
+					? tabletShowSidebar
+					: desktopShowSidebar;
 			
 			// 根据设备类型判断是否显示侧边栏
 			// 只有在配置开启且该设备下有组件时才显示

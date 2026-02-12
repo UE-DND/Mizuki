@@ -1,5 +1,7 @@
 import js from "@eslint/js";
 import prettier from "eslint-config-prettier";
+import astro from "eslint-plugin-astro";
+import svelte from "eslint-plugin-svelte";
 import globals from "globals";
 import tseslint from "typescript-eslint";
 
@@ -8,7 +10,7 @@ export default tseslint.config(
 		ignores: ["dist/**", ".vercel/**", "node_modules/**"],
 	},
 	{
-		files: ["**/*.{js,cjs,mjs,ts,tsx,cts,mts}"],
+		files: ["**/*.{js,cjs,mjs,ts,tsx,cts,mts,astro,svelte}"],
 		languageOptions: {
 			ecmaVersion: "latest",
 			sourceType: "module",
@@ -21,6 +23,25 @@ export default tseslint.config(
 	},
 	js.configs.recommended,
 	...tseslint.configs.recommended,
+	...astro.configs["flat/recommended"],
+	...svelte.configs["flat/recommended"],
+	{
+		files: ["**/*.{astro,svelte}"],
+		rules: {
+			"no-undef": "off",
+		},
+	},
+	{
+		files: ["**/*.svelte"],
+		languageOptions: {
+			parserOptions: {
+				parser: tseslint.parser,
+				extraFileExtensions: [".svelte"],
+				svelteConfig: "./svelte.config.js",
+			},
+		},
+	},
+	...svelte.configs["flat/prettier"],
 	{
 		rules: {
 			curly: ["error", "all"],

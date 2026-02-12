@@ -130,7 +130,7 @@ const links: NavBarLink[] = navBarConfig.links
                 search = parsed.search;
                 hash = parsed.hash;
             } catch {
-                pathname = rawHref;
+                // noop: keep rawHref fallback
             }
 
             const hasUserPlaceholder = pathname

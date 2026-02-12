@@ -78,11 +78,11 @@ Astro.locals.sidebarProfile = profileToSidebarData(profile);
 </MainGridLayout>
 
 <script define:vars={{ username }} is:inline>
-	var ALBUM_TITLE_MAX = 20;
-	var CJK_RE = /[\u2E80-\u9FFF\uF900-\uFAFF\uFE30-\uFE4F\uFF00-\uFFEF]/;
+	const ALBUM_TITLE_MAX = 20;
+	const CJK_RE = /[\u2E80-\u9FFF\uF900-\uFAFF\uFE30-\uFE4F\uFF00-\uFFEF]/;
 	function wcLen(s) {
-		var n = 0;
-		for (var c of s) n += CJK_RE.test(c) ? 2 : 1;
+		let n = 0;
+		for (const c of s) n += CJK_RE.test(c) ? 2 : 1;
 		return n;
 	}
 
@@ -94,7 +94,7 @@ Astro.locals.sidebarProfile = profileToSidebarData(profile);
 
 	function updateCounter() {
 		if (!titleInput || !counterEl) return;
-		var len = wcLen(titleInput.value);
+		const len = wcLen(titleInput.value);
 		counterEl.textContent = len + " / " + ALBUM_TITLE_MAX;
 		counterEl.className = "text-xs mt-1 block " + (len > ALBUM_TITLE_MAX ? "text-red-500" : "text-50");
 	}
@@ -140,7 +140,7 @@ Astro.locals.sidebarProfile = profileToSidebarData(profile);
 			}
 			const shortId = data.item.short_id || data.item.id;
 			window.location.href = `/${username}/albums/${shortId}?edit=1`;
-		} catch (err) {
+		} catch {
 			showError("网络错误，请重试");
 			submitBtn?.removeAttribute("disabled");
 			submitBtn.textContent = "创建相册";

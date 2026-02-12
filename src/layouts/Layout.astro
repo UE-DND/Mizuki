@@ -133,9 +133,21 @@ const bannerOffsetByPosition = {
 };
 const bannerOffset =
 	bannerOffsetByPosition[siteConfig.banner.position || "center"];
+const pageWidthRem = `${PAGE_WIDTH}rem`;
+const bannerHeightHomeVh = `${BANNER_HEIGHT_HOME}vh`;
+const bannerHeightVh = `${BANNER_HEIGHT}vh`;
 
 const umamiEnabled = umamiConfig.enabled || false;
 const umamiScripts = umamiConfig.scripts || ""; // 获取Umami scripts配置
+const bodyClassName = [
+	"min-h-screen",
+	isHomePage ? "lg:is-home" : "",
+	isArchivePage ? "page-archive" : "",
+	initialLayoutMode === "banner" ? "enable-banner" : "no-banner-mode",
+	initialLayoutMode !== "banner" ? "waves-paused" : "",
+]
+	.filter(Boolean)
+	.join(" ");
 
 // 构建字体配置的 CSS 变量
 // ASCII 字体优先级最高（用于英文、数字等），CJK 字体作为回退
@@ -171,12 +183,14 @@ if (siteConfig.font) {
 	// 组合成完整的 font-family 字符串
 	bodyFontFamily = fonts.join(", ");
 }
+const bodyStyle = bodyFontFamily ? `font-family: ${bodyFontFamily};` : "";
 ---
 
 <!doctype html>
 <html
 	lang={siteLang}
 	class="bg-[var(--page-bg)] text-[14px] md:text-[16px]"
+	style={`--page-width:${pageWidthRem};--hue:${configHue};`}
 	data-overlayscrollbars-initialize
 >
 	<head>
@@ -364,12 +378,6 @@ if (siteConfig.font) {
 				}
 			})();
 		</script>
-		<style
-			define:vars={{
-				configHue,
-				"page-width": `${PAGE_WIDTH}rem`,
-			}}
-		></style>
 		<!-- defines global css variables. This will be applied to <html> <body> and some other elements idk why -->
 		<slot name="head" />
 
@@ -384,30 +392,21 @@ if (siteConfig.font) {
 		{umamiEnabled && umamiScripts && <Fragment set:html={umamiScripts} />}
 	</head>
 		<body
-			class="min-h-screen"
-			class:list={[
-				{
-					"lg:is-home": isHomePage,
-					"page-archive": isArchivePage,
-					"enable-banner": initialLayoutMode === "banner",
-					"no-banner-mode": initialLayoutMode !== "banner",
-					"waves-paused": initialLayoutMode !== "banner",
-				},
-			]}
-				style={bodyFontFamily ? `font-family: ${bodyFontFamily};` : ""}
-				data-layout-mode={initialLayoutMode}
-				data-route-home={String(isHomePage)}
-				data-route-archive={String(isArchivePage)}
-				data-overlayscrollbars-initialize
-			>
-		<noscript
-			><iframe
+			class={bodyClassName}
+			style={bodyStyle}
+			data-layout-mode={initialLayoutMode}
+			data-route-home={String(isHomePage)}
+			data-route-archive={String(isArchivePage)}
+			data-overlayscrollbars-initialize
+		>
+		<ConfigCarrier resolvedSiteSettings={resolvedSiteSettings}></ConfigCarrier>
+		<noscript>
+			<iframe
 				src="https://www.googletagmanager.com/ns.html?id=GTM-KRX3XGVH"
 				height="0"
 				width="0"
-				style="display:none;visibility:hidden"></iframe></noscript
-		>
-		<ConfigCarrier resolvedSiteSettings={resolvedSiteSettings} />
+				style="display:none;visibility:hidden"></iframe>
+		</noscript>
 		<slot />
 
 		<!-- Music Player - 仅在启用时加载 -->
@@ -424,10 +423,10 @@ if (siteConfig.font) {
 	is:global
 	define:vars={{
 		bannerOffset,
-		"banner-height-home": `${BANNER_HEIGHT_HOME}vh`,
-		"banner-height": `${BANNER_HEIGHT}vh`,
+		"banner-height-home": bannerHeightHomeVh,
+		"banner-height": bannerHeightVh,
 	}}
-	>
+>
 		@tailwind components;
 		@layer components {
 			#page-height-extend {

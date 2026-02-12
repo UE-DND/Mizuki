@@ -65,7 +65,7 @@
     if (!content) {return;}
     
     content.className = 'test-content transition-slide-in';
-    content.offsetHeight; // 强制重排
+    void content.offsetHeight; // 强制重排
     
     setTimeout(() => {
       content.classList.add('is-active');

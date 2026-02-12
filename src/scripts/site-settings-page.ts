@@ -148,8 +148,6 @@ const PRESET_TO_LINK: Record<number, NavBarLinkObj> = {
 		icon: "material-symbols:photo-library",
 	},
 	7: { name: "项目", url: "/projects", icon: "material-symbols:work" },
-	8: { name: "技能", url: "/skills", icon: "material-symbols:psychology" },
-	9: { name: "时间线", url: "/timeline", icon: "material-symbols:timeline" },
 };
 
 const expandPreset = (item: NavLinkItem): NavBarLinkObj => {

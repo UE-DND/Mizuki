@@ -310,7 +310,6 @@ const mainContentClass = `
 >
 
     {siteConfig.banner.carousel?.enable && ((bannerImages.desktop && Array.isArray(bannerImages.desktop) && bannerImages.desktop.length > 1) || (bannerImages.mobile && Array.isArray(bannerImages.mobile) && bannerImages.mobile.length > 1)) ? (
-        <!-- Carousel mode for multiple images -->
         <div id="banner-carousel" class="relative h-full w-full">
             <ul class="carousel-list h-full w-full">
                 {Math.max(
@@ -341,7 +340,6 @@ const mainContentClass = `
                                     loading={index === 0 ? "eager" : "lazy"}
                                 />
                             )}
-                            <!-- Desktop/Tablet: use desktop-specific images -->
                             {hasDesktopImage && (
                                 <ImageWrapper 
                                     alt={`Desktop banner image ${index + 1}`} 
@@ -356,8 +354,7 @@ const mainContentClass = `
                 }).filter(Boolean)}
             </ul>
         </div>
-    ) : (
-        <!-- Single image mode -->
+        ) : (
         <div id="banner-single-container" class="relative h-full w-full">
             <script is:inline define:vars={{ desktopImages: bannerImages.desktop, mobileImages: bannerImages.mobile, position: siteConfig.banner.position }}>
                 (function() {

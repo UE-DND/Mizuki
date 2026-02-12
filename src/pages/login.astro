@@ -161,7 +161,7 @@ export const prerender = true;
 
 				submitBtn.disabled = true;
 				submitBtn.classList.add("is-loading");
-				var textEl = submitBtn.querySelector(".login-submit-text");
+				const textEl = submitBtn.querySelector(".login-submit-text");
 				if (textEl) textEl.textContent = "正在登录喵…";
 
 				try {

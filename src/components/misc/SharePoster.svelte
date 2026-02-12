@@ -24,7 +24,6 @@ const FONT_FAMILY = "'Roboto', sans-serif";
 // State
 let showModal = false;
 let posterImage: string | null = null;
-let generating = false;
 let themeColor = "#558e88";
 
 onMount(() => {
@@ -127,7 +126,6 @@ async function generatePoster() {
 	showModal = true;
 	if (posterImage) return;
 
-	generating = true;
 	try {
 		const qrCodeUrl = await QRCode.toDataURL(url, {
 			margin: 1,
@@ -232,7 +230,7 @@ async function generatePoster() {
 
 			ctx.beginPath();
 			ctx.strokeStyle = "rgba(255, 255, 255, 0.6)";
-			ctx.lineWidth = 1 * SCALE;
+						ctx.lineWidth = SCALE;
 			ctx.moveTo(dateBoxX + 10 * SCALE, dateBoxY + 42 * SCALE);
 			ctx.lineTo(dateBoxX + dateBoxW - 10 * SCALE, dateBoxY + 42 * SCALE);
 			ctx.stroke();
@@ -274,7 +272,7 @@ async function generatePoster() {
 		drawY += 24 * SCALE;
 		ctx.beginPath();
 		ctx.strokeStyle = "#f3f4f6";
-		ctx.lineWidth = 1 * SCALE;
+					ctx.lineWidth = SCALE;
 		ctx.moveTo(PADDING, drawY);
 		ctx.lineTo(WIDTH - PADDING, drawY);
 		ctx.stroke();
@@ -343,8 +341,6 @@ async function generatePoster() {
 		posterImage = canvas.toDataURL("image/png");
 	} catch (error) {
 		console.error("Failed to generate poster:", error);
-	} finally {
-		generating = false;
 	}
 }
 
