@@ -36,7 +36,7 @@ if (!invalidPath) {
 <MainGridLayout>
   {
     invalidPath ? (
-      <div class="card-base p-8 rounded-[var(--radius-large)]">
+      <div class="card-base p-8 rounded-(--radius-large)">
         <h1 class="text-2xl font-bold mb-2">页面不存在</h1>
         <p class="text-70">请检查访问路径。</p>
       </div>
@@ -44,7 +44,7 @@ if (!invalidPath) {
       <div class="home-layout">
         <div class="min-w-0">
           {allBlogPosts.length === 0 ? (
-            <div class="card-base p-8 rounded-[var(--radius-large)] text-70">
+            <div class="card-base p-8 rounded-(--radius-large) text-70">
               暂无公开文章。
             </div>
           ) : (

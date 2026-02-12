@@ -29,11 +29,11 @@ Astro.locals.sidebarProfile = profileToSidebarData(profile);
 
 <MainGridLayout title="新建相册" description="创建一个新相册">
   <section
-    class="card-base p-6 rounded-[var(--radius-large)] mb-4 space-y-3 text-90"
+    class="card-base p-6 rounded-(--radius-large) mb-4 space-y-3 text-90"
   >
     <a
       href={`/${username}/albums`}
-      class="text-sm text-[var(--primary)] hover:underline">返回相册列表</a
+      class="text-sm text-(--primary) hover:underline">返回相册列表</a
     >
     <h1 class="text-3xl font-bold text-black/90 dark:text-white/90">
       新建相册
@@ -43,9 +43,7 @@ Astro.locals.sidebarProfile = profileToSidebarData(profile);
     </p>
   </section>
 
-  <section
-    class="card-base p-6 rounded-[var(--radius-large)] space-y-5 text-90"
-  >
+  <section class="card-base p-6 rounded-(--radius-large) space-y-5 text-90">
     <form id="album-publish-form" class="space-y-5">
       <div>
         <label
@@ -60,9 +58,9 @@ Astro.locals.sidebarProfile = profileToSidebarData(profile);
           required
           maxlength="40"
           placeholder="输入相册标题"
-          class="w-full h-10 px-3 rounded-lg border border-[var(--line-divider)]
-						bg-[var(--card-bg)] text-90 placeholder:text-50
-						focus:outline-none focus:ring-2 focus:ring-[var(--primary)] focus:border-transparent
+          class="w-full h-10 px-3 rounded-lg border border-(--line-divider)
+						bg-(--card-bg) text-90 placeholder:text-50
+						focus:outline-none focus:ring-2 focus:ring-(--primary) focus:border-transparent
 						transition"
         />
         <span id="album-title-counter" class="text-xs mt-1 block text-50"
@@ -75,7 +73,7 @@ Astro.locals.sidebarProfile = profileToSidebarData(profile);
         <button
           id="album-publish-btn"
           type="submit"
-          class="px-6 h-10 rounded-lg bg-[var(--primary)] text-white font-medium
+          class="px-6 h-10 rounded-lg bg-(--primary) text-white font-medium
 						hover:opacity-90 active:opacity-80 transition cursor-pointer
 						disabled:opacity-50 disabled:cursor-not-allowed"
         >
@@ -83,8 +81,8 @@ Astro.locals.sidebarProfile = profileToSidebarData(profile);
         </button>
         <a
           href={`/${username}/albums`}
-          class="px-4 h-10 rounded-lg border border-[var(--line-divider)]
-						flex items-center text-sm text-75 hover:bg-[var(--btn-plain-bg-hover)] transition"
+          class="px-4 h-10 rounded-lg border border-(--line-divider)
+						flex items-center text-sm text-75 hover:bg-(--btn-plain-bg-hover) transition"
         >
           取消
         </a>

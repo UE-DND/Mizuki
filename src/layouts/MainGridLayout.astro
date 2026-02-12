@@ -551,28 +551,28 @@ const mainContentClass = `
                 xlink:href="#gentle-wave"
                 x="48"
                 y="0"
-                class="opacity-25 fill-[var(--page-bg)]"
+                class="opacity-25 fill-(--page-bg)"
                 style="animation-delay: -2s; animation-duration: 7s; will-change: transform;"
               />
               <use
                 xlink:href="#gentle-wave"
                 x="48"
                 y="3"
-                class="opacity-50 fill-[var(--page-bg)]"
+                class="opacity-50 fill-(--page-bg)"
                 style="animation-delay: -3s; animation-duration: 10s; will-change: transform;"
               />
               <use
                 xlink:href="#gentle-wave"
                 x="48"
                 y="5"
-                class="opacity-75 fill-[var(--page-bg)]"
+                class="opacity-75 fill-(--page-bg)"
                 style="animation-delay: -4s; animation-duration: 13s; will-change: transform;"
               />
               <use
                 xlink:href="#gentle-wave"
                 x="48"
                 y="7"
-                class="fill-[var(--page-bg)]"
+                class="fill-(--page-bg)"
                 style="animation-delay: -5s; animation-duration: 20s; will-change: transform;"
               />
             </g>
@@ -588,7 +588,7 @@ const mainContentClass = `
     style={`top: ${finalMainPanelTop}`}
   >
     <!-- The pointer-events-none here prevent blocking the click event of the TOC -->
-    <div class="relative max-w-[var(--page-width)] mx-auto pointer-events-auto">
+    <div class="relative max-w-(--page-width) mx-auto pointer-events-auto">
       <div
         id="main-grid"
         class={`transition duration-700 w-full left-0 right-0 grid ${gridCols} grid-rows-none md:grid-rows-[auto] mx-auto gap-4 px-2 md:px-4 ${!mobileShowSidebar || !hasMobileDrawerComponents ? "mobile-no-sidebar" : ""} ${effectiveShowRightSidebar ? "mobile-both-sidebar" : ""}`}
@@ -664,7 +664,7 @@ const mainContentClass = `
             class="absolute inset-0 z-20 pointer-events-none p-1"
           >
             <div
-              class="md3-skeleton-surface card-base h-full min-h-[16rem] rounded-[var(--radius-large)] p-6 md:p-8"
+              class="md3-skeleton-surface card-base h-full min-h-[16rem] rounded-(--radius-large) p-6 md:p-8"
             >
               <div class="space-y-4">
                 <div

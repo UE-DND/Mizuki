@@ -44,14 +44,14 @@ const allTags = Array.from(new Set(friendsList.flatMap((item) => item.tags)));
     import("../scripts/right-sidebar-layout.js");
   </script>
   <div
-    class="flex w-full rounded-[var(--radius-large)] overflow-hidden relative min-h-32"
+    class="flex w-full rounded-(--radius-large) overflow-hidden relative min-h-32"
   >
     <div id="post-container" class="card-base z-10 px-9 py-6 relative w-full">
       <!-- 页面标题 -->
       <div class="flex flex-col items-start justify-center mb-8">
         <h1
           class="text-4xl font-bold text-black/90 dark:text-white/90 mb-2 relative
-                  before:w-1 before:h-8 before:rounded-md before:bg-[var(--primary)]
+                  before:w-1 before:h-8 before:rounded-md before:bg-(--primary)
                   before:absolute before:top-1/2 before:-translate-y-1/2 before:-left-4"
         >
           {i18n(I18nKey.friends)}
@@ -70,10 +70,10 @@ const allTags = Array.from(new Set(friendsList.flatMap((item) => item.tags)));
               type="text"
               id="friend-search"
               placeholder={i18n(I18nKey.friendsSearchPlaceholder)}
-              class="w-full px-4 py-2 pl-10 rounded-lg bg-[var(--btn-regular-bg)]
+              class="w-full px-4 py-2 pl-10 rounded-lg bg-(--btn-regular-bg)
 									text-black/90 dark:text-white/90
 									border border-black/10 dark:border-white/10
-									focus:outline-none focus:ring-2 focus:ring-[var(--primary)]/50
+									focus:outline-none focus:ring-2 focus:ring-(--primary)/50
 									transition-all duration-200"
             />
             <svg
@@ -127,8 +127,8 @@ const allTags = Array.from(new Set(friendsList.flatMap((item) => item.tags)));
                 <div class="flex items-start gap-4 mb-4">
                   {/* 网站图标 */}
                   <div
-                    class="w-16 h-16 flex-shrink-0 rounded-xl overflow-hidden 
-												bg-[var(--btn-regular-bg)] 
+                    class="w-16 h-16 shrink-0 rounded-xl overflow-hidden 
+												bg-(--btn-regular-bg) 
 												ring-2 ring-transparent
 												transition-all duration-300"
                   >
@@ -144,7 +144,7 @@ const allTags = Array.from(new Set(friendsList.flatMap((item) => item.tags)));
                   <div class="flex-1 min-w-0">
                     <h3
                       class="text-xl font-bold text-black/90 dark:text-white/90 mb-1 truncate
-												 group-hover:text-[var(--primary)] transition-colors duration-200"
+												 group-hover:text-(--primary) transition-colors duration-200"
                     >
                       {item.title}
                     </h3>
@@ -152,7 +152,7 @@ const allTags = Array.from(new Set(friendsList.flatMap((item) => item.tags)));
                       href={item.siteurl}
                       target="_blank"
                       rel="noopener noreferrer"
-                      class="text-xs text-black/50 dark:text-white/50 hover:text-[var(--primary)] 
+                      class="text-xs text-black/50 dark:text-white/50 hover:text-(--primary) 
 												 truncate block transition-colors duration-200"
                     >
                       {new URL(item.siteurl).hostname}
@@ -170,7 +170,7 @@ const allTags = Array.from(new Set(friendsList.flatMap((item) => item.tags)));
                   {item.tags.map((tag) => (
                     <span
                       class="px-2 py-1 text-xs rounded-md 
-													bg-[var(--primary)]/10 text-[var(--primary)] 
+													bg-(--primary)/10 text-(--primary) 
 													font-medium"
                     >
                       {tag}
@@ -185,8 +185,8 @@ const allTags = Array.from(new Set(friendsList.flatMap((item) => item.tags)));
                     target="_blank"
                     rel="noopener noreferrer"
                     class="flex-1 flex items-center justify-center gap-2 px-4 py-2 
-											 rounded-lg bg-[var(--primary)] text-white 
-											 hover:bg-[var(--primary)]/90 
+											 rounded-lg bg-(--primary) text-white 
+											 hover:bg-(--primary)/90 
 											 active:scale-95 transition-all duration-200
 											 font-medium text-sm"
                   >
@@ -207,8 +207,8 @@ const allTags = Array.from(new Set(friendsList.flatMap((item) => item.tags)));
                   </a>
                   <button
                     class="copy-link-btn px-3 py-2 rounded-lg 
-											 bg-[var(--btn-regular-bg)] 
-											 hover:bg-[var(--btn-regular-bg-hover)] 
+											 bg-(--btn-regular-bg) 
+											 hover:bg-(--btn-regular-bg-hover) 
 											 active:scale-95 transition-all duration-200
 											 text-black/70 dark:text-white/70"
                     data-url={item.siteurl}
@@ -233,7 +233,7 @@ const allTags = Array.from(new Set(friendsList.flatMap((item) => item.tags)));
 
               {/* 悬停装饰效果 */}
               <div
-                class="absolute inset-0 bg-gradient-to-br from-[var(--primary)]/5 to-transparent 
+                class="absolute inset-0 bg-gradient-to-br from-(--primary)/5 to-transparent 
 										opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none"
               />
             </div>

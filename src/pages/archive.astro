@@ -27,7 +27,7 @@ const uncategorizedLabel = i18n(I18nKey.uncategorized);
   >
     {
       allPosts.length === 0 ? (
-        <div class="card-base p-8 rounded-[var(--radius-large)] text-70">
+        <div class="card-base p-8 rounded-(--radius-large) text-70">
           暂无公开文章。
         </div>
       ) : (
@@ -38,7 +38,7 @@ const uncategorizedLabel = i18n(I18nKey.uncategorized);
     <!-- 无筛选结果提示 -->
     <div
       id="archive-no-results"
-      class="hidden card-base p-8 rounded-[var(--radius-large)] text-70 mt-4"
+      class="hidden card-base p-8 rounded-(--radius-large) text-70 mt-4"
     >
       没有匹配的文章。
     </div>
@@ -46,7 +46,7 @@ const uncategorizedLabel = i18n(I18nKey.uncategorized);
     <!-- 分页控件 -->
     <div id="archive-pagination" class="hidden mt-4">
       <div
-        class="card-base p-3 rounded-[var(--radius-large)] flex items-center justify-center gap-2"
+        class="card-base p-3 rounded-(--radius-large) flex items-center justify-center gap-2"
       >
         <button
           id="page-prev"
@@ -81,10 +81,10 @@ const uncategorizedLabel = i18n(I18nKey.uncategorized);
     <Calendar defaultExpanded={false} />
 
     <!-- 分类 -->
-    <div class="card-base rounded-[var(--radius-large)] pb-4">
+    <div class="card-base rounded-(--radius-large) pb-4">
       <div
         class="font-bold transition text-lg text-neutral-900 dark:text-neutral-100 relative ml-8 mt-4 mb-2 flex items-center
-				before:w-1 before:h-4 before:rounded-md before:bg-[var(--primary)]
+				before:w-1 before:h-4 before:rounded-md before:bg-(--primary)
 				before:absolute before:left-[-16px] before:top-[5.5px]"
       >
         {i18n(I18nKey.categories)}
@@ -96,10 +96,10 @@ const uncategorizedLabel = i18n(I18nKey.uncategorized);
               data-filter="category"
               data-value={c.name}
               class="archive-filter-btn w-full h-10 rounded-lg bg-none
-							hover:bg-[var(--btn-plain-bg-hover)] active:bg-[var(--btn-plain-bg-active)]
+							hover:bg-(--btn-plain-bg-hover) active:bg-(--btn-plain-bg-active)
 							transition-all pl-2 hover:pl-3 text-left
-							text-neutral-700 hover:text-[var(--primary)]
-							dark:text-neutral-300 dark:hover:text-[var(--primary)]
+							text-neutral-700 hover:text-(--primary)
+							dark:text-neutral-300 dark:hover:text-(--primary)
 							cursor-pointer"
             >
               <div class="flex items-center justify-between mr-2">
@@ -108,8 +108,8 @@ const uncategorizedLabel = i18n(I18nKey.uncategorized);
                 </span>
                 <span
                   class="transition px-2 h-7 ml-4 min-w-[2rem] rounded-lg text-sm font-bold
-								text-[var(--btn-content)] dark:text-[var(--deep-text)]
-								bg-[oklch(0.95_0.025_var(--hue))] dark:bg-[var(--primary)]
+								text-(--btn-content) dark:text-(--deep-text)
+								bg-[oklch(0.95_0.025_var(--hue))] dark:bg-(--primary)
 								flex items-center justify-center shrink-0"
                 >
                   {c.count}
@@ -122,10 +122,10 @@ const uncategorizedLabel = i18n(I18nKey.uncategorized);
     </div>
 
     <!-- 标签 -->
-    <div class="card-base rounded-[var(--radius-large)] pb-4">
+    <div class="card-base rounded-(--radius-large) pb-4">
       <div
         class="font-bold transition text-lg text-neutral-900 dark:text-neutral-100 relative ml-8 mt-4 mb-2 flex items-center
-				before:w-1 before:h-4 before:rounded-md before:bg-[var(--primary)]
+				before:w-1 before:h-4 before:rounded-md before:bg-(--primary)
 				before:absolute before:left-[-16px] before:top-[5.5px]"
       >
         {i18n(I18nKey.tags)}
@@ -148,12 +148,12 @@ const uncategorizedLabel = i18n(I18nKey.uncategorized);
     <!-- 筛选状态栏 -->
     <div
       id="filter-status"
-      class="hidden card-base rounded-[var(--radius-large)] px-4 py-3 flex items-center justify-between gap-2"
+      class="is-collapsed card-base rounded-(--radius-large) px-4 py-3"
     >
       <span id="filter-status-label" class="text-sm text-75 truncate"></span>
       <button
         id="filter-clear-btn"
-        class="shrink-0 text-sm text-[var(--primary)] hover:underline cursor-pointer"
+        class="shrink-0 text-sm text-(--primary) hover:underline cursor-pointer"
       >
         清除
       </button>
@@ -162,6 +162,8 @@ const uncategorizedLabel = i18n(I18nKey.uncategorized);
 </MainGridLayout>
 
 <style>
+  @reference "../styles/main.css";
+
   /* 自定义滚动条 */
   .archive-filter-panel::-webkit-scrollbar {
     width: 4px;
@@ -187,6 +189,17 @@ const uncategorizedLabel = i18n(I18nKey.uncategorized);
     background-color: var(--primary) !important;
     color: white !important;
   }
+
+  #filter-status.is-collapsed {
+    display: none;
+  }
+
+  #filter-status:not(.is-collapsed) {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.5rem;
+  }
   :global(.archive-filter-btn.active .flex span:last-child) {
     background-color: rgba(255, 255, 255, 0.2) !important;
     color: white !important;
@@ -196,8 +209,8 @@ const uncategorizedLabel = i18n(I18nKey.uncategorized);
   :global(.pagination-btn) {
     @apply px-3 py-2 rounded-lg text-sm font-bold
 			text-neutral-600 dark:text-neutral-400
-			hover:bg-[var(--btn-plain-bg-hover)]
-			hover:text-[var(--primary)]
+			hover:bg-(--btn-plain-bg-hover)
+			hover:text-(--primary)
 			transition-colors cursor-pointer;
   }
   :global(.pagination-btn.disabled) {
@@ -208,9 +221,9 @@ const uncategorizedLabel = i18n(I18nKey.uncategorized);
 			flex items-center justify-center cursor-pointer
 			transition-colors
 			text-neutral-700 dark:text-neutral-300
-			hover:bg-[var(--btn-plain-bg-hover)];
+			hover:bg-(--btn-plain-bg-hover);
   }
   :global(.page-num.active) {
-    @apply bg-[var(--primary)] text-white dark:text-black/70 cursor-default;
+    @apply bg-(--primary) text-white dark:text-black/70 cursor-default;
   }
 </style>

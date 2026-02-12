@@ -56,17 +56,14 @@ const isAdminOnly = isAdminOnlyLink(link);
           data-dropdown-trigger
         >
           {link.icon && (
-            <Icon
-              name={link.icon}
-              class="text-[1.1rem] lg:mr-2 flex-shrink-0"
-            />
+            <Icon name={link.icon} class="text-[1.1rem] lg:mr-2 shrink-0" />
           )}
           <span class="truncate hidden lg:inline">
             {getLocalizedName(link.name)}
           </span>
           <Icon
             name="material-symbols:keyboard-arrow-down-rounded"
-            class="text-[1.25rem] transition-transform duration-200 dropdown-arrow ml-1 flex-shrink-0 hidden lg:inline"
+            class="text-[1.25rem] transition-transform duration-200 dropdown-arrow ml-1 shrink-0 hidden lg:inline"
           />
         </button>
 
@@ -114,7 +111,7 @@ const isAdminOnly = isAdminOnlyLink(link);
         data-admin-only={isAdminOnly ? "true" : undefined}
       >
         {link.icon && (
-          <Icon name={link.icon} class="text-[1.1rem] lg:mr-2 flex-shrink-0" />
+          <Icon name={link.icon} class="text-[1.1rem] lg:mr-2 shrink-0" />
         )}
         <span class="truncate hidden lg:inline">
           {getLocalizedName(link.name)}
@@ -122,7 +119,7 @@ const isAdminOnly = isAdminOnlyLink(link);
         {link.external && (
           <Icon
             name="fa7-solid:arrow-up-right-from-square"
-            class="text-[0.875rem] transition -translate-y-[1px] ml-1 text-black/[0.2] dark:text-white/[0.2] flex-shrink-0 hidden lg:inline"
+            class="text-[0.875rem] transition -translate-y-px ml-1 text-black/20 dark:text-white/20 shrink-0 hidden lg:inline"
           />
         )}
       </a>
@@ -131,6 +128,8 @@ const isAdminOnly = isAdminOnlyLink(link);
 </div>
 
 <style>
+  @reference "../../styles/main.css";
+
   .dropdown-container {
     @apply relative;
   }
@@ -152,11 +151,11 @@ const isAdminOnly = isAdminOnlyLink(link);
   }
 
   .dropdown-content {
-    @apply bg-[var(--float-panel-bg)] rounded-[var(--radius-large)] shadow-xl dark:shadow-none border border-black/5 dark:border-white/10 p-2 min-w-[12rem];
+    @apply bg-(--float-panel-bg) rounded-(--radius-large) shadow-xl dark:shadow-none border border-black/5 dark:border-white/10 p-2 min-w-[12rem];
   }
 
   .dropdown-item {
-    @apply flex items-center justify-between px-4 py-2.5 text-black/75 dark:text-white/75 hover:text-[var(--primary)] hover:bg-[var(--btn-plain-bg-hover)] transition-colors duration-150 font-medium rounded-lg;
+    @apply flex items-center justify-between px-4 py-2.5 text-black/75 dark:text-white/75 hover:text-(--primary) hover:bg-(--btn-plain-bg-hover) transition-colors duration-150 font-medium rounded-lg;
   }
 
   @media (max-width: 767px) {

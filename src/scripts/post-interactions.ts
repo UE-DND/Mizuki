@@ -213,7 +213,7 @@ function setLikeButtonState(
 	likeCount?: number,
 ) {
 	button.dataset.liked = liked ? "true" : "false";
-	button.classList.toggle("text-[var(--primary)]", liked);
+	button.classList.toggle("text-(--primary)", liked);
 	button.classList.toggle("text-50", !liked);
 	const countEl = button.querySelector<HTMLElement>("[data-like-count]");
 	if (countEl && typeof likeCount === "number") {

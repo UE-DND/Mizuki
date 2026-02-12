@@ -27,19 +27,19 @@ const iconName =
 ---
 
 <div
-  class="flex w-full rounded-[var(--radius-large)] overflow-hidden relative min-h-96"
+  class="flex w-full rounded-(--radius-large) overflow-hidden relative min-h-96"
 >
   <div
     class="card-base z-10 px-9 py-12 relative w-full flex flex-col items-center justify-center text-center content-not-visible-card"
   >
     <div
-      class="text-8xl md:text-9xl font-bold text-[var(--primary)] opacity-20 mb-4"
+      class="text-8xl md:text-9xl font-bold text-(--primary) opacity-20 mb-4"
     >
       {statusCode}
     </div>
 
     <div class="mb-6">
-      <Icon name={iconName} class="text-6xl text-[var(--primary)]" />
+      <Icon name={iconName} class="text-6xl text-(--primary)" />
     </div>
 
     <h1 class="text-3xl md:text-4xl font-bold mb-4 text-90">
@@ -52,7 +52,7 @@ const iconName =
 
     <a
       href={backHref}
-      class="inline-flex items-center gap-2 px-6 py-3 bg-[var(--primary)] text-white rounded-[var(--radius-large)] hover:opacity-95 transition-colors transition-transform duration-200 font-medium content-not-visible-btn"
+      class="inline-flex items-center gap-2 px-6 py-3 bg-(--primary) text-white rounded-(--radius-large) hover:opacity-95 transition-colors transition-transform duration-200 font-medium content-not-visible-btn"
     >
       <Icon name="material-symbols:arrow-back" class="text-xl" />
       {backLabel}
@@ -63,7 +63,7 @@ const iconName =
         name={mode === "permission_denied"
           ? "material-symbols:shield-lock"
           : "material-symbols:sentiment-sad"}
-        class="text-4xl text-[var(--primary)]"
+        class="text-4xl text-(--primary)"
       />
     </div>
     <div class="absolute bottom-4 right-4 opacity-10">
@@ -71,7 +71,7 @@ const iconName =
         name={mode === "permission_denied"
           ? "material-symbols:visibility-off"
           : "material-symbols:search-off"}
-        class="text-4xl text-[var(--primary)]"
+        class="text-4xl text-(--primary)"
       />
     </div>
   </div>

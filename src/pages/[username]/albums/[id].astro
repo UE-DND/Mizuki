@@ -155,11 +155,11 @@ function photoUrl(photo: {
       />
     ) : (
       <>
-        <section class="card-base p-6 rounded-[var(--radius-large)] mb-4 space-y-3 text-90">
+        <section class="card-base p-6 rounded-(--radius-large) mb-4 space-y-3 text-90">
           <a
             href={`/${username}/albums`}
             data-no-swup
-            class="text-sm text-[var(--primary)] hover:underline"
+            class="text-sm text-(--primary) hover:underline"
           >
             返回相册列表
           </a>
@@ -169,7 +169,7 @@ function photoUrl(photo: {
             {album.date && <span>{album.date}</span>}
             {album.location && <span>{album.location}</span>}
             {album.category && (
-              <span class="px-2 py-0.5 rounded bg-[var(--btn-plain-bg-hover)] text-75">
+              <span class="px-2 py-0.5 rounded bg-(--btn-plain-bg-hover) text-75">
                 {album.category}
               </span>
             )}
@@ -187,7 +187,7 @@ function photoUrl(photo: {
         </section>
 
         {album.photos.length === 0 ? (
-          <div class="card-base p-8 rounded-[var(--radius-large)] text-70">
+          <div class="card-base p-8 rounded-(--radius-large) text-70">
             该相册暂无可展示照片。
           </div>
         ) : (
@@ -202,7 +202,7 @@ function photoUrl(photo: {
             {album.photos.map((photo) => (
               <figure
                 class:list={[
-                  "rounded-xl overflow-hidden border border-[var(--line-divider)] bg-[var(--card-bg)]",
+                  "rounded-xl overflow-hidden border border-(--line-divider) bg-(--card-bg)",
                   album.layout === "masonry" ? "mb-3 break-inside-avoid" : "",
                 ]}
               >

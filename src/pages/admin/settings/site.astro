@@ -6,10 +6,10 @@ export const prerender = false;
 
 <AdminLayout title="站点设置" description="管理员配置站点运行时设置">
   <div class="space-y-4 text-75">
-    <section class="card-base px-9 py-6 rounded-[var(--radius-large)]">
+    <section class="card-base px-9 py-6 rounded-(--radius-large)">
       <h1
         class="text-4xl font-bold text-black/90 dark:text-white/90 mb-2 relative
-				before:w-1 before:h-8 before:rounded-md before:bg-[var(--primary)]
+				before:w-1 before:h-8 before:rounded-md before:bg-(--primary)
 				before:absolute before:top-1/2 before:-translate-y-1/2 before:-left-4"
       >
         站点设置
@@ -21,14 +21,14 @@ export const prerender = false;
 
     <div id="ss-authenticated" class="space-y-4">
       <!-- ===== Section 1: 站点信息 ===== -->
-      <section class="card-base p-8 rounded-[var(--radius-large)] space-y-4">
+      <section class="card-base p-8 rounded-(--radius-large) space-y-4">
         <h2 class="text-2xl font-semibold text-90">站点信息</h2>
         <form id="ss-site-form" class="grid grid-cols-1 md:grid-cols-2 gap-4">
           <label class="space-y-1.5">
             <span class="text-sm text-60">站点标题</span>
             <input
               id="ss-title"
-              class="w-full rounded-lg border border-[var(--line-divider)] px-3.5 py-2.5 bg-transparent text-75 placeholder:text-50"
+              class="w-full rounded-lg border border-(--line-divider) px-3.5 py-2.5 bg-transparent text-75 placeholder:text-50"
               placeholder="My Blog"
             />
           </label>
@@ -36,7 +36,7 @@ export const prerender = false;
             <span class="text-sm text-60">站点副标题</span>
             <input
               id="ss-subtitle"
-              class="w-full rounded-lg border border-[var(--line-divider)] px-3.5 py-2.5 bg-transparent text-75 placeholder:text-50"
+              class="w-full rounded-lg border border-(--line-divider) px-3.5 py-2.5 bg-transparent text-75 placeholder:text-50"
               placeholder="A place for stories"
             />
           </label>
@@ -44,7 +44,7 @@ export const prerender = false;
             <span class="text-sm text-60">站点关键词（用逗号分隔）</span>
             <input
               id="ss-keywords"
-              class="w-full rounded-lg border border-[var(--line-divider)] px-3.5 py-2.5 bg-transparent text-75 placeholder:text-50"
+              class="w-full rounded-lg border border-(--line-divider) px-3.5 py-2.5 bg-transparent text-75 placeholder:text-50"
               placeholder="blog, tech, life"
             />
           </label>
@@ -55,17 +55,17 @@ export const prerender = false;
               type="date"
               onkeydown="return false"
               inputmode="none"
-              class="date-picker-input w-full rounded-lg border border-[var(--line-divider)] px-3.5 py-2.5 bg-transparent text-75"
+              class="date-picker-input w-full rounded-lg border border-(--line-divider) px-3.5 py-2.5 bg-transparent text-75"
             />
           </label>
-          <hr class="border-[var(--line-divider)] md:col-span-2" />
+          <hr class="border-(--line-divider) md:col-span-2" />
           <h3 class="text-lg font-medium text-75 md:col-span-2">站点图标</h3>
           <div class="md:col-span-2 space-y-2">
             <div class="flex flex-wrap items-center gap-2">
               <button
                 type="button"
                 id="ss-favicon-upload-btn"
-                class="px-4 h-9 rounded-lg text-sm font-medium cursor-pointer bg-[var(--primary)] text-white hover:opacity-90 transition flex items-center gap-1.5"
+                class="px-4 h-9 rounded-lg text-sm font-medium cursor-pointer bg-(--primary) text-white hover:opacity-90 transition flex items-center gap-1.5"
                 ><svg
                   xmlns="http://www.w3.org/2000/svg"
                   class="w-4 h-4"
@@ -87,7 +87,7 @@ export const prerender = false;
             </div>
             <div id="ss-favicon-list" class="space-y-2"></div>
           </div>
-          <hr class="border-[var(--line-divider)] md:col-span-2" />
+          <hr class="border-(--line-divider) md:col-span-2" />
           <h3 class="text-lg font-medium text-75 md:col-span-2">
             统计（Umami）
           </h3>
@@ -106,7 +106,7 @@ export const prerender = false;
             <span class="text-sm text-60">Umami Base URL</span>
             <input
               id="ss-umami-url"
-              class="w-full rounded-lg border border-[var(--line-divider)] px-3.5 py-2.5 bg-transparent text-75 placeholder:text-50"
+              class="w-full rounded-lg border border-(--line-divider) px-3.5 py-2.5 bg-transparent text-75 placeholder:text-50"
               placeholder="https://umami.example.com"
             />
           </label>
@@ -114,13 +114,13 @@ export const prerender = false;
             <span class="text-sm text-60">Umami Scripts</span>
             <textarea
               id="ss-umami-scripts"
-              class="w-full min-h-24 rounded-lg border border-[var(--line-divider)] px-3.5 py-2.5 bg-transparent text-75 font-mono text-xs placeholder:text-50"
+              class="w-full min-h-24 rounded-lg border border-(--line-divider) px-3.5 py-2.5 bg-transparent text-75 font-mono text-xs placeholder:text-50"
               placeholder="<script ...></script>"></textarea>
           </label>
           <div class="md:col-span-2 flex items-center gap-2 pt-2">
             <button
               type="submit"
-              class="px-4 py-2 rounded-lg bg-[var(--btn-regular-bg)] text-[var(--btn-content)] text-sm"
+              class="px-4 py-2 rounded-lg bg-(--btn-regular-bg) text-(--btn-content) text-sm"
               >保存站点信息</button
             >
             <span id="ss-site-msg" class="text-sm text-60"></span>
@@ -129,14 +129,14 @@ export const prerender = false;
       </section>
 
       <!-- ===== Section 2: 导航栏 ===== -->
-      <section class="card-base p-8 rounded-[var(--radius-large)] space-y-4">
+      <section class="card-base p-8 rounded-(--radius-large) space-y-4">
         <h2 class="text-2xl font-semibold text-90">导航栏</h2>
         <form id="ss-nav-form" class="grid grid-cols-1 md:grid-cols-2 gap-4">
           <label class="space-y-1.5">
             <span class="text-sm text-60">导航模式</span>
             <select
               id="ss-navbar-mode"
-              class="w-full rounded-lg border border-[var(--line-divider)] px-3.5 py-2.5 bg-transparent text-75"
+              class="w-full rounded-lg border border-(--line-divider) px-3.5 py-2.5 bg-transparent text-75"
             >
               <option value="logo">Logo</option>
               <option value="text-icon">文字+图标</option>
@@ -146,7 +146,7 @@ export const prerender = false;
             <span class="text-sm text-60">导航标题文本</span>
             <input
               id="ss-navbar-text"
-              class="w-full rounded-lg border border-[var(--line-divider)] px-3.5 py-2.5 bg-transparent text-75 placeholder:text-50"
+              class="w-full rounded-lg border border-(--line-divider) px-3.5 py-2.5 bg-transparent text-75 placeholder:text-50"
               placeholder="Site Title"
             />
           </label>
@@ -157,7 +157,7 @@ export const prerender = false;
           <div class="md:col-span-2 flex items-center gap-2 pt-2">
             <button
               type="submit"
-              class="px-4 py-2 rounded-lg bg-[var(--btn-regular-bg)] text-[var(--btn-content)] text-sm"
+              class="px-4 py-2 rounded-lg bg-(--btn-regular-bg) text-(--btn-content) text-sm"
               >保存导航设置</button
             >
             <span id="ss-nav-msg" class="text-sm text-60"></span>
@@ -166,7 +166,7 @@ export const prerender = false;
       </section>
 
       <!-- ===== Section 3: 首页设置 ===== -->
-      <section class="card-base p-8 rounded-[var(--radius-large)] space-y-4">
+      <section class="card-base p-8 rounded-(--radius-large) space-y-4">
         <h2 class="text-2xl font-semibold text-90">首页设置</h2>
         <form id="ss-home-form" class="grid grid-cols-1 md:grid-cols-2 gap-4">
           <h3 class="text-lg font-medium text-75 md:col-span-2">轮播壁纸</h3>
@@ -174,7 +174,7 @@ export const prerender = false;
             <span class="text-sm text-60">壁纸模式</span>
             <select
               id="ss-wallpaper-mode"
-              class="w-full rounded-lg border border-[var(--line-divider)] px-3.5 py-2.5 bg-transparent text-75"
+              class="w-full rounded-lg border border-(--line-divider) px-3.5 py-2.5 bg-transparent text-75"
             >
               <option value="banner">banner</option>
               <option value="none">none</option>
@@ -198,7 +198,7 @@ export const prerender = false;
               type="number"
               min="1"
               max="120"
-              class="w-full rounded-lg border border-[var(--line-divider)] px-3.5 py-2.5 bg-transparent text-75"
+              class="w-full rounded-lg border border-(--line-divider) px-3.5 py-2.5 bg-transparent text-75"
               placeholder="5"
             />
           </label>
@@ -208,7 +208,7 @@ export const prerender = false;
               <button
                 type="button"
                 id="ss-banner-desktop-upload-btn"
-                class="px-4 h-9 rounded-lg text-sm font-medium cursor-pointer bg-[var(--primary)] text-white hover:opacity-90 transition flex items-center gap-1.5"
+                class="px-4 h-9 rounded-lg text-sm font-medium cursor-pointer bg-(--primary) text-white hover:opacity-90 transition flex items-center gap-1.5"
                 ><svg
                   xmlns="http://www.w3.org/2000/svg"
                   class="w-4 h-4"
@@ -236,7 +236,7 @@ export const prerender = false;
               <button
                 type="button"
                 id="ss-banner-mobile-upload-btn"
-                class="px-4 h-9 rounded-lg text-sm font-medium cursor-pointer bg-[var(--primary)] text-white hover:opacity-90 transition flex items-center gap-1.5"
+                class="px-4 h-9 rounded-lg text-sm font-medium cursor-pointer bg-(--primary) text-white hover:opacity-90 transition flex items-center gap-1.5"
                 ><svg
                   xmlns="http://www.w3.org/2000/svg"
                   class="w-4 h-4"
@@ -261,7 +261,7 @@ export const prerender = false;
           <div class="md:col-span-2 flex items-center gap-2 pt-2">
             <button
               type="submit"
-              class="px-4 py-2 rounded-lg bg-[var(--btn-regular-bg)] text-[var(--btn-content)] text-sm"
+              class="px-4 py-2 rounded-lg bg-(--btn-regular-bg) text-(--btn-content) text-sm"
               >保存首页设置</button
             >
             <span id="ss-home-msg" class="text-sm text-60"></span>
@@ -270,7 +270,7 @@ export const prerender = false;
       </section>
 
       <!-- ===== Section 4: 文章设置 ===== -->
-      <section class="card-base p-8 rounded-[var(--radius-large)] space-y-4">
+      <section class="card-base p-8 rounded-(--radius-large) space-y-4">
         <h2 class="text-2xl font-semibold text-90">文章设置</h2>
         <form
           id="ss-feature-form"
@@ -294,7 +294,7 @@ export const prerender = false;
             <span class="text-sm text-60">TOC 模式</span>
             <select
               id="ss-toc-mode"
-              class="w-full rounded-lg border border-[var(--line-divider)] px-3.5 py-2.5 bg-transparent text-75"
+              class="w-full rounded-lg border border-(--line-divider) px-3.5 py-2.5 bg-transparent text-75"
             >
               <option value="sidebar">sidebar</option>
               <option value="float">float</option>
@@ -304,7 +304,7 @@ export const prerender = false;
             <span class="text-sm text-60">TOC 深度</span>
             <select
               id="ss-toc-depth"
-              class="w-full rounded-lg border border-[var(--line-divider)] px-3.5 py-2.5 bg-transparent text-75"
+              class="w-full rounded-lg border border-(--line-divider) px-3.5 py-2.5 bg-transparent text-75"
             >
               <option value="1">1</option>
               <option value="2">2</option>
@@ -314,7 +314,7 @@ export const prerender = false;
           <div class="md:col-span-2 flex items-center gap-2 pt-2">
             <button
               type="submit"
-              class="px-4 py-2 rounded-lg bg-[var(--btn-regular-bg)] text-[var(--btn-content)] text-sm"
+              class="px-4 py-2 rounded-lg bg-(--btn-regular-bg) text-(--btn-content) text-sm"
               >保存文章设置</button
             >
             <span id="ss-feature-msg" class="text-sm text-60"></span>
@@ -323,7 +323,7 @@ export const prerender = false;
       </section>
 
       <!-- ===== Section 5: 公告与页脚 ===== -->
-      <section class="card-base p-8 rounded-[var(--radius-large)] space-y-4">
+      <section class="card-base p-8 rounded-(--radius-large) space-y-4">
         <h2 class="text-2xl font-semibold text-90">公告与页脚</h2>
         <form
           id="ss-announce-form"
@@ -345,7 +345,7 @@ export const prerender = false;
             <span class="text-sm text-60">公告标题</span>
             <input
               id="ss-ann-title"
-              class="w-full rounded-lg border border-[var(--line-divider)] px-3.5 py-2.5 bg-transparent text-75 placeholder:text-50"
+              class="w-full rounded-lg border border-(--line-divider) px-3.5 py-2.5 bg-transparent text-75 placeholder:text-50"
               placeholder="Welcome!"
             />
           </label>
@@ -353,7 +353,7 @@ export const prerender = false;
             <span class="text-sm text-60">公告内容</span>
             <textarea
               id="ss-ann-content"
-              class="w-full min-h-24 rounded-lg border border-[var(--line-divider)] px-3.5 py-2.5 bg-transparent text-75 placeholder:text-50"
+              class="w-full min-h-24 rounded-lg border border-(--line-divider) px-3.5 py-2.5 bg-transparent text-75 placeholder:text-50"
               placeholder="公告正文..."></textarea>
           </label>
           <label
@@ -371,7 +371,7 @@ export const prerender = false;
             <span class="text-sm text-60">公告链接文本</span>
             <input
               id="ss-ann-link-text"
-              class="w-full rounded-lg border border-[var(--line-divider)] px-3.5 py-2.5 bg-transparent text-75 placeholder:text-50"
+              class="w-full rounded-lg border border-(--line-divider) px-3.5 py-2.5 bg-transparent text-75 placeholder:text-50"
               placeholder="了解更多"
             />
           </label>
@@ -379,11 +379,11 @@ export const prerender = false;
             <span class="text-sm text-60">公告链接 URL</span>
             <input
               id="ss-ann-link-url"
-              class="w-full rounded-lg border border-[var(--line-divider)] px-3.5 py-2.5 bg-transparent text-75 placeholder:text-50"
+              class="w-full rounded-lg border border-(--line-divider) px-3.5 py-2.5 bg-transparent text-75 placeholder:text-50"
               placeholder="https://..."
             />
           </label>
-          <hr class="border-[var(--line-divider)] md:col-span-2" />
+          <hr class="border-(--line-divider) md:col-span-2" />
           <h3 class="text-lg font-medium text-75 md:col-span-2">页脚</h3>
           <label
             class="flex items-center gap-3 text-75 cursor-pointer select-none md:col-span-2"
@@ -402,13 +402,13 @@ export const prerender = false;
             >
             <textarea
               id="ss-footer-html"
-              class="w-full min-h-32 rounded-lg border border-[var(--line-divider)] px-3.5 py-2.5 bg-transparent text-75 font-mono text-xs placeholder:text-50"
+              class="w-full min-h-32 rounded-lg border border-(--line-divider) px-3.5 py-2.5 bg-transparent text-75 font-mono text-xs placeholder:text-50"
               placeholder="<p>ICP 备案号</p>"></textarea>
           </label>
           <div class="md:col-span-2 flex items-center gap-2 pt-2">
             <button
               type="submit"
-              class="px-4 py-2 rounded-lg bg-[var(--btn-regular-bg)] text-[var(--btn-content)] text-sm"
+              class="px-4 py-2 rounded-lg bg-(--btn-regular-bg) text-(--btn-content) text-sm"
               >保存公告与页脚</button
             >
             <span id="ss-announce-msg" class="text-sm text-60"></span>
@@ -417,7 +417,7 @@ export const prerender = false;
       </section>
 
       <!-- ===== Section 6: 其它设置 ===== -->
-      <section class="card-base p-8 rounded-[var(--radius-large)] space-y-4">
+      <section class="card-base p-8 rounded-(--radius-large) space-y-4">
         <h2 class="text-2xl font-semibold text-90">其它设置</h2>
         <form id="ss-other-form" class="grid grid-cols-1 md:grid-cols-2 gap-4">
           <h3 class="text-lg font-medium text-75 md:col-span-2">音乐播放器</h3>
@@ -436,7 +436,7 @@ export const prerender = false;
             <span class="text-sm text-60">模式</span>
             <select
               id="ss-music-mode"
-              class="w-full rounded-lg border border-[var(--line-divider)] px-3.5 py-2.5 bg-transparent text-75"
+              class="w-full rounded-lg border border-(--line-divider) px-3.5 py-2.5 bg-transparent text-75"
             >
               <option value="meting">meting</option>
               <option value="local">local</option>
@@ -446,7 +446,7 @@ export const prerender = false;
             <span class="text-sm text-60">Meting API</span>
             <input
               id="ss-music-api"
-              class="w-full rounded-lg border border-[var(--line-divider)] px-3.5 py-2.5 bg-transparent text-75 placeholder:text-50"
+              class="w-full rounded-lg border border-(--line-divider) px-3.5 py-2.5 bg-transparent text-75 placeholder:text-50"
               placeholder="https://api.injahow.cn/meting/"
             />
           </label>
@@ -454,14 +454,14 @@ export const prerender = false;
             <span class="text-sm text-60">歌单 ID</span>
             <input
               id="ss-music-id"
-              class="w-full rounded-lg border border-[var(--line-divider)] px-3.5 py-2.5 bg-transparent text-75 placeholder:text-50"
+              class="w-full rounded-lg border border-(--line-divider) px-3.5 py-2.5 bg-transparent text-75 placeholder:text-50"
             />
           </label>
           <label class="space-y-1.5">
             <span class="text-sm text-60">服务器</span>
             <input
               id="ss-music-server"
-              class="w-full rounded-lg border border-[var(--line-divider)] px-3.5 py-2.5 bg-transparent text-75 placeholder:text-50"
+              class="w-full rounded-lg border border-(--line-divider) px-3.5 py-2.5 bg-transparent text-75 placeholder:text-50"
               placeholder="netease"
             />
           </label>
@@ -469,7 +469,7 @@ export const prerender = false;
             <span class="text-sm text-60">类型</span>
             <input
               id="ss-music-type"
-              class="w-full rounded-lg border border-[var(--line-divider)] px-3.5 py-2.5 bg-transparent text-75 placeholder:text-50"
+              class="w-full rounded-lg border border-(--line-divider) px-3.5 py-2.5 bg-transparent text-75 placeholder:text-50"
               placeholder="playlist"
             />
           </label>
@@ -480,11 +480,11 @@ export const prerender = false;
               type="number"
               min="0"
               max="200"
-              class="w-full rounded-lg border border-[var(--line-divider)] px-3.5 py-2.5 bg-transparent text-75"
+              class="w-full rounded-lg border border-(--line-divider) px-3.5 py-2.5 bg-transparent text-75"
               placeholder="30"
             />
           </label>
-          <hr class="border-[var(--line-divider)] md:col-span-2" />
+          <hr class="border-(--line-divider) md:col-span-2" />
           <h3 class="text-lg font-medium text-75 md:col-span-2">樱花特效</h3>
           <label
             class="flex items-center gap-3 text-75 cursor-pointer select-none"
@@ -500,7 +500,7 @@ export const prerender = false;
           <div class="md:col-span-2 flex items-center gap-2 pt-2">
             <button
               type="submit"
-              class="px-4 py-2 rounded-lg bg-[var(--btn-regular-bg)] text-[var(--btn-content)] text-sm"
+              class="px-4 py-2 rounded-lg bg-(--btn-regular-bg) text-(--btn-content) text-sm"
               >保存其它设置</button
             >
             <span id="ss-other-msg" class="text-sm text-60"></span>
@@ -513,12 +513,12 @@ export const prerender = false;
   <div
     slot="modal"
     id="ss-image-crop-modal"
-    class="fixed inset-0 z-[9999] hidden items-center justify-center bg-black/70 px-4 py-5"
+    class="fixed inset-0 z-9999 hidden items-center justify-center bg-black/70 px-4 py-5"
     tabindex="-1"
   >
     <div
       id="ss-image-crop-panel"
-      class="card-base w-full max-w-2xl max-h-[92vh] overflow-y-auto rounded-[var(--radius-large)] border border-[var(--line-divider)] p-5 sm:p-6 space-y-4 text-75"
+      class="card-base w-full max-w-2xl max-h-[92vh] overflow-y-auto rounded-(--radius-large) border border-(--line-divider) p-5 sm:p-6 space-y-4 text-75"
     >
       <div class="flex items-center gap-2">
         <h3
@@ -533,7 +533,7 @@ export const prerender = false;
       </p>
       <div
         id="ss-image-crop-viewport"
-        class="relative mx-auto w-full max-w-[640px] overflow-hidden rounded-2xl border border-[var(--line-divider)] bg-black/15 dark:bg-white/10 select-none touch-none"
+        class="relative mx-auto w-full max-w-[640px] overflow-hidden rounded-2xl border border-(--line-divider) bg-black/15 dark:bg-white/10 select-none touch-none"
         style="aspect-ratio: 16 / 9;"
       >
         <img
@@ -574,7 +574,7 @@ export const prerender = false;
         <button
           type="button"
           id="ss-image-crop-select-btn"
-          class="px-4 h-9 rounded-lg text-sm font-medium cursor-pointer bg-[var(--primary)] text-white hover:opacity-90 transition flex items-center gap-1.5"
+          class="px-4 h-9 rounded-lg text-sm font-medium cursor-pointer bg-(--primary) text-white hover:opacity-90 transition flex items-center gap-1.5"
           ><svg
             xmlns="http://www.w3.org/2000/svg"
             class="w-4 h-4"
@@ -595,14 +595,14 @@ export const prerender = false;
         <button
           type="button"
           id="ss-image-crop-apply-btn"
-          class="px-4 py-2.5 rounded-lg bg-[var(--btn-regular-bg)] text-[var(--btn-content)] text-sm"
+          class="px-4 py-2.5 rounded-lg bg-(--btn-regular-bg) text-(--btn-content) text-sm"
         >
           确认裁剪
         </button>
         <button
           type="button"
           id="ss-image-crop-cancel-btn"
-          class="ml-auto px-4 py-2.5 rounded-lg border border-[var(--line-divider)] text-sm text-75"
+          class="ml-auto px-4 py-2.5 rounded-lg border border-(--line-divider) text-sm text-75"
         >
           取消
         </button>

@@ -46,7 +46,7 @@ const calendarTitle = isChinese ? "日期" : "Date";
 <WidgetLayout id="calendar-widget" class={className} style={style}>
   <div
     class="calendar-shell font-bold transition text-lg text-neutral-900 dark:text-neutral-100 relative ml-4 mt-4 mb-0 flex items-center justify-between gap-2
-			before:w-1 before:h-4 before:rounded-md before:bg-[var(--primary)]
+			before:w-1 before:h-4 before:rounded-md before:bg-(--primary)
 			before:absolute before:left-[-16px] before:top-[5.5px]"
   >
     <div class="min-w-0 flex items-center gap-2">
@@ -57,7 +57,7 @@ const calendarTitle = isChinese ? "日期" : "Date";
       type="button"
       aria-controls="calendar-body"
       aria-expanded={defaultExpanded ? "true" : "false"}
-      class="calendar-toggle-btn p-1.5 rounded-md hover:bg-[var(--btn-plain-bg-hover)] text-neutral-600 dark:text-neutral-400 hover:text-[var(--primary)] transition-colors shrink-0"
+      class="calendar-toggle-btn p-1.5 rounded-md hover:bg-(--btn-plain-bg-hover) text-neutral-600 dark:text-neutral-400 hover:text-(--primary) transition-colors shrink-0"
     >
       <Icon
         id="calendar-toggle-icon"
@@ -89,7 +89,7 @@ const calendarTitle = isChinese ? "日期" : "Date";
       <button
         id="calendar-retry-btn"
         type="button"
-        class="mt-2 text-sm text-[var(--primary)] hover:underline cursor-pointer"
+        class="mt-2 text-sm text-(--primary) hover:underline cursor-pointer"
       >
         {isChinese ? "重试" : "Retry"}
       </button>
@@ -100,7 +100,7 @@ const calendarTitle = isChinese ? "日期" : "Date";
         <div class="flex items-center gap-1 min-w-0">
           <div
             id="calendar-year-btn"
-            class="cursor-pointer hover:bg-[var(--btn-plain-bg-hover)] px-2 py-1.5 rounded-lg transition-colors text-lg font-bold text-neutral-900 dark:text-neutral-100 select-none"
+            class="cursor-pointer hover:bg-(--btn-plain-bg-hover) px-2 py-1.5 rounded-lg transition-colors text-lg font-bold text-neutral-900 dark:text-neutral-100 select-none"
           >
           </div>
         </div>
@@ -108,29 +108,29 @@ const calendarTitle = isChinese ? "日期" : "Date";
         <div class="flex items-center gap-1 shrink-0 ml-2">
           <button
             id="back-to-today-btn"
-            class="p-1.5 rounded-md hover:bg-[var(--btn-plain-bg-hover)] text-[var(--primary)] transition-all invisible"
+            class="p-1.5 rounded-md hover:bg-(--btn-plain-bg-hover) text-(--primary) transition-all invisible"
             aria-label="Back to today"
           >
             <Icon name="material-symbols:restart-alt-rounded" class="text-xl" />
           </button>
           <div
-            class="flex items-center bg-[var(--card-bg)] rounded-lg border border-neutral-200 dark:border-neutral-700"
+            class="flex items-center bg-(--card-bg) rounded-lg border border-neutral-200 dark:border-neutral-700"
           >
             <button
               id="prev-month-btn"
-              class="p-1 px-2 hover:bg-[var(--btn-plain-bg-hover)] text-neutral-600 dark:text-neutral-400 hover:text-[var(--primary)] transition-colors text-sm font-bold rounded-l-lg"
+              class="p-1 px-2 hover:bg-(--btn-plain-bg-hover) text-neutral-600 dark:text-neutral-400 hover:text-(--primary) transition-colors text-sm font-bold rounded-l-lg"
               aria-label="Previous month"
             >
               ＜
             </button>
             <div
               id="calendar-month-btn"
-              class="cursor-pointer hover:bg-[var(--btn-plain-bg-hover)] px-2 py-1 transition-colors text-sm font-bold text-neutral-900 dark:text-neutral-100 select-none min-w-[3rem] text-center"
+              class="cursor-pointer hover:bg-(--btn-plain-bg-hover) px-2 py-1 transition-colors text-sm font-bold text-neutral-900 dark:text-neutral-100 select-none min-w-[3rem] text-center"
             >
             </div>
             <button
               id="next-month-btn"
-              class="p-1 px-2 hover:bg-[var(--btn-plain-bg-hover)] text-neutral-600 dark:text-neutral-400 hover:text-[var(--primary)] transition-colors text-sm font-bold rounded-r-lg"
+              class="p-1 px-2 hover:bg-(--btn-plain-bg-hover) text-neutral-600 dark:text-neutral-400 hover:text-(--primary) transition-colors text-sm font-bold rounded-r-lg"
               aria-label="Next month"
             >
               ＞
@@ -156,7 +156,7 @@ const calendarTitle = isChinese ? "日期" : "Date";
         </div>
         <div
           id="selection-panel"
-          class="absolute inset-0 bg-[var(--card-bg)] z-10 hidden opacity-0 transition-opacity duration-200"
+          class="absolute inset-0 bg-(--card-bg) z-10 hidden opacity-0 transition-opacity duration-200"
         >
           <div
             id="selection-content"
@@ -564,10 +564,9 @@ const calendarTitle = isChinese ? "日期" : "Date";
       const isCurrentMonth = index === currentMonth;
       const hasPost = stats.hasPostInMonth[`${currentYear}-${index + 1}`];
       let cls =
-        "month-item cursor-pointer rounded-lg flex flex-col items-center justify-center p-2 transition-all hover:bg-[var(--btn-plain-bg-hover)] relative border border-transparent";
+        "month-item cursor-pointer rounded-lg flex flex-col items-center justify-center p-2 transition-all hover:bg-(--btn-plain-bg-hover) relative border border-transparent";
       if (isCurrentMonth) {
-        cls +=
-          " border-[var(--primary)] text-[var(--primary)] bg-[var(--primary)]/5";
+        cls += " border-(--primary) text-(--primary) bg-(--primary)/5";
       } else {
         cls += " text-neutral-700 dark:text-neutral-300";
       }
@@ -575,7 +574,7 @@ const calendarTitle = isChinese ? "日期" : "Date";
       html += `
 				<div class="${cls}" data-month="${index}">
 					<span class="text-sm font-bold">${name}</span>
-					${hasPost ? `<span class="w-1 h-1 rounded-full bg-[var(--primary)] mt-1"></span>` : `<span class="w-1 h-1 mt-1"></span>`}
+					${hasPost ? `<span class="w-1 h-1 rounded-full bg-(--primary) mt-1"></span>` : `<span class="w-1 h-1 mt-1"></span>`}
 				</div>
 			`;
     });
@@ -601,10 +600,9 @@ const calendarTitle = isChinese ? "日期" : "Date";
       const isCurrent = y === currentYear;
       const hasPost = stats.hasPostInYear[y];
       let cls =
-        "year-item cursor-pointer rounded-lg flex flex-col items-center justify-center py-3 transition-all hover:bg-[var(--btn-plain-bg-hover)] relative border border-transparent";
+        "year-item cursor-pointer rounded-lg flex flex-col items-center justify-center py-3 transition-all hover:bg-(--btn-plain-bg-hover) relative border border-transparent";
       if (isCurrent) {
-        cls +=
-          " border-[var(--primary)] text-[var(--primary)] bg-[var(--primary)]/5";
+        cls += " border-(--primary) text-(--primary) bg-(--primary)/5";
       } else {
         cls += " text-neutral-700 dark:text-neutral-300";
       }
@@ -612,7 +610,7 @@ const calendarTitle = isChinese ? "日期" : "Date";
       html += `
 				<div class="${cls}" data-year="${y}" id="year-${y}">
 					<span class="text-sm font-bold">${y}</span>
-					${hasPost ? `<span class="w-1.5 h-1.5 rounded-full bg-[var(--primary)] mt-1"></span>` : `<span class="w-1.5 h-1.5 mt-1"></span>`}
+					${hasPost ? `<span class="w-1.5 h-1.5 rounded-full bg-(--primary) mt-1"></span>` : `<span class="w-1.5 h-1.5 mt-1"></span>`}
 				</div>
 			`;
     }

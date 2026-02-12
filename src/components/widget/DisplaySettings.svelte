@@ -31,7 +31,7 @@
   <div class="flex flex-row gap-2 mb-3 items-center justify-between">
     <div
       class="flex gap-2 font-bold text-lg text-neutral-900 dark:text-neutral-100 transition relative ml-3
-            before:w-1 before:h-4 before:rounded-md before:bg-[var(--primary)]
+            before:w-1 before:h-4 before:rounded-md before:bg-(--primary)
             before:absolute before:-left-3 before:top-[0.33rem]"
     >
       {i18n(I18nKey.themeColor)}
@@ -42,7 +42,7 @@
         class:pointer-events-none={hue === defaultHue}
         on:click={resetHue}
       >
-        <div class="text-[var(--btn-content)]">
+        <div class="text-(--btn-content)">
           <Icon icon="fa7-solid:arrow-rotate-left" class="text-[0.875rem]"
           ></Icon>
         </div>
@@ -51,8 +51,8 @@
     <div class="flex gap-1">
       <div
         id="hueValue"
-        class="transition bg-[var(--btn-regular-bg)] w-10 h-7 rounded-md flex justify-center
-            font-bold text-sm items-center text-[var(--btn-content)]"
+        class="transition bg-(--btn-regular-bg) w-10 h-7 rounded-md flex justify-center
+            font-bold text-sm items-center text-(--btn-content)"
       >
         {hue}
       </div>

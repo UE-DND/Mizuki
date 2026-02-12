@@ -31,6 +31,11 @@ function toBase64Url(input: ArrayBuffer | Uint8Array | string): string {
 		.replace(/=+$/g, "");
 }
 
+function toStrictArrayBuffer(input: Uint8Array): ArrayBuffer {
+	const { buffer, byteOffset, byteLength } = input;
+	return buffer.slice(byteOffset, byteOffset + byteLength) as ArrayBuffer;
+}
+
 async function deriveAesKey(password: string, salt: Uint8Array) {
 	const encoder = new TextEncoder();
 	const keyMaterial = await webcrypto.subtle.importKey(
@@ -45,7 +50,7 @@ async function deriveAesKey(password: string, salt: Uint8Array) {
 		{
 			name: "PBKDF2",
 			hash: "SHA-256",
-			salt,
+			salt: toStrictArrayBuffer(salt),
 			iterations: PBKDF2_ITERATIONS,
 		},
 		keyMaterial,
@@ -66,12 +71,16 @@ export async function encryptProtectedContent(
 
 	const source = `${MARKER}${String(html || "")}`;
 	const encoder = new TextEncoder();
-	const salt = webcrypto.getRandomValues(new Uint8Array(SALT_BYTES));
-	const iv = webcrypto.getRandomValues(new Uint8Array(IV_BYTES));
+	const salt = webcrypto.getRandomValues(
+		new Uint8Array(new ArrayBuffer(SALT_BYTES)),
+	);
+	const iv = webcrypto.getRandomValues(
+		new Uint8Array(new ArrayBuffer(IV_BYTES)),
+	);
 	const key = await deriveAesKey(cleanPassword, salt);
 
 	const encrypted = await webcrypto.subtle.encrypt(
-		{ name: "AES-GCM", iv },
+		{ name: "AES-GCM", iv: toStrictArrayBuffer(iv) },
 		key,
 		encoder.encode(source),
 	);

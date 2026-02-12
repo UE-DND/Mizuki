@@ -127,11 +127,11 @@ function coverUrl(item: {
       />
     ) : (
       <div class="album-list-root">
-        <section class="card-base px-9 py-6 rounded-[var(--radius-large)] mb-4 text-90 flex items-center justify-between gap-4 flex-wrap">
+        <section class="card-base px-9 py-6 rounded-(--radius-large) mb-4 text-90 flex items-center justify-between gap-4 flex-wrap">
           <div>
             <h1
               class="text-4xl font-bold text-black/90 dark:text-white/90 mb-2 relative
-						before:w-1 before:h-8 before:rounded-md before:bg-[var(--primary)]
+            before:w-1 before:h-8 before:rounded-md before:bg-(--primary)
 						before:absolute before:top-1/2 before:-translate-y-1/2 before:-left-4"
             >
               相册
@@ -141,7 +141,7 @@ function coverUrl(item: {
           {isOwner && (
             <a
               href={`/${username}/albums/publish`}
-              class="px-5 h-10 rounded-lg bg-[var(--primary)] text-white font-medium
+              class="px-5 h-10 rounded-lg bg-(--primary) text-white font-medium
 							hover:opacity-90 active:opacity-80 transition
 							flex items-center gap-1.5 text-sm shrink-0"
             >
@@ -164,14 +164,14 @@ function coverUrl(item: {
         </section>
 
         {items.length === 0 ? (
-          <div class="card-base p-8 rounded-[var(--radius-large)] text-70">
+          <div class="card-base p-8 rounded-(--radius-large) text-70">
             暂无公开相册。
           </div>
         ) : (
           <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
             {items.map((item) => (
               <article
-                class="album-list-item card-base rounded-[var(--radius-large)] overflow-hidden border border-[var(--line-divider)] text-90"
+                class="album-list-item card-base rounded-(--radius-large) overflow-hidden border border-(--line-divider) text-90"
                 data-tags={JSON.stringify(item.tags)}
                 data-category={item.category || ""}
               >
@@ -215,7 +215,7 @@ function coverUrl(item: {
                         </span>
                       )}
                       {item.category && (
-                        <span class="px-1.5 py-0.5 rounded bg-[var(--btn-plain-bg-hover)]">
+                        <span class="px-1.5 py-0.5 rounded bg-(--btn-plain-bg-hover)">
                           {item.category}
                         </span>
                       )}
@@ -244,7 +244,7 @@ function coverUrl(item: {
         {/* No results hint */}
         <div
           id="album-no-results"
-          class="hidden card-base p-8 rounded-[var(--radius-large)] text-70 mt-4"
+          class="hidden card-base p-8 rounded-(--radius-large) text-70 mt-4"
         >
           没有匹配的相册。
         </div>
@@ -261,10 +261,10 @@ function coverUrl(item: {
       >
         {/* Categories */}
         {categoryList.length > 0 && (
-          <div class="card-base rounded-[var(--radius-large)] pb-4">
+          <div class="card-base rounded-(--radius-large) pb-4">
             <div
               class="font-bold transition text-lg text-neutral-900 dark:text-neutral-100 relative ml-8 mt-4 mb-2 flex items-center
-						before:w-1 before:h-4 before:rounded-md before:bg-[var(--primary)]
+            before:w-1 before:h-4 before:rounded-md before:bg-(--primary)
 						before:absolute before:left-[-16px] before:top-[5.5px]"
             >
               分类
@@ -275,10 +275,10 @@ function coverUrl(item: {
                   data-filter="category"
                   data-value={c.name}
                   class="album-filter-btn w-full h-10 rounded-lg bg-none
-									hover:bg-[var(--btn-plain-bg-hover)] active:bg-[var(--btn-plain-bg-active)]
+                  hover:bg-(--btn-plain-bg-hover) active:bg-(--btn-plain-bg-active)
 									transition-all pl-2 hover:pl-3 text-left
-									text-neutral-700 hover:text-[var(--primary)]
-									dark:text-neutral-300 dark:hover:text-[var(--primary)]
+                  text-neutral-700 hover:text-(--primary)
+                  dark:text-neutral-300 dark:hover:text-(--primary)
 									cursor-pointer"
                 >
                   <div class="flex items-center justify-between mr-2">
@@ -287,8 +287,8 @@ function coverUrl(item: {
                     </span>
                     <span
                       class="transition px-2 h-7 ml-4 min-w-[2rem] rounded-lg text-sm font-bold
-										text-[var(--btn-content)] dark:text-[var(--deep-text)]
-										bg-[oklch(0.95_0.025_var(--hue))] dark:bg-[var(--primary)]
+                    text-(--btn-content) dark:text-(--deep-text)
+                    bg-[oklch(0.95_0.025_var(--hue))] dark:bg-(--primary)
 										flex items-center justify-center shrink-0"
                     >
                       {c.count}
@@ -302,10 +302,10 @@ function coverUrl(item: {
 
         {/* Tags */}
         {tagList.length > 0 && (
-          <div class="card-base rounded-[var(--radius-large)] pb-4">
+          <div class="card-base rounded-(--radius-large) pb-4">
             <div
               class="font-bold transition text-lg text-neutral-900 dark:text-neutral-100 relative ml-8 mt-4 mb-2 flex items-center
-						before:w-1 before:h-4 before:rounded-md before:bg-[var(--primary)]
+            before:w-1 before:h-4 before:rounded-md before:bg-(--primary)
 						before:absolute before:left-[-16px] before:top-[5.5px]"
             >
               标签
@@ -327,7 +327,7 @@ function coverUrl(item: {
         {/* Filter status bar */}
         <div
           id="album-filter-status"
-          class="hidden card-base rounded-[var(--radius-large)] px-4 py-3 items-center justify-between gap-2"
+          class="hidden card-base rounded-(--radius-large) px-4 py-3 items-center justify-between gap-2"
         >
           <span
             id="album-filter-status-label"
@@ -335,7 +335,7 @@ function coverUrl(item: {
           />
           <button
             id="album-filter-clear-btn"
-            class="shrink-0 text-sm text-[var(--primary)] hover:underline cursor-pointer"
+            class="shrink-0 text-sm text-(--primary) hover:underline cursor-pointer"
           >
             清除
           </button>

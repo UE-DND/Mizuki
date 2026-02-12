@@ -589,7 +589,7 @@ export function initMePage(): void {
 
 		const select = document.createElement("select");
 		select.className =
-			"rounded-lg border border-[var(--line-divider)] px-3 py-2 text-sm text-75 bg-transparent";
+			"rounded-lg border border-(--line-divider) px-3 py-2 text-sm text-75 bg-transparent";
 		select.dataset.socialField = "platform";
 		const defaultOption = document.createElement("option");
 		defaultOption.value = "";
@@ -611,7 +611,7 @@ export function initMePage(): void {
 		urlInput.placeholder = "链接 URL";
 		urlInput.value = linkUrl;
 		urlInput.className =
-			"flex-1 min-w-[120px] rounded-lg border border-[var(--line-divider)] px-3 py-2 text-sm text-75 bg-transparent placeholder:text-50";
+			"flex-1 min-w-[120px] rounded-lg border border-(--line-divider) px-3 py-2 text-sm text-75 bg-transparent placeholder:text-50";
 		urlInput.dataset.socialField = "url";
 		row.appendChild(urlInput);
 
@@ -619,7 +619,7 @@ export function initMePage(): void {
 		removeBtn.type = "button";
 		removeBtn.textContent = "删除";
 		removeBtn.className =
-			"px-3 py-1.5 rounded-lg border border-[var(--line-divider)] text-sm text-75 hover:text-red-500 hover:border-red-300 transition-colors";
+			"px-3 py-1.5 rounded-lg border border-(--line-divider) text-sm text-75 hover:text-red-500 hover:border-red-300 transition-colors";
 		removeBtn.addEventListener("click", () => {
 			row.remove();
 		});
@@ -696,14 +696,14 @@ export function initMePage(): void {
 			"flex items-center gap-2 w-full py-1.5 group/add cursor-pointer";
 		const lineL = document.createElement("span");
 		lineL.className =
-			"flex-1 border-t border-dashed border-[var(--line-divider)] group-hover/add:border-[var(--primary)] transition-colors";
+			"flex-1 border-t border-dashed border-(--line-divider) group-hover/add:border-(--primary) transition-colors";
 		const label = document.createElement("span");
 		label.className =
-			"px-4 py-1.5 rounded-lg border border-[var(--line-divider)] text-sm text-60 group-hover/add:border-[var(--primary)] group-hover/add:text-[var(--primary)] transition-colors whitespace-nowrap select-none";
+			"px-4 py-1.5 rounded-lg border border-(--line-divider) text-sm text-60 group-hover/add:border-(--primary) group-hover/add:text-(--primary) transition-colors whitespace-nowrap select-none";
 		label.textContent = "添加新链接";
 		const lineR = document.createElement("span");
 		lineR.className =
-			"flex-1 border-t border-dashed border-[var(--line-divider)] group-hover/add:border-[var(--primary)] transition-colors";
+			"flex-1 border-t border-dashed border-(--line-divider) group-hover/add:border-(--primary) transition-colors";
 		wrap.appendChild(lineL);
 		wrap.appendChild(label);
 		wrap.appendChild(lineR);

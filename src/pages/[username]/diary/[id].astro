@@ -75,11 +75,11 @@ const diary = result.status === "ok" ? result.data : null;
       <>
         <article
           id="post-container"
-          class="card-base p-6 md:p-8 rounded-[var(--radius-large)] mb-4 text-90"
+          class="card-base p-6 md:p-8 rounded-(--radius-large) mb-4 text-90"
         >
           <a
             href={`/${username}/diary`}
-            class="inline-block text-sm text-[var(--primary)] hover:underline mb-4"
+            class="inline-block text-sm text-(--primary) hover:underline mb-4"
           >
             返回日记列表
           </a>
@@ -96,7 +96,7 @@ const diary = result.status === "ok" ? result.data : null;
               >
                 ...
               </summary>
-              <div class="absolute right-0 top-10 z-10 min-w-[8rem] card-base rounded-xl border border-[var(--line-divider)] p-2">
+              <div class="absolute right-0 top-10 z-10 min-w-[8rem] card-base rounded-xl border border-(--line-divider) p-2">
                 <button
                   type="button"
                   id="diary-edit-trigger"
@@ -150,7 +150,7 @@ const diary = result.status === "ok" ? result.data : null;
                           : "")
                       }
                       alt={image.caption || "diary image"}
-                      class="w-full h-36 md:h-44 object-cover rounded-xl border border-[var(--line-divider)]"
+                      class="w-full h-36 md:h-44 object-cover rounded-xl border border-(--line-divider)"
                       loading="lazy"
                     />
                     {image.caption && (

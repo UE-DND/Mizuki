@@ -323,7 +323,7 @@
 		top-20 left-4 md:left-[unset] right-4 shadow-2xl rounded-2xl p-4"
 >
   <div class="flex items-center justify-between mb-4">
-    <h3 class="text-lg font-bold text-[var(--primary)]">
+    <h3 class="text-lg font-bold text-(--primary)">
       {isHomePage ? i18n(I18nKey.postList) : i18n(I18nKey.tableOfContents)}
     </h3>
     <button

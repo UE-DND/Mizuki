@@ -24,6 +24,8 @@ import "../styles/fancybox-custom.css";
 import "../styles/expressive-code.css";
 import "../styles/panel-animations.css";
 import "../styles/skeleton.css";
+import "../styles/variables.styl";
+import "../styles/main.css";
 
 interface Props {
   title?: string;
@@ -187,7 +189,7 @@ const bodyStyle = bodyFontFamily ? `font-family: ${bodyFontFamily};` : "";
 <!doctype html>
 <html
   lang={siteLang}
-  class="bg-[var(--page-bg)] text-[14px] md:text-[16px]"
+  class="bg-(--page-bg) text-[14px] md:text-[16px]"
   style={`--page-width:${pageWidthRem};--hue:${configHue};`}
   data-overlayscrollbars-initialize
 >
@@ -410,23 +412,24 @@ const bodyStyle = bodyFontFamily ? `font-family: ${bodyFontFamily};` : "";
     "banner-height": bannerHeightVh,
   }}
 >
-  @tailwind components;
+  @reference "../styles/main.css";
+
   @layer components {
     #page-height-extend {
       display: none !important;
     }
 
     body[data-layout-mode="banner"][data-route-home="true"] #banner-wrapper {
-      @apply h-[var(--banner-height-home)] translate-y-[var(--banner-height-extend)];
+      @apply h-(--banner-height-home) translate-y-(--banner-height-extend);
     }
     body[data-layout-mode="banner"] #banner-wrapper {
-      @apply h-[var(--banner-height-home)];
+      @apply h-(--banner-height-home);
     }
     body[data-layout-mode="banner"][data-route-home="true"] #banner {
-      @apply h-[var(--banner-height-home)] translate-y-0;
+      @apply h-(--banner-height-home) translate-y-0;
     }
     body[data-layout-mode="banner"] #banner {
-      @apply h-[var(--banner-height-home)] translate-y-[var(--bannerOffset)];
+      @apply h-(--banner-height-home) translate-y-(--bannerOffset);
     }
 
     /* Water waves animation */

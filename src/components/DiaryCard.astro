@@ -78,7 +78,7 @@ function resolveDiaryImageSrc(image: AppDiaryImage): string {
 
 <div
   class:list={[
-    "card-base flex flex-col w-full rounded-[var(--radius-large)] overflow-hidden relative",
+    "card-base flex flex-col w-full rounded-(--radius-large) overflow-hidden relative",
     className,
   ]}
   data-diary-card
@@ -121,7 +121,7 @@ function resolveDiaryImageSrc(image: AppDiaryImage): string {
               <img
                 src={resolveDiaryImageSrc(img)}
                 alt="日记配图"
-                class="w-full h-20 md:h-24 object-cover rounded-lg border border-[var(--line-divider)]"
+                class="w-full h-20 md:h-24 object-cover rounded-lg border border-(--line-divider)"
                 loading="lazy"
               />
             ))}
@@ -136,12 +136,10 @@ function resolveDiaryImageSrc(image: AppDiaryImage): string {
       >
         <a
           href={`/${authorHandle}`}
-          class="max-w-[10rem] truncate hover:text-[var(--primary)] transition-colors"
+          class="max-w-[10rem] truncate hover:text-(--primary) transition-colors"
           >@{authorHandle}</a
         >
-        <span class="text-[var(--meta-divider)]" aria-hidden="true"
-          >&middot;</span
-        >
+        <span class="text-(--meta-divider)" aria-hidden="true">&middot;</span>
         <span>{publishedDate}</span>
       </div>
       <div
@@ -149,7 +147,7 @@ function resolveDiaryImageSrc(image: AppDiaryImage): string {
       >
         <button
           type="button"
-          class="inline-flex h-6 items-center gap-1.5 text-50 text-sm md:text-base font-medium hover:text-[var(--primary)] transition-colors post-card-action-btn"
+          class="inline-flex h-6 items-center gap-1.5 text-50 text-sm md:text-base font-medium hover:text-(--primary) transition-colors post-card-action-btn"
           data-action="toggle-like"
           aria-label="切换点赞"
         >
@@ -161,7 +159,7 @@ function resolveDiaryImageSrc(image: AppDiaryImage): string {
         </button>
         <a
           href={`${diaryUrl}#directus-comment-root`}
-          class="inline-flex h-6 items-center gap-1.5 text-50 text-sm md:text-base font-medium hover:text-[var(--primary)] transition-colors"
+          class="inline-flex h-6 items-center gap-1.5 text-50 text-sm md:text-base font-medium hover:text-(--primary) transition-colors"
         >
           <Icon
             name="material-symbols:comment-rounded"
@@ -171,38 +169,38 @@ function resolveDiaryImageSrc(image: AppDiaryImage): string {
         </a>
         <details class="relative post-card-menu">
           <summary
-            class="list-none cursor-pointer inline-flex items-center justify-center w-8 h-8 rounded-lg text-50 hover:text-[var(--primary)] hover:bg-[var(--btn-plain-bg-hover)] active:bg-[var(--btn-plain-bg-active)] transition-colors"
+            class="list-none cursor-pointer inline-flex items-center justify-center w-8 h-8 rounded-lg text-50 hover:text-(--primary) hover:bg-(--btn-plain-bg-hover) active:bg-(--btn-plain-bg-active) transition-colors"
             aria-label="更多操作"
           >
             <Icon name="material-symbols:more-horiz" class="text-xl" />
           </summary>
           <div
-            class="absolute right-0 bottom-full mb-2 z-30 min-w-[10rem] rounded-xl border border-black/5 dark:border-white/10 bg-[var(--float-panel-bg)] p-1.5 shadow-xl dark:shadow-none"
+            class="absolute right-0 bottom-full mb-2 z-30 min-w-[10rem] rounded-xl border border-black/5 dark:border-white/10 bg-(--float-panel-bg) p-1.5 shadow-xl dark:shadow-none"
           >
             <button
               type="button"
-              class="hidden w-full text-left px-3 py-2 text-xs md:text-sm rounded-lg text-black/75 dark:text-white/75 hover:text-[var(--primary)] hover:bg-[var(--btn-plain-bg-hover)] post-card-action-btn transition-colors"
+              class="hidden w-full text-left px-3 py-2 text-xs md:text-sm rounded-lg text-black/75 dark:text-white/75 hover:text-(--primary) hover:bg-(--btn-plain-bg-hover) post-card-action-btn transition-colors"
               data-action="delete-own-diary"
             >
               删除日记
             </button>
             <button
               type="button"
-              class="hidden w-full text-left px-3 py-2 text-xs md:text-sm rounded-lg text-black/75 dark:text-white/75 hover:text-[var(--primary)] hover:bg-[var(--btn-plain-bg-hover)] post-card-action-btn transition-colors"
+              class="hidden w-full text-left px-3 py-2 text-xs md:text-sm rounded-lg text-black/75 dark:text-white/75 hover:text-(--primary) hover:bg-(--btn-plain-bg-hover) post-card-action-btn transition-colors"
               data-action="delete-admin-diary"
             >
               删除此日记(管理员)
             </button>
             <button
               type="button"
-              class="w-full text-left px-3 py-2 text-xs md:text-sm rounded-lg text-black/75 dark:text-white/75 hover:text-[var(--primary)] hover:bg-[var(--btn-plain-bg-hover)] post-card-action-btn transition-colors"
+              class="w-full text-left px-3 py-2 text-xs md:text-sm rounded-lg text-black/75 dark:text-white/75 hover:text-(--primary) hover:bg-(--btn-plain-bg-hover) post-card-action-btn transition-colors"
               data-action="block-user"
             >
               屏蔽用户
             </button>
             <button
               type="button"
-              class="w-full text-left px-3 py-2 text-xs md:text-sm rounded-lg text-amber-600 dark:text-amber-400 hover:bg-[var(--btn-plain-bg-hover)] post-card-action-btn transition-colors"
+              class="w-full text-left px-3 py-2 text-xs md:text-sm rounded-lg text-amber-600 dark:text-amber-400 hover:bg-(--btn-plain-bg-hover) post-card-action-btn transition-colors"
               data-action="report-content"
             >
               举报内容

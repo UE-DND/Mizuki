@@ -783,11 +783,11 @@
 
 {#if musicPlayerConfig.enable}
   {#if showError}
-    <div class="fixed bottom-20 right-4 z-[60] max-w-sm">
+    <div class="fixed bottom-20 right-4 z-60 max-w-sm">
       <div
         class="bg-red-500 text-white px-4 py-3 rounded-lg shadow-lg flex items-center gap-3 animate-slide-up"
       >
-        <Icon icon="material-symbols:error" class="text-xl flex-shrink-0" />
+        <Icon icon="material-symbols:error" class="text-xl shrink-0" />
         <span class="text-sm flex-1">{errorMessage}</span>
         <button
           on:click={hideError}
@@ -806,7 +806,7 @@
   >
     <!-- 隐藏状态的小圆球 -->
     <div
-      class="orb-player w-12 h-12 bg-[var(--primary)] rounded-full shadow-2xl cursor-pointer transition-all duration-500 ease-in-out flex items-center justify-center hover:scale-110 active:scale-95"
+      class="orb-player w-12 h-12 bg-(--primary) rounded-full shadow-2xl cursor-pointer transition-all duration-500 ease-in-out flex items-center justify-center hover:scale-110 active:scale-95"
       hidden={!isHidden}
       class:opacity-0={!isHidden}
       class:scale-0={!isHidden}
@@ -842,7 +842,7 @@
     </div>
     <!-- 收缩状态的迷你播放器（封面圆形） -->
     <div
-      class="mini-player card-base bg-[var(--float-panel-bg)] shadow-2xl rounded-2xl p-3 transition-all duration-500 ease-in-out"
+      class="mini-player card-base bg-(--float-panel-bg) shadow-2xl rounded-2xl p-3 transition-all duration-500 ease-in-out"
       hidden={isExpanded || isHidden || isMobileView}
       class:opacity-0={isExpanded || isHidden || isMobileView}
       class:scale-95={isExpanded || isHidden || isMobileView}
@@ -945,7 +945,7 @@
           transition:slide={{ duration: 300, axis: "y" }}
         >
           <div
-            class="playlist-header flex items-center justify-between p-4 border-b border-[var(--line-divider)]"
+            class="playlist-header flex items-center justify-between p-4 border-b border-(--line-divider)"
           >
             <h3 class="text-lg font-semibold text-90">
               {i18n(Key.musicPlayerPlaylist)}
@@ -960,9 +960,9 @@
           <div class="playlist-content overflow-y-auto max-h-80">
             {#each playlist as song, index (song.id)}
               <div
-                class="playlist-item flex items-center gap-3 p-3 hover:bg-[var(--btn-plain-bg-hover)] cursor-pointer transition-colors"
-                class:bg-[var(--btn-plain-bg)]={index === currentIndex}
-                class:text-[var(--primary)]={index === currentIndex}
+                class="playlist-item flex items-center gap-3 p-3 hover:bg-(--btn-plain-bg-hover) cursor-pointer transition-colors"
+                class:bg-(--btn-plain-bg)={index === currentIndex}
+                class:text-(--primary)={index === currentIndex}
                 on:click={() => playSong(index)}
                 on:keydown={(e) => {
                   if (e.key === "Enter" || e.key === " ") {
@@ -978,21 +978,21 @@
                   {#if index === currentIndex && isPlaying}
                     <Icon
                       icon="material-symbols:graphic-eq"
-                      class="text-[var(--primary)] animate-pulse"
+                      class="text-(--primary) animate-pulse"
                     />
                   {:else if index === currentIndex}
                     <Icon
                       icon="material-symbols:pause"
-                      class="text-[var(--primary)]"
+                      class="text-(--primary)"
                     />
                   {:else}
-                    <span class="text-sm text-[var(--content-meta)]"
+                    <span class="text-sm text-(--content-meta)"
                       >{index + 1}</span
                     >
                   {/if}
                 </div>
                 <div
-                  class="w-10 h-10 rounded-lg overflow-hidden bg-[var(--btn-regular-bg)] flex-shrink-0"
+                  class="w-10 h-10 rounded-lg overflow-hidden bg-(--btn-regular-bg) shrink-0"
                 >
                   <img
                     src={getAssetPath(song.cover)}
@@ -1004,14 +1004,14 @@
                 <div class="flex-1 min-w-0">
                   <div
                     class="font-medium truncate"
-                    class:text-[var(--primary)]={index === currentIndex}
+                    class:text-(--primary)={index === currentIndex}
                     class:text-90={index !== currentIndex}
                   >
                     {song.title}
                   </div>
                   <div
-                    class="text-sm text-[var(--content-meta)] truncate"
-                    class:text-[var(--primary)]={index === currentIndex}
+                    class="text-sm text-(--content-meta) truncate"
+                    class:text-(--primary)={index === currentIndex}
                   >
                     {song.artist}
                   </div>
@@ -1022,12 +1022,10 @@
         </div>
       {/if}
 
-      <div
-        class="card-base bg-[var(--float-panel-bg)] shadow-2xl rounded-2xl p-4"
-      >
+      <div class="card-base bg-(--float-panel-bg) shadow-2xl rounded-2xl p-4">
         <div class="flex items-center gap-4 mb-4">
           <div
-            class="cover-container relative w-16 h-16 rounded-lg overflow-hidden flex-shrink-0"
+            class="cover-container relative w-16 h-16 rounded-lg overflow-hidden shrink-0"
           >
             <img
               src={getAssetPath(currentSong.cover)}
@@ -1075,7 +1073,7 @@
         </div>
         <div class="progress-section mb-4">
           <div
-            class="progress-bar flex-1 h-2 bg-[var(--btn-regular-bg)] rounded-full cursor-pointer"
+            class="progress-bar flex-1 h-2 bg-(--btn-regular-bg) rounded-full cursor-pointer"
             bind:this={progressBar}
             on:click={setProgress}
             on:keydown={(e) => {
@@ -1097,7 +1095,7 @@
             aria-valuenow={duration > 0 ? (currentTime / duration) * 100 : 0}
           >
             <div
-              class="h-full bg-[var(--primary)] rounded-full transition-all duration-100"
+              class="h-full bg-(--primary) rounded-full transition-all duration-100"
               style="width: {duration > 0
                 ? (currentTime / duration) * 100
                 : 0}%"
@@ -1168,7 +1166,7 @@
             {/if}
           </button>
           <div
-            class="flex-1 h-2 bg-[var(--btn-regular-bg)] rounded-full cursor-pointer touch-none"
+            class="flex-1 h-2 bg-(--btn-regular-bg) rounded-full cursor-pointer touch-none"
             bind:this={volumeBar}
             on:pointerdown={startVolumeDrag}
             on:keydown={(e) => {
@@ -1185,7 +1183,7 @@
             aria-valuenow={volume * 100}
           >
             <div
-              class="h-full bg-[var(--primary)] rounded-full transition-all"
+              class="h-full bg-(--primary) rounded-full transition-all"
               class:duration-100={!isVolumeDragging}
               class:duration-0={isVolumeDragging}
               style="width: {volume * 100}%"
@@ -1193,7 +1191,7 @@
           </div>
           <button
             class="btn-plain w-8 h-8 rounded-lg flex items-center justify-center"
-            class:text-[var(--primary)]={showPlaylist}
+            class:text-(--primary)={showPlaylist}
             on:click={togglePlaylist}
             title={i18n(Key.musicPlayerPlaylist)}
           >

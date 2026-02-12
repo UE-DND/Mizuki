@@ -72,11 +72,11 @@ const processedLinks: ProcessedNavBarLink[] = Astro.props.links.map(
           <div class="mobile-dropdown" data-mobile-dropdown>
             <button
               class="group flex justify-between items-center py-2 pl-3 pr-1 rounded-lg gap-4 w-full text-left
-                            hover:bg-[var(--btn-plain-bg-hover)] active:bg-[var(--btn-plain-bg-active)] transition"
+                            hover:bg-(--btn-plain-bg-hover) active:bg-(--btn-plain-bg-active) transition"
               data-mobile-dropdown-trigger
               aria-expanded="false"
             >
-              <div class="flex items-center transition text-black/75 dark:text-white/75 font-bold group-hover:text-[var(--primary)] group-active:text-[var(--primary)]">
+              <div class="flex items-center transition text-black/75 dark:text-white/75 font-bold group-hover:text-(--primary) group-active:text-(--primary)">
                 {link.icon && (
                   <Icon name={link.icon} class="text-[1.1rem] mr-2" />
                 )}
@@ -84,7 +84,7 @@ const processedLinks: ProcessedNavBarLink[] = Astro.props.links.map(
               </div>
               <Icon
                 name="material-symbols:keyboard-arrow-down-rounded"
-                class="transition text-[1.25rem] text-[var(--primary)] mobile-dropdown-arrow duration-200"
+                class="transition text-[1.25rem] text-(--primary) mobile-dropdown-arrow duration-200"
               />
             </button>
             <div class="mobile-submenu" data-mobile-submenu>
@@ -92,13 +92,13 @@ const processedLinks: ProcessedNavBarLink[] = Astro.props.links.map(
                 <a
                   href={child.external ? child.url : url(child.url)}
                   class:list={[
-                    "group flex justify-between items-center py-2 pl-6 pr-1 rounded-lg gap-4 hover:bg-[var(--btn-plain-bg-hover)] active:bg-[var(--btn-plain-bg-active)] transition",
+                    "group flex justify-between items-center py-2 pl-6 pr-1 rounded-lg gap-4 hover:bg-(--btn-plain-bg-hover) active:bg-(--btn-plain-bg-active) transition",
                     isAdminOnlyLink(child) && "hidden",
                   ]}
                   data-admin-only={isAdminOnlyLink(child) ? "true" : undefined}
                   target={child.external ? "_blank" : null}
                 >
-                  <div class="flex items-center transition text-black/60 dark:text-white/60 font-medium group-hover:text-[var(--primary)] group-active:text-[var(--primary)]">
+                  <div class="flex items-center transition text-black/60 dark:text-white/60 font-medium group-hover:text-(--primary) group-active:text-(--primary)">
                     {child.icon && (
                       <Icon name={child.icon} class="text-[1.1rem] mr-2" />
                     )}
@@ -118,13 +118,13 @@ const processedLinks: ProcessedNavBarLink[] = Astro.props.links.map(
           <a
             href={link.external ? link.url : url(link.url)}
             class:list={[
-              "group flex justify-between items-center py-2 pl-3 pr-1 rounded-lg gap-4 hover:bg-[var(--btn-plain-bg-hover)] active:bg-[var(--btn-plain-bg-active)] transition",
+              "group flex justify-between items-center py-2 pl-3 pr-1 rounded-lg gap-4 hover:bg-(--btn-plain-bg-hover) active:bg-(--btn-plain-bg-active) transition",
               isAdminOnlyLink(link) && "hidden",
             ]}
             data-admin-only={isAdminOnlyLink(link) ? "true" : undefined}
             target={link.external ? "_blank" : null}
           >
-            <div class="flex items-center transition text-black/75 dark:text-white/75 font-bold group-hover:text-[var(--primary)] group-active:text-[var(--primary)]">
+            <div class="flex items-center transition text-black/75 dark:text-white/75 font-bold group-hover:text-(--primary) group-active:text-(--primary)">
               {link.icon && (
                 <Icon name={link.icon} class="text-[1.1rem] mr-2" />
               )}
@@ -133,7 +133,7 @@ const processedLinks: ProcessedNavBarLink[] = Astro.props.links.map(
             {!link.external && (
               <Icon
                 name="material-symbols:chevron-right-rounded"
-                class="transition text-[1.25rem] text-[var(--primary)]"
+                class="transition text-[1.25rem] text-(--primary)"
               />
             )}
             {link.external && (
@@ -150,6 +150,8 @@ const processedLinks: ProcessedNavBarLink[] = Astro.props.links.map(
 </div>
 
 <style>
+  @reference "../../styles/main.css";
+
   .mobile-submenu {
     @apply max-h-0 overflow-hidden transition-all duration-300 ease-in-out;
   }

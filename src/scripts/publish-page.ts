@@ -515,8 +515,8 @@ export function initPublishPage(): void {
 		button.setAttribute("aria-pressed", active ? "true" : "false");
 		button.classList.toggle("text-90", active);
 		button.classList.toggle("text-60", !active);
-		button.classList.toggle("bg-[var(--btn-plain-bg-hover)]", active);
-		button.classList.toggle("border-[var(--primary)]", active);
+		button.classList.toggle("bg-(--btn-plain-bg-hover)", active);
+		button.classList.toggle("border-(--primary)", active);
 	};
 
 	const updateModeButtonStyle = (
@@ -526,8 +526,8 @@ export function initPublishPage(): void {
 		button.setAttribute("aria-pressed", active ? "true" : "false");
 		button.classList.toggle("text-90", active);
 		button.classList.toggle("text-60", !active);
-		button.classList.toggle("bg-[var(--btn-plain-bg-hover)]", active);
-		button.classList.toggle("border-[var(--primary)]", active);
+		button.classList.toggle("bg-(--btn-plain-bg-hover)", active);
+		button.classList.toggle("border-(--primary)", active);
 	};
 
 	const updateEditorHeader = (): void => {
@@ -932,8 +932,8 @@ export function initPublishPage(): void {
 			button.className =
 				"w-full text-left rounded-xl border px-3 py-2.5 transition " +
 				(currentItemId === item.id
-					? "border-[var(--primary)] bg-[var(--btn-plain-bg-hover)]"
-					: "border-[var(--line-divider)] hover:bg-[var(--btn-plain-bg-hover)]");
+					? "border-(--primary) bg-(--btn-plain-bg-hover)"
+					: "border-(--line-divider) hover:bg-(--btn-plain-bg-hover)");
 
 			const title = document.createElement("div");
 			title.className = "text-sm font-medium text-90 truncate";

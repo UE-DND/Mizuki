@@ -146,7 +146,7 @@ const publishedMetaText = formatArticleMetaDate(article?.published_at);
         <article
           id="post-container"
           data-enter-skeleton-target="post-detail"
-          class="card-base p-6 md:p-8 rounded-[var(--radius-large)] mb-4 relative"
+          class="card-base p-6 md:p-8 rounded-(--radius-large) mb-4 relative"
         >
           <div data-enter-skeleton-content>
             <header class="mb-6 space-y-3">
@@ -180,7 +180,7 @@ const publishedMetaText = formatArticleMetaDate(article?.published_at);
                 <img
                   src={coverUrl}
                   alt={article.title}
-                  class="w-full max-h-[420px] object-cover rounded-xl border border-[var(--line-divider)]"
+                  class="w-full max-h-[420px] object-cover rounded-xl border border-(--line-divider)"
                   loading="lazy"
                 />
               </div>

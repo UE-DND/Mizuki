@@ -79,10 +79,10 @@ const items = result.status === "ok" ? result.data.items : [];
       />
     ) : (
       <>
-        <section class="card-base px-9 py-6 rounded-[var(--radius-large)] mb-4 text-90">
+        <section class="card-base px-9 py-6 rounded-(--radius-large) mb-4 text-90">
           <h1
             class="text-4xl font-bold text-black/90 dark:text-white/90 mb-2 relative
-					before:w-1 before:h-8 before:rounded-md before:bg-[var(--primary)]
+					before:w-1 before:h-8 before:rounded-md before:bg-(--primary)
 					before:absolute before:top-1/2 before:-translate-y-1/2 before:-left-4"
           >
             日记
@@ -91,7 +91,7 @@ const items = result.status === "ok" ? result.data.items : [];
         </section>
 
         {items.length === 0 ? (
-          <div class="card-base p-8 rounded-[var(--radius-large)] text-70">
+          <div class="card-base p-8 rounded-(--radius-large) text-70">
             暂无公开日记。
           </div>
         ) : (

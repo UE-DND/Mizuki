@@ -6,10 +6,10 @@ export const prerender = false;
 
 <AdminLayout title="管理台" description="站内管理员工作台入口">
   <div class="space-y-4 text-75">
-    <section class="card-base px-9 py-6 rounded-[var(--radius-large)]">
+    <section class="card-base px-9 py-6 rounded-(--radius-large)">
       <h1
         class="text-4xl font-bold text-90 mb-2 relative
-				before:w-1 before:h-8 before:rounded-md before:bg-[var(--primary)]
+				before:w-1 before:h-8 before:rounded-md before:bg-(--primary)
 				before:absolute before:top-1/2 before:-translate-y-1/2 before:-left-4"
       >
         管理台
@@ -22,7 +22,7 @@ export const prerender = false;
     <section class="grid grid-cols-1 gap-4">
       <a
         href="/admin/users"
-        class="card-base p-6 rounded-[var(--radius-large)] border border-[var(--line-divider)] hover:border-[var(--primary)] transition-colors"
+        class="card-base p-6 rounded-(--radius-large) border border-(--line-divider) hover:border-(--primary) transition-colors"
       >
         <h2 class="text-xl font-semibold text-90 mb-2">用户管理</h2>
         <p class="text-sm text-70">
@@ -31,7 +31,7 @@ export const prerender = false;
       </a>
       <a
         href="/admin/settings/site"
-        class="card-base p-6 rounded-[var(--radius-large)] border border-[var(--line-divider)] hover:border-[var(--primary)] transition-colors"
+        class="card-base p-6 rounded-(--radius-large) border border-(--line-divider) hover:border-(--primary) transition-colors"
       >
         <h2 class="text-xl font-semibold text-90 mb-2">站点设置</h2>
         <p class="text-sm text-70">

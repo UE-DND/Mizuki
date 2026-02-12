@@ -45,7 +45,7 @@ const publishedDate =
 
 <div
   class:list={[
-    "card-base flex flex-col-reverse md:flex-col w-full rounded-[var(--radius-large)] overflow-hidden relative",
+    "card-base flex flex-col-reverse md:flex-col w-full rounded-(--radius-large) overflow-hidden relative",
     className,
   ]}
   style={style}
@@ -60,17 +60,17 @@ const publishedDate =
     class:list={[
       "pl-6 md:pl-9 pr-6 md:pr-2 pt-6 md:pt-7 pb-6 relative",
       {
-        "w-full md:w-[calc(100%_-_3.25rem_-_0.75rem)]": !hasCover,
-        "w-full md:w-[calc(100%_-_var(--coverWidth)_-_0.75rem)]": hasCover,
+        "w-full md:w-[calc(100%-3.25rem-0.75rem)]": !hasCover,
+        "w-full md:w-[calc(100%-var(--coverWidth)-0.75rem)]": hasCover,
       },
     ]}
   >
     <a
       href={url}
       class="transition group w-full block font-bold mb-3 text-2xl md:text-3xl text-90
-        hover:text-[var(--primary)] dark:hover:text-[var(--primary)]
-        active:text-[var(--title-active)] dark:active:text-[var(--title-active)]
-        before:w-1 before:h-5 before:rounded-md before:bg-[var(--primary)]
+        hover:text-(--primary) dark:hover:text-(--primary)
+        active:text-(--title-active) dark:active:text-(--title-active)
+        before:w-1 before:h-5 before:rounded-md before:bg-(--primary)
         before:absolute
         before:top-[2.1875rem] before:left-[1.125rem] before:hidden md:before:block"
     >
@@ -78,17 +78,17 @@ const publishedDate =
         pinned && (
           <Icon
             name="mdi:pin"
-            class="inline text-[var(--primary)] text-2xl mr-2 -translate-y-0.5"
+            class="inline text-(--primary) text-2xl mr-2 -translate-y-0.5"
           />
         )
       }
       {title}
       <Icon
-        class="inline text-[2rem] text-[var(--primary)] md:hidden translate-y-0.5 absolute"
+        class="inline text-[2rem] text-(--primary) md:hidden translate-y-0.5 absolute"
         name="material-symbols:chevron-right-rounded"
       />
       <Icon
-        class="text-[var(--primary)] text-[2rem] transition hidden md:inline absolute translate-y-0.5 opacity-0 group-hover:opacity-100 -translate-x-1 group-hover:translate-x-0"
+        class="text-(--primary) text-[2rem] transition hidden md:inline absolute translate-y-0.5 opacity-0 group-hover:opacity-100 -translate-x-1 group-hover:translate-x-0"
         name="material-symbols:chevron-right-rounded"
       />
     </a>
@@ -107,10 +107,10 @@ const publishedDate =
       >
         <a
           href={`/${authorHandle}`}
-          class="max-w-[10rem] truncate hover:text-[var(--primary)] transition-colors"
+          class="max-w-[10rem] truncate hover:text-(--primary) transition-colors"
           >@{authorHandle}</a
         >
-        <span class="text-[var(--meta-divider)]" aria-hidden="true">·</span>
+        <span class="text-(--meta-divider)" aria-hidden="true">·</span>
         <span>{publishedDate}</span>
       </div>
       <div
@@ -118,7 +118,7 @@ const publishedDate =
       >
         <button
           type="button"
-          class="inline-flex h-6 items-center gap-1.5 text-50 text-sm md:text-base font-medium hover:text-[var(--primary)] transition-colors post-card-action-btn"
+          class="inline-flex h-6 items-center gap-1.5 text-50 text-sm md:text-base font-medium hover:text-(--primary) transition-colors post-card-action-btn"
           data-action="toggle-like"
           aria-label="切换点赞"
         >
@@ -130,7 +130,7 @@ const publishedDate =
         </button>
         <a
           href={`${url}#directus-comment-root`}
-          class="inline-flex h-6 items-center gap-1.5 text-50 text-sm md:text-base font-medium hover:text-[var(--primary)] transition-colors"
+          class="inline-flex h-6 items-center gap-1.5 text-50 text-sm md:text-base font-medium hover:text-(--primary) transition-colors"
         >
           <Icon
             name="material-symbols:comment-rounded"
@@ -140,38 +140,38 @@ const publishedDate =
         </a>
         <details class="relative post-card-menu">
           <summary
-            class="list-none cursor-pointer inline-flex items-center justify-center w-8 h-8 rounded-lg text-50 hover:text-[var(--primary)] hover:bg-[var(--btn-plain-bg-hover)] active:bg-[var(--btn-plain-bg-active)] transition-colors"
+            class="list-none cursor-pointer inline-flex items-center justify-center w-8 h-8 rounded-lg text-50 hover:text-(--primary) hover:bg-(--btn-plain-bg-hover) active:bg-(--btn-plain-bg-active) transition-colors"
             aria-label="更多操作"
           >
             <Icon name="material-symbols:more-horiz" class="text-xl" />
           </summary>
           <div
-            class="absolute right-0 bottom-full mb-2 z-30 min-w-[12rem] rounded-xl border border-black/5 dark:border-white/10 bg-[var(--float-panel-bg)] p-1.5 shadow-xl dark:shadow-none"
+            class="absolute right-0 bottom-full mb-2 z-30 min-w-[12rem] rounded-xl border border-black/5 dark:border-white/10 bg-(--float-panel-bg) p-1.5 shadow-xl dark:shadow-none"
           >
             <button
               type="button"
-              class="hidden w-full text-left px-3 py-2 text-xs md:text-sm rounded-lg text-black/75 dark:text-white/75 hover:text-[var(--primary)] hover:bg-[var(--btn-plain-bg-hover)] post-card-action-btn transition-colors"
+              class="hidden w-full text-left px-3 py-2 text-xs md:text-sm rounded-lg text-black/75 dark:text-white/75 hover:text-(--primary) hover:bg-(--btn-plain-bg-hover) post-card-action-btn transition-colors"
               data-action="delete-own-article"
             >
               删除文章
             </button>
             <button
               type="button"
-              class="hidden w-full text-left px-3 py-2 text-xs md:text-sm rounded-lg text-black/75 dark:text-white/75 hover:text-[var(--primary)] hover:bg-[var(--btn-plain-bg-hover)] post-card-action-btn transition-colors"
+              class="hidden w-full text-left px-3 py-2 text-xs md:text-sm rounded-lg text-black/75 dark:text-white/75 hover:text-(--primary) hover:bg-(--btn-plain-bg-hover) post-card-action-btn transition-colors"
               data-action="delete-admin-article"
             >
               删除此文章【管理员】
             </button>
             <button
               type="button"
-              class="w-full text-left px-3 py-2 text-xs md:text-sm rounded-lg text-black/75 dark:text-white/75 hover:text-[var(--primary)] hover:bg-[var(--btn-plain-bg-hover)] post-card-action-btn transition-colors"
+              class="w-full text-left px-3 py-2 text-xs md:text-sm rounded-lg text-black/75 dark:text-white/75 hover:text-(--primary) hover:bg-(--btn-plain-bg-hover) post-card-action-btn transition-colors"
               data-action="block-user"
             >
               屏蔽用户
             </button>
             <button
               type="button"
-              class="w-full text-left px-3 py-2 text-xs md:text-sm rounded-lg text-amber-600 dark:text-amber-400 hover:bg-[var(--btn-plain-bg-hover)] post-card-action-btn transition-colors"
+              class="w-full text-left px-3 py-2 text-xs md:text-sm rounded-lg text-amber-600 dark:text-amber-400 hover:bg-(--btn-plain-bg-hover) post-card-action-btn transition-colors"
               data-action="report-content"
             >
               举报内容
@@ -191,7 +191,7 @@ const publishedDate =
         class:list={[
           "group",
           "max-h-[20vh] md:max-h-none mx-4 mt-4 -mb-2 md:mb-0 md:mx-0 md:mt-0",
-          "md:w-[var(--coverWidth)] relative md:absolute md:top-3 md:bottom-3 md:right-3 rounded-xl overflow-hidden active:scale-95",
+          "md:w-(--coverWidth) relative md:absolute md:top-3 md:bottom-3 md:right-3 rounded-xl overflow-hidden active:scale-95",
         ]}
       >
         <div class="absolute pointer-events-none z-10 w-full h-full group-hover:bg-black/30 group-active:bg-black/50 transition" />
@@ -218,12 +218,12 @@ const publishedDate =
         href={url}
         aria-label={title}
         class="hidden md:flex btn-regular w-[3.25rem]
-         absolute right-3 top-3 bottom-3 rounded-xl bg-[var(--enter-btn-bg)]
-         hover:bg-[var(--enter-btn-bg-hover)] active:bg-[var(--enter-btn-bg-active)] active:scale-95"
+         absolute right-3 top-3 bottom-3 rounded-xl bg-(--enter-btn-bg)
+         hover:bg-(--enter-btn-bg-hover) active:bg-(--enter-btn-bg-active) active:scale-95"
       >
         <Icon
           name="material-symbols:chevron-right-rounded"
-          class="transition text-[var(--primary)] text-4xl mx-auto"
+          class="transition text-(--primary) text-4xl mx-auto"
         />
       </a>
     )
@@ -237,8 +237,8 @@ const publishedDate =
       class:list={[
         "pl-6 md:pl-9 pr-6 md:pr-2 pt-6 md:pt-7 pb-6 h-full flex flex-col",
         {
-          "w-full md:w-[calc(100%_-_3.25rem_-_0.75rem)]": !hasCover,
-          "w-full md:w-[calc(100%_-_var(--coverWidth)_-_0.75rem)]": hasCover,
+          "w-full md:w-[calc(100%-3.25rem-0.75rem)]": !hasCover,
+          "w-full md:w-[calc(100%-var(--coverWidth)-0.75rem)]": hasCover,
         },
       ]}
     >
@@ -286,7 +286,7 @@ const publishedDate =
     </div>
     {
       hasCover ? (
-        <div class="max-h-[20vh] md:max-h-none mx-4 mt-4 -mb-2 md:mb-0 md:mx-0 md:mt-0 md:w-[var(--coverWidth)] relative md:absolute md:top-3 md:bottom-3 md:right-3 rounded-xl overflow-hidden">
+        <div class="max-h-[20vh] md:max-h-none mx-4 mt-4 -mb-2 md:mb-0 md:mx-0 md:mt-0 md:w-(--coverWidth) relative md:absolute md:top-3 md:bottom-3 md:right-3 rounded-xl overflow-hidden">
           <div class="md3-skeleton-block h-full w-full rounded-xl" />
         </div>
       ) : (
@@ -298,7 +298,7 @@ const publishedDate =
   </div>
 </div>
 <div
-  class="transition border-t-[1px] border-dashed mx-6 border-black/10 dark:border-white/[0.15] last:border-t-0 md:hidden"
+  class="transition border-t border-dashed mx-6 border-black/10 dark:border-white/15 last:border-t-0 md:hidden"
 >
 </div>
 

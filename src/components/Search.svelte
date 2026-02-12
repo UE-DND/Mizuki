@@ -278,7 +278,7 @@
     id="search-bar"
     class="flex transition-all items-center h-11 rounded-lg absolute right-0 top-0 shrink-0
             {isDesktopSearchExpanded
-      ? 'bg-black/[0.04] hover:bg-black/[0.06] focus-within:bg-black/[0.06] dark:bg-white/5 dark:hover:bg-white/10 dark:focus-within:bg-white/10'
+      ? 'bg-black/4 hover:bg-black/6 focus-within:bg-black/6 dark:bg-white/5 dark:hover:bg-white/10 dark:focus-within:bg-white/10'
       : 'btn-plain active:scale-90'}
             {isDesktopSearchExpanded ? 'w-48' : 'w-11'}"
     role="button"
@@ -334,7 +334,7 @@
   onclick={togglePanel}
   aria-label="Search Panel"
   id="search-switch"
-  class="btn-plain scale-animation lg:!hidden rounded-lg w-11 h-11 active:scale-90"
+  class="btn-plain scale-animation lg:hidden! rounded-lg w-11 h-11 active:scale-90"
 >
   <Icon icon="material-symbols:search" class="text-[1.25rem]"></Icon>
 </button>
@@ -348,7 +348,7 @@
   <div
     id="search-bar-inside"
     class="flex relative lg:hidden transition-all items-center h-11 rounded-xl
-      bg-black/[0.04] hover:bg-black/[0.06] focus-within:bg-black/[0.06]
+      bg-black/4 hover:bg-black/6 focus-within:bg-black/6
       dark:bg-white/5 dark:hover:bg-white/10 dark:focus-within:bg-white/10
   "
   >
@@ -369,14 +369,14 @@
       href={item.url}
       onclick={(e) => handleResultClick(e, item.url)}
       class="transition first-of-type:mt-2 lg:first-of-type:mt-0 group block
-       rounded-xl text-lg px-3 py-2 hover:bg-[var(--btn-plain-bg-hover)] active:bg-[var(--btn-plain-bg-active)]"
+       rounded-xl text-lg px-3 py-2 hover:bg-(--btn-plain-bg-hover) active:bg-(--btn-plain-bg-active)"
     >
       <div
-        class="transition text-90 inline-flex font-bold group-hover:text-[var(--primary)]"
+        class="transition text-90 inline-flex font-bold group-hover:text-(--primary)"
       >
         {item.meta.title}<Icon
           icon="fa7-solid:chevron-right"
-          class="transition text-[0.75rem] translate-x-1 my-auto text-[var(--primary)]"
+          class="transition text-[0.75rem] translate-x-1 my-auto text-(--primary)"
         ></Icon>
       </div>
       <div class="transition text-sm text-50">

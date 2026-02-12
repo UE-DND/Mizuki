@@ -772,7 +772,7 @@
 <div class="space-y-4">
   {#if isOwner}
     <div
-      class="card-base p-3 rounded-[var(--radius-large)] shadow-[0_6px_14px_rgba(15,23,42,0.08)] dark:shadow-[0_6px_14px_rgba(0,0,0,0.24)] flex items-center justify-between gap-3 flex-wrap sticky top-[4.5rem] z-30"
+      class="card-base p-3 rounded-(--radius-large) shadow-[0_6px_14px_rgba(15,23,42,0.08)] dark:shadow-[0_6px_14px_rgba(0,0,0,0.24)] flex items-center justify-between gap-3 flex-wrap sticky top-[4.5rem] z-30"
     >
       <div class="flex items-center gap-3 flex-wrap">
         <a
@@ -780,7 +780,7 @@
           data-no-swup
           aria-label="返回相册列表"
           title="返回相册列表"
-          class="w-9 h-9 rounded-full bg-[var(--primary)] text-white hover:opacity-90 transition flex items-center justify-center"
+          class="w-9 h-9 rounded-full bg-(--primary) text-white hover:opacity-90 transition flex items-center justify-center"
         >
           <svg
             xmlns="http://www.w3.org/2000/svg"
@@ -801,7 +801,7 @@
             on:click={() => {
               editing = true;
             }}
-            class="px-4 h-9 rounded-lg text-sm font-medium transition cursor-pointer border border-[var(--line-divider)] text-75 hover:bg-[var(--btn-plain-bg-hover)]"
+            class="px-4 h-9 rounded-lg text-sm font-medium transition cursor-pointer border border-(--line-divider) text-75 hover:bg-(--btn-plain-bg-hover)"
           >
             编辑相册
           </button>
@@ -809,14 +809,14 @@
           <button
             on:click={saveAlbum}
             disabled={saving}
-            class="px-4 h-9 rounded-lg text-sm font-medium transition cursor-pointer bg-[var(--primary)] text-white hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed"
+            class="px-4 h-9 rounded-lg text-sm font-medium transition cursor-pointer bg-(--primary) text-white hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed"
           >
             {saving ? "保存中…" : "保存相册"}
           </button>
         {/if}
 
         {#if saveMsg}
-          <span class="text-sm text-[var(--primary)]">{saveMsg}</span>
+          <span class="text-sm text-(--primary)">{saveMsg}</span>
         {/if}
       </div>
 
@@ -836,9 +836,7 @@
     </div>
   {/if}
 
-  <section
-    class="card-base p-6 rounded-[var(--radius-large)] space-y-3 text-90"
-  >
+  <section class="card-base p-6 rounded-(--radius-large) space-y-3 text-90">
     {#if editing}
       <div class="space-y-4">
         <div>
@@ -848,7 +846,7 @@
           <input
             id="ed-title"
             bind:value={mTitle}
-            class="w-full h-10 px-3 rounded-lg border border-[var(--line-divider)] bg-[var(--card-bg)] text-90 focus:outline-none focus:ring-2 focus:ring-[var(--primary)] transition"
+            class="w-full h-10 px-3 rounded-lg border border-(--line-divider) bg-(--card-bg) text-90 focus:outline-none focus:ring-2 focus:ring-(--primary) transition"
           />
           <span
             class="text-xs mt-1 block {weightedCharLength(mTitle) >
@@ -866,7 +864,7 @@
             id="ed-desc"
             bind:value={mDescription}
             rows="3"
-            class="w-full px-3 py-2 rounded-lg border border-[var(--line-divider)] bg-[var(--card-bg)] text-90 focus:outline-none focus:ring-2 focus:ring-[var(--primary)] transition resize-y"
+            class="w-full px-3 py-2 rounded-lg border border-(--line-divider) bg-(--card-bg) text-90 focus:outline-none focus:ring-2 focus:ring-(--primary) transition resize-y"
           ></textarea>
         </div>
         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -878,7 +876,7 @@
               id="ed-cat"
               bind:value={mCategory}
               placeholder="例：旅行"
-              class="w-full h-10 px-3 rounded-lg border border-[var(--line-divider)] bg-[var(--card-bg)] text-90 focus:outline-none focus:ring-2 focus:ring-[var(--primary)] transition"
+              class="w-full h-10 px-3 rounded-lg border border-(--line-divider) bg-(--card-bg) text-90 focus:outline-none focus:ring-2 focus:ring-(--primary) transition"
             />
           </div>
           <div>
@@ -889,7 +887,7 @@
               id="ed-tags"
               bind:value={mTags}
               placeholder="风景, 街拍"
-              class="w-full h-10 px-3 rounded-lg border border-[var(--line-divider)] bg-[var(--card-bg)] text-90 focus:outline-none focus:ring-2 focus:ring-[var(--primary)] transition"
+              class="w-full h-10 px-3 rounded-lg border border-(--line-divider) bg-(--card-bg) text-90 focus:outline-none focus:ring-2 focus:ring-(--primary) transition"
             />
           </div>
           <div>
@@ -902,7 +900,7 @@
               bind:value={mDate}
               on:keydown|preventDefault={() => {}}
               on:paste|preventDefault={() => {}}
-              class="date-picker-input w-full h-10 px-3 rounded-lg border border-[var(--line-divider)] bg-[var(--card-bg)] text-90 focus:outline-none focus:ring-2 focus:ring-[var(--primary)] transition"
+              class="date-picker-input w-full h-10 px-3 rounded-lg border border-(--line-divider) bg-(--card-bg) text-90 focus:outline-none focus:ring-2 focus:ring-(--primary) transition"
             />
           </div>
           <div>
@@ -913,7 +911,7 @@
               id="ed-loc"
               bind:value={mLocation}
               placeholder="例：东京"
-              class="w-full h-10 px-3 rounded-lg border border-[var(--line-divider)] bg-[var(--card-bg)] text-90 focus:outline-none focus:ring-2 focus:ring-[var(--primary)] transition"
+              class="w-full h-10 px-3 rounded-lg border border-(--line-divider) bg-(--card-bg) text-90 focus:outline-none focus:ring-2 focus:ring-(--primary) transition"
             />
           </div>
         </div>
@@ -926,7 +924,7 @@
             <select
               id="ed-layout"
               bind:value={mLayout}
-              class="w-full h-10 px-3 rounded-lg border border-[var(--line-divider)] bg-[var(--card-bg)] text-90 focus:outline-none focus:ring-2 focus:ring-[var(--primary)] transition cursor-pointer"
+              class="w-full h-10 px-3 rounded-lg border border-(--line-divider) bg-(--card-bg) text-90 focus:outline-none focus:ring-2 focus:ring-(--primary) transition cursor-pointer"
             >
               <option value="grid">网格</option>
               <option value="masonry">瀑布流</option>
@@ -940,7 +938,7 @@
             <select
               id="ed-status"
               bind:value={mStatus}
-              class="w-full h-10 px-3 rounded-lg border border-[var(--line-divider)] bg-[var(--card-bg)] text-90 focus:outline-none focus:ring-2 focus:ring-[var(--primary)] transition cursor-pointer"
+              class="w-full h-10 px-3 rounded-lg border border-(--line-divider) bg-(--card-bg) text-90 focus:outline-none focus:ring-2 focus:ring-(--primary) transition cursor-pointer"
             >
               <option value="draft">草稿</option>
               <option value="published">已发布</option>
@@ -998,7 +996,7 @@
           </span>
         {/if}
         {#if mCategory}<span
-            class="px-2 py-0.5 rounded bg-[var(--btn-plain-bg-hover)] text-75"
+            class="px-2 py-0.5 rounded bg-(--btn-plain-bg-hover) text-75"
             >{mCategory}</span
           >{/if}
       </div>
@@ -1016,15 +1014,13 @@
   </section>
 
   {#if editing}
-    <section
-      class="card-base p-5 rounded-[var(--radius-large)] space-y-3 text-90"
-    >
+    <section class="card-base p-5 rounded-(--radius-large) space-y-3 text-90">
       <h3 class="text-sm font-semibold text-75">
         上传图片（上传后点击保存生效）
       </h3>
       <div class="flex flex-wrap items-end gap-3">
         <label
-          class="px-4 h-9 rounded-lg text-sm font-medium cursor-pointer bg-[var(--primary)] text-white hover:opacity-90 transition flex items-center gap-1.5 {saving
+          class="px-4 h-9 rounded-lg text-sm font-medium cursor-pointer bg-(--primary) text-white hover:opacity-90 transition flex items-center gap-1.5 {saving
             ? 'opacity-50 pointer-events-none'
             : ''}"
         >
@@ -1057,12 +1053,12 @@
             bind:value={externalUrl}
             placeholder="粘贴图片外链 URL"
             disabled={saving}
-            class="flex-1 h-9 px-3 rounded-lg border border-[var(--line-divider)] bg-[var(--card-bg)] text-sm text-90 focus:outline-none focus:ring-2 focus:ring-[var(--primary)] transition"
+            class="flex-1 h-9 px-3 rounded-lg border border-(--line-divider) bg-(--card-bg) text-sm text-90 focus:outline-none focus:ring-2 focus:ring-(--primary) transition"
           />
           <button
             on:click={addExternalPhoto}
             disabled={saving || !externalUrl.trim()}
-            class="px-3 h-9 rounded-lg text-sm border border-[var(--line-divider)] text-75 hover:bg-[var(--btn-plain-bg-hover)] transition cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+            class="px-3 h-9 rounded-lg text-sm border border-(--line-divider) text-75 hover:bg-(--btn-plain-bg-hover) transition cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
           >
             加入队列
           </button>
@@ -1080,7 +1076,7 @@
           <div class="grid grid-cols-2 sm:grid-cols-4 gap-2">
             {#each pendingLocalPhotos as item (item.id)}
               <div
-                class="relative rounded-lg overflow-hidden border border-[var(--line-divider)] bg-[var(--card-bg)]"
+                class="relative rounded-lg overflow-hidden border border-(--line-divider) bg-(--card-bg)"
               >
                 <img
                   src={item.previewUrl}
@@ -1108,7 +1104,7 @@
           <div class="space-y-1">
             {#each pendingExternalPhotos as item (item.id)}
               <div
-                class="flex items-center gap-2 rounded-lg border border-[var(--line-divider)] px-2 py-1.5"
+                class="flex items-center gap-2 rounded-lg border border-(--line-divider) px-2 py-1.5"
               >
                 <span class="text-xs text-75 truncate flex-1">{item.url}</span>
                 <button
@@ -1127,7 +1123,7 @@
   {/if}
 
   {#if mPhotos.length === 0}
-    <div class="card-base p-8 rounded-[var(--radius-large)] text-70">
+    <div class="card-base p-8 rounded-(--radius-large) text-70">
       {editing
         ? "尚未添加照片。可先加入待上传队列，再点击“保存相册”。"
         : "该相册暂无可展示照片。"}
@@ -1140,7 +1136,7 @@
     >
       {#each mPhotos as photo, index (photo.id)}
         <figure
-          class="rounded-xl overflow-hidden border border-[var(--line-divider)] bg-[var(--card-bg)] relative group {mLayout ===
+          class="rounded-xl overflow-hidden border border-(--line-divider) bg-(--card-bg) relative group {mLayout ===
           'masonry'
             ? 'mb-3 break-inside-avoid'
             : ''}"
@@ -1263,10 +1259,10 @@
 {#if saveOverlayVisible}
   <div
     use:portal
-    class="fixed inset-0 z-[9999] bg-black/45 flex items-center justify-center px-4"
+    class="fixed inset-0 z-9999 bg-black/45 flex items-center justify-center px-4"
   >
     <div
-      class="card-base w-full max-w-xl p-7 rounded-[var(--radius-large)] border border-[var(--line-divider)] space-y-4"
+      class="card-base w-full max-w-xl p-7 rounded-(--radius-large) border border-(--line-divider) space-y-4"
     >
       <h3 class="text-xl font-semibold text-90">正在保存相册</h3>
       <p class="text-base text-70">{saveProgressText}</p>
@@ -1274,7 +1270,7 @@
         class="h-3 w-full rounded-full bg-black/10 dark:bg-white/10 overflow-hidden"
       >
         <div
-          class="h-full bg-[var(--primary)] transition-all duration-200"
+          class="h-full bg-(--primary) transition-all duration-200"
           style={`width: ${saveProgressPercent}%`}
         ></div>
       </div>
@@ -1293,7 +1289,7 @@
     }}
   >
     <div
-      class="bg-[var(--card-bg)] rounded-2xl p-6 w-full max-w-md space-y-4 shadow-xl"
+      class="bg-(--card-bg) rounded-2xl p-6 w-full max-w-md space-y-4 shadow-xl"
     >
       <h3 class="text-lg font-bold text-90">编辑照片信息</h3>
       <div>
@@ -1303,7 +1299,7 @@
         <input
           id="ph-title"
           bind:value={editPhotoTitle}
-          class="w-full h-10 px-3 rounded-lg border border-[var(--line-divider)] bg-[var(--card-bg)] text-90 focus:outline-none focus:ring-2 focus:ring-[var(--primary)] transition"
+          class="w-full h-10 px-3 rounded-lg border border-(--line-divider) bg-(--card-bg) text-90 focus:outline-none focus:ring-2 focus:ring-(--primary) transition"
         />
       </div>
       <div>
@@ -1314,7 +1310,7 @@
           id="ph-desc"
           bind:value={editPhotoDesc}
           rows="3"
-          class="w-full px-3 py-2 rounded-lg border border-[var(--line-divider)] bg-[var(--card-bg)] text-90 focus:outline-none focus:ring-2 focus:ring-[var(--primary)] transition resize-y"
+          class="w-full px-3 py-2 rounded-lg border border-(--line-divider) bg-(--card-bg) text-90 focus:outline-none focus:ring-2 focus:ring-(--primary) transition resize-y"
         ></textarea>
       </div>
       <div class="flex justify-end gap-3">
@@ -1322,13 +1318,13 @@
           on:click={() => {
             editingPhoto = null;
           }}
-          class="px-4 h-9 rounded-lg text-sm border border-[var(--line-divider)] text-75 hover:bg-[var(--btn-plain-bg-hover)] transition cursor-pointer"
+          class="px-4 h-9 rounded-lg text-sm border border-(--line-divider) text-75 hover:bg-(--btn-plain-bg-hover) transition cursor-pointer"
         >
           取消
         </button>
         <button
           on:click={savePhotoEdit}
-          class="px-4 h-9 rounded-lg text-sm bg-[var(--primary)] text-white hover:opacity-90 transition cursor-pointer"
+          class="px-4 h-9 rounded-lg text-sm bg-(--primary) text-white hover:opacity-90 transition cursor-pointer"
         >
           保存
         </button>

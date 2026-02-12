@@ -33,7 +33,7 @@ const hasDirectusTarget = Boolean(moduleName && contentId);
       </div>
 
       {!hasDirectusTarget && (
-        <p class="text-sm text-70 rounded-xl border border-[var(--line-divider)] px-4 py-3">
+        <p class="text-sm text-70 rounded-xl border border-(--line-divider) px-4 py-3">
           旧评论系统已移除。该页面未绑定 Directus 评论对象。
         </p>
       )}
@@ -47,7 +47,7 @@ const hasDirectusTarget = Boolean(moduleName && contentId);
               <button
                 type="button"
                 id="comment-mode-edit"
-                class="px-3 py-1.5 rounded-lg text-xs border border-[var(--line-divider)] text-60"
+                class="px-3 py-1.5 rounded-lg text-xs border border-(--line-divider) text-60"
                 aria-pressed="true"
               >
                 编辑
@@ -55,7 +55,7 @@ const hasDirectusTarget = Boolean(moduleName && contentId);
               <button
                 type="button"
                 id="comment-mode-preview"
-                class="px-3 py-1.5 rounded-lg text-xs border border-[var(--line-divider)] text-60"
+                class="px-3 py-1.5 rounded-lg text-xs border border-(--line-divider) text-60"
                 aria-pressed="false"
               >
                 预览
@@ -66,7 +66,7 @@ const hasDirectusTarget = Boolean(moduleName && contentId);
               <textarea
                 id="comment-body"
                 rows="6"
-                class="w-full rounded-xl border border-[var(--line-divider)] bg-transparent px-4 py-3 text-90 font-mono focus:outline-none focus:border-[var(--primary)]"
+                class="w-full rounded-xl border border-(--line-divider) bg-transparent px-4 py-3 text-90 font-mono focus:outline-none focus:border-(--primary)"
                 placeholder="期待你的神评..."
               />
 
@@ -77,7 +77,7 @@ const hasDirectusTarget = Boolean(moduleName && contentId);
                 >
                   <button
                     type="button"
-                    class="comment-toolbar-btn btn-plain scale-animation w-9 h-9 rounded-lg border border-[var(--line-divider)] text-75 hover:text-90"
+                    class="comment-toolbar-btn btn-plain scale-animation w-9 h-9 rounded-lg border border-(--line-divider) text-75 hover:text-90"
                     data-md-action="bold"
                     aria-label="加粗"
                     title="加粗"
@@ -89,7 +89,7 @@ const hasDirectusTarget = Boolean(moduleName && contentId);
                   </button>
                   <button
                     type="button"
-                    class="comment-toolbar-btn btn-plain scale-animation w-9 h-9 rounded-lg border border-[var(--line-divider)] text-75 hover:text-90"
+                    class="comment-toolbar-btn btn-plain scale-animation w-9 h-9 rounded-lg border border-(--line-divider) text-75 hover:text-90"
                     data-md-action="italic"
                     aria-label="斜体"
                     title="斜体"
@@ -101,7 +101,7 @@ const hasDirectusTarget = Boolean(moduleName && contentId);
                   </button>
                   <button
                     type="button"
-                    class="comment-toolbar-btn btn-plain scale-animation w-9 h-9 rounded-lg border border-[var(--line-divider)] text-75 hover:text-90"
+                    class="comment-toolbar-btn btn-plain scale-animation w-9 h-9 rounded-lg border border-(--line-divider) text-75 hover:text-90"
                     data-md-action="underline"
                     aria-label="下划线"
                     title="下划线"
@@ -113,7 +113,7 @@ const hasDirectusTarget = Boolean(moduleName && contentId);
                   </button>
                   <button
                     type="button"
-                    class="comment-toolbar-btn btn-plain scale-animation w-9 h-9 rounded-lg border border-[var(--line-divider)] text-75 hover:text-90"
+                    class="comment-toolbar-btn btn-plain scale-animation w-9 h-9 rounded-lg border border-(--line-divider) text-75 hover:text-90"
                     data-md-action="strike"
                     aria-label="删除线"
                     title="删除线"
@@ -125,7 +125,7 @@ const hasDirectusTarget = Boolean(moduleName && contentId);
                   </button>
                   <button
                     type="button"
-                    class="comment-toolbar-btn btn-plain scale-animation w-9 h-9 rounded-lg border border-[var(--line-divider)] text-75 hover:text-90"
+                    class="comment-toolbar-btn btn-plain scale-animation w-9 h-9 rounded-lg border border-(--line-divider) text-75 hover:text-90"
                     data-md-action="quote"
                     aria-label="引用"
                     title="引用"
@@ -137,7 +137,7 @@ const hasDirectusTarget = Boolean(moduleName && contentId);
                   </button>
                   <button
                     type="button"
-                    class="comment-toolbar-btn btn-plain scale-animation w-9 h-9 rounded-lg border border-[var(--line-divider)] text-75 hover:text-90"
+                    class="comment-toolbar-btn btn-plain scale-animation w-9 h-9 rounded-lg border border-(--line-divider) text-75 hover:text-90"
                     data-md-action="inline-code"
                     aria-label="行内代码"
                     title="行内代码"
@@ -146,7 +146,7 @@ const hasDirectusTarget = Boolean(moduleName && contentId);
                   </button>
                   <button
                     type="button"
-                    class="comment-toolbar-btn btn-plain scale-animation w-9 h-9 rounded-lg border border-[var(--line-divider)] text-75 hover:text-90"
+                    class="comment-toolbar-btn btn-plain scale-animation w-9 h-9 rounded-lg border border-(--line-divider) text-75 hover:text-90"
                     data-md-action="code-block"
                     aria-label="代码块"
                     title="代码块"
@@ -160,7 +160,7 @@ const hasDirectusTarget = Boolean(moduleName && contentId);
                 <button
                   type="submit"
                   id="comment-submit"
-                  class="ml-auto shrink-0 px-4 py-2 rounded-lg bg-[var(--btn-regular-bg)] text-[var(--btn-content)] text-sm"
+                  class="ml-auto shrink-0 px-4 py-2 rounded-lg bg-(--btn-regular-bg) text-(--btn-content) text-sm"
                 >
                   发布评论
                 </button>
@@ -169,7 +169,7 @@ const hasDirectusTarget = Boolean(moduleName && contentId);
 
             <div
               id="comment-preview-panel"
-              class="hidden rounded-xl border border-[var(--line-divider)] p-4"
+              class="hidden rounded-xl border border-(--line-divider) p-4"
             >
               <div id="comment-preview-loading" class="hidden text-xs text-60">
                 预览渲染中喵...
@@ -193,7 +193,7 @@ const hasDirectusTarget = Boolean(moduleName && contentId);
                 <button
                   type="button"
                   id="comment-reply-cancel"
-                  class="hidden px-3 py-2 rounded-lg border border-[var(--line-divider)] text-xs text-75"
+                  class="hidden px-3 py-2 rounded-lg border border-(--line-divider) text-xs text-75"
                 >
                   取消回复
                 </button>
@@ -205,7 +205,7 @@ const hasDirectusTarget = Boolean(moduleName && contentId);
           <div id="comment-list" class="space-y-4" />
           <div
             id="comment-empty"
-            class="hidden text-sm text-60 rounded-xl border border-[var(--line-divider)] px-4 py-3"
+            class="hidden text-sm text-60 rounded-xl border border-(--line-divider) px-4 py-3"
           >
             暂无评论，来抢沙发吧。
           </div>
@@ -509,8 +509,8 @@ const hasDirectusTarget = Boolean(moduleName && contentId);
       button.setAttribute("aria-pressed", active ? "true" : "false");
       button.classList.toggle("text-90", active);
       button.classList.toggle("text-60", !active);
-      button.classList.toggle("bg-[var(--btn-plain-bg-hover)]", active);
-      button.classList.toggle("border-[var(--primary)]", active);
+      button.classList.toggle("bg-(--btn-plain-bg-hover)", active);
+      button.classList.toggle("border-(--primary)", active);
     };
 
     const renderPreview = (): void => {
@@ -777,7 +777,7 @@ const hasDirectusTarget = Boolean(moduleName && contentId);
       return `
 				<details class="relative comment-action-menu z-20">
 						<summary class="list-none cursor-pointer btn-plain scale-animation w-8 h-8 rounded-lg flex items-center justify-center text-base select-none text-75" aria-label="评论操作">...</summary>
-						<div class="absolute right-0 top-9 z-50 min-w-[7rem] card-base rounded-xl border border-[var(--line-divider)] p-2 text-90">
+						<div class="absolute right-0 top-9 z-50 min-w-[7rem] card-base rounded-xl border border-(--line-divider) p-2 text-90">
 						${menuActions.join("")}
 					</div>
 				</details>
@@ -802,13 +802,13 @@ const hasDirectusTarget = Boolean(moduleName && contentId);
         ? `<a href="${escapeHtml(authorHref)}" class="block rounded-full hover:opacity-90 transition-opacity">${avatarContent}</a>`
         : avatarContent;
       const authorNameHtml = authorHref
-        ? `<a href="${escapeHtml(authorHref)}" class="truncate text-90 hover:text-[var(--primary)] transition-colors">${escapeHtml(authorName)}</a>`
+        ? `<a href="${escapeHtml(authorHref)}" class="truncate text-90 hover:text-(--primary) transition-colors">${escapeHtml(authorName)}</a>`
         : `<span class="truncate text-90">${escapeHtml(authorName)}</span>`;
       const replies = Array.isArray(item.replies) ? item.replies : [];
 
       return `
 				<div class="comment-node ${level > 0 ? "ml-8 mt-3" : ""}" data-comment-id="${escapeHtml(item.id)}">
-					<div class="rounded-xl border border-[var(--line-divider)] p-4 space-y-3 text-90">
+					<div class="rounded-xl border border-(--line-divider) p-4 space-y-3 text-90">
 						<div class="flex items-start justify-between gap-3">
 							<div class="flex items-center gap-3 min-w-0">
 								${avatar}

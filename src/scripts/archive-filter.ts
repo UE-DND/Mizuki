@@ -326,11 +326,11 @@ export function initArchiveFilter(): void {
 		}
 
 		if (!hasActiveFilters(filter)) {
-			filterStatus.classList.add("hidden");
+			filterStatus.classList.add("is-collapsed");
 			return;
 		}
 
-		filterStatus.classList.remove("hidden");
+		filterStatus.classList.remove("is-collapsed");
 
 		const segments: string[] = [];
 		const selectedTags = getSelectedTags(filter);

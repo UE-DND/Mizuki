@@ -1,8 +1,10 @@
+@reference "./main.css";
+
 .expressive-code {
   @apply relative;
 
   .frame {
-    @apply !shadow-none;
+    @apply shadow-none!;
   }
 
   .title {
@@ -43,7 +45,7 @@
 
   /* 成功状态下的切换动画 */
   .copy-btn.success .copy-icon {
-    @apply opacity-0 fill-[var(--deep-text)];
+    @apply opacity-0 fill-(--deep-text);
   }
 
   .copy-btn.success .success-icon {

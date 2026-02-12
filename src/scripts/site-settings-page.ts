@@ -161,15 +161,15 @@ const expandPreset = (item: NavLinkItem): NavBarLinkObj => {
 
 // Common CSS class strings
 const INPUT_CLS =
-	"rounded-lg border border-[var(--line-divider)] px-3 py-2 text-sm text-75 bg-transparent placeholder:text-50";
+	"rounded-lg border border-(--line-divider) px-3 py-2 text-sm text-75 bg-transparent placeholder:text-50";
 const BTN_DELETE_CLS =
-	"px-3 py-1.5 rounded-lg border border-[var(--line-divider)] text-sm text-75 hover:text-red-500 hover:border-red-300 transition-colors";
+	"px-3 py-1.5 rounded-lg border border-(--line-divider) text-sm text-75 hover:text-red-500 hover:border-red-300 transition-colors";
 const DRAG_HANDLE_CLS =
 	"cursor-grab active:cursor-grabbing text-30 hover:text-60 transition-colors select-none text-base leading-none";
 const PREVIEW_IMG_CLS =
-	"h-20 w-36 rounded-lg border border-[var(--line-divider)] object-cover bg-black/5";
+	"h-20 w-36 rounded-lg border border-(--line-divider) object-cover bg-black/5";
 const PREVIEW_ICON_CLS =
-	"h-15 w-15 rounded-lg border border-[var(--line-divider)] object-contain bg-black/5";
+	"h-15 w-15 rounded-lg border border-(--line-divider) object-contain bg-black/5";
 const CROP_ZOOM_MIN = 100;
 const CROP_ZOOM_MAX = 300;
 const CROP_OUTPUT_MAX_BYTES = 1.5 * 1024 * 1024;
@@ -260,14 +260,14 @@ const createAddDivider = (label: string, onClick: () => void): HTMLElement => {
 		"flex items-center gap-2 w-full py-1.5 group/add cursor-pointer";
 	const lineL = document.createElement("span");
 	lineL.className =
-		"flex-1 border-t border-dashed border-[var(--line-divider)] group-hover/add:border-[var(--primary)] transition-colors";
+		"flex-1 border-t border-dashed border-(--line-divider) group-hover/add:border-(--primary) transition-colors";
 	const labelEl = document.createElement("span");
 	labelEl.className =
-		"px-4 py-1.5 rounded-lg border border-[var(--line-divider)] text-sm text-60 group-hover/add:border-[var(--primary)] group-hover/add:text-[var(--primary)] transition-colors whitespace-nowrap select-none";
+		"px-4 py-1.5 rounded-lg border border-(--line-divider) text-sm text-60 group-hover/add:border-(--primary) group-hover/add:text-(--primary) transition-colors whitespace-nowrap select-none";
 	labelEl.textContent = label;
 	const lineR = document.createElement("span");
 	lineR.className =
-		"flex-1 border-t border-dashed border-[var(--line-divider)] group-hover/add:border-[var(--primary)] transition-colors";
+		"flex-1 border-t border-dashed border-(--line-divider) group-hover/add:border-(--primary) transition-colors";
 	wrap.appendChild(lineL);
 	wrap.appendChild(labelEl);
 	wrap.appendChild(lineR);
@@ -349,7 +349,7 @@ const createNavLinkRow = (
 		const childToggle = document.createElement("button");
 		childToggle.type = "button";
 		childToggle.className =
-			"nav-child-toggle px-2 py-1.5 rounded-lg border border-[var(--line-divider)] text-xs text-75 hover:border-[var(--primary)] hover:text-[var(--primary)] transition-colors";
+			"nav-child-toggle px-2 py-1.5 rounded-lg border border-(--line-divider) text-xs text-75 hover:border-(--primary) hover:text-(--primary) transition-colors";
 		childToggle.textContent = "添加子菜单";
 		childToggle.title = "添加子菜单";
 		childToggle.addEventListener("click", () => {
@@ -401,7 +401,7 @@ const createNavLinkRow = (
 const createNavChildrenBlock = (children: NavLinkItem[]): HTMLElement => {
 	const block = document.createElement("div");
 	block.className =
-		"nav-child-block space-y-2 ml-4 pl-4 border-l-2 border-[var(--line-divider)]";
+		"nav-child-block space-y-2 ml-4 pl-4 border-l-2 border-(--line-divider)";
 
 	for (const child of children) {
 		block.appendChild(createNavLinkRow(expandPreset(child), true, block));

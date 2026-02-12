@@ -23,10 +23,10 @@ try {
 
 <MainGridLayout title="账户设置" description="管理个人资料与隐私设置">
   <div class="space-y-4 text-75">
-    <section class="card-base px-9 py-6 rounded-[var(--radius-large)]">
+    <section class="card-base px-9 py-6 rounded-(--radius-large)">
       <h1
         class="text-4xl font-bold text-black/90 dark:text-white/90 mb-2 relative
-				before:w-1 before:h-8 before:rounded-md before:bg-[var(--primary)]
+				before:w-1 before:h-8 before:rounded-md before:bg-(--primary)
 				before:absolute before:top-1/2 before:-translate-y-1/2 before:-left-4"
       >
         账户设置
@@ -35,7 +35,7 @@ try {
     </section>
 
     <div id="me-authenticated-sections" class="hidden space-y-4">
-      <section class="card-base p-8 rounded-[var(--radius-large)] space-y-4">
+      <section class="card-base p-8 rounded-(--radius-large) space-y-4">
         <h2 class="text-2xl font-semibold text-90">个人资料</h2>
         <form
           id="me-profile-form"
@@ -45,7 +45,7 @@ try {
             <span class="text-sm text-60">邮箱</span>
             <input
               id="me-email"
-              class="w-full rounded-lg border border-[var(--line-divider)] px-3.5 py-2.5 bg-black/5 dark:bg-white/5 text-70"
+              class="w-full rounded-lg border border-(--line-divider) px-3.5 py-2.5 bg-black/5 dark:bg-white/5 text-70"
               disabled
             />
           </label>
@@ -54,7 +54,7 @@ try {
             <button
               type="button"
               id="me-username-display-btn"
-              class="w-full appearance-none rounded-lg border border-[var(--line-divider)] px-3.5 py-2.5 text-left text-70 bg-black/5 dark:bg-white/5 leading-normal"
+              class="w-full appearance-none rounded-lg border border-(--line-divider) px-3.5 py-2.5 text-left text-70 bg-black/5 dark:bg-white/5 leading-normal"
             >
               <span
                 id="me-username-display"
@@ -64,7 +64,7 @@ try {
             <div id="me-username-editor" class="relative hidden">
               <input
                 id="me-username"
-                class="w-full rounded-lg border border-[var(--line-divider)] px-3.5 py-2.5 pr-16 text-70 bg-transparent"
+                class="w-full rounded-lg border border-(--line-divider) px-3.5 py-2.5 pr-16 text-70 bg-transparent"
               />
               <span
                 id="me-username-counter"
@@ -78,7 +78,7 @@ try {
             <button
               type="button"
               id="me-displayname-display-btn"
-              class="w-full appearance-none rounded-lg border border-[var(--line-divider)] px-3.5 py-2.5 text-left text-70 bg-black/5 dark:bg-white/5 leading-normal"
+              class="w-full appearance-none rounded-lg border border-(--line-divider) px-3.5 py-2.5 text-left text-70 bg-black/5 dark:bg-white/5 leading-normal"
             >
               <span
                 id="me-displayname-display"
@@ -88,7 +88,7 @@ try {
             <div id="me-displayname-editor" class="relative hidden">
               <input
                 id="me-displayname"
-                class="w-full rounded-lg border border-[var(--line-divider)] px-3.5 py-2.5 pr-16 text-70 bg-transparent"
+                class="w-full rounded-lg border border-(--line-divider) px-3.5 py-2.5 pr-16 text-70 bg-transparent"
               />
               <span
                 id="me-displayname-counter"
@@ -102,7 +102,7 @@ try {
             <div class="flex flex-col sm:flex-row sm:items-center gap-4">
               <img
                 id="me-avatar-preview"
-                class="w-20 h-20 rounded-full object-cover border border-[var(--line-divider)] bg-black/10 dark:bg-white/10"
+                class="w-20 h-20 rounded-full object-cover border border-(--line-divider) bg-black/10 dark:bg-white/10"
                 alt="avatar"
                 loading="lazy"
               />
@@ -110,13 +110,13 @@ try {
                 <input
                   id="me-avatar-url"
                   placeholder="头像 URL 或上传图片"
-                  class="w-full rounded-lg border border-[var(--line-divider)] px-3.5 py-2.5 bg-transparent text-75 placeholder:text-50"
+                  class="w-full rounded-lg border border-(--line-divider) px-3.5 py-2.5 bg-transparent text-75 placeholder:text-50"
                 />
                 <div class="flex flex-wrap items-center gap-2">
                   <button
                     type="button"
                     id="me-avatar-upload-btn"
-                    class="px-4 h-9 rounded-lg text-sm font-medium cursor-pointer bg-[var(--primary)] text-white hover:opacity-90 transition flex items-center gap-1.5"
+                    class="px-4 h-9 rounded-lg text-sm font-medium cursor-pointer bg-(--primary) text-white hover:opacity-90 transition flex items-center gap-1.5"
                     ><svg
                       xmlns="http://www.w3.org/2000/svg"
                       class="w-4 h-4"
@@ -137,7 +137,7 @@ try {
                   <button
                     type="button"
                     id="me-avatar-clear-btn"
-                    class="px-4 py-2.5 rounded-lg border border-[var(--line-divider)] text-sm text-75"
+                    class="px-4 py-2.5 rounded-lg border border-(--line-divider) text-sm text-75"
                   >
                     清空头像
                   </button>
@@ -150,7 +150,7 @@ try {
             <button
               type="button"
               id="me-bio-display-btn"
-              class="w-full h-28 rounded-lg border border-[var(--line-divider)] text-left bg-black/5 dark:bg-white/5"
+              class="w-full h-28 rounded-lg border border-(--line-divider) text-left bg-black/5 dark:bg-white/5"
             >
               <span
                 id="me-bio-display"
@@ -163,7 +163,7 @@ try {
                 <textarea
                   id="me-bio"
                   rows="3"
-                  class="w-full h-28 resize-none rounded-lg border border-[var(--line-divider)] px-3.5 py-2.5 pr-16 text-base leading-7 bg-transparent text-75 placeholder:text-50"
+                  class="w-full h-28 resize-none rounded-lg border border-(--line-divider) px-3.5 py-2.5 pr-16 text-base leading-7 bg-transparent text-75 placeholder:text-50"
                 ></textarea>
                 <div
                   id="me-bio-counter"
@@ -193,14 +193,14 @@ try {
               type="number"
               min="10"
               max="500"
-              class="w-full rounded-lg border border-[var(--line-divider)] px-3.5 py-2.5 bg-transparent text-75"
+              class="w-full rounded-lg border border-(--line-divider) px-3.5 py-2.5 bg-transparent text-75"
               placeholder="80"
             />
           </label>
           <div class="md:col-span-2 flex items-center gap-2">
             <button
               type="submit"
-              class="px-4 py-2 rounded-lg bg-[var(--btn-regular-bg)] text-[var(--btn-content)] text-sm"
+              class="px-4 py-2 rounded-lg bg-(--btn-regular-bg) text-(--btn-content) text-sm"
               >保存资料</button
             >
             <span id="me-profile-msg" class="text-sm text-60"></span>
@@ -208,14 +208,14 @@ try {
         </form>
       </section>
 
-      <section class="card-base p-8 rounded-[var(--radius-large)] space-y-4">
+      <section class="card-base p-8 rounded-(--radius-large) space-y-4">
         <h2 class="text-2xl font-semibold text-90">社交链接</h2>
         <div id="me-social-links-list" class="space-y-4"></div>
         <div class="flex items-center gap-2">
           <button
             type="button"
             id="me-social-save-btn"
-            class="px-4 py-2 rounded-lg bg-[var(--btn-regular-bg)] text-[var(--btn-content)] text-sm"
+            class="px-4 py-2 rounded-lg bg-(--btn-regular-bg) text-(--btn-content) text-sm"
           >
             保存社交链接
           </button>
@@ -223,7 +223,7 @@ try {
         </div>
       </section>
 
-      <section class="card-base p-8 rounded-[var(--radius-large)] space-y-4">
+      <section class="card-base p-8 rounded-(--radius-large) space-y-4">
         <h2 class="text-2xl font-semibold text-90">隐私设置</h2>
         <div class="space-y-4">
           <h3 class="text-xl font-medium text-75">内容展示</h3>
@@ -306,7 +306,7 @@ try {
             <div class="md:col-span-2 flex items-center gap-2 pt-4">
               <button
                 type="submit"
-                class="px-4 py-2 rounded-lg bg-[var(--btn-regular-bg)] text-[var(--btn-content)] text-sm"
+                class="px-4 py-2 rounded-lg bg-(--btn-regular-bg) text-(--btn-content) text-sm"
                 >保存隐私设置</button
               >
               <span id="me-privacy-msg" class="text-sm text-60"></span>
@@ -320,11 +320,11 @@ try {
   <div
     slot="modal"
     id="me-avatar-crop-modal"
-    class="fixed inset-0 z-[9999] hidden items-center justify-center bg-black/70 px-4 py-5"
+    class="fixed inset-0 z-9999 hidden items-center justify-center bg-black/70 px-4 py-5"
     tabindex="-1"
   >
     <div
-      class="card-base w-full max-w-xl rounded-[var(--radius-large)] border border-[var(--line-divider)] p-5 sm:p-6 space-y-4 text-75"
+      class="card-base w-full max-w-xl rounded-(--radius-large) border border-(--line-divider) p-5 sm:p-6 space-y-4 text-75"
     >
       <div class="flex items-center gap-2">
         <h3 class="text-lg sm:text-xl font-semibold text-90">裁剪头像</h3>
@@ -332,7 +332,7 @@ try {
       <p class="text-sm text-60">建议使用方形图片，拖拽调整位置并缩放。</p>
       <div
         id="me-avatar-crop-viewport"
-        class="relative mx-auto w-full max-w-[360px] aspect-square overflow-hidden rounded-2xl border border-[var(--line-divider)] bg-black/15 dark:bg-white/10 select-none touch-none"
+        class="relative mx-auto w-full max-w-[360px] aspect-square overflow-hidden rounded-2xl border border-(--line-divider) bg-black/15 dark:bg-white/10 select-none touch-none"
       >
         <img
           id="me-avatar-crop-image"
@@ -372,7 +372,7 @@ try {
         <button
           type="button"
           id="me-avatar-crop-select-btn"
-          class="px-4 h-9 rounded-lg text-sm font-medium cursor-pointer bg-[var(--primary)] text-white hover:opacity-90 transition flex items-center gap-1.5"
+          class="px-4 h-9 rounded-lg text-sm font-medium cursor-pointer bg-(--primary) text-white hover:opacity-90 transition flex items-center gap-1.5"
           ><svg
             xmlns="http://www.w3.org/2000/svg"
             class="w-4 h-4"
@@ -393,14 +393,14 @@ try {
         <button
           type="button"
           id="me-avatar-crop-apply-btn"
-          class="px-4 py-2.5 rounded-lg bg-[var(--btn-regular-bg)] text-[var(--btn-content)] text-sm"
+          class="px-4 py-2.5 rounded-lg bg-(--btn-regular-bg) text-(--btn-content) text-sm"
         >
           确认裁剪
         </button>
         <button
           type="button"
           id="me-avatar-crop-cancel-btn"
-          class="ml-auto px-4 py-2.5 rounded-lg border border-[var(--line-divider)] text-sm text-75"
+          class="ml-auto px-4 py-2.5 rounded-lg border border-(--line-divider) text-sm text-75"
         >
           取消
         </button>

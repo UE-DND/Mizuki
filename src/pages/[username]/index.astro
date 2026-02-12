@@ -88,13 +88,13 @@ function shortDiary(text: string): string {
       />
     ) : (
       <>
-        <section class="card-base p-6 rounded-[var(--radius-large)] mb-4">
+        <section class="card-base p-6 rounded-(--radius-large) mb-4">
           <div class="flex items-center gap-4">
             {payload!.owner?.avatar_url ? (
               <img
                 src={payload!.owner.avatar_url}
                 alt="avatar"
-                class="w-16 h-16 rounded-full object-cover border border-[var(--line-divider)]"
+                class="w-16 h-16 rounded-full object-cover border border-(--line-divider)"
                 loading="lazy"
               />
             ) : (
@@ -115,14 +115,14 @@ function shortDiary(text: string): string {
         </section>
 
         {Array.isArray(payload!.articles) && payload!.articles.length > 0 && (
-          <section class="card-base p-6 rounded-[var(--radius-large)] mb-4 space-y-3">
+          <section class="card-base p-6 rounded-(--radius-large) mb-4 space-y-3">
             <h2 class="text-xl font-semibold text-90">文章</h2>
             <ul class="space-y-2 text-75">
               {payload!.articles.map((item) => (
                 <li>
                   <a
                     href={`/posts/${item.short_id || item.id}`}
-                    class="hover:text-[var(--primary)] transition-colors"
+                    class="hover:text-(--primary) transition-colors"
                   >
                     {item.title}
                   </a>
@@ -133,14 +133,14 @@ function shortDiary(text: string): string {
         )}
 
         {Array.isArray(payload!.diaries) && payload!.diaries.length > 0 && (
-          <section class="card-base p-6 rounded-[var(--radius-large)] mb-4 space-y-3">
+          <section class="card-base p-6 rounded-(--radius-large) mb-4 space-y-3">
             <h2 class="text-xl font-semibold text-90">日记</h2>
             <ul class="space-y-2 text-sm text-75">
               {payload!.diaries.map((item) => (
                 <li>
                   <a
                     href={`/${payload!.owner?.username || username}/diary/${item.short_id || item.id}`}
-                    class="hover:text-[var(--primary)] transition-colors"
+                    class="hover:text-(--primary) transition-colors"
                   >
                     {shortDiary(item.content)}
                   </a>
@@ -151,7 +151,7 @@ function shortDiary(text: string): string {
         )}
 
         {Array.isArray(payload!.anime) && payload!.anime.length > 0 && (
-          <section class="card-base p-6 rounded-[var(--radius-large)] mb-4 space-y-3">
+          <section class="card-base p-6 rounded-(--radius-large) mb-4 space-y-3">
             <h2 class="text-xl font-semibold text-90">番剧</h2>
             <ul class="space-y-2 text-sm text-75">
               {payload!.anime.map((item) => (
@@ -164,14 +164,14 @@ function shortDiary(text: string): string {
         )}
 
         {Array.isArray(payload!.albums) && payload!.albums.length > 0 && (
-          <section class="card-base p-6 rounded-[var(--radius-large)] mb-4 space-y-3">
+          <section class="card-base p-6 rounded-(--radius-large) mb-4 space-y-3">
             <h2 class="text-xl font-semibold text-90">相册</h2>
             <ul class="space-y-2 text-75">
               {payload!.albums.map((item) => (
                 <li>
                   <a
                     href={`/${payload!.owner?.username || username}/albums/${item.short_id || item.id}`}
-                    class="hover:text-[var(--primary)] transition-colors"
+                    class="hover:text-(--primary) transition-colors"
                   >
                     {item.title}
                   </a>
@@ -182,7 +182,7 @@ function shortDiary(text: string): string {
         )}
 
         {payload!.comments && (
-          <section class="card-base p-6 rounded-[var(--radius-large)] space-y-3">
+          <section class="card-base p-6 rounded-(--radius-large) space-y-3">
             <h2 class="text-xl font-semibold text-90">评论</h2>
             <div class="text-sm text-75">
               文章评论：{payload!.comments.article_comments?.length || 0} 条
