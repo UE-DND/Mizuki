@@ -51,6 +51,7 @@ export type CommentTreeNode = {
 	id: string;
 	parent_id: string | null;
 	body: string;
+	body_html: string;
 	status: CommentStatus;
 	is_public: boolean;
 	show_on_profile: boolean;
@@ -335,6 +336,7 @@ export function buildCommentTree(
 			id: comment.id,
 			parent_id: comment.parent_id,
 			body: decodeLegacyCommentBody(comment.body),
+			body_html: "",
 			status: comment.status,
 			is_public: comment.is_public,
 			show_on_profile: comment.show_on_profile,

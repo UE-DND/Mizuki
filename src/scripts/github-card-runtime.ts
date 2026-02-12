@@ -126,10 +126,14 @@ async function initGithubCards(): Promise<void> {
 	);
 }
 
+export async function refreshGithubCards(): Promise<void> {
+	await initGithubCards();
+}
+
 setupPageInit({
 	key: "github-card-runtime",
 	init: () => {
-		void initGithubCards();
+		void refreshGithubCards();
 	},
 	delay: 20,
 	runOnPageShow: true,

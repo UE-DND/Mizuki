@@ -2,6 +2,7 @@ import type { APIContext } from "astro";
 
 import type { JsonObject } from "@/types/json";
 import { assertCan, assertOwnerOrAdmin } from "@/server/auth/acl";
+import { renderMarkdown } from "@/server/markdown/render";
 import {
 	createOne,
 	deleteOne,
@@ -24,12 +25,80 @@ import {
 	parseRouteId,
 	requireAccess,
 } from "./shared";
+import type { CommentTreeNode } from "./shared";
 import { getAuthorBundle } from "./shared/author-cache";
+
+type CommentPermissionKey = "can_comment_articles" | "can_comment_diaries";
+
+async function renderCommentBodyHtml(markdown: string): Promise<string> {
+	const source = String(markdown || "");
+	if (!source.trim()) {
+		return "";
+	}
+	try {
+		return await renderMarkdown(source, { target: "page" });
+	} catch (error) {
+		console.error("[comments] markdown render failed:", error);
+		return "";
+	}
+}
+
+async function decorateCommentNodeWithHtml(
+	node: CommentTreeNode,
+): Promise<CommentTreeNode> {
+	const replies = await Promise.all(
+		(node.replies || []).map((reply) => decorateCommentNodeWithHtml(reply)),
+	);
+	return {
+		...node,
+		body_html: await renderCommentBodyHtml(node.body),
+		replies,
+	};
+}
+
+async function decorateCommentTreeWithHtml(
+	tree: CommentTreeNode[],
+): Promise<CommentTreeNode[]> {
+	return await Promise.all(
+		tree.map((comment) => decorateCommentNodeWithHtml(comment)),
+	);
+}
+
+async function handleCommentPreview(
+	context: APIContext,
+	permission: CommentPermissionKey,
+): Promise<Response> {
+	if (context.request.method !== "POST") {
+		return fail("方法不允许", 405);
+	}
+	const required = await requireAccess(context);
+	if ("response" in required) {
+		return required.response;
+	}
+	const access = required.access;
+	assertCan(access, permission);
+
+	const body = await parseJsonBody(context.request);
+	const text = parseBodyTextField(body, "body");
+	const bodyHtml = await renderCommentBodyHtml(text);
+	return ok({
+		body: text,
+		body_html: bodyHtml,
+	});
+}
 
 async function handleArticleComments(
 	context: APIContext,
 	segments: string[],
 ): Promise<Response> {
+	if (
+		segments.length === 3 &&
+		segments[1] === "comments" &&
+		segments[2] === "preview"
+	) {
+		return await handleCommentPreview(context, "can_comment_articles");
+	}
+
 	if (segments.length === 3 && segments[2] === "comments") {
 		const articleId = parseRouteId(segments[1]);
 		if (!articleId) {
@@ -61,7 +130,9 @@ async function handleArticleComments(
 				new Set(comments.map((item) => item.author_id)),
 			);
 			const authorMap = await getAuthorBundle(authorIds);
-			const tree = buildCommentTree(comments, authorMap);
+			const tree = await decorateCommentTreeWithHtml(
+				buildCommentTree(comments, authorMap),
+			);
 			return ok({
 				items: tree,
 				total: comments.length,
@@ -116,6 +187,7 @@ async function handleArticleComments(
 				item: {
 					...created,
 					body: created.body,
+					body_html: await renderCommentBodyHtml(created.body),
 				},
 			});
 		}
@@ -171,6 +243,7 @@ async function handleArticleComments(
 				item: {
 					...updated,
 					body: updated.body,
+					body_html: await renderCommentBodyHtml(updated.body),
 				},
 			});
 		}
@@ -188,6 +261,14 @@ async function handleDiaryComments(
 	context: APIContext,
 	segments: string[],
 ): Promise<Response> {
+	if (
+		segments.length === 3 &&
+		segments[1] === "comments" &&
+		segments[2] === "preview"
+	) {
+		return await handleCommentPreview(context, "can_comment_diaries");
+	}
+
 	if (segments.length === 3 && segments[2] === "comments") {
 		const diaryId = parseRouteId(segments[1]);
 		if (!diaryId) {
@@ -219,7 +300,9 @@ async function handleDiaryComments(
 				new Set(comments.map((item) => item.author_id)),
 			);
 			const authorMap = await getAuthorBundle(authorIds);
-			const tree = buildCommentTree(comments, authorMap);
+			const tree = await decorateCommentTreeWithHtml(
+				buildCommentTree(comments, authorMap),
+			);
 			return ok({
 				items: tree,
 				total: comments.length,
@@ -274,6 +357,7 @@ async function handleDiaryComments(
 				item: {
 					...created,
 					body: created.body,
+					body_html: await renderCommentBodyHtml(created.body),
 				},
 			});
 		}
@@ -329,6 +413,7 @@ async function handleDiaryComments(
 				item: {
 					...updated,
 					body: updated.body,
+					body_html: await renderCommentBodyHtml(updated.body),
 				},
 			});
 		}

@@ -1,4 +1,8 @@
 ---
+import { Icon } from "astro-icon/components";
+import "../../styles/markdown.css";
+import "../../styles/markdown-extend.styl";
+
 interface Props {
 	module?: "articles" | "diaries";
 	contentId?: string;
@@ -8,14 +12,16 @@ interface Props {
 const moduleName = Astro.props.module;
 const contentId = Astro.props.contentId;
 const enabled =
-	typeof Astro.props.allowComments === "boolean" ? Astro.props.allowComments : true;
+	typeof Astro.props.allowComments === "boolean"
+		? Astro.props.allowComments
+		: true;
 
 const hasDirectusTarget = Boolean(moduleName && contentId);
 ---
 
 {enabled && (
 	<div
-		class="card-base p-6 mb-4"
+		class="card-base p-6 mb-4 relative overflow-visible"
 		id="directus-comment-root"
 		data-module={moduleName || ""}
 		data-content-id={contentId || ""}
@@ -35,12 +41,133 @@ const hasDirectusTarget = Boolean(moduleName && contentId);
 			<>
 				<form id="comment-create-form" class="space-y-3 mb-6">
 					<input type="hidden" id="comment-parent-id" value="" />
-					<textarea
-						id="comment-body"
-						rows="4"
-						class="w-full rounded-xl border border-[var(--line-divider)] bg-transparent px-4 py-3 text-90 focus:outline-none focus:border-[var(--primary)]"
-						placeholder="写下你的评论..."
-					></textarea>
+
+					<div class="flex items-center gap-2">
+						<button
+							type="button"
+							id="comment-mode-edit"
+							class="px-3 py-1.5 rounded-lg text-xs border border-[var(--line-divider)] text-60"
+							aria-pressed="true"
+						>
+							编辑
+						</button>
+						<button
+							type="button"
+							id="comment-mode-preview"
+							class="px-3 py-1.5 rounded-lg text-xs border border-[var(--line-divider)] text-60"
+							aria-pressed="false"
+						>
+							预览
+						</button>
+					</div>
+
+					<div id="comment-editor-panel" class="space-y-3">
+						<textarea
+							id="comment-body"
+							rows="6"
+							class="w-full rounded-xl border border-[var(--line-divider)] bg-transparent px-4 py-3 text-90 font-mono focus:outline-none focus:border-[var(--primary)]"
+							placeholder="期待你的神评..."
+						></textarea>
+
+						<div
+							id="comment-toolbar"
+							class="flex flex-wrap items-center gap-2"
+						>
+							<button
+								type="button"
+								class="comment-toolbar-btn btn-plain scale-animation w-9 h-9 rounded-lg border border-[var(--line-divider)] text-75 hover:text-90"
+								data-md-action="bold"
+								aria-label="加粗"
+								title="加粗"
+							>
+								<Icon name="material-symbols:format-bold" class="text-[1.1rem]" />
+							</button>
+							<button
+								type="button"
+								class="comment-toolbar-btn btn-plain scale-animation w-9 h-9 rounded-lg border border-[var(--line-divider)] text-75 hover:text-90"
+								data-md-action="italic"
+								aria-label="斜体"
+								title="斜体"
+							>
+								<Icon
+									name="material-symbols:format-italic"
+									class="text-[1.1rem]"
+								/>
+							</button>
+							<button
+								type="button"
+								class="comment-toolbar-btn btn-plain scale-animation w-9 h-9 rounded-lg border border-[var(--line-divider)] text-75 hover:text-90"
+								data-md-action="underline"
+								aria-label="下划线"
+								title="下划线"
+							>
+								<Icon
+									name="material-symbols:format-underlined"
+									class="text-[1.1rem]"
+								/>
+							</button>
+							<button
+								type="button"
+								class="comment-toolbar-btn btn-plain scale-animation w-9 h-9 rounded-lg border border-[var(--line-divider)] text-75 hover:text-90"
+								data-md-action="strike"
+								aria-label="删除线"
+								title="删除线"
+							>
+								<Icon
+									name="material-symbols:format-strikethrough"
+									class="text-[1.1rem]"
+								/>
+							</button>
+							<button
+								type="button"
+								class="comment-toolbar-btn btn-plain scale-animation w-9 h-9 rounded-lg border border-[var(--line-divider)] text-75 hover:text-90"
+								data-md-action="quote"
+								aria-label="引用"
+								title="引用"
+							>
+								<Icon
+									name="material-symbols:format-quote"
+									class="text-[1.1rem]"
+								/>
+							</button>
+							<button
+								type="button"
+								class="comment-toolbar-btn btn-plain scale-animation w-9 h-9 rounded-lg border border-[var(--line-divider)] text-75 hover:text-90"
+								data-md-action="inline-code"
+								aria-label="行内代码"
+								title="行内代码"
+							>
+								<Icon name="material-symbols:code" class="text-[1.1rem]" />
+							</button>
+							<button
+								type="button"
+								class="comment-toolbar-btn btn-plain scale-animation w-9 h-9 rounded-lg border border-[var(--line-divider)] text-75 hover:text-90"
+								data-md-action="code-block"
+								aria-label="代码块"
+								title="代码块"
+							>
+								<Icon name="material-symbols:terminal" class="text-[1.1rem]" />
+							</button>
+						</div>
+					</div>
+
+					<div
+						id="comment-preview-panel"
+						class="hidden rounded-xl border border-[var(--line-divider)] p-4"
+					>
+						<div id="comment-preview-loading" class="hidden text-xs text-60">
+							预览渲染中喵...
+						</div>
+						<p id="comment-preview-error" class="hidden text-sm text-red-500"></p>
+						<div id="comment-preview-empty" class="text-sm text-60">
+							暂无预览内容喵～
+						</div>
+						<div
+							id="comment-preview-content"
+							class="hidden prose prose-sm md:prose-base dark:prose-invert !max-w-none custom-md text-90"
+						></div>
+					</div>
+
 					<div class="flex items-center justify-between gap-2">
 						<div class="text-xs text-60" id="comment-reply-hint"></div>
 						<div class="flex items-center gap-2">
@@ -64,7 +191,10 @@ const hasDirectusTarget = Boolean(moduleName && contentId);
 				</form>
 
 				<div id="comment-list" class="space-y-4"></div>
-				<div id="comment-empty" class="hidden text-sm text-60 rounded-xl border border-[var(--line-divider)] px-4 py-3">
+				<div
+					id="comment-empty"
+					class="hidden text-sm text-60 rounded-xl border border-[var(--line-divider)] px-4 py-3"
+				>
 					暂无评论，来抢沙发吧。
 				</div>
 			</>
@@ -75,25 +205,51 @@ const hasDirectusTarget = Boolean(moduleName && contentId);
 <script>
 	import { getAuthState, subscribeAuthState } from "@/scripts/auth-state";
 	import type { AuthState } from "@/scripts/auth-state";
+	import { setupCodeCopyDelegation } from "@/scripts/code-copy";
 	import { showAuthRequiredDialog } from "@/scripts/dialogs";
+	import { refreshGithubCards } from "@/scripts/github-card-runtime";
 
 	type CommentAuthor = {
 		name?: string | null;
 		avatar_url?: string | null;
 	};
+
 	type CommentItem = {
 		id: string;
 		author_id?: string | null;
 		author?: CommentAuthor | null;
 		date_created?: string | null;
 		body?: string | null;
+		body_html?: string | null;
 		replies?: CommentItem[] | null;
 	};
+
+	type CommentMode = "edit" | "preview";
+	type CommentToolbarAction =
+		| "bold"
+		| "italic"
+		| "underline"
+		| "strike"
+		| "quote"
+		| "inline-code"
+		| "code-block";
+
+	const TOOLBAR_ACTIONS = new Set<CommentToolbarAction>([
+		"bold",
+		"italic",
+		"underline",
+		"strike",
+		"quote",
+		"inline-code",
+		"code-block",
+	]);
 
 	const runtimeWindow = window as Window &
 		typeof globalThis & {
 			_directusCommentAuthSubscribed?: boolean;
 			_directusCommentApplyAuth?: (state: AuthState) => void;
+			_directusCommentMenuOutsideBound?: boolean;
+			renderMermaidDiagrams?: () => Promise<void>;
 		};
 
 	function initComments() {
@@ -112,6 +268,19 @@ const hasDirectusTarget = Boolean(moduleName && contentId);
 		const bodyEl = document.getElementById(
 			"comment-body",
 		) as HTMLTextAreaElement | null;
+		const toolbarEl = document.getElementById("comment-toolbar");
+		const editorPanelEl = document.getElementById("comment-editor-panel");
+		const previewPanelEl = document.getElementById("comment-preview-panel");
+		const modeEditEl = document.getElementById(
+			"comment-mode-edit",
+		) as HTMLButtonElement | null;
+		const modePreviewEl = document.getElementById(
+			"comment-mode-preview",
+		) as HTMLButtonElement | null;
+		const previewLoadingEl = document.getElementById("comment-preview-loading");
+		const previewErrorEl = document.getElementById("comment-preview-error");
+		const previewEmptyEl = document.getElementById("comment-preview-empty");
+		const previewContentEl = document.getElementById("comment-preview-content");
 		const parentIdEl = document.getElementById(
 			"comment-parent-id",
 		) as HTMLInputElement | null;
@@ -125,6 +294,14 @@ const hasDirectusTarget = Boolean(moduleName && contentId);
 		let currentUserId = "";
 		let isAdmin = false;
 		let comments: CommentItem[] = [];
+		let commentMode: CommentMode = "edit";
+		let previewSource = "";
+		let previewHtml = "";
+		let previewError = "";
+		let previewLoading = false;
+		let previewDirty = false;
+		let previewRequestId = 0;
+		let renderedPreviewHtml = "";
 
 		const escapeHtml = (raw: unknown): string =>
 			String(raw || "")
@@ -141,7 +318,13 @@ const hasDirectusTarget = Boolean(moduleName && contentId);
 			return time.toLocaleString();
 		};
 
-		const commentApiBase = () => {
+		const isToolbarAction = (
+			value: string,
+		): value is CommentToolbarAction => {
+			return TOOLBAR_ACTIONS.has(value as CommentToolbarAction);
+		};
+
+		const commentApiBase = (): string => {
 			if (moduleName === "diaries") {
 				return `/api/v1/diaries/${encodeURIComponent(contentId)}/comments`;
 			}
@@ -153,6 +336,75 @@ const hasDirectusTarget = Boolean(moduleName && contentId);
 				return `/api/v1/diaries/comments/${encodeURIComponent(commentId)}`;
 			}
 			return `/api/v1/articles/comments/${encodeURIComponent(commentId)}`;
+		};
+
+		const commentPreviewApi = (): string => {
+			if (moduleName === "diaries") {
+				return "/api/v1/diaries/comments/preview";
+			}
+			return "/api/v1/articles/comments/preview";
+		};
+
+		const hasHtmlTag = (value: string): boolean => {
+			return /<[a-z][\w:-]*(\s[^>]*)?>/i.test(value);
+		};
+
+		const decodeHtmlEntities = (value: string): string => {
+			const textarea = document.createElement("textarea");
+			textarea.innerHTML = value;
+			return String(textarea.value || "");
+		};
+
+		const normalizeMarkdownHtml = (raw: unknown): string => {
+			const source = String(raw || "").trim();
+			if (!source) {
+				return "";
+			}
+			if (hasHtmlTag(source)) {
+				return source;
+			}
+			if (source.includes("&lt;") || source.includes("&#")) {
+				const decoded = decodeHtmlEntities(source).trim();
+				if (hasHtmlTag(decoded)) {
+					return decoded;
+				}
+			}
+			return source;
+		};
+
+		const resolveBodyHtmlFromResponse = (data: unknown): string => {
+			if (!data || typeof data !== "object") {
+				return "";
+			}
+			const record = data as Record<string, unknown>;
+			const item =
+				record.item && typeof record.item === "object"
+					? (record.item as Record<string, unknown>)
+					: null;
+			return normalizeMarkdownHtml(record.body_html ?? item?.body_html ?? "");
+		};
+
+		const refreshMarkdownRuntime = async (): Promise<void> => {
+			setupCodeCopyDelegation();
+			try {
+				await refreshGithubCards();
+			} catch (error) {
+				console.warn("[comment] refresh github cards failed:", error);
+			}
+			if (typeof runtimeWindow.renderMermaidDiagrams === "function") {
+				void runtimeWindow.renderMermaidDiagrams().catch((error) => {
+					console.warn("[comment] refresh mermaid failed:", error);
+				});
+			}
+		};
+
+		const closeAllCommentActionMenus = (): void => {
+			const openedMenus = document.querySelectorAll<HTMLDetailsElement>(
+				"details.comment-action-menu[open]",
+			);
+			openedMenus.forEach((menu) => {
+				menu.removeAttribute("open");
+			});
 		};
 
 		const setFormError = (message: string): void => {
@@ -175,6 +427,254 @@ const hasDirectusTarget = Boolean(moduleName && contentId);
 			} else {
 				replyHintEl.textContent = "";
 				replyCancelEl.classList.add("hidden");
+			}
+		};
+
+		const updateModeButtonStyle = (
+			button: HTMLButtonElement | null,
+			active: boolean,
+		): void => {
+			if (!button) return;
+			button.setAttribute("aria-pressed", active ? "true" : "false");
+			button.classList.toggle("text-90", active);
+			button.classList.toggle("text-60", !active);
+			button.classList.toggle("bg-[var(--btn-plain-bg-hover)]", active);
+			button.classList.toggle("border-[var(--primary)]", active);
+		};
+
+		const renderPreview = (): void => {
+			if (
+				!previewLoadingEl ||
+				!previewErrorEl ||
+				!previewEmptyEl ||
+				!previewContentEl
+			) {
+				return;
+			}
+
+			previewLoadingEl.classList.toggle("hidden", !previewLoading);
+
+			if (previewError) {
+				previewErrorEl.textContent = previewError;
+				previewErrorEl.classList.remove("hidden");
+			} else {
+				previewErrorEl.textContent = "";
+				previewErrorEl.classList.add("hidden");
+			}
+
+			if (previewHtml) {
+				if (renderedPreviewHtml !== previewHtml) {
+					previewContentEl.innerHTML = previewHtml;
+					renderedPreviewHtml = previewHtml;
+					void refreshMarkdownRuntime();
+				}
+				previewContentEl.classList.remove("hidden");
+				previewEmptyEl.classList.add("hidden");
+				return;
+			}
+
+			previewContentEl.innerHTML = "";
+			renderedPreviewHtml = "";
+			previewContentEl.classList.add("hidden");
+			previewEmptyEl.classList.remove("hidden");
+		};
+
+		const setCommentMode = (mode: CommentMode): void => {
+			commentMode = mode;
+			if (editorPanelEl) {
+				editorPanelEl.classList.toggle("hidden", mode !== "edit");
+			}
+			if (previewPanelEl) {
+				previewPanelEl.classList.toggle("hidden", mode !== "preview");
+			}
+			updateModeButtonStyle(modeEditEl, mode === "edit");
+			updateModeButtonStyle(modePreviewEl, mode === "preview");
+			if (mode === "preview") {
+				void requestPreview();
+			}
+		};
+
+		const markPreviewDirty = (): void => {
+			previewDirty = true;
+		};
+
+		const replaceSelection = (
+			textarea: HTMLTextAreaElement,
+			replacement: string,
+			selectionStartOffset: number,
+			selectionEndOffset: number,
+		): void => {
+			const start = textarea.selectionStart;
+			const end = textarea.selectionEnd;
+			const source = textarea.value;
+			const before = source.slice(0, start);
+			const after = source.slice(end);
+			textarea.value = `${before}${replacement}${after}`;
+			const nextStart = before.length + selectionStartOffset;
+			const nextEnd = before.length + selectionEndOffset;
+			textarea.focus();
+			textarea.setSelectionRange(nextStart, nextEnd);
+			markPreviewDirty();
+		};
+
+		const applyWrapAction = (
+			textarea: HTMLTextAreaElement,
+			prefix: string,
+			suffix: string,
+			placeholder: string,
+		): void => {
+			const start = textarea.selectionStart;
+			const end = textarea.selectionEnd;
+			const selected = textarea.value.slice(start, end);
+			const content = selected || placeholder;
+			const replacement = `${prefix}${content}${suffix}`;
+			const selectionStartOffset = prefix.length;
+			const selectionEndOffset = prefix.length + content.length;
+			replaceSelection(
+				textarea,
+				replacement,
+				selectionStartOffset,
+				selectionEndOffset,
+			);
+		};
+
+		const applyQuoteAction = (textarea: HTMLTextAreaElement): void => {
+			const start = textarea.selectionStart;
+			const end = textarea.selectionEnd;
+			const selected = textarea.value.slice(start, end);
+			const source = selected || "引用内容";
+			const quoted = source
+				.replaceAll("\r\n", "\n")
+				.split("\n")
+				.map((line) => (line.startsWith("> ") ? line : `> ${line}`))
+				.join("\n");
+			replaceSelection(textarea, quoted, 0, quoted.length);
+		};
+
+		const applyCodeBlockAction = (textarea: HTMLTextAreaElement): void => {
+			const start = textarea.selectionStart;
+			const end = textarea.selectionEnd;
+			const source = textarea.value;
+			const selected = source.slice(start, end) || "代码内容";
+			const language = "text";
+			const block = `\`\`\`${language}\n${selected}\n\`\`\``;
+			const needsLeadingBreak = start > 0 && source[start - 1] !== "\n";
+			const needsTrailingBreak = end < source.length && source[end] !== "\n";
+			const prefix = needsLeadingBreak ? "\n" : "";
+			const suffix = needsTrailingBreak ? "\n" : "";
+			const replacement = `${prefix}${block}${suffix}`;
+			const contentStartOffset =
+				prefix.length + `\`\`\`${language}\n`.length;
+			const contentEndOffset = contentStartOffset + selected.length;
+			replaceSelection(
+				textarea,
+				replacement,
+				contentStartOffset,
+				contentEndOffset,
+			);
+		};
+
+		const applyToolbarAction = (action: CommentToolbarAction): void => {
+			if (!bodyEl) return;
+			if (action === "bold") {
+				applyWrapAction(bodyEl, "**", "**", "粗体文本");
+				return;
+			}
+			if (action === "italic") {
+				applyWrapAction(bodyEl, "*", "*", "斜体文本");
+				return;
+			}
+			if (action === "underline") {
+				applyWrapAction(bodyEl, "<u>", "</u>", "下划线文本");
+				return;
+			}
+			if (action === "strike") {
+				applyWrapAction(bodyEl, "~~", "~~", "删除线文本");
+				return;
+			}
+			if (action === "quote") {
+				applyQuoteAction(bodyEl);
+				return;
+			}
+			if (action === "inline-code") {
+				applyWrapAction(bodyEl, "`", "`", "代码");
+				return;
+			}
+			if (action === "code-block") {
+				applyCodeBlockAction(bodyEl);
+			}
+		};
+
+		const requestPreview = async (force = false): Promise<void> => {
+			if (!bodyEl) return;
+			const source = String(bodyEl.value || "");
+			const text = source.trim();
+			if (!force && !previewDirty && source === previewSource) {
+				return;
+			}
+
+			if (!text) {
+				previewSource = source;
+				previewHtml = "";
+				previewError = "";
+				previewLoading = false;
+				previewDirty = false;
+				renderPreview();
+				return;
+			}
+
+			if (!currentUserId) {
+				previewSource = source;
+				previewHtml = "";
+				previewError = "请先登录后预览评论内容。";
+				previewLoading = false;
+				previewDirty = false;
+				renderPreview();
+				return;
+			}
+
+			previewLoading = true;
+			previewError = "";
+			renderPreview();
+
+			const requestId = ++previewRequestId;
+			try {
+				const response = await fetch(commentPreviewApi(), {
+					method: "POST",
+					credentials: "include",
+					headers: {
+						"Content-Type": "application/json",
+						Accept: "application/json",
+					},
+					body: JSON.stringify({ body: text }),
+				});
+				const data = await response.json().catch(() => null);
+				if (requestId !== previewRequestId) {
+					return;
+				}
+				if (!response.ok || !data?.ok) {
+					previewHtml = "";
+					previewError = data?.message || "预览生成失败";
+					previewDirty = true;
+					return;
+				}
+				previewHtml = resolveBodyHtmlFromResponse(data);
+				previewSource = source;
+				previewError = "";
+				previewDirty = false;
+			} catch (error) {
+				console.error("[comment] preview render failed:", error);
+				if (requestId !== previewRequestId) {
+					return;
+				}
+				previewHtml = "";
+				previewError = "预览生成失败，请稍后重试";
+				previewDirty = true;
+			} finally {
+				if (requestId === previewRequestId) {
+					previewLoading = false;
+					renderPreview();
+				}
 			}
 		};
 
@@ -204,13 +704,21 @@ const hasDirectusTarget = Boolean(moduleName && contentId);
 			}
 
 			return `
-				<details class="relative comment-action-menu">
+				<details class="relative comment-action-menu z-20">
 						<summary class="list-none cursor-pointer btn-plain scale-animation w-8 h-8 rounded-lg flex items-center justify-center text-base select-none text-75" aria-label="评论操作">...</summary>
-						<div class="absolute right-0 top-9 z-10 min-w-[7rem] card-base rounded-xl border border-[var(--line-divider)] p-2 text-90">
+						<div class="absolute right-0 top-9 z-50 min-w-[7rem] card-base rounded-xl border border-[var(--line-divider)] p-2 text-90">
 						${menuActions.join("")}
 					</div>
 				</details>
 			`;
+		};
+
+		const renderCommentBody = (item: CommentItem): string => {
+			const bodyHtml = normalizeMarkdownHtml(item.body_html);
+			if (bodyHtml) {
+				return `<div class="prose prose-sm md:prose-base dark:prose-invert !max-w-none custom-md text-90">${bodyHtml}</div>`;
+			}
+			return `<div class="text-sm leading-7 whitespace-pre-wrap break-words text-90">${escapeHtml(item.body || "")}</div>`;
 		};
 
 		const renderCommentNode = (item: CommentItem, level: number): string => {
@@ -232,7 +740,7 @@ const hasDirectusTarget = Boolean(moduleName && contentId);
 							</div>
 							${renderCommentActions(item, level)}
 						</div>
-						<div class="text-sm leading-7 whitespace-pre-wrap break-words text-90">${escapeHtml(item.body || "")}</div>
+						${renderCommentBody(item)}
 					</div>
 					<div class="space-y-2">${replies
 						.map((reply: CommentItem) => renderCommentNode(reply, 1))
@@ -241,7 +749,7 @@ const hasDirectusTarget = Boolean(moduleName && contentId);
 			`;
 		};
 
-		const renderComments = () => {
+		const renderComments = (): void => {
 			if (!commentListEl || !commentEmptyEl) return;
 			if (!Array.isArray(comments) || comments.length === 0) {
 				commentListEl.innerHTML = "";
@@ -252,18 +760,21 @@ const hasDirectusTarget = Boolean(moduleName && contentId);
 			commentListEl.innerHTML = comments
 				.map((item) => renderCommentNode(item, 0))
 				.join("");
+			void refreshMarkdownRuntime();
 		};
 
 		const applyAuthState = (state: AuthState): void => {
 			currentUserId = state.isLoggedIn ? state.userId : "";
 			isAdmin = state.isLoggedIn && state.isAdmin;
 			renderComments();
+			if (commentMode === "preview" && previewDirty) {
+				void requestPreview(true);
+			}
 		};
 
-		// Expose latest applyAuthState for global auth subscription
 		runtimeWindow._directusCommentApplyAuth = applyAuthState;
 
-		const loadComments = async () => {
+		const loadComments = async (): Promise<void> => {
 			if (!directusEnabled) return;
 			try {
 				const response = await fetch(commentApiBase(), {
@@ -280,13 +791,25 @@ const hasDirectusTarget = Boolean(moduleName && contentId);
 					? (data.items as CommentItem[])
 					: [];
 				renderComments();
-			} catch {
+			} catch (error) {
+				console.error("[comment] load comments failed:", error);
 				comments = [];
 				renderComments();
 			}
 		};
 
-		const submitComment = async () => {
+		const resetPreviewState = (): void => {
+			previewSource = "";
+			previewHtml = "";
+			previewError = "";
+			previewLoading = false;
+			previewDirty = false;
+			previewRequestId += 1;
+			renderedPreviewHtml = "";
+			renderPreview();
+		};
+
+		const submitComment = async (): Promise<void> => {
 			if (!bodyEl || !submitEl || !parentIdEl) return;
 
 			if (!currentUserId) {
@@ -323,8 +846,11 @@ const hasDirectusTarget = Boolean(moduleName && contentId);
 				}
 				bodyEl.value = "";
 				setReplyState("", "");
+				setCommentMode("edit");
+				resetPreviewState();
 				await loadComments();
-			} catch {
+			} catch (error) {
+				console.error("[comment] submit failed:", error);
 				setFormError("评论提交失败，请稍后重试");
 			} finally {
 				submitEl.disabled = false;
@@ -347,6 +873,46 @@ const hasDirectusTarget = Boolean(moduleName && contentId);
 			}
 			await loadComments();
 		};
+
+		if (modeEditEl && !modeEditEl.dataset.bound) {
+			modeEditEl.dataset.bound = "1";
+			modeEditEl.addEventListener("click", () => {
+				setCommentMode("edit");
+			});
+		}
+
+		if (modePreviewEl && !modePreviewEl.dataset.bound) {
+			modePreviewEl.dataset.bound = "1";
+			modePreviewEl.addEventListener("click", () => {
+				setCommentMode("preview");
+			});
+		}
+
+		if (bodyEl && !bodyEl.dataset.bound) {
+			bodyEl.dataset.bound = "1";
+			bodyEl.addEventListener("input", () => {
+				markPreviewDirty();
+			});
+			bodyEl.addEventListener("blur", () => {
+				if (!previewDirty) return;
+				void requestPreview(true);
+			});
+		}
+
+		if (toolbarEl && !toolbarEl.dataset.bound) {
+			toolbarEl.dataset.bound = "1";
+			toolbarEl.addEventListener("click", (event) => {
+				const target = event.target;
+				if (!(target instanceof Element)) return;
+				const actionEl = target.closest(
+					".comment-toolbar-btn",
+				) as HTMLButtonElement | null;
+				if (!actionEl) return;
+				const action = String(actionEl.dataset.mdAction || "");
+				if (!isToolbarAction(action)) return;
+				applyToolbarAction(action);
+			});
+		}
 
 		if (formEl && !formEl.dataset.bound) {
 			formEl.dataset.bound = "1";
@@ -376,13 +942,30 @@ const hasDirectusTarget = Boolean(moduleName && contentId);
 				if (!id) return;
 
 				if (action === "reply") {
+					closeAllCommentActionMenus();
 					setReplyState(id, actionEl.dataset.author || "用户");
 					bodyEl?.focus();
 					return;
 				}
 				if (action === "delete") {
+					closeAllCommentActionMenus();
 					await deleteComment(id);
 				}
+			});
+		}
+
+		if (!runtimeWindow._directusCommentMenuOutsideBound) {
+			runtimeWindow._directusCommentMenuOutsideBound = true;
+			document.addEventListener("click", (event) => {
+				const target = event.target;
+				if (!(target instanceof Element)) {
+					closeAllCommentActionMenus();
+					return;
+				}
+				if (target.closest(".comment-action-menu")) {
+					return;
+				}
+				closeAllCommentActionMenus();
 			});
 		}
 
@@ -394,8 +977,10 @@ const hasDirectusTarget = Boolean(moduleName && contentId);
 		}
 
 		if (!directusEnabled) return;
+		setCommentMode("edit");
+		resetPreviewState();
 		applyAuthState(getAuthState());
-		loadComments();
+		void loadComments();
 	}
 
 	initComments();
