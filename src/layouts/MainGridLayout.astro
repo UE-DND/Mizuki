@@ -729,11 +729,6 @@ const mainContentClass = `
     }
 }
 
-/* Keep banner visible during the synchronized upward transition. */
-:global(html.layout-banner-to-spec-transition) #banner-wrapper.wallpaper-layer-hidden {
-    opacity: 1 !important;
-}
-
 @media (min-width: 1280px) {
     :global(#right-sidebar-slot.right-sidebar-toc-fixed) {
         position: sticky;
@@ -770,6 +765,15 @@ const mainContentClass = `
 :global(.wallpaper-layer-hidden) {
     opacity: 0 !important;
     pointer-events: none;
+}
+
+/* 非 banner 模式下强制即时隐藏，避免模式切换和路由切换时的底层闪现。 */
+body[data-layout-mode="none"] #banner-wrapper,
+body[data-layout-mode="collapsed"] #banner-wrapper {
+    opacity: 0 !important;
+    visibility: hidden !important;
+    transition: none !important;
+    pointer-events: none !important;
 }
 
 /* 主内容区位移动画 */

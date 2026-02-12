@@ -489,6 +489,10 @@ export function setupSwupIntentSource(
 			deactivateEnterSkeleton();
 			const hash = window.location.hash?.slice(1);
 
+			clearBannerToSpecTransitionVisualState();
+			pendingBannerToSpecRoutePath = null;
+			pendingSidebarProfilePatch = null;
+
 			deps.controller.dispatch({
 				type: "ROUTE_CHANGED",
 				path: window.location.pathname,
@@ -496,10 +500,6 @@ export function setupSwupIntentSource(
 				viewportWidth: window.innerWidth,
 				reason: "route-change",
 			});
-
-			clearBannerToSpecTransitionVisualState();
-			pendingBannerToSpecRoutePath = null;
-			pendingSidebarProfilePatch = null;
 
 			const isHomePage = deps.pathsEqual(
 				window.location.pathname,
