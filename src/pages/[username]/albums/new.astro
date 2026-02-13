@@ -106,6 +106,19 @@ Astro.locals.sidebarProfile = profileToSidebarData(profile);
   const errorEl = document.getElementById("album-publish-error");
   const counterEl = document.getElementById("album-title-counter");
 
+  function navigateInternal(path) {
+    const swup = window.swup;
+    if (swup?.navigate) {
+      try {
+        swup.navigate(path);
+        return;
+      } catch (error) {
+        console.warn("[album-new] swup 导航失败，回退浏览器跳转:", error);
+      }
+    }
+    window.location.href = path;
+  }
+
   function updateCounter() {
     if (!titleInput || !counterEl) return;
     const len = wcLen(titleInput.value);
@@ -155,7 +168,7 @@ Astro.locals.sidebarProfile = profileToSidebarData(profile);
         return;
       }
       const shortId = data.item.short_id || data.item.id;
-      window.location.href = `/${username}/albums/${shortId}?edit=1`;
+      navigateInternal(`/${username}/albums/${shortId}?edit=1`);
     } catch {
       showError("网络错误，请重试");
       submitBtn?.removeAttribute("disabled");

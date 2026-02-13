@@ -101,6 +101,7 @@ const { articleId, authorId } = Astro.props;
   import { getAuthState, subscribeAuthState } from "@/scripts/auth-state";
   import type { AuthState } from "@/scripts/auth-state";
   import { showConfirmDialog, showNoticeDialog } from "@/scripts/dialogs";
+  import { navigateToPage } from "@/utils/navigation-utils";
 
   function initArticleManageFloat(): void {
     const floatEl = document.querySelector<HTMLElement>(
@@ -213,7 +214,7 @@ const { articleId, authorId } = Astro.props;
             });
             return;
           }
-          window.location.href = "/";
+          navigateToPage("/");
         } catch (error) {
           console.error("[article-manage] delete article failed:", error);
           await showNoticeDialog({
@@ -231,7 +232,9 @@ const { articleId, authorId } = Astro.props;
         if (!articleId) {
           return;
         }
-        window.location.href = `/publish?type=article&id=${encodeURIComponent(articleId)}`;
+        navigateToPage(
+          `/publish?type=article&id=${encodeURIComponent(articleId)}`,
+        );
       });
     }
 

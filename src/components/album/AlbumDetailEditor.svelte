@@ -1,6 +1,7 @@
 <script lang="ts">
   import { onDestroy, onMount } from "svelte";
   import { showConfirmDialog, showNoticeDialog } from "@/scripts/dialogs";
+  import { navigateToPage } from "@/utils/navigation-utils";
   import {
     UPLOAD_LIMITS,
     UPLOAD_LIMIT_LABELS,
@@ -635,7 +636,7 @@
         await showNoticeDialog({ message: getApiMessage(data, "删除失败") });
         return;
       }
-      window.location.href = `/${username}/albums`;
+      navigateToPage(`/${username}/albums`);
     } catch {
       await showNoticeDialog({ message: "网络错误" });
     }
@@ -823,8 +824,7 @@
     >
       <div class="flex items-center gap-3 flex-wrap">
         <a
-          href="/{username}/albums"
-          data-no-swup
+          href={`/${username}/albums`}
           aria-label="返回相册列表"
           title="返回相册列表"
           class="w-9 h-9 rounded-full bg-(--primary) text-white hover:opacity-90 transition flex items-center justify-center"

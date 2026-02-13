@@ -177,6 +177,7 @@ const diary = result.status === "ok" ? result.data : null;
 <script>
   import { getAuthState, subscribeAuthState } from "@/scripts/auth-state";
   import type { AuthState } from "@/scripts/auth-state";
+  import { navigateToPage } from "@/utils/navigation-utils";
 
   const diaryManageRoot = document.getElementById("diary-manage-root");
 
@@ -220,10 +221,10 @@ const diary = result.status === "ok" ? result.data : null;
           }
           const authState = getAuthState();
           if (authState.username) {
-            window.location.href = `/${authState.username}/diary`;
+            navigateToPage(`/${authState.username}/diary`);
             return;
           }
-          window.location.href = "/me";
+          navigateToPage("/me");
         } catch (error) {
           console.error("[diary] delete failed:", error);
           window.alert("删除失败，请稍后重试");
@@ -236,7 +237,7 @@ const diary = result.status === "ok" ? result.data : null;
     if (editBtn instanceof HTMLButtonElement) {
       editBtn.addEventListener("click", () => {
         if (!diaryId) return;
-        window.location.href = `/publish?type=diary&id=${encodeURIComponent(diaryId)}`;
+        navigateToPage(`/publish?type=diary&id=${encodeURIComponent(diaryId)}`);
       });
     }
 

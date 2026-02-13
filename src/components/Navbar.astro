@@ -156,6 +156,39 @@ const links: NavBarLink[] = navBarConfig.links
   const navbarLinksContainer = document.getElementById(
     "navbar-links-container",
   );
+  const AUTH_PROTECTED_TARGET_ATTR = "data-auth-target-href";
+
+  const setAuthProtectedLink = (
+    anchor: HTMLAnchorElement,
+    targetHref: string,
+    options?: {
+      keepNoSwup?: boolean;
+    },
+  ): void => {
+    anchor.setAttribute(AUTH_PROTECTED_TARGET_ATTR, targetHref);
+    anchor.setAttribute("href", "#");
+    anchor.setAttribute("data-needs-login", "");
+    if (options?.keepNoSwup) {
+      anchor.setAttribute("data-no-swup", "");
+    } else {
+      anchor.removeAttribute("data-no-swup");
+    }
+  };
+
+  const clearAuthProtectedLink = (
+    anchor: HTMLAnchorElement,
+    href: string,
+    options?: {
+      removeNoSwup?: boolean;
+    },
+  ): void => {
+    anchor.setAttribute("href", href);
+    anchor.removeAttribute("data-needs-login");
+    anchor.removeAttribute(AUTH_PROTECTED_TARGET_ATTR);
+    if (options?.removeNoSwup) {
+      anchor.removeAttribute("data-no-swup");
+    }
+  };
 
   const updateUserRouteLinks = (
     username: string,
@@ -167,12 +200,14 @@ const links: NavBarLink[] = navBarConfig.links
     );
     anchors.forEach((anchor) => {
       const rawHref = anchor.getAttribute("href") || "";
-      if (!rawHref.startsWith("/")) return;
-      let pathname = rawHref;
+      const targetHref =
+        anchor.getAttribute(AUTH_PROTECTED_TARGET_ATTR) || rawHref;
+      if (!targetHref.startsWith("/")) return;
+      let pathname = targetHref;
       let search = "";
       let hash = "";
       try {
-        const parsed = new URL(rawHref, window.location.origin);
+        const parsed = new URL(targetHref, window.location.origin);
         pathname = parsed.pathname;
         search = parsed.search;
         hash = parsed.hash;
@@ -181,11 +216,15 @@ const links: NavBarLink[] = navBarConfig.links
       }
 
       if (pathname === "/publish") {
-        anchor.setAttribute("data-no-swup", "");
+        const publishHref = `${pathname}${search}${hash}`;
         if (isLoggedIn) {
-          anchor.removeAttribute("data-needs-login");
+          clearAuthProtectedLink(anchor, publishHref, {
+            removeNoSwup: true,
+          });
         } else {
-          anchor.setAttribute("data-needs-login", "");
+          setAuthProtectedLink(anchor, publishHref, {
+            keepNoSwup: true,
+          });
         }
         return;
       }
@@ -204,24 +243,21 @@ const links: NavBarLink[] = navBarConfig.links
               segment === "__user__" ? cleanUsername : segment,
             )
             .join("/")}`;
-          anchor.setAttribute("href", `${resolvedPath}${search}${hash}`);
-          anchor.removeAttribute("data-needs-login");
+          clearAuthProtectedLink(anchor, `${resolvedPath}${search}${hash}`);
         } else if (!isLoggedIn) {
-          anchor.setAttribute("href", "#");
-          anchor.setAttribute("data-needs-login", "");
+          setAuthProtectedLink(anchor, `${pathname}${search}${hash}`);
         } else {
-          anchor.setAttribute("href", "/me");
-          anchor.removeAttribute("data-needs-login");
+          clearAuthProtectedLink(anchor, "/me");
         }
         return;
       }
       let hashLower = "";
       try {
-        const parsed = new URL(rawHref, window.location.origin);
+        const parsed = new URL(targetHref, window.location.origin);
         pathname = parsed.pathname;
         hashLower = parsed.hash.replace(/^#/, "").trim().toLowerCase();
       } catch {
-        pathname = rawHref;
+        pathname = targetHref;
       }
       if (pathname === "/me") {
         if (
@@ -230,11 +266,11 @@ const links: NavBarLink[] = navBarConfig.links
           hashLower === "albums"
         ) {
           if (cleanUsername) {
-            anchor.setAttribute("href", `/${cleanUsername}/${hashLower}`);
-            anchor.removeAttribute("data-needs-login");
+            clearAuthProtectedLink(anchor, `/${cleanUsername}/${hashLower}`);
           } else if (!isLoggedIn) {
-            anchor.setAttribute("href", "#");
-            anchor.setAttribute("data-needs-login", "");
+            setAuthProtectedLink(anchor, `${pathname}${search}${hash}`);
+          } else {
+            clearAuthProtectedLink(anchor, "/me");
           }
         }
         return;
@@ -243,14 +279,11 @@ const links: NavBarLink[] = navBarConfig.links
       if (!legacyTarget.includes(pathname)) return;
       const target = pathname.replace(/^\//, "");
       if (cleanUsername) {
-        anchor.setAttribute("href", `/${cleanUsername}/${target}`);
-        anchor.removeAttribute("data-needs-login");
+        clearAuthProtectedLink(anchor, `/${cleanUsername}/${target}`);
       } else if (!isLoggedIn) {
-        anchor.setAttribute("href", "#");
-        anchor.setAttribute("data-needs-login", "");
+        setAuthProtectedLink(anchor, `/${target}`);
       } else {
-        anchor.setAttribute("href", "/me");
-        anchor.removeAttribute("data-needs-login");
+        clearAuthProtectedLink(anchor, "/me");
       }
     });
   };
@@ -284,6 +317,10 @@ const links: NavBarLink[] = navBarConfig.links
   ): Promise<void> => {
     let username = String(state?.username || "").trim();
     let isLoggedIn = Boolean(state?.isLoggedIn);
+
+    // 先使用当前已知状态立即更新链接行为，避免等待鉴权接口期间出现竞态
+    updateUserRouteLinks(username, isLoggedIn);
+
     if (!username) {
       const profile = await fetchAuthProfile();
       if (profile.ok) {
@@ -334,12 +371,14 @@ const links: NavBarLink[] = navBarConfig.links
 
       const rawHref = anchor.getAttribute("href") || "";
       const needsLogin = anchor.hasAttribute("data-needs-login");
+      const authTargetHref =
+        anchor.getAttribute(AUTH_PROTECTED_TARGET_ATTR) || rawHref;
       const isPublishTarget = (() => {
-        if (!rawHref.startsWith("/")) {
+        if (!authTargetHref.startsWith("/")) {
           return false;
         }
         try {
-          const parsed = new URL(rawHref, window.location.origin);
+          const parsed = new URL(authTargetHref, window.location.origin);
           return parsed.pathname === "/publish";
         } catch {
           return false;
@@ -348,12 +387,14 @@ const links: NavBarLink[] = navBarConfig.links
 
       if (isPublishTarget && !getAuthState().isLoggedIn) {
         e.preventDefault();
+        e.stopImmediatePropagation();
         showAuthRequiredDialog();
         return;
       }
 
       if (needsLogin) {
         e.preventDefault();
+        e.stopImmediatePropagation();
         showAuthRequiredDialog();
       }
     },

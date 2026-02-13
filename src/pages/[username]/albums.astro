@@ -176,7 +176,6 @@ function buildGoogleMapsSearchUrl(value: string | null | undefined): string {
             {isOwner && (
               <a
                 href={`/${username}/albums/new`}
-                data-no-swup
                 class="px-5 h-10 rounded-lg bg-(--primary) text-white font-medium
 							hover:opacity-90 active:opacity-80 transition
 							flex items-center gap-1.5 text-sm shrink-0"
@@ -230,7 +229,6 @@ function buildGoogleMapsSearchUrl(value: string | null | undefined): string {
                   >
                     <a
                       href={`/${username}/albums/${item.short_id || item.id}`}
-                      data-no-swup
                       class="block"
                     >
                       {coverUrl(item) &&
@@ -255,7 +253,6 @@ function buildGoogleMapsSearchUrl(value: string | null | undefined): string {
                     <div class="p-5 space-y-2">
                       <a
                         href={`/${username}/albums/${item.short_id || item.id}`}
-                        data-no-swup
                         class="block space-y-2"
                       >
                         <h2 class="text-lg text-xl font-semibold line-clamp-1">

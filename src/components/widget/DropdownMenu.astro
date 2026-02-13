@@ -39,25 +39,8 @@ const getLocalizedName = (name: string): string => {
   return name in navTitleMap ? i18n(navTitleMap[name]) : name;
 };
 
-const normalizePathname = (pathname: string): string => {
-  const normalized = pathname.replace(/\/+$/, "");
-  return normalized || "/";
-};
-
 const resolveHref = (rawUrl: string, isExternal?: boolean): string => {
   return isExternal ? rawUrl : url(rawUrl);
-};
-
-const isPublishHref = (href: string, isExternal?: boolean): boolean => {
-  if (isExternal) {
-    return false;
-  }
-  try {
-    const parsed = new URL(href, "https://www.cqutccgal.com");
-    return normalizePathname(parsed.pathname) === "/publish";
-  } catch {
-    return false;
-  }
 };
 
 const children =
@@ -68,7 +51,6 @@ const children =
 const hasChildren = children.length > 0;
 const isAdminOnly = isAdminOnlyLink(link);
 const linkHref = resolveHref(link.url, link.external);
-const linkIsPublish = isPublishHref(linkHref, link.external);
 ---
 
 <div
@@ -101,7 +83,6 @@ const linkIsPublish = isPublishHref(linkHref, link.external);
           <div class="dropdown-content">
             {children.map((child) => {
               const childHref = resolveHref(child.url, child.external);
-              const childIsPublish = isPublishHref(childHref, child.external);
               return (
                 <a
                   href={childHref}
@@ -112,7 +93,6 @@ const linkIsPublish = isPublishHref(linkHref, link.external);
                     isAdminOnlyLink(child) && "hidden",
                   ]}
                   data-admin-only={isAdminOnlyLink(child) ? "true" : undefined}
-                  data-no-swup={childIsPublish ? "" : undefined}
                   aria-label={child.name}
                 >
                   <div class="flex items-center">
@@ -144,7 +124,6 @@ const linkIsPublish = isPublishHref(linkHref, link.external);
           isAdminOnly && "hidden",
         ]}
         data-admin-only={isAdminOnly ? "true" : undefined}
-        data-no-swup={linkIsPublish ? "" : undefined}
       >
         {link.icon && (
           <Icon name={link.icon} class="text-[1.1rem] lg:mr-2 shrink-0" />
