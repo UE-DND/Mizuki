@@ -142,7 +142,11 @@ const PRESET_TO_LINK: Record<number, NavBarLinkObj> = {
 	3: { name: "友链", url: "/friends", icon: "material-symbols:group" },
 	4: { name: "番剧", url: "/me/#anime", icon: "material-symbols:movie" },
 	5: { name: "日记", url: "/me/#diary", icon: "material-symbols:book" },
-	6: { name: "相册", url: "/me/#albums", icon: "material-symbols:photo-library" },
+	6: {
+		name: "相册",
+		url: "/me/#albums",
+		icon: "material-symbols:photo-library",
+	},
 };
 
 const expandPreset = (item: NavLinkItem): NavBarLinkObj => {

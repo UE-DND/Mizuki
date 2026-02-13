@@ -167,7 +167,7 @@ export const systemSiteConfig = {
 
 ### 特色页面配置
 
-- **友链页面内容：** 在 `src/data/friends.ts` 中编辑朋友数据
+- **友链页面内容：** 在 Directus 的 `app_friends` 集合中维护
 - **关于页面：** 在 Directus 的 `app_articles` 中维护 `slug=about` 内容
 
 ### 数据源说明

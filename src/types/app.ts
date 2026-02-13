@@ -129,6 +129,21 @@ export type AppAnimeEntry = {
 	date_updated: string | null;
 };
 
+export type AppFriend = {
+	id: string;
+	status: AppStatus;
+	sort: number | null;
+	title: string;
+	description: string | null;
+	site_url: string;
+	avatar_file: string | null;
+	avatar_url: string | null;
+	tags: string[] | null;
+	is_public: boolean;
+	date_created: string | null;
+	date_updated: string | null;
+};
+
 export type AppAlbum = {
 	id: string;
 	short_id: string | null;

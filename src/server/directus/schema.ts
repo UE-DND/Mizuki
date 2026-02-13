@@ -11,6 +11,7 @@ import type {
 	AppDiaryLike,
 	AppDiaryImage,
 	AppFile,
+	AppFriend,
 	AppPermissions,
 	AppProfile,
 	AppUserRegistrationRequest,
@@ -32,6 +33,7 @@ export type DirectusSchema = {
 	app_anime_entries: AppAnimeEntry[];
 	app_albums: AppAlbum[];
 	app_album_photos: AppAlbumPhoto[];
+	app_friends: AppFriend[];
 	app_user_blocks: AppUserBlock[];
 	app_content_reports: AppContentReport[];
 	app_user_registration_requests: AppUserRegistrationRequest[];

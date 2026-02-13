@@ -8,6 +8,7 @@ import type {
 	ContentReportTargetType,
 	AppDiary,
 	AppDiaryComment,
+	AppFriend,
 	AppRole,
 	RegistrationRequestStatus,
 	AppStatus,
@@ -718,6 +719,14 @@ export async function loadPublicArticleBySlug(
 		limit: 1,
 	});
 	return rows[0] || null;
+}
+
+export async function loadPublicFriends(): Promise<AppFriend[]> {
+	return await readMany("app_friends", {
+		filter: filterPublicStatus(),
+		sort: ["sort", "-date_created"],
+		limit: 500,
+	});
 }
 
 /** Loose variant: load article by slug without status/is_public filter (for owner fallback) */

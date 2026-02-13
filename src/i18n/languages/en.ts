@@ -72,8 +72,6 @@ export const en: Translation = {
 	[Key.animeEmpty]: "No anime data available",
 	[Key.animeEmptyBangumi]:
 		"Please check Bangumi configuration or network connection",
-	[Key.animeEmptyLocal]:
-		"Please add anime information in src/data/anime.ts file",
 
 	// Diary Page
 	[Key.diarySubtitle]: "Share life, anytime, anywhere",

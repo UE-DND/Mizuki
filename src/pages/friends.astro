@@ -1,14 +1,50 @@
 ---
 import Markdown from "@components/misc/Markdown.astro";
 import { renderMarkdown } from "@/server/markdown/render";
-import { loadPublicArticleBySlug } from "@/server/api/v1/shared";
+import {
+  loadPublicArticleBySlug,
+  loadPublicFriends,
+  safeCsv,
+} from "@/server/api/v1/shared";
+import { buildDirectusAssetUrl } from "@/server/directus-auth";
 // import Icon from "../components/misc/Icon.astro";
-import { getShuffledFriendsList } from "../data/friends";
 import I18nKey from "../i18n/i18nKey";
 import { i18n } from "../i18n/translation";
 import MainGridLayout from "../layouts/MainGridLayout.astro";
 
 export const prerender = false;
+
+type FriendCardItem = {
+  id: string;
+  title: string;
+  imgurl: string;
+  desc: string;
+  siteurl: string;
+  hostname: string;
+  tags: string[];
+};
+
+function getSiteHostname(siteurl: string): string {
+  try {
+    return new URL(siteurl).hostname;
+  } catch {
+    return (
+      siteurl
+        .replace(/^https?:\/\//i, "")
+        .split("/")
+        .filter(Boolean)[0] || siteurl
+    );
+  }
+}
+
+function shuffleList<T>(list: T[]): T[] {
+  const shuffled = [...list];
+  for (let i = shuffled.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+  }
+  return shuffled;
+}
 
 let friendsDocHtml = "";
 try {
@@ -25,7 +61,41 @@ try {
 if (!friendsDocHtml) {
   friendsDocHtml = "<p>欢迎交换友链。</p>";
 }
-const friendsList = getShuffledFriendsList();
+
+let friendsList: FriendCardItem[] = [];
+try {
+  const rows = await loadPublicFriends();
+  const mapped = rows
+    .map((item): FriendCardItem | null => {
+      const title = String(item.title || "").trim();
+      const siteurl = String(item.site_url || "").trim();
+      if (!title || !siteurl) {
+        return null;
+      }
+      const imgurl = item.avatar_file
+        ? buildDirectusAssetUrl(item.avatar_file, {
+            width: 128,
+            height: 128,
+            fit: "cover",
+          })
+        : String(item.avatar_url || "").trim();
+
+      return {
+        id: item.id,
+        title,
+        imgurl,
+        desc: String(item.description || "").trim(),
+        siteurl,
+        hostname: getSiteHostname(siteurl),
+        tags: safeCsv(item.tags),
+      };
+    })
+    .filter((item): item is FriendCardItem => Boolean(item));
+
+  friendsList = shuffleList(mapped);
+} catch (error) {
+  console.error("[friends] failed to load friends list:", error);
+}
 
 // 获取所有标签
 const allTags = Array.from(new Set(friendsList.flatMap((item) => item.tags)));
@@ -110,12 +180,18 @@ const allTags = Array.from(new Set(friendsList.flatMap((item) => item.tags)));
 												ring-2 ring-transparent
 												transition-all duration-300"
                       >
-                        <img
-                          src={item.imgurl}
-                          alt={item.title}
-                          class="w-full h-full object-cover transform group-hover:scale-110 transition-transform duration-300"
-                          loading="lazy"
-                        />
+                        {item.imgurl ? (
+                          <img
+                            src={item.imgurl}
+                            alt={item.title}
+                            class="w-full h-full object-cover transform group-hover:scale-110 transition-transform duration-300"
+                            loading="lazy"
+                          />
+                        ) : (
+                          <div class="w-full h-full flex items-center justify-center text-lg font-semibold text-black/40 dark:text-white/40">
+                            {item.title.slice(0, 1).toUpperCase()}
+                          </div>
+                        )}
                       </div>
 
                       {/* 标题和链接 */}
@@ -133,7 +209,7 @@ const allTags = Array.from(new Set(friendsList.flatMap((item) => item.tags)));
                           class="text-xs text-black/50 dark:text-white/50 hover:text-(--primary) 
 												 truncate block transition-colors duration-200"
                         >
-                          {new URL(item.siteurl).hostname}
+                          {item.hostname}
                         </a>
                       </div>
                     </div>
