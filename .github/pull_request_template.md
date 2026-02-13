@@ -1,37 +1,33 @@
-## Type of change
+## 变更类型
 
-- [ ] Bug fix (a non-breaking change that fixes an issue)
-- [ ] New feature (a non-breaking change that adds functionality)
-- [ ] Breaking change (fix or feature that would cause existing functionality to not work as expected)
-- [ ] Other (please describe):
+- [ ] 缺陷修复（不影响现有兼容性的修复）
+- [ ] 新功能（不影响现有兼容性的新增）
+- [ ] 破坏性变更（会影响现有行为或兼容性）
+- [ ] 其他（请说明）：
 
-## Checklist
+## 提交前检查清单
 
-- [ ] I have read the [**CONTRIBUTING**](../CONTRIBUTING.md) document.
-- [ ] I have checked to ensure that this Pull Request is not for personal changes.
-- [ ] I have performed a self-review of my own code.
-- [ ] My changes generate no new warnings.
+- [ ] 我已阅读 [**CONTRIBUTING**](../CONTRIBUTING.md) 文档。
+- [ ] 我已确认该 Pull Request 不是个人无关改动。
+- [ ] 我已完成自查并确认改动符合项目规范。
+- [ ] 我的改动未引入新的告警或错误。
 
-## Related Issue
+## 关联 Issue
 
-<!-- Please link to the issue that this pull request addresses. e.g. #123 -->
+<!-- 请关联本次 PR 对应的 Issue，例如：#123 -->
 
+## 改动说明
 
-## Changes
+<!-- 请简要说明本次 PR 做了什么、为什么这样改。 -->
 
-<!-- Please describe the changes you made in this pull request. -->
+## 测试说明
 
+<!-- 请说明你如何验证本次改动（命令、步骤、结果）。 -->
 
-## How To Test
+## 截图（如适用）
 
-<!-- Please describe how you tested your changes. -->
+<!-- 如果涉及 UI 改动，请附上截图或录屏。 -->
 
+## 其他补充
 
-## Screenshots (if applicable)
-
-<!-- If you made any UI changes, please include screenshots. -->
-
-
-## Additional Notes
-
-<!-- Any additional information that you want to share with the reviewer. -->
+<!-- 其他需要告知评审者的信息。 -->

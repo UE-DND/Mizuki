@@ -1,4 +1,4 @@
-name: Check
+name: CI
 
 on:
   push:
@@ -16,22 +16,28 @@ permissions:
 
 jobs:
   check:
-    name: Astro Check
+    name: Check And Build
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
-        uses: actions/checkout@v6
+        uses: actions/checkout@v4
 
       - name: Setup Node.js
-        uses: actions/setup-node@v6
+        uses: actions/setup-node@v4
         with:
-          node-version: lts/*
+          node-version: 22
+          cache: pnpm
 
       - name: Setup pnpm
         uses: pnpm/action-setup@v4
         with:
-          run_install: true
-          cache: true
+          version: 10.22.0
 
-      - name: Run Astro Check
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Run checks
         run: pnpm check && pnpm lint && pnpm build
+
+      - name: Check formatting
+        run: pnpm exec prettier --check .

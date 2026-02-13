@@ -10,6 +10,7 @@
 /* 通用弹层 */
 @import "./overlay-dialog.css";
 @import "./toggle.css";
+@import "tailwindcss";
 /* 导入 ZenMaruGothic-Medium 字体 */
 @font-face {
   font-family: "ZenMaruGothic-Medium";
@@ -27,7 +28,6 @@
   font-display: swap;
 }
 
-@import "tailwindcss";
 @config "../../tailwind.config.mjs";
 
 /* 确保平滑滚动 */
