@@ -19,7 +19,7 @@ export const prerender = false;
           站点设置
         </h1>
         <p class="text-base text-70">
-          管理站点运行时配置，保存后在缓存周期内自动生效。
+          管理站点信息、导航栏、壁纸、首页与文章等配置
         </p>
       </section>
 
@@ -196,7 +196,7 @@ export const prerender = false;
               />
               <span class="toggle-track"><span class="toggle-knob"></span></span
               >
-              启用 Banner 轮播
+              启用壁纸轮播
             </label>
             <label class="space-y-1.5">
               <span class="text-sm text-60">轮播间隔（秒）</span>
@@ -293,7 +293,7 @@ export const prerender = false;
               />
               <span class="toggle-track"><span class="toggle-knob"></span></span
               >
-              启用 TOC
+              启用文章目录
             </label>
             <label
               class="flex items-center gap-3 text-75 cursor-pointer select-none"
@@ -301,10 +301,10 @@ export const prerender = false;
               <input type="checkbox" id="ss-toc-jp" class="toggle-checkbox" />
               <span class="toggle-track"><span class="toggle-knob"></span></span
               >
-              使用日文序号
+              目录使用日文序号
             </label>
             <label class="space-y-1.5">
-              <span class="text-sm text-60">TOC 模式</span>
+              <span class="text-sm text-60">目录模式</span>
               <select
                 id="ss-toc-mode"
                 class="w-full rounded-lg border border-(--line-divider) px-3.5 py-2.5 bg-transparent text-75"
@@ -314,7 +314,7 @@ export const prerender = false;
               </select>
             </label>
             <label class="space-y-1.5">
-              <span class="text-sm text-60">TOC 深度</span>
+              <span class="text-sm text-60">目录深度</span>
               <select
                 id="ss-toc-depth"
                 class="w-full rounded-lg border border-(--line-divider) px-3.5 py-2.5 bg-transparent text-75"
@@ -335,9 +335,9 @@ export const prerender = false;
           </form>
         </section>
 
-        <!-- ===== Section 5: 公告与页脚 ===== -->
+        <!-- ===== Section 5: 公告 ===== -->
         <section class="card-base p-8 rounded-(--radius-large) space-y-4">
-          <h2 class="text-2xl font-semibold text-90">公告与页脚</h2>
+          <h2 class="text-2xl font-semibold text-90">公告</h2>
           <form
             id="ss-announce-form"
             class="grid grid-cols-1 md:grid-cols-2 gap-4"
@@ -398,34 +398,11 @@ export const prerender = false;
                 placeholder="https://..."
               />
             </label>
-            <hr class="border-(--line-divider) md:col-span-2" />
-            <h3 class="text-lg font-medium text-75 md:col-span-2">页脚</h3>
-            <label
-              class="flex items-center gap-3 text-75 cursor-pointer select-none md:col-span-2"
-            >
-              <input
-                type="checkbox"
-                id="ss-footer-enable"
-                class="toggle-checkbox"
-              />
-              <span class="toggle-track"><span class="toggle-knob"></span></span
-              >
-              启用页脚自定义 HTML
-            </label>
-            <label class="space-y-1.5 md:col-span-2">
-              <span class="text-sm text-60"
-                >页脚 HTML（保存时会服务端 sanitize）</span
-              >
-              <textarea
-                id="ss-footer-html"
-                class="w-full min-h-32 rounded-lg border border-(--line-divider) px-3.5 py-2.5 bg-transparent text-75 font-mono text-xs placeholder:text-50"
-                placeholder="<p>ICP 备案号</p>"></textarea>
-            </label>
             <div class="md:col-span-2 flex items-center gap-2 pt-2">
               <button
                 type="submit"
                 class="px-4 py-2 rounded-lg bg-(--btn-regular-bg) text-(--btn-content) text-sm"
-                >保存公告与页脚</button
+                >保存公告</button
               >
               <span id="ss-announce-msg" class="text-sm text-60"></span>
             </div>
@@ -518,7 +495,7 @@ export const prerender = false;
               />
               <span class="toggle-track"><span class="toggle-knob"></span></span
               >
-              启用樱花特效
+              启用全屏樱花特效
             </label>
             <div class="md:col-span-2 flex items-center gap-2 pt-2">
               <button

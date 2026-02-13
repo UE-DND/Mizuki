@@ -18,6 +18,17 @@ const resolvedSiteSettings =
 const siteSettings = resolvedSiteSettings.settings;
 const navBarConfig = siteSettings.navBar;
 
+const DEFAULT_NAV_ICON = "/assets/home/home.png";
+
+function resolveAssetSrc(path: string): string {
+  return path.startsWith("/") ? url(path) : path;
+}
+
+const navbarIconSrc =
+  siteSettings.site.favicon[0]?.src ||
+  siteSettings.navbarTitle?.icon ||
+  DEFAULT_NAV_ICON;
+
 // 获取导航栏透明模式配置
 const navbarTransparentMode =
   siteSettings.banner?.navbar?.transparentMode || "semi";
@@ -95,9 +106,7 @@ const links: NavBarLink[] = navBarConfig.links
             ) : (
               <>
                 <img
-                  src={url(
-                    siteSettings.navbarTitle.icon || "/assets/home/home.png",
-                  )}
+                  src={resolveAssetSrc(navbarIconSrc)}
                   alt={siteSettings.navbarTitle.text}
                   class="h-[1.75rem] w-[1.75rem] mr-2 object-contain"
                   loading="lazy"

@@ -816,7 +816,6 @@ const bindSettings = (s: SettingsObj): void => {
 	const toc = (s.toc ?? {}) as SettingsObj;
 	const announcement = (s.announcement ?? {}) as SettingsObj;
 	const annLink = (announcement.link ?? {}) as SettingsObj;
-	const footer = (s.footer ?? {}) as SettingsObj;
 	const musicPlayer = (s.musicPlayer ?? {}) as SettingsObj;
 	const sakura = (s.sakura ?? {}) as SettingsObj;
 	const umami = (s.umami ?? {}) as SettingsObj;
@@ -902,15 +901,13 @@ const bindSettings = (s: SettingsObj): void => {
 	setSelect("ss-toc-mode", String(toc.mode ?? "sidebar"));
 	setSelect("ss-toc-depth", String(toc.depth ?? 2));
 
-	// Section 5 — 公告与页脚
+	// Section 5 — 公告
 	setVal("ss-ann-title", String(announcement.title ?? ""));
 	setVal("ss-ann-content", String(announcement.content ?? ""));
 	setChecked("ss-ann-link-enable", Boolean(annLink.enable));
 	setVal("ss-ann-link-text", String(annLink.text ?? ""));
 	setVal("ss-ann-link-url", String(annLink.url ?? ""));
 	setChecked("ss-ann-closable", Boolean(announcement.closable));
-	setChecked("ss-footer-enable", Boolean(footer.enable));
-	setVal("ss-footer-html", String(footer.customHtml ?? ""));
 };
 
 // ---------------------------------------------------------------------------
@@ -1023,11 +1020,6 @@ const collectAnnouncePayload = (current: SettingsObj): SettingsObj => ({
 			text: inputVal("ss-ann-link-text"),
 			url: inputVal("ss-ann-link-url"),
 		},
-	},
-	footer: {
-		enable: checked("ss-footer-enable"),
-		customHtml:
-			(el("ss-footer-html") as HTMLTextAreaElement | null)?.value ?? "",
 	},
 });
 
