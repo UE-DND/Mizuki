@@ -19,6 +19,7 @@ import {
 	deleteOne,
 	readMany,
 	readOneById,
+	updateDirectusFileMetadata,
 	updateDirectusUser,
 	updateOne,
 } from "@/server/directus/client";
@@ -95,6 +96,19 @@ async function renderMeMarkdownPreview(markdown: string): Promise<string> {
 	}
 }
 
+async function bindFileOwnerToUser(
+	fileValue: unknown,
+	userId: string,
+): Promise<void> {
+	const fileId = normalizeDirectusFileId(fileValue);
+	if (!fileId) {
+		return;
+	}
+	await updateDirectusFileMetadata(fileId, {
+		uploaded_by: userId,
+	});
+}
+
 async function handleMeProfile(
 	context: APIContext,
 	access: AppAccess,
@@ -162,6 +176,9 @@ async function handleMeProfile(
 			access.profile.id,
 			payload,
 		);
+		if (hasAvatarFilePatch && nextAvatarFile) {
+			await bindFileOwnerToUser(nextAvatarFile, access.user.id);
+		}
 		// 头像文件发生变更时，删除旧文件避免孤立资源
 		if (
 			hasAvatarFilePatch &&
@@ -828,6 +845,9 @@ async function handleMeArticles(
 					throw error;
 				}
 			}
+			if (created?.cover_file) {
+				await bindFileOwnerToUser(created.cover_file, access.user.id);
+			}
 			return ok({ item: { ...created, tags: safeCsv(created?.tags) } });
 		}
 	}
@@ -895,6 +915,9 @@ async function handleMeArticles(
 			}
 
 			const updated = await updateOne("app_articles", id, payload);
+			if (hasOwn(body, "cover_file") && nextCoverFile) {
+				await bindFileOwnerToUser(nextCoverFile, access.user.id);
+			}
 			if (
 				hasOwn(body, "cover_file") &&
 				prevCoverFile &&
@@ -1115,6 +1138,9 @@ async function handleMeAnime(
 				is_public: toBooleanValue(body.is_public, true),
 				show_on_profile: toBooleanValue(body.show_on_profile, true),
 			});
+			if (created.cover_file) {
+				await bindFileOwnerToUser(created.cover_file, access.user.id);
+			}
 			return ok({
 				item: { ...created, genres: safeCsv(created.genres) },
 			});
@@ -1182,6 +1208,9 @@ async function handleMeAnime(
 			}
 			Object.assign(payload, parseVisibilityPatch(body));
 			const updated = await updateOne("app_anime_entries", id, payload);
+			if (hasOwn(body, "cover_file") && nextCoverFile) {
+				await bindFileOwnerToUser(nextCoverFile, access.user.id);
+			}
 			if (
 				hasOwn(body, "cover_file") &&
 				prevCoverFile &&
@@ -1308,6 +1337,9 @@ async function handleMeAlbums(
 					throw error;
 				}
 			}
+			if (created?.cover_file) {
+				await bindFileOwnerToUser(created.cover_file, access.user.id);
+			}
 			return ok({ item: { ...created, tags: safeCsv(created?.tags) } });
 		}
 	}
@@ -1407,6 +1439,9 @@ async function handleMeAlbums(
 				);
 			}
 			const updated = await updateOne("app_albums", id, payload);
+			if (hasOwn(body, "cover_file") && nextCoverFile) {
+				await bindFileOwnerToUser(nextCoverFile, access.user.id);
+			}
 			if (
 				hasOwn(body, "cover_file") &&
 				prevCoverFile &&
@@ -1467,6 +1502,9 @@ async function handleMeAlbumPhotos(
 			is_public: toBooleanValue(body.is_public, true),
 			show_on_profile: toBooleanValue(body.show_on_profile, true),
 		});
+		if (created.file_id) {
+			await bindFileOwnerToUser(created.file_id, access.user.id);
+		}
 		return ok({ item: { ...created, tags: safeCsv(created.tags) } });
 	}
 
@@ -1538,6 +1576,9 @@ async function handleMeAlbumPhotos(
 				photoId,
 				payload,
 			);
+			if (hasOwn(body, "file_id") && nextFileId) {
+				await bindFileOwnerToUser(nextFileId, access.user.id);
+			}
 			if (
 				hasOwn(body, "file_id") &&
 				prevFileId &&
@@ -1590,6 +1631,9 @@ async function handleMeDiaryImages(
 			is_public: toBooleanValue(body.is_public, true),
 			show_on_profile: toBooleanValue(body.show_on_profile, true),
 		});
+		if (created.file_id) {
+			await bindFileOwnerToUser(created.file_id, access.user.id);
+		}
 		return ok({ item: created });
 	}
 
@@ -1649,6 +1693,9 @@ async function handleMeDiaryImages(
 				imageId,
 				payload,
 			);
+			if (hasOwn(body, "file_id") && nextFileId) {
+				await bindFileOwnerToUser(nextFileId, access.user.id);
+			}
 			if (
 				hasOwn(body, "file_id") &&
 				prevFileId &&

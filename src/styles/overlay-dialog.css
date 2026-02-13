@@ -22,11 +22,15 @@
 
 .overlay-dialog-card {
   width: 90%;
-  max-width: 420px;
+  max-width: 640px;
+  max-height: min(86vh, 760px);
   padding: 2.5rem 2.25rem;
   border-radius: var(--radius-large);
   background: var(--card-bg);
+  display: flex;
+  flex-direction: column;
   text-align: center;
+  overflow-y: auto;
   transform: scale(0.92) translateY(12px);
   opacity: 0;
   animation: overlay-dialog-card-in 200ms cubic-bezier(0, 0, 0, 1) 50ms forwards;
@@ -44,6 +48,63 @@
 }
 
 :root.dark .overlay-dialog-message {
+  color: oklch(0.9 0.02 var(--hue));
+}
+
+.overlay-dialog-content {
+  display: grid;
+  gap: 0.625rem;
+  margin: -0.5rem 0 1.5rem;
+  text-align: left;
+}
+
+.overlay-dialog-content-two-columns {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.overlay-dialog-content[hidden] {
+  display: none !important;
+}
+
+.overlay-dialog-content-item {
+  border: 1px solid var(--line-divider);
+  border-radius: 0.65rem;
+  padding: 0.625rem 0.75rem;
+  background: color-mix(in oklab, var(--card-bg) 88%, var(--primary) 12%);
+}
+
+.overlay-dialog-content-item-primary {
+  border-color: color-mix(in oklab, var(--primary) 40%, var(--line-divider) 60%);
+  background: color-mix(in oklab, var(--card-bg) 80%, var(--primary) 20%);
+}
+
+.overlay-dialog-content-item-danger {
+  border-color: color-mix(in oklab, oklch(0.62 0.22 25) 40%, var(--line-divider) 60%);
+  background: color-mix(in oklab, var(--card-bg) 86%, oklch(0.62 0.22 25) 14%);
+}
+
+.overlay-dialog-content-item-full {
+  grid-column: 1 / -1;
+}
+
+.overlay-dialog-content-label {
+  margin: 0 0 0.25rem;
+  font-size: 0.75rem;
+  opacity: 0.74;
+  color: var(--deep-text);
+}
+
+.overlay-dialog-content-value {
+  margin: 0;
+  font-size: 0.9rem;
+  line-height: 1.45;
+  color: var(--deep-text);
+  word-break: break-word;
+  white-space: pre-wrap;
+}
+
+:root.dark .overlay-dialog-content-label,
+:root.dark .overlay-dialog-content-value {
   color: oklch(0.9 0.02 var(--hue));
 }
 
@@ -130,6 +191,10 @@ textarea.overlay-dialog-field-control {
   display: flex;
   gap: 0.75rem;
   justify-content: center;
+  position: sticky;
+  bottom: 0;
+  padding-top: 0.5rem;
+  background: var(--card-bg);
 }
 
 .overlay-dialog-actions a,
@@ -219,5 +284,21 @@ textarea.overlay-dialog-field-control {
   .overlay-dialog.is-closing,
   .overlay-dialog.is-closing .overlay-dialog-card {
     animation-duration: 1ms !important;
+  }
+}
+
+@media (max-width: 640px) {
+  .overlay-dialog-card {
+    width: calc(100% - 1.5rem);
+    max-height: 88vh;
+    padding: 1.25rem 1rem;
+  }
+
+  .overlay-dialog-content-two-columns {
+    grid-template-columns: 1fr;
+  }
+
+  .overlay-dialog-message {
+    margin-bottom: 1rem;
   }
 }

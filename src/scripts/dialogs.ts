@@ -219,7 +219,11 @@ export async function showFormDialog(
 declare global {
 	interface Window {
 		showAuthRequiredDialog: typeof showAuthRequiredDialog;
+		showConfirmDialog: typeof showConfirmDialog;
+		showNoticeDialog: typeof showNoticeDialog;
 	}
 }
 
 window.showAuthRequiredDialog = showAuthRequiredDialog;
+window.showConfirmDialog = showConfirmDialog;
+window.showNoticeDialog = showNoticeDialog;

@@ -12,6 +12,12 @@ import {
 	resolveAccessTokenMaxAgeSeconds,
 	type PublicUserInfo,
 } from "../../../server/directus-auth";
+import {
+	clearRegistrationRequestCookie,
+	normalizeRegistrationRequestId,
+	REGISTRATION_REQUEST_COOKIE_NAME,
+} from "../../../server/auth/registration-request-cookie";
+import { readMany } from "../../../server/directus/client";
 import { checkLoginRateLimitDistributed } from "../../../server/security/login-rate-limit";
 import type { JsonObject, JsonValue } from "../../../types/json";
 import { getJsonString, isJsonObject } from "../../../utils/json-utils";
@@ -50,6 +56,44 @@ function json<T>(data: T, init?: ResponseInit): Response {
 			...(init?.headers ?? {}),
 		},
 	});
+}
+
+async function shouldClearRegistrationCookieOnLogin(
+	context: APIContext,
+	userId: string,
+): Promise<boolean> {
+	const normalizedUserId = String(userId || "").trim();
+	if (!normalizedUserId) {
+		return false;
+	}
+	const requestId = normalizeRegistrationRequestId(
+		context.cookies.get(REGISTRATION_REQUEST_COOKIE_NAME)?.value,
+	);
+	if (!requestId) {
+		return false;
+	}
+	try {
+		const rows = await readMany("app_user_registration_requests", {
+			filter: { id: { _eq: requestId } } as JsonObject,
+			limit: 1,
+			fields: ["id", "request_status", "approved_user_id"],
+		});
+		const row = rows[0] as
+			| { request_status?: unknown; approved_user_id?: unknown }
+			| undefined;
+		if (!row) {
+			return true;
+		}
+		const status = String(row.request_status || "").trim();
+		const approvedUserId = String(row.approved_user_id || "").trim();
+		return status === "approved" && approvedUserId === normalizedUserId;
+	} catch (error) {
+		console.warn(
+			"[api/auth/login] skip registration cookie clear check:",
+			error,
+		);
+		return false;
+	}
 }
 
 export async function POST(context: APIContext): Promise<Response> {
@@ -137,16 +181,16 @@ export async function POST(context: APIContext): Promise<Response> {
 				sessionOnly,
 			}),
 		);
-		cookies.set(
-			REMEMBER_COOKIE_NAME,
-			remember ? "1" : "0",
-			getRememberCookieOptions({ requestUrl: url, remember }),
-		);
+			cookies.set(
+				REMEMBER_COOKIE_NAME,
+				remember ? "1" : "0",
+				getRememberCookieOptions({ requestUrl: url, remember }),
+			);
 
-		let user: PublicUserInfo = {
-			id: "",
-			email,
-			name: email,
+			let user: PublicUserInfo = {
+				id: "",
+				email,
+				name: email,
 		};
 		try {
 			const me = await directusGetMe({ accessToken: tokens.accessToken });
@@ -157,11 +201,14 @@ export async function POST(context: APIContext): Promise<Response> {
 				name: picked.name || user.name,
 				avatarUrl: picked.avatarUrl || user.avatarUrl,
 			};
-		} catch {
-			// 若 /users/me 失败，不影响登录态写入，前台可再调用 /api/auth/me
-		}
+			} catch {
+				// 若 /users/me 失败，不影响登录态写入，前台可再调用 /api/auth/me
+			}
+			if (await shouldClearRegistrationCookieOnLogin(context, user.id)) {
+				clearRegistrationRequestCookie(context);
+			}
 
-		return json(
+			return json(
 			{ ok: true, user },
 			{
 				headers: {

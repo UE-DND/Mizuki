@@ -345,6 +345,10 @@ const runDynamicPageInit = async (): Promise<void> => {
 		const { initSiteSettingsPage } =
 			await import("@/scripts/site-settings-page");
 		initSiteSettingsPage();
+	} else if (path === "/admin/users") {
+		const { initAdminUsersPage } =
+			await import("@/scripts/admin-users-page");
+		initAdminUsersPage();
 	}
 };
 

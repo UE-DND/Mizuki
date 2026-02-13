@@ -507,8 +507,12 @@ export function toErrorResponse(
 	context?: APIContext,
 ): Response {
 	const message = String((error as Error)?.message ?? error);
-	if (message.includes("FORBIDDEN")) {
-		return fail("权限不足", 403, "FORBIDDEN");
+	if (message.includes("REGISTRATION_REQUEST_FORBIDDEN")) {
+		return fail(
+			"无法操作当前申请，请刷新后重试",
+			403,
+			"REGISTRATION_REQUEST_FORBIDDEN",
+		);
 	}
 	if (message.includes("ACCOUNT_SUSPENDED")) {
 		return fail("账号已被停用", 403, "ACCOUNT_SUSPENDED");
@@ -561,6 +565,33 @@ export function toErrorResponse(
 			"REGISTRATION_REASON_TOO_LONG",
 		);
 	}
+	if (message.includes("REGISTRATION_PASSWORD_REQUIRED")) {
+		return fail("密码不能为空", 400, "REGISTRATION_PASSWORD_REQUIRED");
+	}
+	if (message.includes("REGISTRATION_PASSWORD_INVALID")) {
+		return fail(
+			"密码仅支持数字、字母、@ 和下划线",
+			400,
+			"REGISTRATION_PASSWORD_INVALID",
+		);
+	}
+	if (message.includes("REGISTRATION_PASSWORD_TOO_SHORT")) {
+		return fail("密码至少 8 位", 400, "REGISTRATION_PASSWORD_TOO_SHORT");
+	}
+	if (message.includes("REGISTRATION_PASSWORD_TOO_LONG")) {
+		return fail(
+			"密码长度不能超过 20 位",
+			400,
+			"REGISTRATION_PASSWORD_TOO_LONG",
+		);
+	}
+	if (message.includes("REGISTRATION_PASSWORD_MISSING")) {
+		return fail(
+			"申请缺少密码，请让用户重新提交申请",
+			400,
+			"REGISTRATION_PASSWORD_MISSING",
+		);
+	}
 	if (message.includes("REGISTRATION_ACTION_INVALID")) {
 		return fail("不支持的申请操作", 400, "REGISTRATION_ACTION_INVALID");
 	}
@@ -581,9 +612,16 @@ export function toErrorResponse(
 		return fail("删除账号失败，权限不足", 403, "USER_DELETE_FORBIDDEN");
 	}
 	if (
-		message.includes("CONSTRAINT") &&
-		message.includes("删除 Directus 用户")
+		message.includes("删除 Directus 用户") &&
+		/(constraint|foreign key|violat)/i.test(message)
 	) {
+		return fail(
+			"删除账号失败，请先处理该用户关联内容",
+			409,
+			"USER_DELETE_CONSTRAINT",
+		);
+	}
+	if (message.includes("删除 Directus 用户失败")) {
 		return fail(
 			"删除账号失败，请先处理该用户关联内容",
 			409,
@@ -628,6 +666,9 @@ export function toErrorResponse(
 	}
 	if (message.includes("SOCIAL_LINKS_TOO_MANY")) {
 		return fail("社交链接最多 20 条", 400, "SOCIAL_LINKS_TOO_MANY");
+	}
+	if (message.includes("FORBIDDEN")) {
+		return fail("权限不足", 403, "FORBIDDEN");
 	}
 	if (message.includes("ITEM_NOT_FOUND")) {
 		return fail("资源不存在", 404, "ITEM_NOT_FOUND");

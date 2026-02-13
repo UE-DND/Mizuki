@@ -4,6 +4,7 @@ import sharp from "sharp";
 import type { UploadPurpose } from "@/constants/upload-limits";
 import { UPLOAD_LIMITS, UPLOAD_LIMIT_LABELS } from "@/constants/upload-limits";
 import { assertCan } from "@/server/auth/acl";
+import { getSessionUser } from "@/server/auth/session";
 import {
 	uploadDirectusFile,
 	updateDirectusFileMetadata,
@@ -59,6 +60,7 @@ export async function handleUploads(context: APIContext): Promise<Response> {
 	}
 	const formData = await context.request.formData();
 	const purpose = resolvePurpose(formData.get("purpose"));
+	let ownerUserId: string | null;
 	if (purpose !== "registration-avatar") {
 		const required = await requireAccess(context);
 		if ("response" in required) {
@@ -66,6 +68,10 @@ export async function handleUploads(context: APIContext): Promise<Response> {
 		}
 		const access = required.access;
 		assertCan(access, "can_upload_files");
+		ownerUserId = access.user.id;
+	} else {
+		const sessionUser = await getSessionUser(context);
+		ownerUserId = sessionUser?.id || null;
 	}
 
 	const file = formData.get("file");
@@ -103,9 +109,10 @@ export async function handleUploads(context: APIContext): Promise<Response> {
 		title: requestedTitle || undefined,
 		folder: typeof folderRaw === "string" ? folderRaw : undefined,
 	});
-	if (requestedTitle && uploaded.id) {
+	if (uploaded.id && (requestedTitle || ownerUserId)) {
 		await updateDirectusFileMetadata(uploaded.id, {
-			title: requestedTitle,
+			title: requestedTitle || undefined,
+			uploaded_by: ownerUserId,
 		});
 	}
 	return ok({ file: uploaded });

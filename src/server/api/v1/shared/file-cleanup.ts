@@ -74,7 +74,8 @@ async function collectFileIdsFromCollection(
 		| "app_user_profiles"
 		| "app_articles"
 		| "app_anime_entries"
-		| "app_albums",
+		| "app_albums"
+		| "app_user_registration_requests",
 	field: "avatar_file" | "cover_file",
 	filter: JsonObject,
 ): Promise<string[]> {
@@ -87,6 +88,42 @@ async function collectFileIdsFromCollection(
 		(row) => row[field],
 	);
 	return toUniqueFileIds(values);
+}
+
+async function collectOwnedDirectusFileIds(userId: string): Promise<string[]> {
+	try {
+		const rows = await readMany("directus_files", {
+			filter: { uploaded_by: { _eq: userId } } as JsonObject,
+			fields: ["id"],
+			limit: 5000,
+		});
+		return toUniqueFileIds(
+			(rows as Array<Record<string, unknown>>).map((row) => row.id),
+		);
+	} catch (error) {
+		const message = String(error);
+		if (/forbidden|permission/i.test(message)) {
+			console.warn(
+				"[file-cleanup] skip collectOwnedDirectusFileIds due to permission:",
+				message,
+			);
+			return [];
+		}
+		throw error;
+	}
+}
+
+async function collectDirectusUserAvatarFileIds(
+	userId: string,
+): Promise<string[]> {
+	const rows = await readMany("directus_users", {
+		filter: { id: { _eq: userId } } as JsonObject,
+		fields: ["avatar"],
+		limit: 1,
+	});
+	return toUniqueFileIds(
+		(rows as Array<Record<string, unknown>>).map((row) => row.avatar),
+	);
 }
 
 async function collectRelationFileIds(
@@ -276,21 +313,37 @@ export async function collectAlbumFileIds(
 export async function collectUserOwnedFileIds(
 	userId: string,
 ): Promise<string[]> {
-	const [profileFiles, articleCoverFiles, animeCoverFiles, albumCoverFiles] =
-		await Promise.all([
-			collectFileIdsFromCollection("app_user_profiles", "avatar_file", {
-				user_id: { _eq: userId },
-			} as JsonObject),
-			collectFileIdsFromCollection("app_articles", "cover_file", {
-				author_id: { _eq: userId },
-			} as JsonObject),
-			collectFileIdsFromCollection("app_anime_entries", "cover_file", {
-				author_id: { _eq: userId },
-			} as JsonObject),
-			collectFileIdsFromCollection("app_albums", "cover_file", {
-				author_id: { _eq: userId },
-			} as JsonObject),
-		]);
+	const [
+		profileFiles,
+		directusAvatarFiles,
+		articleCoverFiles,
+		animeCoverFiles,
+		albumCoverFiles,
+	] = await Promise.all([
+		collectFileIdsFromCollection("app_user_profiles", "avatar_file", {
+			user_id: { _eq: userId },
+		} as JsonObject),
+		collectDirectusUserAvatarFileIds(userId),
+		collectFileIdsFromCollection("app_articles", "cover_file", {
+			author_id: { _eq: userId },
+		} as JsonObject),
+		collectFileIdsFromCollection("app_anime_entries", "cover_file", {
+			author_id: { _eq: userId },
+		} as JsonObject),
+		collectFileIdsFromCollection("app_albums", "cover_file", {
+			author_id: { _eq: userId },
+		} as JsonObject),
+	]);
+	const [registrationAvatarFiles, uploadedByFiles] = await Promise.all([
+		collectFileIdsFromCollection(
+			"app_user_registration_requests",
+			"avatar_file",
+			{
+				approved_user_id: { _eq: userId },
+			} as JsonObject,
+		),
+		collectOwnedDirectusFileIds(userId),
+	]);
 
 	const [albumIds, diaryIds] = await Promise.all([
 		collectOwnerIds("app_albums", "author_id", userId),
@@ -304,9 +357,12 @@ export async function collectUserOwnedFileIds(
 
 	return toUniqueFileIds([
 		...profileFiles,
+		...directusAvatarFiles,
 		...articleCoverFiles,
 		...animeCoverFiles,
 		...albumCoverFiles,
+		...registrationAvatarFiles,
+		...uploadedByFiles,
 		...albumPhotoFiles,
 		...diaryImageFiles,
 	]);

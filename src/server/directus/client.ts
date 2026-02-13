@@ -9,6 +9,7 @@ import {
 	isDirectusError,
 	readItem,
 	readItems,
+	readFiles,
 	readUser,
 	readUsers,
 	rest,
@@ -137,13 +138,18 @@ export async function readMany<K extends keyof DirectusSchema>(
 			return await getDirectusClient().request(readUsers(query as never));
 		})) as DirectusSchema[K];
 	}
+	if (collection === "directus_files") {
+		return (await runDirectusRequest("读取文件列表", async () => {
+			return await getDirectusClient().request(readFiles(query as never));
+		})) as DirectusSchema[K];
+	}
 
 	return (await runDirectusRequest(
 		`读取集合 ${String(collection)} 列表`,
 		async () => {
 			return await getDirectusClient().request(
 				readItems(
-					collection as Exclude<K, "directus_users">,
+					collection as Exclude<K, "directus_users" | "directus_files">,
 					query as never,
 				),
 			);
@@ -395,11 +401,72 @@ export async function updateDirectusFileMetadata(
 		description?: string | null;
 		filename_download?: string | null;
 		folder?: string | null;
+		uploaded_by?: string | null;
+		modified_by?: string | null;
 	},
 ): Promise<void> {
 	await runDirectusRequest("更新 Directus 文件元数据", async () => {
 		await getDirectusClient().request(updateFile(id, payload as never));
 	});
+}
+
+export async function updateManyItemsByFilter(params: {
+	collection: string;
+	filter: JsonObject;
+	data: JsonObject;
+}): Promise<void> {
+	const rows = await runDirectusRequest(
+		`读取集合 ${params.collection} 批量更新候选`,
+		async () => {
+			return await getDirectusClient().request(
+				customEndpoint({
+					path: `/items/${encodeURIComponent(params.collection)}`,
+					method: "GET",
+					params: {
+						filter: params.filter,
+						fields: ["id"],
+						limit: 5000,
+					},
+				}),
+			);
+		},
+	);
+	const list = Array.isArray(rows)
+		? rows
+		: Array.isArray((rows as { data?: unknown[] })?.data)
+			? ((rows as { data: unknown[] }).data ?? [])
+			: [];
+	const keys = list
+		.map((item) => {
+			if (item && typeof item === "object") {
+				const record = item as { id?: unknown };
+				return typeof record.id === "string"
+					? record.id
+					: String(record.id ?? "");
+			}
+			return "";
+		})
+		.map((id) => id.trim())
+		.filter(Boolean);
+	if (keys.length === 0) {
+		return;
+	}
+	await runDirectusRequest(
+		`批量更新集合 ${params.collection} 数据`,
+		async () => {
+			await getDirectusClient().request(
+				customEndpoint({
+					path: `/items/${encodeURIComponent(params.collection)}`,
+					method: "PATCH",
+					body:
+						{
+							keys,
+							data: params.data,
+						} as never,
+				}),
+			);
+		},
+	);
 }
 
 /**

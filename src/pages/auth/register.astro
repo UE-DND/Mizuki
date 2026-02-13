@@ -1,6 +1,19 @@
 ---
+import type {
+  AppUserRegistrationRequest,
+  RegistrationRequestStatus,
+} from "@/types/app";
+import type { JsonObject } from "@/types/json";
+import defaultAvatarAsset from "@/assets/images/avatar.webp";
 import MainGridLayout from "@layouts/MainGridLayout.astro";
 import { Icon } from "astro-icon/components";
+import { readMany } from "@/server/directus/client";
+import { buildDirectusAssetUrl } from "@/server/directus-auth";
+import { getSessionUser } from "@/server/auth/session";
+import {
+  normalizeRegistrationRequestId,
+  REGISTRATION_REQUEST_COOKIE_NAME,
+} from "@/server/auth/registration-request-cookie";
 import { getResolvedSiteSettings } from "@/server/site-settings/service";
 
 export const prerender = false;
@@ -11,8 +24,115 @@ const registerEnabled = Boolean(
   resolvedSettings.settings.auth?.register_enabled,
 );
 if (!registerEnabled) {
-  return Astro.rewrite("/404");
+  return Astro.redirect("/404");
 }
+
+const registrationRequestId = normalizeRegistrationRequestId(
+  Astro.cookies.get(REGISTRATION_REQUEST_COOKIE_NAME)?.value,
+);
+
+type RegistrationSnapshot = Pick<
+  AppUserRegistrationRequest,
+  | "id"
+  | "email"
+  | "username"
+  | "display_name"
+  | "avatar_file"
+  | "registration_reason"
+  | "request_status"
+  | "approved_user_id"
+  | "reviewed_at"
+  | "reject_reason"
+  | "date_created"
+>;
+
+let currentRegistration: RegistrationSnapshot | null = null;
+let hiddenBySessionMismatch = false;
+
+if (registrationRequestId) {
+  const rows = await readMany("app_user_registration_requests", {
+    filter: { id: { _eq: registrationRequestId } } as JsonObject,
+    limit: 1,
+    fields: [
+      "id",
+      "email",
+      "username",
+      "display_name",
+      "avatar_file",
+      "registration_reason",
+      "request_status",
+      "approved_user_id",
+      "reviewed_at",
+      "reject_reason",
+      "date_created",
+    ],
+  });
+  currentRegistration = (rows[0] as RegistrationSnapshot | undefined) || null;
+  const sessionUser = await getSessionUser(Astro);
+  if (currentRegistration && sessionUser) {
+    const approvedUserId = String(currentRegistration.approved_user_id || "").trim();
+    const canDisplayApprovedSelfStatus =
+      currentRegistration.request_status === "approved" &&
+      approvedUserId &&
+      approvedUserId === sessionUser.id;
+    if (!canDisplayApprovedSelfStatus) {
+      currentRegistration = null;
+      hiddenBySessionMismatch = true;
+    }
+  }
+  if (!currentRegistration && !hiddenBySessionMismatch) {
+    Astro.cookies.delete(REGISTRATION_REQUEST_COOKIE_NAME, { path: "/" });
+  }
+}
+
+const registrationStatusMeta: Record<
+  RegistrationRequestStatus,
+  {
+    label: string;
+    description: string;
+    tone: "warning" | "success" | "danger" | "neutral";
+  }
+> = {
+  pending: {
+    label: "待审批",
+    description: "申请已提交，等待管理员审核。",
+    tone: "warning",
+  },
+  approved: {
+    label: "已通过",
+    description: "申请已通过，请使用申请邮箱和密码登录。",
+    tone: "success",
+  },
+  rejected: {
+    label: "已拒绝",
+    description: "申请未通过，请查看拒绝原因。",
+    tone: "danger",
+  },
+  cancelled: {
+    label: "已取消",
+    description: "申请已被管理员取消。",
+    tone: "neutral",
+  },
+};
+
+const currentRegistrationStatus = currentRegistration
+  ? registrationStatusMeta[currentRegistration.request_status]
+  : null;
+const currentRegistrationAvatar = currentRegistration?.avatar_file
+  ? buildDirectusAssetUrl(currentRegistration.avatar_file, {
+      width: 160,
+      height: 160,
+      fit: "cover",
+    })
+  : "";
+const currentRegistrationReviewReason =
+  currentRegistration?.request_status === "rejected"
+    ? String(currentRegistration.reject_reason || "").trim()
+    : "";
+const currentRegistrationReason = String(
+  currentRegistration?.registration_reason || "",
+).trim();
+const defaultAvatarPreviewSrc = defaultAvatarAsset.src;
 ---
 
 <MainGridLayout title="注册申请" description="提交注册申请，等待管理员审批">
@@ -39,91 +159,290 @@ if (!registerEnabled) {
           </div>
         </div>
 
-        <form id="register-form" class="space-y-4">
-          <label class="block space-y-1">
-            <span class="text-sm text-70">邮箱</span>
-            <input
-              id="register-email"
-              type="email"
-              required
-              autocomplete="email"
-              class="w-full rounded-lg border border-(--line-divider) px-3 py-2.5 bg-transparent text-75"
-              placeholder="name@example.com"
-            />
-          </label>
-          <label class="block space-y-1">
-            <span class="text-sm text-70">用户名</span>
-            <input
-              id="register-username"
-              required
-              pattern="[A-Za-z0-9_-]+"
-              title="仅支持英文、数字、下划线和短横线"
-              class="w-full rounded-lg border border-(--line-divider) px-3 py-2.5 bg-transparent text-75"
-              placeholder="mizuki_user"
-            />
-          </label>
-          <label class="block space-y-1">
-            <span class="text-sm text-70">昵称</span>
-            <input
-              id="register-display-name"
-              required
-              class="w-full rounded-lg border border-(--line-divider) px-3 py-2.5 bg-transparent text-75"
-              placeholder="显示昵称"
-            />
-          </label>
-          <div class="space-y-2">
-            <span class="text-sm text-70">头像（可选）</span>
-            <div class="flex items-center gap-4">
-              <img
-                id="register-avatar-preview"
-                class="w-20 h-20 rounded-full object-cover border border-(--line-divider) bg-black/10 dark:bg-white/10"
-                alt="申请头像预览"
-                loading="lazy"
-              />
-              <div class="flex flex-wrap gap-2">
-                <button
-                  type="button"
-                  id="register-avatar-upload-btn"
-                  class="px-4 h-9 rounded-lg text-sm font-medium cursor-pointer bg-(--primary) text-white hover:opacity-90 transition"
+        {
+          currentRegistration ? (
+            <section class="space-y-4">
+              <div class="flex items-start justify-between gap-4 flex-wrap">
+                <div class="flex items-center gap-3">
+                  {currentRegistrationAvatar ? (
+                    <img
+                      class="w-12 h-12 rounded-full object-cover border border-(--line-divider) bg-black/10 dark:bg-white/10"
+                      src={currentRegistrationAvatar}
+                      alt="申请头像"
+                      onerror={`this.onerror=null;this.src='${defaultAvatarPreviewSrc}'`}
+                      loading="lazy"
+                    />
+                  ) : (
+                    <div class="w-12 h-12 rounded-full border border-(--line-divider) bg-black/10 dark:bg-white/10 inline-flex items-center justify-center text-60">
+                      <Icon
+                        name="material-symbols:person-rounded"
+                        class="text-xl"
+                      />
+                    </div>
+                  )}
+                  <div class="space-y-1">
+                    <p class="text-sm text-60">
+                      申请ID：{currentRegistration.id}
+                    </p>
+                    <p class="text-sm text-75">
+                      提交时间：{currentRegistration.date_created || "-"}
+                    </p>
+                  </div>
+                </div>
+                <span
+                  class:list={[
+                    "inline-flex items-center px-2.5 h-7 rounded-full text-xs font-medium",
+                    currentRegistrationStatus?.tone === "warning" &&
+                      "bg-amber-500/15 text-amber-600 dark:bg-amber-500/22 dark:text-amber-300",
+                    currentRegistrationStatus?.tone === "success" &&
+                      "bg-emerald-500/15 text-emerald-600 dark:bg-emerald-500/22 dark:text-emerald-300",
+                    currentRegistrationStatus?.tone === "danger" &&
+                      "bg-red-500/15 text-red-600 dark:bg-red-500/22 dark:text-red-300",
+                    currentRegistrationStatus?.tone === "neutral" &&
+                      "bg-black/8 text-70 dark:bg-white/10",
+                  ]}
                 >
-                  上传头像
-                </button>
-                <button
-                  type="button"
-                  id="register-avatar-clear-btn"
-                  class="px-4 h-9 rounded-lg text-sm border border-(--line-divider) text-75"
-                >
-                  清空
-                </button>
+                  {currentRegistrationStatus?.label ||
+                    currentRegistration.request_status}
+                </span>
               </div>
-            </div>
-          </div>
-          <label class="block space-y-1">
-            <span class="text-sm text-70">注册理由</span>
-            <textarea
-              id="register-reason"
-              required
-              rows="4"
-              maxlength="500"
-              class="w-full rounded-lg border border-(--line-divider) px-3 py-2.5 bg-transparent text-75 resize-none"
-              placeholder="请简单介绍你的用途或申请理由"></textarea>
-          </label>
-          <div id="register-message" class="text-sm text-70 hidden"></div>
-          <button
-            id="register-submit"
-            type="submit"
-            class="w-full px-4 py-2.5 rounded-lg bg-(--btn-regular-bg) text-(--btn-content) text-sm font-semibold"
-          >
-            <span id="register-submit-text">提交申请</span>
-          </button>
-        </form>
+              <p class="text-sm text-75">
+                {currentRegistrationStatus?.description || "申请状态已更新。"}
+              </p>
+              <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 text-sm">
+                <div class="rounded-lg border border-(--line-divider) bg-black/5 dark:bg-white/5 px-3 py-2.5">
+                  <p class="text-60 text-xs mb-1">邮箱</p>
+                  <p class="text-90 break-all">{currentRegistration.email}</p>
+                </div>
+                <div class="rounded-lg border border-(--line-divider) bg-black/5 dark:bg-white/5 px-3 py-2.5">
+                  <p class="text-60 text-xs mb-1">用户名</p>
+                  <p class="text-90 break-all">
+                    {currentRegistration.username}
+                  </p>
+                </div>
+                <div class="rounded-lg border border-(--line-divider) bg-black/5 dark:bg-white/5 px-3 py-2.5">
+                  <p class="text-60 text-xs mb-1">昵称</p>
+                  <p class="text-90 break-all">
+                    {currentRegistration.display_name}
+                  </p>
+                </div>
+                <div class="rounded-lg border border-(--line-divider) bg-black/5 dark:bg-white/5 px-3 py-2.5">
+                  <p class="text-60 text-xs mb-1">审批时间</p>
+                  <p class="text-90 break-all">
+                    {currentRegistration.reviewed_at || "-"}
+                  </p>
+                </div>
+                <div class="rounded-lg border border-(--line-divider) bg-black/5 dark:bg-white/5 px-3 py-2.5 sm:col-span-2">
+                  <p class="text-60 text-xs mb-1">注册理由</p>
+                  <p class="text-90 whitespace-pre-wrap break-all">
+                    {currentRegistrationReason || "-"}
+                  </p>
+                </div>
+                {currentRegistrationReviewReason ? (
+                  <div class="rounded-lg border border-red-500/35 bg-red-500/5 dark:border-red-400/35 dark:bg-red-500/12 px-3 py-2.5 sm:col-span-2">
+                    <p class="text-red-600 dark:text-red-300 text-xs mb-1">
+                      审批说明
+                    </p>
+                    <p class="text-red-700/90 dark:text-red-200/90 whitespace-pre-wrap break-all">
+                      {currentRegistrationReviewReason}
+                    </p>
+                  </div>
+                ) : null}
+              </div>
+              <div class="flex items-center gap-3 pt-2">
+                <a
+                  href="/auth/login"
+                  class="px-4 h-9 rounded-lg text-sm font-medium bg-(--btn-regular-bg) text-(--btn-content) inline-flex items-center"
+                >
+                  前往登录
+                </a>
+                {currentRegistration.request_status === "pending" ? (
+                  <button
+                    id="register-cancel-btn"
+                    type="button"
+                    data-request-id={currentRegistration.id}
+                    class="px-4 h-9 rounded-lg text-sm font-medium border border-red-500/50 text-red-600 dark:text-red-300 hover:bg-red-500/10 transition"
+                  >
+                    取消申请
+                  </button>
+                ) : null}
+                {currentRegistration.request_status === "rejected" ||
+                currentRegistration.request_status === "cancelled" ? (
+                  <button
+                    id="register-reapply-btn"
+                    type="button"
+                    data-reapply-email={currentRegistration.email}
+                    data-reapply-username={currentRegistration.username}
+                    data-reapply-display-name={currentRegistration.display_name}
+                    data-reapply-reason={currentRegistrationReason}
+                    data-reapply-avatar-file={
+                      currentRegistration.avatar_file || ""
+                    }
+                    data-reapply-avatar-url={currentRegistrationAvatar}
+                    class="px-4 h-9 rounded-lg text-sm font-medium border border-(--line-divider) text-75 hover:bg-(--btn-plain-bg-hover) transition"
+                  >
+                    重新提交申请
+                  </button>
+                ) : null}
+              </div>
+            </section>
+          ) : (
+            <>
+              <form id="register-form" class="space-y-4">
+                <label class="block space-y-1">
+                  <span class="text-sm text-70">邮箱</span>
+                  <input
+                    id="register-email"
+                    type="email"
+                    required
+                    autocomplete="email"
+                    class="w-full rounded-lg border border-(--line-divider) px-3 py-2.5 bg-transparent text-75"
+                    placeholder="name@example.com"
+                  />
+                  <span
+                    id="register-email-hint"
+                    class="text-xs text-60 hidden"
+                  />
+                </label>
+                <label class="block space-y-1">
+                  <span class="text-sm text-70">用户名</span>
+                  <input
+                    id="register-username"
+                    required
+                    pattern="[A-Za-z0-9_-]+"
+                    title="仅支持英文、数字、下划线和短横线"
+                    class="w-full rounded-lg border border-(--line-divider) px-3 py-2.5 bg-transparent text-75"
+                    placeholder="mizuki_user"
+                  />
+                  <span
+                    id="register-username-hint"
+                    class="text-xs text-60 hidden"
+                  />
+                </label>
+                <label class="block space-y-1">
+                  <span class="text-sm text-70">昵称</span>
+                  <input
+                    id="register-display-name"
+                    required
+                    class="w-full rounded-lg border border-(--line-divider) px-3 py-2.5 bg-transparent text-75"
+                    placeholder="显示昵称"
+                  />
+                </label>
+                <label class="block space-y-1">
+                  <span class="text-sm text-70">密码</span>
+                  <div class="relative">
+                    <input
+                      id="register-password"
+                      type="password"
+                      required
+                      minlength="8"
+                      maxlength="20"
+                      pattern="[A-Za-z0-9@_]+"
+                      title="仅支持数字、字母、@和下划线"
+                      autocomplete="new-password"
+                      class="w-full rounded-lg border border-(--line-divider) pl-3 pr-11 py-2.5 bg-transparent text-75"
+                      placeholder="请设置登录密码（8-20 位）"
+                    />
+                    <button
+                      id="register-password-toggle"
+                      type="button"
+                      class="absolute right-2 top-1/2 -translate-y-1/2 border border-(--line-divider) bg-white/70 dark:bg-zinc-800/72 text-zinc-800 dark:text-zinc-200 w-8 h-8 rounded-lg inline-flex items-center justify-center hover:border-(--primary) hover:bg-(--primary)/10 transition"
+                      aria-label="显示密码"
+                      aria-pressed="false"
+                    >
+                      <svg
+                        class="register-password-icon register-password-icon-show w-4 h-4"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        stroke-width="1.8"
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                        aria-hidden="true"
+                      >
+                        <path d="M2 12s3.5-6 10-6 10 6 10 6-3.5 6-10 6-10-6-10-6z" />
+                        <circle cx="12" cy="12" r="3" />
+                      </svg>
+                      <svg
+                        class="register-password-icon register-password-icon-hide hidden w-4 h-4"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        stroke-width="1.8"
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                        aria-hidden="true"
+                      >
+                        <path d="M3 3l18 18" />
+                        <path d="M10.6 10.6a2 2 0 102.8 2.8" />
+                        <path d="M9.9 5.3A11 11 0 0112 5c6.5 0 10 7 10 7a16.2 16.2 0 01-4 4.7" />
+                        <path d="M6.3 6.3A16.1 16.1 0 002 12s3.5 7 10 7c1 0 2-.2 2.9-.5" />
+                      </svg>
+                    </button>
+                  </div>
+                  <span
+                    id="register-password-hint"
+                    class="text-xs text-60 hidden"
+                  />
+                </label>
+                <div class="space-y-2">
+                  <span class="text-sm text-70">头像（可选）</span>
+                  <div class="flex items-center gap-4">
+                    <img
+                      id="register-avatar-preview"
+                      src={defaultAvatarPreviewSrc}
+                      class="w-20 h-20 rounded-full object-cover border border-(--line-divider) bg-black/10 dark:bg-white/10"
+                      alt="申请头像预览"
+                      loading="lazy"
+                    />
+                    <div class="flex flex-wrap gap-2">
+                      <button
+                        type="button"
+                        id="register-avatar-upload-btn"
+                        class="px-4 h-9 rounded-lg text-sm font-medium cursor-pointer bg-(--primary) text-white hover:opacity-90 transition"
+                      >
+                        上传头像
+                      </button>
+                      <button
+                        type="button"
+                        id="register-avatar-clear-btn"
+                        class="px-4 h-9 rounded-lg text-sm border border-(--line-divider) text-75"
+                      >
+                        清空
+                      </button>
+                    </div>
+                  </div>
+                </div>
+                <label class="block space-y-1">
+                  <span class="text-sm text-70">注册理由</span>
+                  <textarea
+                    id="register-reason"
+                    required
+                    rows="4"
+                    maxlength="500"
+                    class="w-full rounded-lg border border-(--line-divider) px-3 py-2.5 bg-transparent text-75 resize-none"
+                    placeholder="请简单介绍你的用途或申请理由"
+                  />
+                </label>
+                <div id="register-message" class="text-sm text-70 hidden" />
+                <button
+                  id="register-submit"
+                  type="submit"
+                  class="w-full px-4 py-2.5 rounded-lg bg-(--btn-regular-bg) text-(--btn-content) text-sm font-semibold"
+                >
+                  <span id="register-submit-text">提交申请</span>
+                </button>
+              </form>
 
-        <p class="text-sm text-70">
-          已有账号？
-          <a class="text-(--primary) hover:underline" href="/auth/login">
-            前往登录
-          </a>
-        </p>
+              <p class="text-sm text-70">
+                已有账号？
+                <a class="text-(--primary) hover:underline" href="/auth/login">
+                  前往登录
+                </a>
+              </p>
+            </>
+          )
+        }
       </div>
     </div>
     <div data-enter-skeleton-inline-placeholder aria-hidden="true">
@@ -281,15 +600,22 @@ if (!registerEnabled) {
     </div>
   </div>
 
-  <script is:inline>
+  <script>
+    import "@/scripts/dialogs";
+  </script>
+
+  <script is:inline define:vars={{ defaultAvatarPreviewSrc }}>
     const API_REGISTER = "/api/v1/public/registration-requests";
+    const API_REGISTER_CHECK = "/api/v1/public/registration-check";
+    const API_REGISTER_SESSION = "/api/v1/public/registration-session";
+    const API_REGISTER_BASE = "/api/v1/public/registration-requests";
     const API_UPLOAD = "/api/v1/uploads";
     const DATA_BOUND = "data-register-bound";
+    const REAPPLY_DRAFT_STORAGE_KEY = "mzk_registration_reapply_draft_v1";
     const AVATAR_OUTPUT_SIZE = 512;
     const AVATAR_ZOOM_MIN = 100;
     const AVATAR_ZOOM_MAX = 300;
-    const EMPTY_AVATAR_SRC =
-      "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='128' height='128'%3E%3Crect width='128' height='128' fill='%23d1d5db'/%3E%3C/svg%3E";
+    const DEFAULT_AVATAR_SRC = String(defaultAvatarPreviewSrc || "").trim();
 
     function setPageMessage(message, tone = "normal") {
       const messageEl = document.getElementById("register-message");
@@ -310,12 +636,77 @@ if (!registerEnabled) {
       messageEl.textContent = message;
     }
 
+    function setFieldHint(element, message, tone = "default") {
+      if (!element) {
+        return;
+      }
+      const text = String(message || "").trim();
+      element.classList.remove(
+        "hidden",
+        "text-60",
+        "text-red-500",
+        "text-emerald-600",
+        "text-(--primary)",
+      );
+      if (!text) {
+        element.textContent = "";
+        element.classList.add("hidden");
+        return;
+      }
+      element.textContent = text;
+      if (tone === "error") {
+        element.classList.add("text-red-500");
+        return;
+      }
+      if (tone === "success") {
+        element.classList.add("text-emerald-600");
+        return;
+      }
+      if (tone === "loading") {
+        element.classList.add("text-(--primary)");
+        return;
+      }
+      element.classList.add("text-60");
+    }
+
+    async function requestRegistrationCheck({ email, username }) {
+      const params = new URLSearchParams();
+      if (email) {
+        params.set("email", email);
+      }
+      if (username) {
+        params.set("username", username);
+      }
+      const response = await fetch(
+        `${API_REGISTER_CHECK}?${params.toString()}`,
+        {
+          method: "GET",
+          credentials: "include",
+          headers: {
+            Accept: "application/json",
+          },
+        },
+      );
+      const data = await response.json().catch(() => null);
+      if (!response.ok || !data?.ok) {
+        throw new Error(resolveRegisterError(data));
+      }
+      return data;
+    }
+
     function buildAssetUrl(fileId) {
       const normalized = String(fileId || "").trim();
       if (!normalized) {
         return "";
       }
       return `/api/v1/public/assets/${encodeURIComponent(normalized)}?width=160&height=160&fit=cover`;
+    }
+
+    function toSafeFileLabel(value) {
+      return String(value || "")
+        .trim()
+        .replace(/[\\/:*?"<>|]/g, "-")
+        .replace(/\s+/g, " ");
     }
 
     function resolveRegisterError(data) {
@@ -335,7 +726,74 @@ if (!registerEnabled) {
       if (code === "REGISTRATION_STATUS_CONFLICT") {
         return "申请状态已变更，请刷新列表";
       }
+      if (code === "REGISTRATION_REQUEST_FORBIDDEN") {
+        return "无法操作当前申请，请刷新后重试";
+      }
+      if (code === "REGISTRATION_PASSWORD_REQUIRED") {
+        return "请填写密码";
+      }
+      if (code === "REGISTRATION_PASSWORD_INVALID") {
+        return "密码仅支持数字、字母、@和下划线";
+      }
+      if (code === "REGISTRATION_PASSWORD_TOO_SHORT") {
+        return "密码至少 8 位";
+      }
+      if (code === "REGISTRATION_PASSWORD_TOO_LONG") {
+        return "密码长度不能超过 20 位";
+      }
       return String(data?.message || "提交失败");
+    }
+
+    function persistReapplyDraft(draft) {
+      try {
+        const payload = {
+          email: String(draft?.email || "").trim(),
+          username: String(draft?.username || "").trim(),
+          displayName: String(draft?.displayName || "").trim(),
+          reason: String(draft?.reason || "").trim(),
+          avatarFileId: String(draft?.avatarFileId || "").trim(),
+          avatarUrl: String(draft?.avatarUrl || "").trim(),
+        };
+        if (
+          !payload.email &&
+          !payload.username &&
+          !payload.displayName &&
+          !payload.reason &&
+          !payload.avatarFileId
+        ) {
+          return;
+        }
+        window.sessionStorage.setItem(
+          REAPPLY_DRAFT_STORAGE_KEY,
+          JSON.stringify(payload),
+        );
+      } catch {
+        // ignore
+      }
+    }
+
+    function consumeReapplyDraft() {
+      try {
+        const raw = window.sessionStorage.getItem(REAPPLY_DRAFT_STORAGE_KEY);
+        if (!raw) {
+          return null;
+        }
+        window.sessionStorage.removeItem(REAPPLY_DRAFT_STORAGE_KEY);
+        const data = JSON.parse(raw);
+        if (!data || typeof data !== "object") {
+          return null;
+        }
+        return {
+          email: String(data.email || "").trim(),
+          username: String(data.username || "").trim(),
+          displayName: String(data.displayName || "").trim(),
+          reason: String(data.reason || "").trim(),
+          avatarFileId: String(data.avatarFileId || "").trim(),
+          avatarUrl: String(data.avatarUrl || "").trim(),
+        };
+      } catch {
+        return null;
+      }
     }
 
     async function initRegisterPage() {
@@ -345,8 +803,15 @@ if (!registerEnabled) {
       }
 
       const emailEl = document.getElementById("register-email");
+      const emailHintEl = document.getElementById("register-email-hint");
       const usernameEl = document.getElementById("register-username");
+      const usernameHintEl = document.getElementById("register-username-hint");
       const displayNameEl = document.getElementById("register-display-name");
+      const passwordEl = document.getElementById("register-password");
+      const passwordHintEl = document.getElementById("register-password-hint");
+      const passwordToggleEl = document.getElementById(
+        "register-password-toggle",
+      );
       const reasonEl = document.getElementById("register-reason");
       const submitBtn = document.getElementById("register-submit");
       const submitText = document.getElementById("register-submit-text");
@@ -384,8 +849,13 @@ if (!registerEnabled) {
 
       if (
         !emailEl ||
+        !emailHintEl ||
         !usernameEl ||
+        !usernameHintEl ||
         !displayNameEl ||
+        !passwordEl ||
+        !passwordHintEl ||
+        !passwordToggleEl ||
         !reasonEl ||
         !submitBtn ||
         !submitText ||
@@ -412,10 +882,31 @@ if (!registerEnabled) {
       }
       form.setAttribute(DATA_BOUND, "1");
 
-      avatarPreviewEl.src = EMPTY_AVATAR_SRC;
+      const setAvatarPreviewSrc = (input) => {
+        const next = String(input || "").trim() || DEFAULT_AVATAR_SRC;
+        avatarPreviewEl.dataset.fallbackApplied = "0";
+        avatarPreviewEl.src = next;
+      };
+      avatarPreviewEl.addEventListener("error", () => {
+        if (avatarPreviewEl.dataset.fallbackApplied === "1") {
+          return;
+        }
+        avatarPreviewEl.dataset.fallbackApplied = "1";
+        avatarPreviewEl.src = DEFAULT_AVATAR_SRC;
+      });
+      setAvatarPreviewSrc(DEFAULT_AVATAR_SRC);
 
       let avatarFileId = "";
+      let pendingAvatarBlob = null;
+      let pendingAvatarPreviewUrl = "";
       let avatarUploading = false;
+      let emailCheckSeq = 0;
+      let usernameCheckSeq = 0;
+      let emailCheckTimer = 0;
+      let usernameCheckTimer = 0;
+      let emailCheckPassed = false;
+      let usernameCheckPassed = false;
+      let passwordCheckPassed = false;
       let cropObjectUrl = "";
       let cropLoaded = false;
       let cropImageWidth = 0;
@@ -430,6 +921,221 @@ if (!registerEnabled) {
       let cropPointerY = 0;
 
       const clamp = (value, min, max) => Math.min(max, Math.max(min, value));
+
+      const revokePendingAvatarPreviewUrl = () => {
+        if (!pendingAvatarPreviewUrl) {
+          return;
+        }
+        URL.revokeObjectURL(pendingAvatarPreviewUrl);
+        pendingAvatarPreviewUrl = "";
+      };
+
+      const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      const USERNAME_PATTERN = /^[A-Za-z0-9_-]+$/;
+      const PASSWORD_PATTERN = /^[A-Za-z0-9@_]+$/;
+      const PASSWORD_MIN_LENGTH = 8;
+      const PASSWORD_MAX_LENGTH = 20;
+
+      const validateEmailField = async (force = false) => {
+        const value = String(emailEl.value || "").trim();
+        emailCheckPassed = false;
+        if (!value) {
+          setFieldHint(emailHintEl, "请输入邮箱", "default");
+          return false;
+        }
+        if (!EMAIL_PATTERN.test(value)) {
+          setFieldHint(emailHintEl, "邮箱格式不正确", "error");
+          return false;
+        }
+
+        const run = async () => {
+          const currentSeq = ++emailCheckSeq;
+          setFieldHint(emailHintEl, "检查中...", "loading");
+          try {
+            const data = await requestRegistrationCheck({ email: value });
+            if (currentSeq !== emailCheckSeq) {
+              return false;
+            }
+            const result = data?.email;
+            if (result?.valid && result?.available) {
+              emailCheckPassed = true;
+              setFieldHint(emailHintEl, "邮箱可用", "success");
+              return true;
+            }
+            setFieldHint(emailHintEl, result?.message || "邮箱不可用", "error");
+            return false;
+          } catch (error) {
+            if (currentSeq !== emailCheckSeq) {
+              return false;
+            }
+            setFieldHint(
+              emailHintEl,
+              error instanceof Error ? error.message : "邮箱校验失败",
+              "error",
+            );
+            return false;
+          }
+        };
+
+        if (force) {
+          return await run();
+        }
+        window.clearTimeout(emailCheckTimer);
+        emailCheckTimer = window.setTimeout(() => {
+          void run();
+        }, 350);
+        return false;
+      };
+
+      const validateUsernameField = async (force = false) => {
+        const value = String(usernameEl.value || "").trim();
+        usernameCheckPassed = false;
+        if (!value) {
+          setFieldHint(usernameHintEl, "请输入用户名", "default");
+          return false;
+        }
+        if (!USERNAME_PATTERN.test(value)) {
+          setFieldHint(
+            usernameHintEl,
+            "用户名仅支持英文、数字、下划线和短横线",
+            "error",
+          );
+          return false;
+        }
+        if (value.length > 14) {
+          setFieldHint(usernameHintEl, "用户名最多 14 字符", "error");
+          return false;
+        }
+
+        const run = async () => {
+          const currentSeq = ++usernameCheckSeq;
+          setFieldHint(usernameHintEl, "检查中...", "loading");
+          try {
+            const data = await requestRegistrationCheck({ username: value });
+            if (currentSeq !== usernameCheckSeq) {
+              return false;
+            }
+            const result = data?.username;
+            if (result?.valid && result?.available) {
+              usernameCheckPassed = true;
+              setFieldHint(usernameHintEl, "用户名可用", "success");
+              return true;
+            }
+            setFieldHint(
+              usernameHintEl,
+              result?.message || "用户名不可用",
+              "error",
+            );
+            return false;
+          } catch (error) {
+            if (currentSeq !== usernameCheckSeq) {
+              return false;
+            }
+            setFieldHint(
+              usernameHintEl,
+              error instanceof Error ? error.message : "用户名校验失败",
+              "error",
+            );
+            return false;
+          }
+        };
+
+        if (force) {
+          return await run();
+        }
+        window.clearTimeout(usernameCheckTimer);
+        usernameCheckTimer = window.setTimeout(() => {
+          void run();
+        }, 350);
+        return false;
+      };
+
+      const setPasswordVisible = (visible) => {
+        const nextType = visible ? "text" : "password";
+        try {
+          passwordEl.type = nextType;
+        } catch {
+          // ignore
+        }
+        const actuallyVisible = passwordEl.type === "text";
+        passwordToggleEl
+          .querySelector(".register-password-icon-show")
+          ?.classList.toggle("hidden", actuallyVisible);
+        passwordToggleEl
+          .querySelector(".register-password-icon-hide")
+          ?.classList.toggle("hidden", !actuallyVisible);
+        passwordToggleEl.setAttribute(
+          "aria-label",
+          actuallyVisible ? "隐藏密码" : "显示密码",
+        );
+        passwordToggleEl.setAttribute(
+          "aria-pressed",
+          actuallyVisible ? "true" : "false",
+        );
+      };
+
+      const validatePasswordField = (force = false) => {
+        const value = String(passwordEl.value || "");
+        const trimmed = value.trim();
+        passwordCheckPassed = false;
+        if (!trimmed) {
+          setFieldHint(
+            passwordHintEl,
+            force ? "密码不能为空" : "请设置登录密码",
+            force ? "error" : "default",
+          );
+          return false;
+        }
+        if (value.length < PASSWORD_MIN_LENGTH) {
+          setFieldHint(passwordHintEl, "密码至少 8 位", "error");
+          return false;
+        }
+        if (value.length > PASSWORD_MAX_LENGTH) {
+          setFieldHint(passwordHintEl, "密码长度不能超过 20 位", "error");
+          return false;
+        }
+        if (!PASSWORD_PATTERN.test(value)) {
+          setFieldHint(
+            passwordHintEl,
+            "密码仅支持数字、字母、@和下划线",
+            "error",
+          );
+          return false;
+        }
+        passwordCheckPassed = true;
+        setFieldHint(passwordHintEl, "密码长度符合要求", "success");
+        return true;
+      };
+
+      const reapplyDraft = consumeReapplyDraft();
+      if (reapplyDraft) {
+        if (reapplyDraft.email) {
+          emailEl.value = reapplyDraft.email;
+        }
+        if (reapplyDraft.username) {
+          usernameEl.value = reapplyDraft.username;
+        }
+        if (reapplyDraft.displayName) {
+          displayNameEl.value = reapplyDraft.displayName;
+        }
+        if (reapplyDraft.reason) {
+          reasonEl.value = reapplyDraft.reason;
+        }
+        if (reapplyDraft.avatarFileId) {
+          avatarFileId = reapplyDraft.avatarFileId;
+          pendingAvatarBlob = null;
+          revokePendingAvatarPreviewUrl();
+          setAvatarPreviewSrc(
+            reapplyDraft.avatarUrl || buildAssetUrl(reapplyDraft.avatarFileId),
+          );
+        }
+        void validateEmailField(false);
+        void validateUsernameField(false);
+        setPageMessage(
+          "已自动填充上次申请信息，请重新填写密码后提交",
+          "success",
+        );
+      }
 
       const setCropMessage = (message) => {
         cropMsg.textContent = String(message || "");
@@ -605,14 +1311,15 @@ if (!registerEnabled) {
           cropImageHeight * cropScale * ratio,
         );
         return await new Promise((resolve) => {
-          canvas.toBlob((blob) => resolve(blob), "image/png");
+          canvas.toBlob((blob) => resolve(blob), "image/jpeg", 0.92);
         });
       };
 
       const uploadCroppedAvatar = async (blob) => {
+        const avatarTitleBase = `Avatar-${toSafeFileLabel(String(emailEl.value || "").trim() || "unknown")}`;
         const formData = new FormData();
-        formData.append("file", blob, "registration-avatar.png");
-        formData.append("title", "Registration Avatar");
+        formData.append("file", blob, `${avatarTitleBase}.jpg`);
+        formData.append("title", avatarTitleBase);
         formData.append("purpose", "registration-avatar");
         const response = await fetch(API_UPLOAD, {
           method: "POST",
@@ -638,9 +1345,11 @@ if (!registerEnabled) {
             setCropMessage("裁剪失败，请重试");
             return;
           }
-          const fileId = await uploadCroppedAvatar(blob);
-          avatarFileId = fileId;
-          avatarPreviewEl.src = buildAssetUrl(fileId) || EMPTY_AVATAR_SRC;
+          pendingAvatarBlob = blob;
+          avatarFileId = "";
+          revokePendingAvatarPreviewUrl();
+          pendingAvatarPreviewUrl = URL.createObjectURL(blob);
+          setAvatarPreviewSrc(pendingAvatarPreviewUrl);
           closeCropModal();
         } catch (error) {
           setCropMessage(
@@ -653,9 +1362,38 @@ if (!registerEnabled) {
       };
 
       avatarUploadBtn.addEventListener("click", openCropModal);
+      emailEl.addEventListener("input", () => {
+        void validateEmailField(false);
+      });
+      emailEl.addEventListener("blur", () => {
+        void validateEmailField(true);
+      });
+      usernameEl.addEventListener("input", () => {
+        void validateUsernameField(false);
+      });
+      usernameEl.addEventListener("blur", () => {
+        void validateUsernameField(true);
+      });
+      passwordEl.addEventListener("input", () => {
+        validatePasswordField(false);
+      });
+      passwordEl.addEventListener("blur", () => {
+        validatePasswordField(true);
+      });
+      setPasswordVisible(false);
+      passwordToggleEl.addEventListener("pointerdown", (event) => {
+        event.preventDefault();
+      });
+      passwordToggleEl.addEventListener("click", (event) => {
+        event.preventDefault();
+        event.stopPropagation();
+        setPasswordVisible(passwordEl.type === "password");
+      });
       avatarClearBtn.addEventListener("click", () => {
         avatarFileId = "";
-        avatarPreviewEl.src = EMPTY_AVATAR_SRC;
+        pendingAvatarBlob = null;
+        revokePendingAvatarPreviewUrl();
+        setAvatarPreviewSrc(DEFAULT_AVATAR_SRC);
       });
       cropSelectBtn.addEventListener("click", () => cropFileInput.click());
       cropFileInput.addEventListener("change", () => {
@@ -720,28 +1458,63 @@ if (!registerEnabled) {
       form.addEventListener("submit", async (event) => {
         event.preventDefault();
         setPageMessage("");
-
-        const payload = {
-          email: String(emailEl.value || "").trim(),
-          username: String(usernameEl.value || "").trim(),
-          display_name: String(displayNameEl.value || "").trim(),
-          registration_reason: String(reasonEl.value || "").trim(),
-          avatar_file: avatarFileId || null,
-        };
+        const email = String(emailEl.value || "").trim();
+        const username = String(usernameEl.value || "").trim();
+        const displayName = String(displayNameEl.value || "").trim();
+        const password = String(passwordEl.value || "");
+        const registrationReason = String(reasonEl.value || "").trim();
 
         if (
-          !payload.email ||
-          !payload.username ||
-          !payload.display_name ||
-          !payload.registration_reason
+          !email ||
+          !username ||
+          !displayName ||
+          !password ||
+          !registrationReason
         ) {
           setPageMessage("请完整填写申请信息", "error");
+          return;
+        }
+        if (password.length < 8 || password.length > 20) {
+          setPageMessage("密码长度需为 8-20 位", "error");
+          return;
+        }
+        const passwordAvailable = passwordCheckPassed
+          ? true
+          : validatePasswordField(true);
+        if (!passwordAvailable) {
+          setPageMessage("请先修正密码后再提交", "error");
+          return;
+        }
+        const [emailAvailable, usernameAvailable] = await Promise.all([
+          emailCheckPassed ? Promise.resolve(true) : validateEmailField(true),
+          usernameCheckPassed
+            ? Promise.resolve(true)
+            : validateUsernameField(true),
+        ]);
+        if (!emailAvailable || !usernameAvailable) {
+          setPageMessage("请先修正邮箱或用户名后再提交", "error");
           return;
         }
 
         submitBtn.disabled = true;
         submitText.textContent = "提交中...";
         try {
+          if (pendingAvatarBlob) {
+            submitText.textContent = "上传头像中...";
+            avatarFileId = await uploadCroppedAvatar(pendingAvatarBlob);
+            pendingAvatarBlob = null;
+            revokePendingAvatarPreviewUrl();
+            setAvatarPreviewSrc(buildAssetUrl(avatarFileId));
+            submitText.textContent = "提交中...";
+          }
+          const payload = {
+            email,
+            username,
+            display_name: displayName,
+            password,
+            registration_reason: registrationReason,
+            avatar_file: avatarFileId || null,
+          };
           const response = await fetch(API_REGISTER, {
             method: "POST",
             credentials: "include",
@@ -756,10 +1529,8 @@ if (!registerEnabled) {
             setPageMessage(resolveRegisterError(data), "error");
             return;
           }
-          setPageMessage("申请已提交，请等待管理员审核", "success");
-          form.reset();
-          avatarFileId = "";
-          avatarPreviewEl.src = EMPTY_AVATAR_SRC;
+          window.location.assign("/auth/register");
+          return;
         } catch (error) {
           setPageMessage(
             error instanceof Error ? error.message : "提交失败，请稍后重试",
@@ -772,7 +1543,111 @@ if (!registerEnabled) {
       });
     }
 
-    initRegisterPage();
-    document.addEventListener("astro:after-swap", initRegisterPage);
+    function initRegistrationStatusPage() {
+      const retryButton = document.getElementById("register-reapply-btn");
+      if (retryButton && !retryButton.hasAttribute("data-bound")) {
+        retryButton.setAttribute("data-bound", "1");
+        const originalText = retryButton.textContent || "重新提交申请";
+        retryButton.addEventListener("click", async () => {
+          persistReapplyDraft({
+            email: retryButton.getAttribute("data-reapply-email"),
+            username: retryButton.getAttribute("data-reapply-username"),
+            displayName: retryButton.getAttribute("data-reapply-display-name"),
+            reason: retryButton.getAttribute("data-reapply-reason"),
+            avatarFileId: retryButton.getAttribute("data-reapply-avatar-file"),
+            avatarUrl: retryButton.getAttribute("data-reapply-avatar-url"),
+          });
+          retryButton.setAttribute("disabled", "true");
+          retryButton.textContent = "处理中...";
+          try {
+            const response = await fetch(API_REGISTER_SESSION, {
+              method: "DELETE",
+              credentials: "include",
+              headers: {
+                Accept: "application/json",
+              },
+            });
+            const data = await response.json().catch(() => null);
+            if (!response.ok || !data?.ok) {
+              window.alert(resolveRegisterError(data));
+              return;
+            }
+            window.location.assign("/auth/register");
+          } catch (error) {
+            window.alert(error instanceof Error ? error.message : "重置失败");
+          } finally {
+            retryButton.removeAttribute("disabled");
+            retryButton.textContent = originalText;
+          }
+        });
+      }
+
+      const cancelButton = document.getElementById("register-cancel-btn");
+      if (cancelButton && !cancelButton.hasAttribute("data-bound")) {
+        cancelButton.setAttribute("data-bound", "1");
+        const originalText = cancelButton.textContent || "取消申请";
+        cancelButton.addEventListener("click", async () => {
+          const requestId = String(
+            cancelButton.getAttribute("data-request-id") || "",
+          ).trim();
+          if (!requestId) {
+            await window.showNoticeDialog({
+              message: "申请 ID 无效",
+            });
+            return;
+          }
+          const confirmCancel = await window.showConfirmDialog({
+            message: "确认取消当前注册申请？",
+            confirmText: "确认取消",
+            cancelText: "再想想",
+            confirmVariant: "danger",
+          });
+          if (!confirmCancel) {
+            return;
+          }
+          cancelButton.setAttribute("disabled", "true");
+          cancelButton.textContent = "处理中...";
+          try {
+            const response = await fetch(
+              `${API_REGISTER_BASE}/${encodeURIComponent(requestId)}`,
+              {
+                method: "PATCH",
+                credentials: "include",
+                headers: {
+                  "Content-Type": "application/json",
+                  Accept: "application/json",
+                },
+                body: JSON.stringify({
+                  action: "cancel",
+                }),
+              },
+            );
+            const data = await response.json().catch(() => null);
+            if (!response.ok || !data?.ok) {
+              await window.showNoticeDialog({
+                message: resolveRegisterError(data),
+              });
+              return;
+            }
+            window.location.assign("/auth/register");
+          } catch (error) {
+            await window.showNoticeDialog({
+              message: error instanceof Error ? error.message : "取消失败",
+            });
+          } finally {
+            cancelButton.removeAttribute("disabled");
+            cancelButton.textContent = originalText;
+          }
+        });
+      }
+    }
+
+    function initPage() {
+      initRegisterPage();
+      initRegistrationStatusPage();
+    }
+
+    initPage();
+    document.addEventListener("astro:after-swap", initPage);
   </script>
 </MainGridLayout>

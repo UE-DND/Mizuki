@@ -16,6 +16,7 @@ import {
 	countItems,
 	readDirectusAssetResponse,
 	readMany,
+	updateOne,
 } from "@/server/directus/client";
 import { buildDirectusAssetUrl } from "@/server/directus-auth";
 import { getPublicSiteSettings } from "@/server/site-settings/service";
@@ -29,6 +30,12 @@ import {
 	normalizeRequestedUsername,
 	validateDisplayName,
 } from "@/server/auth/username";
+import {
+	clearRegistrationRequestCookie,
+	normalizeRegistrationRequestId,
+	REGISTRATION_REQUEST_COOKIE_NAME,
+	setRegistrationRequestCookie,
+} from "@/server/auth/registration-request-cookie";
 import { getSessionUser } from "@/server/auth/session";
 
 import {
@@ -46,6 +53,9 @@ import {
 import { getAuthorBundle } from "./shared/author-cache";
 
 const REGISTRATION_REASON_MAX_LENGTH = 500;
+const REGISTRATION_PASSWORD_MIN_LENGTH = 8;
+const REGISTRATION_PASSWORD_MAX_LENGTH = 20;
+const REGISTRATION_PASSWORD_ALLOWED_PATTERN = /^[A-Za-z0-9@_]+$/;
 
 function assertRegisterEnabled(context: APIContext): void {
 	const enabled = Boolean(
@@ -65,6 +75,23 @@ function parseRegistrationReason(raw: unknown): string {
 		throw new Error("REGISTRATION_REASON_TOO_LONG");
 	}
 	return reason;
+}
+
+function parseRegistrationPassword(raw: unknown): string {
+	const password = String(raw ?? "");
+	if (!password.trim()) {
+		throw new Error("REGISTRATION_PASSWORD_REQUIRED");
+	}
+	if (!REGISTRATION_PASSWORD_ALLOWED_PATTERN.test(password)) {
+		throw new Error("REGISTRATION_PASSWORD_INVALID");
+	}
+	if (password.length < REGISTRATION_PASSWORD_MIN_LENGTH) {
+		throw new Error("REGISTRATION_PASSWORD_TOO_SHORT");
+	}
+	if (password.length > REGISTRATION_PASSWORD_MAX_LENGTH) {
+		throw new Error("REGISTRATION_PASSWORD_TOO_LONG");
+	}
+	return password;
 }
 
 function parseRegistrationEmail(raw: unknown): string {
@@ -129,6 +156,120 @@ async function assertNoPendingRegistrationConflict(
 	}
 }
 
+async function assertNoPendingRegistrationEmailConflict(
+	email: string,
+): Promise<void> {
+	const rows = await readMany("app_user_registration_requests", {
+		filter: {
+			_and: [
+				{ request_status: { _eq: "pending" } },
+				{ email: { _eq: email } },
+			],
+		} as JsonObject,
+		limit: 1,
+		fields: ["id"],
+	});
+	if (rows.length > 0) {
+		throw new Error("REGISTRATION_REQUEST_EXISTS");
+	}
+}
+
+async function assertNoPendingRegistrationUsernameConflict(
+	username: string,
+): Promise<void> {
+	const rows = await readMany("app_user_registration_requests", {
+		filter: {
+			_and: [
+				{ request_status: { _eq: "pending" } },
+				{ username: { _eq: username } },
+			],
+		} as JsonObject,
+		limit: 1,
+		fields: ["id"],
+	});
+	if (rows.length > 0) {
+		throw new Error("REGISTRATION_REQUEST_EXISTS");
+	}
+}
+
+type RegistrationFieldCheckResult = {
+	valid: boolean;
+	available: boolean;
+	code: string;
+	message: string;
+};
+
+function mapRegistrationCheckError(
+	error: unknown,
+): RegistrationFieldCheckResult {
+	const message = String((error as Error)?.message ?? error);
+	if (message.includes("EMAIL_EMPTY")) {
+		return {
+			valid: false,
+			available: false,
+			code: "EMAIL_EMPTY",
+			message: "邮箱不能为空",
+		};
+	}
+	if (message.includes("EMAIL_INVALID")) {
+		return {
+			valid: false,
+			available: false,
+			code: "EMAIL_INVALID",
+			message: "邮箱格式不正确",
+		};
+	}
+	if (message.includes("USERNAME_EMPTY")) {
+		return {
+			valid: false,
+			available: false,
+			code: "USERNAME_EMPTY",
+			message: "用户名不能为空",
+		};
+	}
+	if (message.includes("USERNAME_INVALID")) {
+		return {
+			valid: false,
+			available: false,
+			code: "USERNAME_INVALID",
+			message: "用户名仅支持英文、数字、下划线和短横线",
+		};
+	}
+	if (message.includes("USERNAME_TOO_LONG")) {
+		return {
+			valid: false,
+			available: false,
+			code: "USERNAME_TOO_LONG",
+			message: "用户名最多 14 字符",
+		};
+	}
+	if (message.includes("EMAIL_EXISTS")) {
+		return {
+			valid: true,
+			available: false,
+			code: "EMAIL_EXISTS",
+			message: "邮箱已存在",
+		};
+	}
+	if (message.includes("USERNAME_EXISTS")) {
+		return {
+			valid: true,
+			available: false,
+			code: "USERNAME_EXISTS",
+			message: "用户名已存在",
+		};
+	}
+	if (message.includes("REGISTRATION_REQUEST_EXISTS")) {
+		return {
+			valid: true,
+			available: false,
+			code: "REGISTRATION_REQUEST_EXISTS",
+			message: "该邮箱或用户名已有待处理申请",
+		};
+	}
+	throw error;
+}
+
 function toAuthorFallback(userId: string): {
 	id: string;
 	name: string;
@@ -174,51 +315,188 @@ async function handlePublicRegistrationRequests(
 	context: APIContext,
 	segments: string[],
 ): Promise<Response> {
+	if (segments.length === 2) {
+		if (context.request.method !== "POST") {
+			return fail("方法不允许", 405);
+		}
+
+		assertRegisterEnabled(context);
+		const body = await parseJsonBody(context.request);
+		const email = parseRegistrationEmail(body.email);
+		const username = normalizeRequestedUsername(
+			toStringValue(body.username).trim(),
+		);
+		const displayName = validateDisplayName(
+			toStringValue(body.display_name).trim(),
+		);
+		const registrationPassword = parseRegistrationPassword(body.password);
+		const registrationReason = parseRegistrationReason(
+			body.registration_reason,
+		);
+		const avatarFileRaw = toStringValue(body.avatar_file).trim();
+		const avatarFile = avatarFileRaw ? parseRouteId(avatarFileRaw) : null;
+
+		await assertNoPendingRegistrationConflict(email, username);
+		await Promise.all([
+			assertRegistrationEmailAvailable(email),
+			assertRegistrationUsernameAvailable(username),
+		]);
+
+		const created = await createOne("app_user_registration_requests", {
+			status: "published",
+			email,
+			username,
+			display_name: displayName,
+			registration_password: registrationPassword,
+			avatar_file: avatarFile,
+			registration_reason: registrationReason,
+			request_status: "pending",
+			reviewed_by: null,
+			reviewed_at: null,
+			reject_reason: null,
+			approved_user_id: null,
+		});
+
+		if (created?.id) {
+			setRegistrationRequestCookie(context, created.id);
+		}
+
+		return ok({
+			item: created,
+		});
+	}
+
+	if (segments.length === 3) {
+		if (context.request.method !== "PATCH") {
+			return fail("方法不允许", 405);
+		}
+		assertRegisterEnabled(context);
+
+		const requestId = parseRouteId(segments[2]);
+		if (!requestId) {
+			return fail("缺少申请 ID", 400);
+		}
+		const cookieRequestId = normalizeRegistrationRequestId(
+			context.cookies.get(REGISTRATION_REQUEST_COOKIE_NAME)?.value,
+		);
+		if (!cookieRequestId || cookieRequestId !== requestId) {
+			throw new Error("REGISTRATION_REQUEST_FORBIDDEN");
+		}
+
+		const body = await parseJsonBody(context.request);
+		const action = String(body.action || "").trim();
+		if (action !== "cancel") {
+			throw new Error("REGISTRATION_ACTION_INVALID");
+		}
+
+		const rows = await readMany("app_user_registration_requests", {
+			filter: { id: { _eq: requestId } } as JsonObject,
+			limit: 1,
+			fields: ["id", "request_status"],
+		});
+		const target = rows[0];
+		if (!target) {
+			throw new Error("REGISTRATION_NOT_FOUND");
+		}
+		if (String(target.request_status || "").trim() !== "pending") {
+			throw new Error("REGISTRATION_STATUS_CONFLICT");
+		}
+
+		const updated = await updateOne(
+			"app_user_registration_requests",
+			requestId,
+			{
+				request_status: "cancelled",
+				reviewed_by: null,
+				reviewed_at: new Date().toISOString(),
+				registration_password: null,
+				reject_reason: null,
+			},
+		);
+
+		return ok({ item: updated });
+	}
+
+	return fail("未找到接口", 404);
+}
+
+async function handlePublicRegistrationCheck(
+	context: APIContext,
+	segments: string[],
+): Promise<Response> {
 	if (segments.length !== 2) {
 		return fail("未找到接口", 404);
 	}
-	if (context.request.method !== "POST") {
+	if (context.request.method !== "GET") {
 		return fail("方法不允许", 405);
 	}
 
 	assertRegisterEnabled(context);
-	const body = await parseJsonBody(context.request);
-	const email = parseRegistrationEmail(body.email);
-	const username = normalizeRequestedUsername(
-		toStringValue(body.username).trim(),
-	);
-	const displayName = validateDisplayName(
-		toStringValue(body.display_name).trim(),
-	);
-	const registrationReason = parseRegistrationReason(
-		body.registration_reason,
-	);
-	const avatarFileRaw = toStringValue(body.avatar_file).trim();
-	const avatarFile = avatarFileRaw ? parseRouteId(avatarFileRaw) : null;
+	const emailRaw = String(context.url.searchParams.get("email") || "").trim();
+	const usernameRaw = String(
+		context.url.searchParams.get("username") || "",
+	).trim();
+	if (!emailRaw && !usernameRaw) {
+		return fail("至少提供邮箱或用户名", 400);
+	}
 
-	await assertNoPendingRegistrationConflict(email, username);
-	await Promise.all([
-		assertRegistrationEmailAvailable(email),
-		assertRegistrationUsernameAvailable(username),
-	]);
+	const result: {
+		email?: RegistrationFieldCheckResult;
+		username?: RegistrationFieldCheckResult;
+	} = {};
 
-	const created = await createOne("app_user_registration_requests", {
-		status: "published",
-		email,
-		username,
-		display_name: displayName,
-		avatar_file: avatarFile,
-		registration_reason: registrationReason,
-		request_status: "pending",
-		reviewed_by: null,
-		reviewed_at: null,
-		reject_reason: null,
-		cancel_reason: null,
-		approved_user_id: null,
-	});
+	if (emailRaw) {
+		try {
+			const email = parseRegistrationEmail(emailRaw);
+			await Promise.all([
+				assertRegistrationEmailAvailable(email),
+				assertNoPendingRegistrationEmailConflict(email),
+			]);
+			result.email = {
+				valid: true,
+				available: true,
+				code: "OK",
+				message: "邮箱可用",
+			};
+		} catch (error) {
+			result.email = mapRegistrationCheckError(error);
+		}
+	}
 
+	if (usernameRaw) {
+		try {
+			const username = normalizeRequestedUsername(usernameRaw);
+			await Promise.all([
+				assertRegistrationUsernameAvailable(username),
+				assertNoPendingRegistrationUsernameConflict(username),
+			]);
+			result.username = {
+				valid: true,
+				available: true,
+				code: "OK",
+				message: "用户名可用",
+			};
+		} catch (error) {
+			result.username = mapRegistrationCheckError(error);
+		}
+	}
+
+	return ok(result);
+}
+
+async function handlePublicRegistrationSession(
+	context: APIContext,
+	segments: string[],
+): Promise<Response> {
+	if (segments.length !== 2) {
+		return fail("未找到接口", 404);
+	}
+	if (context.request.method !== "DELETE") {
+		return fail("方法不允许", 405);
+	}
+	clearRegistrationRequestCookie(context);
 	return ok({
-		item: created,
+		cleared: true,
 	});
 }
 
@@ -1110,6 +1388,12 @@ export async function handlePublic(
 	}
 	if (segments[1] === "registration-requests") {
 		return await handlePublicRegistrationRequests(context, segments);
+	}
+	if (segments[1] === "registration-check") {
+		return await handlePublicRegistrationCheck(context, segments);
+	}
+	if (segments[1] === "registration-session") {
+		return await handlePublicRegistrationSession(context, segments);
 	}
 	if (segments[1] === "articles") {
 		return await handlePublicArticles(context, segments);

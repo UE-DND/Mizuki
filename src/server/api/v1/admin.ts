@@ -24,6 +24,8 @@ import {
 	deleteOne,
 	listDirectusUsers,
 	readMany,
+	updateDirectusFileMetadata,
+	updateManyItemsByFilter,
 	updateDirectusUser,
 	updateOne,
 } from "@/server/directus/client";
@@ -392,6 +394,26 @@ async function readRegistrationRequestById(
 	const rows = await readMany("app_user_registration_requests", {
 		filter: { id: { _eq: requestId } } as JsonObject,
 		limit: 1,
+		fields: [
+			"id",
+			"email",
+			"username",
+			"display_name",
+			"avatar_file",
+			"registration_password",
+			"registration_reason",
+			"request_status",
+			"reviewed_by",
+			"reviewed_at",
+			"reject_reason",
+			"approved_user_id",
+			"status",
+			"sort",
+			"user_created",
+			"date_created",
+			"user_updated",
+			"date_updated",
+		],
 	});
 	return rows[0] || null;
 }
@@ -401,6 +423,62 @@ function ensurePendingRegistrationStatus(
 ): void {
 	if (status !== "pending") {
 		throw new Error("REGISTRATION_STATUS_CONFLICT");
+	}
+}
+
+const USER_DELETE_NULLIFY_REFERENCES: Array<{
+	collection: string;
+	field: string;
+}> = [
+	{ collection: "directus_notifications", field: "sender" },
+	{ collection: "directus_versions", field: "user_updated" },
+	{ collection: "directus_comments", field: "user_updated" },
+	{ collection: "app_site_settings", field: "user_created" },
+	{ collection: "app_site_settings", field: "user_updated" },
+	{ collection: "app_diary_likes", field: "user_created" },
+	{ collection: "app_diary_likes", field: "user_updated" },
+	{ collection: "ai_prompts", field: "user_created" },
+	{ collection: "ai_prompts", field: "user_updated" },
+];
+
+async function nullifyUserReferenceField(
+	collection: string,
+	field: string,
+	userId: string,
+): Promise<void> {
+	try {
+		await updateManyItemsByFilter({
+			collection,
+			filter: { [field]: { _eq: userId } } as JsonObject,
+			data: { [field]: null } as JsonObject,
+		});
+	} catch (error) {
+		const message = String(error);
+		if (
+			message.includes("COLLECTION_NOT_FOUND") ||
+			message.includes("ITEM_NOT_FOUND") ||
+			message.includes("404")
+		) {
+			return;
+		}
+		if (
+			/forbidden|permission|readonly|read-only|invalid payload|field/i.test(
+				message,
+			)
+		) {
+			console.warn(
+				`[admin/users] skip nullify reference ${collection}.${field}:`,
+				message,
+			);
+			return;
+		}
+		throw error;
+	}
+}
+
+async function clearBlockingUserReferences(userId: string): Promise<void> {
+	for (const target of USER_DELETE_NULLIFY_REFERENCES) {
+		await nullifyUserReferenceField(target.collection, target.field, userId);
 	}
 }
 
@@ -599,6 +677,11 @@ export async function handleAdminUsers(
 
 			invalidateAuthorCache(userId);
 			invalidateOfficialSidebarCache();
+			if (hasOwn(body, "avatar_file") && nextAvatarFile) {
+				await updateDirectusFileMetadata(nextAvatarFile, {
+					uploaded_by: userId,
+				});
+			}
 			if (
 				hasOwn(body, "avatar_file") &&
 				prevAvatarFile &&
@@ -617,20 +700,68 @@ export async function handleAdminUsers(
 			if (required.access.user.id === userId) {
 				throw new Error("USER_DELETE_SELF_FORBIDDEN");
 			}
-			const candidateFileIds = await collectUserOwnedFileIds(userId);
+			let candidateFileIds: string[] = [];
+			try {
+				candidateFileIds = await collectUserOwnedFileIds(userId);
+			} catch (error) {
+				const message = String(error);
+				if (/forbidden|permission/i.test(message)) {
+					console.warn(
+						"[admin/users] skip collectUserOwnedFileIds due to permission:",
+						message,
+					);
+				} else {
+					throw error;
+				}
+			}
 
-			const [profiles, permissions] = await Promise.all([
-				readMany("app_user_profiles", {
-					filter: { user_id: { _eq: userId } } as JsonObject,
-					limit: 10,
-					fields: ["id"],
-				}),
-				readMany("app_user_permissions", {
-					filter: { user_id: { _eq: userId } } as JsonObject,
-					limit: 10,
-					fields: ["id"],
-				}),
-			]);
+			const referencedFilesPromise = readMany("directus_files", {
+				filter: {
+					_or: [
+						{ uploaded_by: { _eq: userId } },
+						{ modified_by: { _eq: userId } },
+					],
+				} as JsonObject,
+				limit: 5000,
+				fields: ["id", "uploaded_by", "modified_by"],
+			}).catch((error) => {
+				const message = String(error);
+				if (/forbidden|permission/i.test(message)) {
+					console.warn(
+						"[admin/users] skip read referenced directus_files due to permission:",
+						message,
+					);
+					return [];
+				}
+				throw error;
+			});
+
+			const [
+				profiles,
+				permissions,
+				registrationRequests,
+				referencedFiles,
+			] =
+				await Promise.all([
+					readMany("app_user_profiles", {
+						filter: { user_id: { _eq: userId } } as JsonObject,
+						limit: 10,
+						fields: ["id"],
+					}),
+					readMany("app_user_permissions", {
+						filter: { user_id: { _eq: userId } } as JsonObject,
+						limit: 10,
+						fields: ["id"],
+					}),
+						readMany("app_user_registration_requests", {
+							filter: {
+								approved_user_id: { _eq: userId },
+							} as JsonObject,
+							limit: 200,
+							fields: ["id", "avatar_file"],
+						}),
+						referencedFilesPromise,
+					]);
 
 			for (const profile of profiles) {
 				await deleteOne("app_user_profiles", profile.id);
@@ -638,6 +769,56 @@ export async function handleAdminUsers(
 			for (const permission of permissions) {
 				await deleteOne("app_user_permissions", permission.id);
 			}
+			for (const request of registrationRequests) {
+				if (!request.avatar_file) {
+					continue;
+				}
+				await updateOne("app_user_registration_requests", request.id, {
+					avatar_file: null,
+				});
+			}
+			for (const file of referencedFiles) {
+				const payload: {
+					uploaded_by?: null;
+					modified_by?: null;
+				} = {};
+				if (String(file.uploaded_by || "").trim() === userId) {
+					payload.uploaded_by = null;
+				}
+				if (String(file.modified_by || "").trim() === userId) {
+					payload.modified_by = null;
+				}
+				if (Object.keys(payload).length === 0) {
+					continue;
+				}
+				try {
+					await updateDirectusFileMetadata(file.id, payload);
+				} catch (error) {
+					const message = String(error);
+					if (
+						payload.uploaded_by === null &&
+						payload.modified_by === null
+					) {
+						try {
+							await updateDirectusFileMetadata(file.id, {
+								uploaded_by: null,
+							});
+							continue;
+						} catch (fallbackError) {
+							console.warn(
+								`[admin/users] skip file cleanup ${file.id}:`,
+								String(fallbackError),
+							);
+							continue;
+						}
+					}
+					console.warn(
+						`[admin/users] skip file cleanup ${file.id}:`,
+						message,
+					);
+				}
+			}
+			await clearBlockingUserReferences(userId);
 
 			await deleteDirectusUser(userId);
 			await cleanupOrphanDirectusFiles(candidateFileIds);
@@ -705,6 +886,25 @@ export async function handleAdminRegistrationRequests(
 				sort: ["-date_created"],
 				limit,
 				offset,
+				fields: [
+					"id",
+					"email",
+					"username",
+					"display_name",
+					"avatar_file",
+					"registration_reason",
+					"request_status",
+					"reviewed_by",
+					"reviewed_at",
+					"reject_reason",
+					"approved_user_id",
+					"status",
+					"sort",
+					"user_created",
+					"date_created",
+					"user_updated",
+					"date_updated",
+				],
 			}),
 			countItems("app_user_registration_requests", filter),
 		]);
@@ -739,9 +939,9 @@ export async function handleAdminRegistrationRequests(
 		const reviewedAt = new Date().toISOString();
 
 		if (action === "approve") {
-			const password = parseBodyTextField(body, "password");
+			const password = String(target.registration_password || "");
 			if (!password) {
-				throw new Error("REGISTRATION_APPROVE_PASSWORD_REQUIRED");
+				throw new Error("REGISTRATION_PASSWORD_MISSING");
 			}
 
 			const created = await createManagedUser({
@@ -752,6 +952,14 @@ export async function handleAdminRegistrationRequests(
 				avatarFile: target.avatar_file,
 				appRole: "member",
 			});
+			const registrationAvatarFileId = normalizeDirectusFileId(
+				target.avatar_file,
+			);
+			if (registrationAvatarFileId) {
+				await updateDirectusFileMetadata(registrationAvatarFileId, {
+					uploaded_by: created.user.id,
+				});
+			}
 
 			const updated = await updateOne(
 				"app_user_registration_requests",
@@ -761,8 +969,8 @@ export async function handleAdminRegistrationRequests(
 					reviewed_by: reviewedBy,
 					reviewed_at: reviewedAt,
 					approved_user_id: created.user.id,
+					registration_password: null,
 					reject_reason: null,
-					cancel_reason: null,
 				},
 			);
 			return ok({
@@ -774,7 +982,10 @@ export async function handleAdminRegistrationRequests(
 		}
 
 		if (action === "reject" || action === "cancel") {
-			const reason = parseOptionalRegistrationReason(body.reason);
+			const reason =
+				action === "reject"
+					? parseOptionalRegistrationReason(body.reason)
+					: null;
 			const updated = await updateOne(
 				"app_user_registration_requests",
 				target.id,
@@ -783,8 +994,8 @@ export async function handleAdminRegistrationRequests(
 						action === "reject" ? "rejected" : "cancelled",
 					reviewed_by: reviewedBy,
 					reviewed_at: reviewedAt,
+					registration_password: null,
 					reject_reason: action === "reject" ? reason : null,
-					cancel_reason: action === "cancel" ? reason : null,
 				},
 			);
 			return ok({ item: updated });

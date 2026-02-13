@@ -270,12 +270,12 @@ export type AppUserRegistrationRequest = {
 	username: string;
 	display_name: string;
 	avatar_file: string | null;
+	registration_password: string | null;
 	registration_reason: string;
 	request_status: RegistrationRequestStatus;
 	reviewed_by: string | null;
 	reviewed_at: string | null;
 	reject_reason: string | null;
-	cancel_reason: string | null;
 	approved_user_id: string | null;
 	status: AppStatus;
 	sort: number | null;
@@ -299,6 +299,8 @@ export type AppFile = {
 	title: string | null;
 	type: string | null;
 	filename_download: string | null;
+	uploaded_by?: string | { id?: string } | null;
+	modified_by?: string | { id?: string } | null;
 };
 
 export type AppSiteSettings = import("./site-settings").AppSiteSettings;
