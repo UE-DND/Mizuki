@@ -28,7 +28,7 @@
 }
 
 @import "tailwindcss";
-@config "../../tailwind.config.cjs";
+@config "../../tailwind.config.mjs";
 
 /* 确保平滑滚动 */
 html {

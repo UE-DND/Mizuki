@@ -231,7 +231,6 @@ const html = await renderMarkdown(String(markdownSource || ""), {
 Swup 下重初始化：
 
 - `src/scripts/layout/swup-hooks.ts`
-- `src/scripts/layout/swup-hooks-legacy.ts`
 
 ### 7.3 代码复制
 
@@ -441,7 +440,6 @@ Swup 下重初始化：
 - `src/components/control/FloatingTOC.astro`
 - `src/components/MobileTOC.svelte`
 - `src/scripts/layout/swup-hooks.ts`
-- `src/scripts/layout/swup-hooks-legacy.ts`
 
 ### 样式
 

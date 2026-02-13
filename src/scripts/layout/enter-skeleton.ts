@@ -14,6 +14,8 @@ type EnterSkeletonMode =
 	| "stats-page"
 	| "auth-login"
 	| "auth-register"
+	| "rss-page"
+	| "atom-page"
 	| "fallback";
 
 const ACTIVE_CLASS = "enter-skeleton-active";
@@ -89,6 +91,12 @@ function detectEnterSkeletonMode(): EnterSkeletonMode {
 	}
 	if (document.querySelector('[data-enter-skeleton-page="auth-register"]')) {
 		return "auth-register";
+	}
+	if (document.querySelector('[data-enter-skeleton-page="rss-page"]')) {
+		return "rss-page";
+	}
+	if (document.querySelector('[data-enter-skeleton-page="atom-page"]')) {
+		return "atom-page";
 	}
 	return "fallback";
 }
