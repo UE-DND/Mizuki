@@ -181,16 +181,16 @@ export async function POST(context: APIContext): Promise<Response> {
 				sessionOnly,
 			}),
 		);
-			cookies.set(
-				REMEMBER_COOKIE_NAME,
-				remember ? "1" : "0",
-				getRememberCookieOptions({ requestUrl: url, remember }),
-			);
+		cookies.set(
+			REMEMBER_COOKIE_NAME,
+			remember ? "1" : "0",
+			getRememberCookieOptions({ requestUrl: url, remember }),
+		);
 
-			let user: PublicUserInfo = {
-				id: "",
-				email,
-				name: email,
+		let user: PublicUserInfo = {
+			id: "",
+			email,
+			name: email,
 		};
 		try {
 			const me = await directusGetMe({ accessToken: tokens.accessToken });
@@ -201,14 +201,14 @@ export async function POST(context: APIContext): Promise<Response> {
 				name: picked.name || user.name,
 				avatarUrl: picked.avatarUrl || user.avatarUrl,
 			};
-			} catch {
-				// 若 /users/me 失败，不影响登录态写入，前台可再调用 /api/auth/me
-			}
-			if (await shouldClearRegistrationCookieOnLogin(context, user.id)) {
-				clearRegistrationRequestCookie(context);
-			}
+		} catch {
+			// 若 /users/me 失败，不影响登录态写入，前台可再调用 /api/auth/me
+		}
+		if (await shouldClearRegistrationCookieOnLogin(context, user.id)) {
+			clearRegistrationRequestCookie(context);
+		}
 
-			return json(
+		return json(
 			{ ok: true, user },
 			{
 				headers: {

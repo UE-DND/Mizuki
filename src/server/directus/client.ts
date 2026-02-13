@@ -149,7 +149,10 @@ export async function readMany<K extends keyof DirectusSchema>(
 		async () => {
 			return await getDirectusClient().request(
 				readItems(
-					collection as Exclude<K, "directus_users" | "directus_files">,
+					collection as Exclude<
+						K,
+						"directus_users" | "directus_files"
+					>,
 					query as never,
 				),
 			);
@@ -458,11 +461,10 @@ export async function updateManyItemsByFilter(params: {
 				customEndpoint({
 					path: `/items/${encodeURIComponent(params.collection)}`,
 					method: "PATCH",
-					body:
-						{
-							keys,
-							data: params.data,
-						} as never,
+					body: {
+						keys,
+						data: params.data,
+					} as never,
 				}),
 			);
 		},

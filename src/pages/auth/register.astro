@@ -70,7 +70,9 @@ if (registrationRequestId) {
   currentRegistration = (rows[0] as RegistrationSnapshot | undefined) || null;
   const sessionUser = await getSessionUser(Astro);
   if (currentRegistration && sessionUser) {
-    const approvedUserId = String(currentRegistration.approved_user_id || "").trim();
+    const approvedUserId = String(
+      currentRegistration.approved_user_id || "",
+    ).trim();
     const canDisplayApprovedSelfStatus =
       currentRegistration.request_status === "approved" &&
       approvedUserId &&
@@ -421,7 +423,7 @@ const defaultAvatarPreviewSrc = defaultAvatarAsset.src;
                     rows="4"
                     maxlength="500"
                     class="w-full rounded-lg border border-(--line-divider) px-3 py-2.5 bg-transparent text-75 resize-none"
-                    placeholder="请简单介绍你的用途或申请理由"
+                    placeholder="简单描述你的申请理由"
                   />
                 </label>
                 <div id="register-message" class="text-sm text-70 hidden" />

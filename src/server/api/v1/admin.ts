@@ -478,7 +478,11 @@ async function nullifyUserReferenceField(
 
 async function clearBlockingUserReferences(userId: string): Promise<void> {
 	for (const target of USER_DELETE_NULLIFY_REFERENCES) {
-		await nullifyUserReferenceField(target.collection, target.field, userId);
+		await nullifyUserReferenceField(
+			target.collection,
+			target.field,
+			userId,
+		);
 	}
 }
 
@@ -741,27 +745,26 @@ export async function handleAdminUsers(
 				permissions,
 				registrationRequests,
 				referencedFiles,
-			] =
-				await Promise.all([
-					readMany("app_user_profiles", {
-						filter: { user_id: { _eq: userId } } as JsonObject,
-						limit: 10,
-						fields: ["id"],
-					}),
-					readMany("app_user_permissions", {
-						filter: { user_id: { _eq: userId } } as JsonObject,
-						limit: 10,
-						fields: ["id"],
-					}),
-						readMany("app_user_registration_requests", {
-							filter: {
-								approved_user_id: { _eq: userId },
-							} as JsonObject,
-							limit: 200,
-							fields: ["id", "avatar_file"],
-						}),
-						referencedFilesPromise,
-					]);
+			] = await Promise.all([
+				readMany("app_user_profiles", {
+					filter: { user_id: { _eq: userId } } as JsonObject,
+					limit: 10,
+					fields: ["id"],
+				}),
+				readMany("app_user_permissions", {
+					filter: { user_id: { _eq: userId } } as JsonObject,
+					limit: 10,
+					fields: ["id"],
+				}),
+				readMany("app_user_registration_requests", {
+					filter: {
+						approved_user_id: { _eq: userId },
+					} as JsonObject,
+					limit: 200,
+					fields: ["id", "avatar_file"],
+				}),
+				referencedFilesPromise,
+			]);
 
 			for (const profile of profiles) {
 				await deleteOne("app_user_profiles", profile.id);
