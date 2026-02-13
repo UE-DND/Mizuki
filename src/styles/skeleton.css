@@ -2,6 +2,10 @@
 :root {
   --md3-skeleton-base: oklch(0.92 0.055 var(--hue));
   --md3-skeleton-highlight: oklch(0.97 0.07 var(--hue));
+  --enter-skeleton-fade-duration: 420ms;
+  --enter-skeleton-fade-easing: cubic-bezier(0.22, 1, 0.36, 1);
+  --enter-skeleton-shift-distance: 0.625rem;
+  --enter-skeleton-blur-radius: 2.5px;
 }
 
 :root.dark {
@@ -54,18 +58,55 @@
 
 [data-enter-skeleton-placeholder] {
   opacity: 0;
+  transform: translate3d(0, var(--enter-skeleton-shift-distance), 0) scale(0.992);
+  filter: blur(var(--enter-skeleton-blur-radius));
   pointer-events: none;
-  transition: opacity 160ms ease;
+  transition:
+    opacity var(--enter-skeleton-fade-duration) var(--enter-skeleton-fade-easing),
+    transform var(--enter-skeleton-fade-duration) var(--enter-skeleton-fade-easing),
+    filter var(--enter-skeleton-fade-duration) var(--enter-skeleton-fade-easing);
+  will-change: opacity, transform, filter;
 }
 
 [data-enter-skeleton-content] {
-  transition: opacity 120ms ease;
+  opacity: 1;
+  transform: translate3d(0, 0, 0) scale(1);
+  filter: blur(0);
+  transition:
+    opacity var(--enter-skeleton-fade-duration) var(--enter-skeleton-fade-easing),
+    transform var(--enter-skeleton-fade-duration) var(--enter-skeleton-fade-easing),
+    filter var(--enter-skeleton-fade-duration) var(--enter-skeleton-fade-easing);
+  will-change: opacity, transform, filter;
+}
+
+[data-enter-skeleton-page][data-enter-skeleton-target] {
+  position: relative;
+}
+
+[data-enter-skeleton-inline-content] {
+  opacity: 1;
+  transform: translate3d(0, 0, 0) scale(1);
+  filter: blur(0);
+  transition:
+    opacity var(--enter-skeleton-fade-duration) var(--enter-skeleton-fade-easing),
+    transform var(--enter-skeleton-fade-duration) var(--enter-skeleton-fade-easing),
+    filter var(--enter-skeleton-fade-duration) var(--enter-skeleton-fade-easing);
+  will-change: opacity, transform, filter;
 }
 
 [data-enter-skeleton-inline-placeholder] {
-  display: none;
-  opacity: 1;
+  position: absolute;
+  inset: 0;
+  z-index: 20;
+  opacity: 0;
+  transform: translate3d(0, var(--enter-skeleton-shift-distance), 0) scale(0.992);
+  filter: blur(var(--enter-skeleton-blur-radius));
   pointer-events: none;
+  transition:
+    opacity var(--enter-skeleton-fade-duration) var(--enter-skeleton-fade-easing),
+    transform var(--enter-skeleton-fade-duration) var(--enter-skeleton-fade-easing),
+    filter var(--enter-skeleton-fade-duration) var(--enter-skeleton-fade-easing);
+  will-change: opacity, transform, filter;
 }
 
 html.enter-skeleton-active .transition-main {
@@ -81,29 +122,41 @@ html.enter-skeleton-awaiting-replace.is-animating.is-leaving #content-wrapper {
 
 html.enter-skeleton-active[data-enter-skeleton-mode="post-card"] [data-enter-skeleton-target="post-card"] [data-enter-skeleton-content] {
   opacity: 0;
+  transform: translate3d(0, calc(var(--enter-skeleton-shift-distance) * -1), 0) scale(0.992);
+  filter: blur(var(--enter-skeleton-blur-radius));
   pointer-events: none;
 }
 
 html.enter-skeleton-active[data-enter-skeleton-mode="post-card"] [data-enter-skeleton-target="post-card"] [data-enter-skeleton-placeholder] {
   opacity: 1;
+  transform: translate3d(0, 0, 0) scale(1);
+  filter: blur(0);
 }
 
 html.enter-skeleton-active[data-enter-skeleton-mode="post-detail"] [data-enter-skeleton-target="post-detail"] [data-enter-skeleton-content] {
   opacity: 0;
+  transform: translate3d(0, calc(var(--enter-skeleton-shift-distance) * -1), 0) scale(0.992);
+  filter: blur(var(--enter-skeleton-blur-radius));
   pointer-events: none;
 }
 
 html.enter-skeleton-active[data-enter-skeleton-mode="post-detail"] [data-enter-skeleton-target="post-detail"] [data-enter-skeleton-placeholder] {
   opacity: 1;
+  transform: translate3d(0, 0, 0) scale(1);
+  filter: blur(0);
 }
 
 html.enter-skeleton-active[data-enter-skeleton-mode="fallback"] [data-enter-skeleton-target="fallback"] [data-enter-skeleton-content] {
   opacity: 0;
+  transform: translate3d(0, calc(var(--enter-skeleton-shift-distance) * -1), 0) scale(0.992);
+  filter: blur(var(--enter-skeleton-blur-radius));
   pointer-events: none;
 }
 
 html.enter-skeleton-active[data-enter-skeleton-mode="fallback"] [data-enter-skeleton-target="fallback"] [data-enter-skeleton-placeholder] {
   opacity: 1;
+  transform: translate3d(0, 0, 0) scale(1);
+  filter: blur(0);
 }
 
 html.enter-skeleton-active[data-enter-skeleton-mode="user-home"] [data-enter-skeleton-target="user-home"] [data-enter-skeleton-inline-content],
@@ -119,7 +172,10 @@ html.enter-skeleton-active[data-enter-skeleton-mode="friends-page"] [data-enter-
 html.enter-skeleton-active[data-enter-skeleton-mode="stats-page"] [data-enter-skeleton-target="stats-page"] [data-enter-skeleton-inline-content],
 html.enter-skeleton-active[data-enter-skeleton-mode="auth-login"] [data-enter-skeleton-target="auth-login"] [data-enter-skeleton-inline-content],
 html.enter-skeleton-active[data-enter-skeleton-mode="auth-register"] [data-enter-skeleton-target="auth-register"] [data-enter-skeleton-inline-content] {
-  display: none;
+  opacity: 0;
+  transform: translate3d(0, calc(var(--enter-skeleton-shift-distance) * -1), 0) scale(0.992);
+  filter: blur(var(--enter-skeleton-blur-radius));
+  pointer-events: none;
 }
 
 html.enter-skeleton-active[data-enter-skeleton-mode="user-home"] [data-enter-skeleton-target="user-home"] [data-enter-skeleton-inline-placeholder],
@@ -135,7 +191,9 @@ html.enter-skeleton-active[data-enter-skeleton-mode="friends-page"] [data-enter-
 html.enter-skeleton-active[data-enter-skeleton-mode="stats-page"] [data-enter-skeleton-target="stats-page"] [data-enter-skeleton-inline-placeholder],
 html.enter-skeleton-active[data-enter-skeleton-mode="auth-login"] [data-enter-skeleton-target="auth-login"] [data-enter-skeleton-inline-placeholder],
 html.enter-skeleton-active[data-enter-skeleton-mode="auth-register"] [data-enter-skeleton-target="auth-register"] [data-enter-skeleton-inline-placeholder] {
-  display: block;
+  opacity: 1;
+  transform: translate3d(0, 0, 0) scale(1);
+  filter: blur(0);
 }
 
 [data-sidebar-avatar-shell] {
@@ -171,5 +229,12 @@ html.enter-skeleton-active[data-enter-skeleton-mode="auth-register"] [data-enter
   .md3-skeleton-circle::after {
     animation: none;
     background: none;
+  }
+
+  [data-enter-skeleton-content],
+  [data-enter-skeleton-placeholder],
+  [data-enter-skeleton-inline-content],
+  [data-enter-skeleton-inline-placeholder] {
+    transition: none !important;
   }
 }
