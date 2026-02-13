@@ -25,11 +25,18 @@ type SwupVisit = {
 };
 
 const BANNER_TO_SPEC_TRANSITION_CLASS = "layout-banner-to-spec-transition";
+const BANNER_TO_SPEC_TRANSITION_PREPARING_CLASS =
+	"layout-banner-to-spec-transition-preparing";
 const BANNER_TO_SPEC_TRANSITION_ACTIVE_CLASS =
 	"layout-banner-to-spec-transition-active";
-const BANNER_TO_SPEC_TRANSITION_CONTENT_FADE_IN_CLASS =
-	"layout-banner-to-spec-transition-content-fade-in";
+const BANNER_TO_SPEC_NAVBAR_SYNC_CLASS = "layout-banner-to-spec-navbar-sync";
+const BANNER_TO_SPEC_NAVBAR_COMMIT_FREEZE_CLASS =
+	"layout-banner-to-spec-navbar-commit-freeze";
 const BANNER_TO_SPEC_SHIFT_VAR = "--layout-banner-route-up-shift";
+const BANNER_TO_SPEC_BANNER_EXTRA_SHIFT_VAR =
+	"--layout-banner-route-banner-extra-shift";
+const BANNER_TO_SPEC_TRANSITION_DURATION_VAR =
+	"--layout-banner-route-transition-duration";
 const ENTER_SKELETON_AWAITING_REPLACE_CLASS = "enter-skeleton-awaiting-replace";
 const BANNER_TO_SPEC_TRANSITION_DURATION_MS = 920;
 const COLLAPSED_MAIN_PANEL_TOP = "5.5rem";
@@ -167,18 +174,32 @@ function resolveAnchorViewportTop(selector: string): number | null {
 	return rect.top;
 }
 
-function resolveBannerToSpecShiftPx(visit: SwupVisit): number {
+type BannerToSpecShiftMetrics = {
+	mainPanelShiftPx: number;
+	bannerExtraShiftPx: number;
+};
+
+function resolveBannerToSpecShiftMetrics(
+	visit: SwupVisit,
+): BannerToSpecShiftMetrics {
 	const targetTop = resolveTargetMainPanelTopPx(visit);
 	const mainPanelTop = resolveAnchorViewportTop(".main-panel-wrapper");
+	const resolvedBannerExtraShift = Math.max(0, Number(targetTop.toFixed(3)));
 	if (mainPanelTop === null) {
-		return 0;
+		return {
+			mainPanelShiftPx: 0,
+			bannerExtraShiftPx: resolvedBannerExtraShift,
+		};
 	}
 
 	// Keep the main panel as the primary anchor so transition end aligns
 	// exactly with the target layout top and avoids a tail "catch-up" snap.
 	const rawMainShift = mainPanelTop - targetTop;
 	if (rawMainShift <= 0) {
-		return 0;
+		return {
+			mainPanelShiftPx: 0,
+			bannerExtraShiftPx: resolvedBannerExtraShift,
+		};
 	}
 
 	// Apply a safety cap only when a sidebar would move above navbar baseline.
@@ -196,7 +217,10 @@ function resolveBannerToSpecShiftPx(visit: SwupVisit): number {
 		? Math.min(rawMainShift, sidebarCap)
 		: rawMainShift;
 
-	return Math.max(0, Number(resolvedShift.toFixed(3)));
+	return {
+		mainPanelShiftPx: Math.max(0, Number(resolvedShift.toFixed(3))),
+		bannerExtraShiftPx: resolvedBannerExtraShift,
+	};
 }
 
 function isSidebarProfilePatchEqual(
@@ -266,6 +290,7 @@ export function setupSwupIntentSource(
 	let bannerToSpecAnimationStartedAt: number | null = null;
 	let delayedPageViewTimerId: number | null = null;
 	let didReplaceContentDuringVisit = false;
+	let shouldDelayBannerToSpecMoveUntilReplace = false;
 
 	const setPageHeightExtendVisible = (_visible: boolean): void => {
 		const heightExtend = document.getElementById("page-height-extend");
@@ -303,14 +328,69 @@ export function setupSwupIntentSource(
 		return Math.max(0, BANNER_TO_SPEC_TRANSITION_DURATION_MS - elapsedMs);
 	};
 
-	const clearBannerToSpecTransitionVisualState = (): void => {
+	const clearBannerToSpecTransitionVisualState = (options?: {
+		preserveNavbarCommitFreeze?: boolean;
+	}): void => {
 		clearDelayedPageViewTimer();
 		bannerToSpecAnimationStartedAt = null;
+		shouldDelayBannerToSpecMoveUntilReplace = false;
 		const root = document.documentElement;
 		root.classList.remove(BANNER_TO_SPEC_TRANSITION_CLASS);
+		root.classList.remove(BANNER_TO_SPEC_TRANSITION_PREPARING_CLASS);
 		root.classList.remove(BANNER_TO_SPEC_TRANSITION_ACTIVE_CLASS);
-		root.classList.remove(BANNER_TO_SPEC_TRANSITION_CONTENT_FADE_IN_CLASS);
+		root.classList.remove(BANNER_TO_SPEC_NAVBAR_SYNC_CLASS);
+		if (!options?.preserveNavbarCommitFreeze) {
+			root.classList.remove(BANNER_TO_SPEC_NAVBAR_COMMIT_FREEZE_CLASS);
+		}
 		root.style.removeProperty(BANNER_TO_SPEC_SHIFT_VAR);
+		root.style.removeProperty(BANNER_TO_SPEC_BANNER_EXTRA_SHIFT_VAR);
+		root.style.removeProperty(BANNER_TO_SPEC_TRANSITION_DURATION_VAR);
+	};
+
+	const startBannerToSpecMoveTransition = (): void => {
+		if (
+			!pendingBannerToSpecRoutePath ||
+			bannerToSpecAnimationStartedAt !== null
+		) {
+			return;
+		}
+		const root = document.documentElement;
+		root.classList.remove(BANNER_TO_SPEC_TRANSITION_PREPARING_CLASS);
+		root.classList.add(BANNER_TO_SPEC_TRANSITION_ACTIVE_CLASS);
+		root.classList.add(BANNER_TO_SPEC_NAVBAR_SYNC_CLASS);
+		bannerToSpecAnimationStartedAt = performance.now();
+	};
+
+	const dispatchRouteChangeWithNavbarCommitFreeze = (): boolean => {
+		const commitRouteChange = (): void => {
+			deps.controller.dispatch({
+				type: "ROUTE_CHANGED",
+				path: window.location.pathname,
+				scrollTop: document.documentElement.scrollTop,
+				viewportWidth: window.innerWidth,
+				reason: "route-change",
+			});
+		};
+
+		if (
+			!pendingBannerToSpecRoutePath ||
+			bannerToSpecAnimationStartedAt === null
+		) {
+			commitRouteChange();
+			return false;
+		}
+
+		const root = document.documentElement;
+		root.classList.add(BANNER_TO_SPEC_NAVBAR_COMMIT_FREEZE_CLASS);
+		commitRouteChange();
+		requestAnimationFrame(() => {
+			requestAnimationFrame(() => {
+				root.classList.remove(
+					BANNER_TO_SPEC_NAVBAR_COMMIT_FREEZE_CLASS,
+				);
+			});
+		});
+		return true;
 	};
 
 	// Ensure spacer is always reset when tab visibility/lifecycle changes.
@@ -429,22 +509,9 @@ export function setupSwupIntentSource(
 			}, 100);
 		}
 
-		// After container swap, crossfade in the new content while keeping
-		// the global upward move consistent.
 		if (pendingBannerToSpecRoutePath) {
-			document.documentElement.classList.add(
-				BANNER_TO_SPEC_TRANSITION_ACTIVE_CLASS,
-			);
-			document.documentElement.classList.add(
-				BANNER_TO_SPEC_TRANSITION_CONTENT_FADE_IN_CLASS,
-			);
-			requestAnimationFrame(() => {
-				requestAnimationFrame(() => {
-					document.documentElement.classList.remove(
-						BANNER_TO_SPEC_TRANSITION_CONTENT_FADE_IN_CLASS,
-					);
-				});
-			});
+			shouldDelayBannerToSpecMoveUntilReplace = false;
+			startBannerToSpecMoveTransition();
 		}
 	});
 
@@ -456,6 +523,7 @@ export function setupSwupIntentSource(
 		pendingBannerToSpecRoutePath = null;
 		pendingSidebarProfilePatch = null;
 		bannerToSpecAnimationStartedAt = null;
+		shouldDelayBannerToSpecMoveUntilReplace = false;
 		clearBannerToSpecTransitionVisualState();
 
 		const targetPathname = extractVisitPathname(visit);
@@ -476,10 +544,24 @@ export function setupSwupIntentSource(
 
 		if (shouldUseBannerToSpecTransition) {
 			pendingBannerToSpecRoutePath = targetPathname;
-			const shiftPx = resolveBannerToSpecShiftPx(visit);
+			const { mainPanelShiftPx, bannerExtraShiftPx } =
+				resolveBannerToSpecShiftMetrics(visit);
 			const root = document.documentElement;
-			root.style.setProperty(BANNER_TO_SPEC_SHIFT_VAR, `${shiftPx}px`);
+			root.style.setProperty(
+				BANNER_TO_SPEC_SHIFT_VAR,
+				`${mainPanelShiftPx}px`,
+			);
+			root.style.setProperty(
+				BANNER_TO_SPEC_BANNER_EXTRA_SHIFT_VAR,
+				`${bannerExtraShiftPx}px`,
+			);
+			root.style.setProperty(
+				BANNER_TO_SPEC_TRANSITION_DURATION_VAR,
+				`${BANNER_TO_SPEC_TRANSITION_DURATION_MS}ms`,
+			);
 			root.classList.add(BANNER_TO_SPEC_TRANSITION_CLASS);
+			root.classList.add(BANNER_TO_SPEC_TRANSITION_PREPARING_CLASS);
+			shouldDelayBannerToSpecMoveUntilReplace = true;
 		}
 
 		setPageHeightExtendVisible(true);
@@ -494,10 +576,10 @@ export function setupSwupIntentSource(
 		if (!pendingBannerToSpecRoutePath) {
 			return;
 		}
-		bannerToSpecAnimationStartedAt = performance.now();
-		document.documentElement.classList.add(
-			BANNER_TO_SPEC_TRANSITION_ACTIVE_CLASS,
-		);
+		if (shouldDelayBannerToSpecMoveUntilReplace) {
+			return;
+		}
+		startBannerToSpecMoveTransition();
 	});
 
 	swup.hooks.on("page:view", () => {
@@ -506,17 +588,14 @@ export function setupSwupIntentSource(
 			deactivateEnterSkeleton();
 			const hash = window.location.hash?.slice(1);
 
-			clearBannerToSpecTransitionVisualState();
+			const didUseNavbarCommitFreeze =
+				dispatchRouteChangeWithNavbarCommitFreeze();
+
+			clearBannerToSpecTransitionVisualState({
+				preserveNavbarCommitFreeze: didUseNavbarCommitFreeze,
+			});
 			pendingBannerToSpecRoutePath = null;
 			pendingSidebarProfilePatch = null;
-
-			deps.controller.dispatch({
-				type: "ROUTE_CHANGED",
-				path: window.location.pathname,
-				scrollTop: document.documentElement.scrollTop,
-				viewportWidth: window.innerWidth,
-				reason: "route-change",
-			});
 
 			const isHomePage = deps.pathsEqual(
 				window.location.pathname,

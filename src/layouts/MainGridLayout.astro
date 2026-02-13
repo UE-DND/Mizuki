@@ -735,6 +735,8 @@ const mainContentClass = `
   :root {
     --layout-mode-transition-duration: 0.98s;
     --layout-mode-transition-easing: cubic-bezier(0.16, 1, 0.4, 1);
+    --layout-banner-route-transition-duration: 920ms;
+    --layout-banner-route-transition-easing: cubic-bezier(0.22, 1, 0.36, 1);
   }
 
   /* 导航区顶部遮罩层 */
@@ -792,15 +794,19 @@ const mainContentClass = `
   :global(html.layout-banner-to-spec-transition) #banner-wrapper,
   :global(html.layout-banner-to-spec-transition) .main-panel-wrapper {
     transition:
-      transform 920ms cubic-bezier(0.22, 1, 0.36, 1),
-      opacity 920ms cubic-bezier(0.22, 1, 0.36, 1);
+      transform var(--layout-banner-route-transition-duration, 920ms)
+        var(
+          --layout-banner-route-transition-easing,
+          cubic-bezier(0.22, 1, 0.36, 1)
+        ),
+      opacity var(--layout-banner-route-transition-duration, 920ms)
+        var(
+          --layout-banner-route-transition-easing,
+          cubic-bezier(0.22, 1, 0.36, 1)
+        );
     will-change: transform;
   }
 
-  :global(
-      html.layout-banner-to-spec-transition.layout-banner-to-spec-transition-active
-    )
-    #banner-wrapper,
   :global(
       html.layout-banner-to-spec-transition.layout-banner-to-spec-transition-active
     )
@@ -812,10 +818,27 @@ const mainContentClass = `
     );
   }
 
+  :global(
+      html.layout-banner-to-spec-transition.layout-banner-to-spec-transition-active
+    )
+    #banner-wrapper {
+    transform: translate3d(
+      0,
+      calc(
+        (
+            var(--layout-banner-route-up-shift, 0px) +
+              var(--layout-banner-route-banner-extra-shift, 0px)
+          ) *
+          -1
+      ),
+      0
+    );
+  }
+
   /*
- * Keep Swup timing in sync with the banner-route upward move.
- * This prevents cached/fast visits from truncating the upward transition.
- */
+  * Keep Swup timing in sync with the banner-route upward move.
+  * This prevents cached/fast visits from truncating the upward transition.
+  */
   :global(html.layout-banner-to-spec-transition .transition-main),
   :global(html.layout-banner-to-spec-transition .transition-leaving),
   :global(html.layout-banner-to-spec-transition .transition-swup-fade) {
@@ -832,18 +855,63 @@ const mainContentClass = `
     transform: none !important;
   }
 
-  /* Old content: fade out while the frame is moving upward. */
+  :global(
+      html.layout-banner-to-spec-transition.layout-banner-to-spec-transition-preparing
+    )
+    .home-layout
+    .min-w-0 {
+    transition: opacity 220ms cubic-bezier(0.22, 1, 0.36, 1) !important;
+  }
+
+  :global(
+      html.layout-banner-to-spec-transition.layout-banner-to-spec-transition-preparing.is-animating.is-leaving
+    )
+    .home-layout
+    .min-w-0 {
+    opacity: 0 !important;
+  }
+
   :global(html.layout-banner-to-spec-transition.is-animating.is-leaving)
     #content-wrapper {
     opacity: 1 !important;
   }
 
-  /* New content: start at transparent, then fade to visible after replace. */
   :global(
-      html.layout-banner-to-spec-transition.layout-banner-to-spec-transition-content-fade-in
-    )
-    #content-wrapper {
-    opacity: 0 !important;
+    html.layout-banner-to-spec-transition.layout-banner-to-spec-transition-active.layout-banner-to-spec-navbar-sync
+      #navbar
+      > div
+  ) {
+    border-radius: 0 !important;
+    background: var(--page-bg) !important;
+    box-shadow: none !important;
+    backdrop-filter: none !important;
+    transition-property:
+      border-radius, background-color, box-shadow, backdrop-filter !important;
+    transition-duration: var(
+      --layout-banner-route-transition-duration,
+      920ms
+    ) !important;
+    transition-timing-function: var(
+      --layout-banner-route-transition-easing,
+      cubic-bezier(0.22, 1, 0.36, 1)
+    ) !important;
+  }
+
+  :global(
+    html.layout-banner-to-spec-transition.layout-banner-to-spec-navbar-commit-freeze
+      #navbar
+      > div
+  ),
+  :global(
+    html.layout-banner-to-spec-transition.layout-banner-to-spec-navbar-commit-freeze
+      #navbar-logo
+  ),
+  :global(
+    html.layout-banner-to-spec-transition.layout-banner-to-spec-navbar-commit-freeze
+      #navbar-logo
+      img
+  ) {
+    transition: none !important;
   }
 
   /* Keep navbar persistent during page transition. */
@@ -857,16 +925,37 @@ const mainContentClass = `
 
   /* Start logo resize at the exact same frame as banner->spec transition start. */
   @media (min-width: 768px) {
-    :global(html.layout-banner-to-spec-transition #navbar-logo) {
+    :global(
+      html.layout-banner-to-spec-transition.layout-banner-to-spec-transition-active.layout-banner-to-spec-navbar-sync
+        #navbar-logo
+    ) {
       height: 3.25rem !important;
-      transition-duration: 920ms !important;
-      transition-timing-function: cubic-bezier(0.22, 1, 0.36, 1) !important;
+      transition-property: height !important;
+      transition-duration: var(
+        --layout-banner-route-transition-duration,
+        920ms
+      ) !important;
+      transition-timing-function: var(
+        --layout-banner-route-transition-easing,
+        cubic-bezier(0.22, 1, 0.36, 1)
+      ) !important;
     }
 
-    :global(html.layout-banner-to-spec-transition #navbar-logo img) {
+    :global(
+      html.layout-banner-to-spec-transition.layout-banner-to-spec-transition-active.layout-banner-to-spec-navbar-sync
+        #navbar-logo
+        img
+    ) {
       height: 3.25rem !important;
-      transition-duration: 920ms !important;
-      transition-timing-function: cubic-bezier(0.22, 1, 0.36, 1) !important;
+      transition-property: height !important;
+      transition-duration: var(
+        --layout-banner-route-transition-duration,
+        920ms
+      ) !important;
+      transition-timing-function: var(
+        --layout-banner-route-transition-easing,
+        cubic-bezier(0.22, 1, 0.36, 1)
+      ) !important;
     }
   }
 
