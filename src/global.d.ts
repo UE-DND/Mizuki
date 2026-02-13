@@ -74,7 +74,7 @@ declare global {
 			onLoad: (callback: () => void) => void;
 			isLoaded: boolean;
 		};
-		__MIZUKI_RUNTIME_SETTINGS__?: ResolvedSiteSettings;
+		__DACAPO_RUNTIME_SETTINGS__?: ResolvedSiteSettings;
 		siteConfig?: SiteConfig;
 	}
 }

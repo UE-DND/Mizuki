@@ -22,10 +22,10 @@ export const friendsData: FriendItem[] = [
 	},
 	{
 		id: 2,
-		title: "Mizuki Docs",
+		title: "DaCapo Docs",
 		imgurl: "http://q.qlogo.cn/headimg_dl?dst_uin=3231515355&spec=640&img_type=jpg",
-		desc: "Mizuki User Manual",
-		siteurl: "https://docs.mizuki.mysqil.com",
+		desc: "DaCapo User Manual",
+		siteurl: "https://docs.dacapo.mysqil.com",
 		tags: ["Docs"],
 	},
 	{

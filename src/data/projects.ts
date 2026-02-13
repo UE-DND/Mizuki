@@ -29,8 +29,8 @@ export interface ProjectStats {
 
 export const projectsData: Project[] = [
 	{
-		id: "mizuki-blog",
-		title: "Mizuki Blog Theme",
+		id: "dacapo-blog",
+		title: "DaCapo Blog Theme",
 		description:
 			"Modern blog theme developed based on the Astro framework, supporting multilingual, dark mode, and responsive design features.",
 		image: "",
@@ -38,7 +38,7 @@ export const projectsData: Project[] = [
 		techStack: ["Astro", "TypeScript", "Tailwind CSS", "Svelte"],
 		status: "completed",
 		liveDemo: "https://blog.example.com",
-		sourceCode: "https://github.com/example/mizuki", // 更改为GitHub链接
+		sourceCode: "https://github.com/example/dacapo", // 更改为GitHub链接
 		visitUrl: "https://blog.example.com", // 添加前往项目链接
 		startDate: "2024-01-01",
 		endDate: "2024-06-01",

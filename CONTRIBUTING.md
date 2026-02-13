@@ -1,6 +1,6 @@
-# 🌸 Mizuki 开发、贡献指南
+# 🌸 DaCapo 开发、贡献指南
 
-<img align='right' src='assets/Logo.png' width='200px' alt="Mizuki logo">
+<img align='right' src='assets/Logo.png' width='200px' alt="DaCapo logo">
 
 [![Node.js >= 20](https://img.shields.io/badge/node.js-%3E%3D20-brightgreen)](https://nodejs.org/)
 [![pnpm >= 9](https://img.shields.io/badge/pnpm-%3E%3D9-blue)](https://pnpm.io/)
@@ -26,8 +26,8 @@
 1. **克隆仓库：**
 
    ```bash
-   git clone https://github.com/matsuzaka-yuki/mizuki.git
-   cd mizuki
+   git clone <your-dacapo-repo-url>
+   cd dacapo
    ```
 
 2. **安装依赖：**

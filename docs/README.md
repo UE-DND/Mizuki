@@ -1,6 +1,6 @@
-# Mizuki 文档索引
+# DaCapo 文档索引
 
-欢迎查阅 Mizuki 的项目文档。
+欢迎查阅 DaCapo 的项目文档。
 
 ## 文档列表
 

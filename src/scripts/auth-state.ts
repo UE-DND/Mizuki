@@ -5,7 +5,7 @@ export type AuthState = {
 	isLoggedIn: boolean;
 };
 
-const AUTH_STATE_CACHE_KEY = "__mizukiAuthState";
+const AUTH_STATE_CACHE_KEY = "__dacapoAuthState";
 
 function normalizeState(
 	input: Partial<AuthState> | null | undefined,
@@ -40,7 +40,7 @@ export function emitAuthState(
 	)[AUTH_STATE_CACHE_KEY] = state;
 
 	document.dispatchEvent(
-		new CustomEvent("mizuki:auth-state", {
+		new CustomEvent("dacapo:auth-state", {
 			detail: state,
 		}),
 	);
@@ -59,8 +59,8 @@ export function subscribeAuthState(
 			normalizeState((event as CustomEvent<Partial<AuthState>>).detail),
 		);
 	};
-	document.addEventListener("mizuki:auth-state", listener);
+	document.addEventListener("dacapo:auth-state", listener);
 	return () => {
-		document.removeEventListener("mizuki:auth-state", listener);
+		document.removeEventListener("dacapo:auth-state", listener);
 	};
 }

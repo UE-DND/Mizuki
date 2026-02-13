@@ -2,7 +2,7 @@ import type { APIContext } from "astro";
 
 import { getCookieOptions } from "@/server/directus-auth";
 
-export const REGISTRATION_REQUEST_COOKIE_NAME = "mzk_registration_request";
+export const REGISTRATION_REQUEST_COOKIE_NAME = "dc_registration_request";
 export const REGISTRATION_REQUEST_COOKIE_MAX_AGE_SECONDS = 60 * 60 * 24 * 30;
 
 const UUID_PATTERN =

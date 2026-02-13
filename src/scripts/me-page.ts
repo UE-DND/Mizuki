@@ -17,7 +17,7 @@ import {
 	PROFILE_BIO_MAX_LENGTH,
 } from "@/constants/text-limits";
 
-const OUTSIDE_CLICK_KEY = "__mizuki_me_page_outside_click__";
+const OUTSIDE_CLICK_KEY = "__dacapo_me_page_outside_click__";
 
 interface RuntimeWindow extends Window {
 	[OUTSIDE_CLICK_KEY]?: ((e: MouseEvent) => void) | undefined;

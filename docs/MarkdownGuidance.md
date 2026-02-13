@@ -359,7 +359,7 @@ Swup 下重初始化：
 
 - HTML 是否有 `.copy-btn`（插件是否注入）
 - `setupCodeCopyDelegation()` 是否执行
-- `code-copy.ts` 是否被重复初始化（委托标记 `__mzkCodeCopyDelegated`）
+- `code-copy.ts` 是否被重复初始化（委托标记 `__dcCodeCopyDelegated`）
 
 ### 11.6 TOC 不生成或高亮错乱
 

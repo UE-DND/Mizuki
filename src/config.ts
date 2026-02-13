@@ -26,7 +26,7 @@ export const buildTimeConfig = {
 };
 
 export const systemSiteConfig: SystemSiteConfig = {
-	siteURL: "https://mizuki.mysqil.com/",
+	siteURL: "https://dacapo.mysqil.com/",
 	lang: "zh_CN",
 	themeColor: {
 		hue: 285,
@@ -62,7 +62,7 @@ export const systemSiteConfig: SystemSiteConfig = {
 
 export const defaultSiteSettings: SiteSettingsPayload = {
 	site: {
-		title: "Mizuki",
+		title: "DaCapo",
 		subtitle: "个人博客",
 		keywords: [],
 		siteStartDate: "2026-02-01",
@@ -76,7 +76,7 @@ export const defaultSiteSettings: SiteSettingsPayload = {
 	},
 	navbarTitle: {
 		mode: "logo",
-		text: "MizukiUI",
+		text: "DaCapoUI",
 		icon: "assets/home/home.png",
 		logo: "assets/home/default-logo.png",
 	},

@@ -263,7 +263,7 @@ const bootstrap = (): void => {
 		runOnPageShow: true,
 	});
 
-	document.addEventListener("mizuki:page:loaded", () => {
+	document.addEventListener("dacapo:page:loaded", () => {
 		scheduleRender(50);
 	});
 

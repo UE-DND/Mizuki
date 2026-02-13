@@ -53,7 +53,7 @@ function getRatelimit(limit: number, windowMs: number): Ratelimit {
 		redis,
 		limiter: Ratelimit.slidingWindow(limit, `${seconds} s`),
 		analytics: false,
-		prefix: "mizuki:auth:login",
+		prefix: "dacapo:auth:login",
 	});
 
 	return cachedRatelimit;

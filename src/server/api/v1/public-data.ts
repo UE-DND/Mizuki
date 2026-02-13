@@ -794,7 +794,7 @@ export async function loadOfficialSidebarProfile(): Promise<SidebarProfileData> 
 	const profile = rows[0] as AppProfile | undefined;
 	if (!profile) {
 		return {
-			display_name: "Mizuki",
+			display_name: "DaCapo",
 			bio: null,
 			bio_typewriter_enable: true,
 			bio_typewriter_speed: 80,

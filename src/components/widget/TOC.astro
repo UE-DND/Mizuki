@@ -282,7 +282,7 @@ const className = Astro.props.class;
     }
 
     regenerateTOC(retryCount = 0): void {
-      const runtimeSettings = window.__MIZUKI_RUNTIME_SETTINGS__;
+      const runtimeSettings = window.__DACAPO_RUNTIME_SETTINGS__;
       const maxLevel = runtimeSettings?.settings.toc.depth ?? 3;
       const useJapaneseBadge =
         runtimeSettings?.settings.toc.useJapaneseBadge ?? false;

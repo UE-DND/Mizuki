@@ -40,9 +40,9 @@ const ACCESS_COOKIE_DEFAULT_MAX_AGE_SECONDS = 60 * 15;
 const ACCESS_COOKIE_MIN_MAX_AGE_SECONDS = 60;
 const ACCESS_COOKIE_MAX_MAX_AGE_SECONDS = 60 * 60 * 24;
 
-export const DIRECTUS_ACCESS_COOKIE_NAME = "mizuki_directus_access";
-export const DIRECTUS_REFRESH_COOKIE_NAME = "mizuki_directus_refresh";
-export const REMEMBER_COOKIE_NAME = "mizuki_remember";
+export const DIRECTUS_ACCESS_COOKIE_NAME = "dacapo_directus_access";
+export const DIRECTUS_REFRESH_COOKIE_NAME = "dacapo_directus_refresh";
+export const REMEMBER_COOKIE_NAME = "dacapo_remember";
 
 function resolveCookieSecure(requestUrl?: URL): boolean {
 	if (requestUrl) {

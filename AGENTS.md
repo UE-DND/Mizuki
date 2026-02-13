@@ -118,7 +118,7 @@ ACL 判定顺序固定：
 
 - Markdown 输出必须经过服务端 sanitize（`src/server/markdown/sanitize.ts`）
 - 禁止在 markdown 渲染链路引入内联 `<script>` 注入逻辑
-- 密码保护内容使用 `MZK2:` 版本化密文，浏览器端通过 Web Crypto 解密
+- 密码保护内容使用 `DC2:` 版本化密文，浏览器端通过 Web Crypto 解密
 
 ## 错误处理
 

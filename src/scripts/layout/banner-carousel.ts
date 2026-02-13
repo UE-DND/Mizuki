@@ -52,7 +52,7 @@ export function initBannerCarousel(): void {
 		return item.querySelector(".hidden.md\\:block");
 	});
 	const carouselConfig =
-		runtimeWindow.__MIZUKI_RUNTIME_SETTINGS__?.settings.banner.carousel;
+		runtimeWindow.__DACAPO_RUNTIME_SETTINGS__?.settings.banner.carousel;
 
 	if (validItems.length <= 1 || !carouselConfig?.enable) {
 		return;

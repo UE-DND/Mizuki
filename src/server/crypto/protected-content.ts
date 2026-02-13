@@ -1,7 +1,7 @@
 import { webcrypto } from "node:crypto";
 
-const MARKER = "MIZUKI-VERIFY:";
-const VERSION_PREFIX = "MZK2:";
+const MARKER = "DACAPO-VERIFY:";
+const VERSION_PREFIX = "DC2:";
 const PBKDF2_ITERATIONS = 210_000;
 const SALT_BYTES = 16;
 const IV_BYTES = 12;

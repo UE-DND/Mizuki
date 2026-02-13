@@ -123,7 +123,7 @@ export function initLayoutRuntime(): void {
 	}
 
 	runtimeWindow.__layoutRuntimeInitialized = true;
-	const runtimeSettings = runtimeWindow.__MIZUKI_RUNTIME_SETTINGS__;
+	const runtimeSettings = runtimeWindow.__DACAPO_RUNTIME_SETTINGS__;
 	const bannerEnabled = Boolean(document.getElementById("banner-wrapper"));
 	const fancyboxController = createFancyboxController();
 	const navbarTransparentMode =

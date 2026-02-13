@@ -43,7 +43,7 @@ export const ADMIN_MODULE_COLLECTION = {
 } as const;
 
 const SPECIAL_ARTICLE_SLUG_SET = new Set(["about", "friends"]);
-const COMMENT_BODY_BASE64_PREFIX = "__MZK_UTF8_B64__:";
+const COMMENT_BODY_BASE64_PREFIX = "__DC_UTF8_B64__:";
 
 export type AdminModuleKey = keyof typeof ADMIN_MODULE_COLLECTION;
 

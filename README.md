@@ -1,10 +1,10 @@
-# 🌸 Mizuki
+# 🌸 DaCapo
 
-<img align='right' src='assets/Logo.png' width='200px' alt="Mizuki logo">
+<img align='right' src='assets/Logo.png' width='200px' alt="DaCapo logo">
 
 一个现代化、功能丰富的静态博客模板，基于 [Astro](https://astro.build) 构建，具有先进的功能和精美的设计。
 
-![Mizuki Preview](assets/Preview.png)
+![DaCapo Preview](assets/Preview.png)
 
 ## 功能特性
 
@@ -64,7 +64,7 @@
    - 登录 [Vercel](https://vercel.com)
    - 点击 `Import Project`
    - 选择 `Import Git Repository` 并连接你的GitHub账号
-   - 选择 Mizuki 仓库
+   - 选择 DaCapo 仓库
 
 2. **配置环境变量（可选）**:
    - 在部署设置页面，找到 `Environment Variables` 部分
@@ -128,7 +128,7 @@ pinned: false # 普通文章（默认）
 
 ## Markdown 扩展语法
 
-Mizuki 支持超越标准 GitHub Flavored Markdown 的增强功能：
+DaCapo 支持超越标准 GitHub Flavored Markdown 的增强功能：
 
 ### 增强写作
 
@@ -190,14 +190,14 @@ export const systemSiteConfig = {
 
 感谢以下本项目作者对本项目做出的贡献
 
-[![本项目贡献者](https://contrib.rocks/image?repo=CiaLliChannel/Mizuki)](https://github.com/CiaLliChannel/Mizuki/graphs/contributors)
+[![本项目贡献者](https://contrib.rocks/image?repo=CiaLliChannel/DaCapo)](https://github.com/CiaLliChannel/DaCapo/graphs/contributors)
 
 ## 致谢
 
 - **[Fuwari](https://github.com/saicaca/fuwari)** by saicaca - 本项目所基于的原始模板。感谢您创建了如此漂亮且功能强大的模板
 - **[Yukina](https://github.com/WhitePaper233/yukina)** - 感谢提供设计灵感和创意，帮助塑造了这个项目。Yukina 是一个优雅的博客模板，展现了出色的设计原则和用户体验
-- **[Firefly](https://github.com/CuteLeaf/Firefly)** - 感谢提供优秀的布局设计思路，双侧边栏布局、文章双列网格等布局，及部分小组件的设计与实现，让 Mizuki 的界面更加丰富
-- **[Twilight](https://github.com/spr-aachen/Twilight)** - 感谢提供灵感和技术支持。Twilight 的响应式设计与过渡效果显著提升了 Mizuki 的使用体验
+- **[Firefly](https://github.com/CuteLeaf/Firefly)** - 感谢提供优秀的布局设计思路，双侧边栏布局、文章双列网格等布局，及部分小组件的设计与实现，让 DaCapo 的界面更加丰富
+- **[Twilight](https://github.com/spr-aachen/Twilight)** - 感谢提供灵感和技术支持。Twilight 的响应式设计与过渡效果显著提升了 DaCapo 的使用体验
 - **[Iconify](https://iconify.design/)** 精美的图标
 
 ## 许可证

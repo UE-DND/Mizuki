@@ -2,7 +2,7 @@ import { DARK_MODE, DEFAULT_THEME, LIGHT_MODE } from "@constants/constants";
 import type { LIGHT_DARK_MODE } from "@/types/config";
 
 function getRuntimeSettings() {
-	return window.__MIZUKI_RUNTIME_SETTINGS__;
+	return window.__DACAPO_RUNTIME_SETTINGS__;
 }
 
 function isThemeColorFixed(): boolean {

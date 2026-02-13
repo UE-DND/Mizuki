@@ -2,7 +2,7 @@ const COPY_SUCCESS_DURATION_MS = 1000;
 
 type RuntimeWindow = Window &
 	typeof globalThis & {
-		__mzkCodeCopyDelegated?: boolean;
+		__dcCodeCopyDelegated?: boolean;
 	};
 
 function extractCodeText(codeElement: HTMLElement): string {
@@ -96,10 +96,10 @@ function handleDocumentClick(event: MouseEvent): void {
 
 export function setupCodeCopyDelegation(): void {
 	const runtimeWindow = window as RuntimeWindow;
-	if (runtimeWindow.__mzkCodeCopyDelegated) {
+	if (runtimeWindow.__dcCodeCopyDelegated) {
 		return;
 	}
 
 	document.addEventListener("click", handleDocumentClick);
-	runtimeWindow.__mzkCodeCopyDelegated = true;
+	runtimeWindow.__dcCodeCopyDelegated = true;
 }

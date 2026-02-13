@@ -1,6 +1,6 @@
-# Mizuki 部署指南（Directus 数据源）
+# DaCapo 部署指南（Directus 数据源）
 
-本文档说明如何部署当前的 Mizuki 全栈前端（Astro + Directus 数据源）。
+本文档说明如何部署当前的 DaCapo 全栈前端（Astro + Directus 数据源）。
 
 ## 部署前准备
 

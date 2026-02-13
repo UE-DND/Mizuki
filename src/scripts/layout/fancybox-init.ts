@@ -39,7 +39,7 @@ export function createFancyboxController(): FancyboxController {
 		const albumImagesSelector =
 			".custom-md img, #post-cover img, .moment-images img";
 		const albumLinksSelector = ".moment-images a[data-fancybox]";
-		const albumPhotoSelector = `.mzk-album-gallery [data-fancybox='${ALBUM_PREVIEW_GROUP}']`;
+		const albumPhotoSelector = `.dc-album-gallery [data-fancybox='${ALBUM_PREVIEW_GROUP}']`;
 		const singleFancyboxSelector = `[data-fancybox]:not(.moment-images a):not([data-fancybox='${ALBUM_PREVIEW_GROUP}'])`;
 
 		const hasImages =

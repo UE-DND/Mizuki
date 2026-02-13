@@ -658,7 +658,7 @@ export function setupSwupIntentSource(
 			window.setTimeout(() => {
 				if (document.getElementById("tcomment")) {
 					document.dispatchEvent(
-						new CustomEvent("mizuki:page:loaded", {
+						new CustomEvent("dacapo:page:loaded", {
 							detail: {
 								path: window.location.pathname,
 								timestamp: Date.now(),

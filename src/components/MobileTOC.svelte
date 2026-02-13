@@ -40,9 +40,9 @@
   const generateTOC = () => {
     // 获取配置
     useJapaneseBadge =
-      window.__MIZUKI_RUNTIME_SETTINGS__?.settings.toc.useJapaneseBadge ??
+      window.__DACAPO_RUNTIME_SETTINGS__?.settings.toc.useJapaneseBadge ??
       false;
-    tocDepth = window.__MIZUKI_RUNTIME_SETTINGS__?.settings.toc.depth ?? 3;
+    tocDepth = window.__DACAPO_RUNTIME_SETTINGS__?.settings.toc.depth ?? 3;
     const collected = collectMarkdownHeadings({ maxDepth: tocDepth });
     headingElements = collected.map((item) => item.element);
     const japaneseHiragana = [
