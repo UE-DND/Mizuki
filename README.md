@@ -167,7 +167,6 @@ export const systemSiteConfig = {
 
 ### 特色页面配置
 
-- **开关配置：** 在管理台 `站点设置 -> 功能开关` 中启用/关闭 `friends/projects/skills/timeline`
 - **友链页面内容：** 在 `src/data/friends.ts` 中编辑朋友数据
 - **关于页面：** 在 Directus 的 `app_articles` 中维护 `slug=about` 内容
 
@@ -190,7 +189,7 @@ export const systemSiteConfig = {
 
 感谢以下本项目作者对本项目做出的贡献
 
-[![本项目贡献者](https://contrib.rocks/image?repo=CiaLliChannel/DaCapo)](https://github.com/CiaLliChannel/DaCapo/graphs/contributors)
+[![本项目贡献者](https://contrib.rocks/image?repo=CiaLliChannel-Dev/DaCapo)](https://github.com/CiaLliChannel-Dev/DaCapo/graphs/contributors)
 
 ## 致谢
 

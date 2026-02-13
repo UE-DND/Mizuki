@@ -71,9 +71,6 @@ export const defaultSiteSettings: SiteSettingsPayload = {
 	auth: {
 		register_enabled: false,
 	},
-	featurePages: {
-		friends: true,
-	},
 	navbarTitle: {
 		mode: "logo",
 		text: "DaCapoUI",
@@ -332,7 +329,6 @@ export function buildLegacySiteConfig(
 		siteStartDate: settings.site.siteStartDate || undefined,
 		lang: system.lang,
 		themeColor: system.themeColor,
-		featurePages: settings.featurePages,
 		navbarTitle: settings.navbarTitle,
 		pageScaling: system.pageScaling,
 		font: system.font,

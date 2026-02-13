@@ -3,7 +3,7 @@
 
 /**
  * 初始化页面布局
- * @param {string} pageType - 页面类型（projects, skills等）
+ * @param {string} pageType - 页面类型
  */
 function initPageLayout(_pageType) {
 	showRightSidebar();
@@ -23,7 +23,7 @@ function showRightSidebar() {
 // 页面加载完成后初始化
 function initialize() {
 	const pageType =
-		document.documentElement.getAttribute("data-page-type") || "projects";
+		document.documentElement.getAttribute("data-page-type") || "default";
 	initPageLayout(pageType);
 }
 

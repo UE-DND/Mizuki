@@ -25,11 +25,6 @@ export type SiteConfig = {
 		fixed: boolean;
 	};
 
-	// 特色页面开关配置
-	featurePages: {
-		friends: boolean; // 友链页面开关
-	};
-
 	// 顶栏标题配置
 	navbarTitle?: {
 		mode?: "text-icon" | "logo"; // 显示模式："text-icon" 显示图标+文本，"logo" 仅显示Logo
@@ -126,7 +121,6 @@ export enum LinkPreset {
 	Anime = 4,
 	Diary = 5,
 	Albums = 6,
-	Projects = 7,
 }
 
 export type NavBarLink = {

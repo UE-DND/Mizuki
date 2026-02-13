@@ -38,9 +38,4 @@ export const LinkPresets: { [key in LinkPreset]: NavBarLink } = {
 		url: "/me/#albums",
 		icon: "material-symbols:photo-library",
 	},
-	[LinkPreset.Projects]: {
-		name: i18n(I18nKey.projects),
-		url: "/projects",
-		icon: "material-symbols:work",
-	},
 };

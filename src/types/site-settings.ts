@@ -35,9 +35,6 @@ export type EditableSiteSettings = {
 	auth: {
 		register_enabled: boolean;
 	};
-	featurePages: {
-		friends: boolean;
-	};
 	navbarTitle: NonNullable<SiteConfig["navbarTitle"]>;
 	wallpaperMode: SiteConfig["wallpaperMode"];
 	banner: SiteConfig["banner"];

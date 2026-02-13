@@ -255,8 +255,6 @@ function normalizeSettings(
 		merged.auth.register_enabled ?? base.auth.register_enabled,
 	);
 
-	merged.featurePages.friends = true;
-
 	merged.navbarTitle.text =
 		String(merged.navbarTitle.text || base.navbarTitle.text).trim() ||
 		base.navbarTitle.text;
