@@ -276,7 +276,6 @@ export function setupSwupIntentSource(
 					) => void;
 				};
 			};
-			mobileTOCInit?: () => void;
 			floatingTOCInit?: () => void;
 		};
 
@@ -467,8 +466,8 @@ export function setupSwupIntentSource(
 		}
 
 		// 同步 #main-grid 类名
-		// #main-grid 不是 Swup 容器，但其 CSS 类（grid 列定义、mobile-both-sidebar 等）
-		// 随页面侧边栏配置变化，需在内容替换前同步以避免布局错乱。
+		// #main-grid 不是 Swup 容器，但其 CSS 类会随侧边栏布局变化。
+		// 在内容替换前同步，避免布局错乱。
 		const newMainGrid = visit.to.document?.querySelector("#main-grid");
 		const currentMainGrid = document.getElementById("main-grid");
 		if (newMainGrid instanceof HTMLElement && currentMainGrid) {
@@ -498,13 +497,11 @@ export function setupSwupIntentSource(
 			| null;
 		const hasAnyTOCRuntime =
 			typeof tocElement?.init === "function" ||
-			typeof runtimeWindow.mobileTOCInit === "function" ||
 			typeof runtimeWindow.floatingTOCInit === "function";
 
 		if (hasAnyTOCRuntime) {
 			window.setTimeout(() => {
 				tocElement?.init?.();
-				runtimeWindow.mobileTOCInit?.();
 				runtimeWindow.floatingTOCInit?.();
 			}, 100);
 		}

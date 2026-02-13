@@ -77,9 +77,6 @@
   // 是否显示错误信息，默认为 false
   let showError = false;
 
-  let isMobileView = false;
-  let resizeHandler: (() => void) | null = null;
-
   // 当前歌曲信息
   let currentSong = {
     title: "Sample Song",
@@ -249,22 +246,10 @@
   }
 
   function handleOrbClick() {
-    if (isMobileView) {
-      isHidden = false;
-      isExpanded = true;
-      showPlaylist = false;
-      return;
-    }
     toggleHidden();
   }
 
   function handleCollapseToOrb() {
-    if (isMobileView) {
-      isExpanded = false;
-      isHidden = true;
-      showPlaylist = false;
-      return;
-    }
     toggleExpanded();
   }
 
@@ -665,7 +650,6 @@
     void currentSong.title;
     void isExpanded;
     void isHidden;
-    void isMobileView;
     scheduleTitleMarqueeUpdate();
   }
   $: if (!isPlaying) {
@@ -691,18 +675,9 @@
     if (!musicPlayerConfig.enable) {
       return;
     }
-    const isTouchDevice = navigator.maxTouchPoints > 0;
-    const isMobile =
-      window.matchMedia("(max-width: 768px)").matches ||
-      window.matchMedia("(hover: none) and (pointer: coarse)").matches ||
-      (isTouchDevice && window.innerWidth <= 1024);
-    if (isMobile) {
-      applyDisplayMode("orb");
-    } else {
-      const storedMode = readDisplayMode();
-      if (storedMode) {
-        applyDisplayMode(storedMode);
-      }
+    const storedMode = readDisplayMode();
+    if (storedMode) {
+      applyDisplayMode(storedMode);
     }
     if (mode === "meting") {
       fetchMetingPlaylist();
@@ -718,20 +693,6 @@
         showErrorMessage("本地播放列表为空");
       }
     }
-    const updateMobileState = () => {
-      isMobileView =
-        window.matchMedia("(max-width: 768px)").matches ||
-        window.matchMedia("(hover: none) and (pointer: coarse)").matches ||
-        (navigator.maxTouchPoints > 0 && window.innerWidth <= 1024);
-      if (isMobileView) {
-        applyDisplayMode("orb");
-      }
-    };
-    updateMobileState();
-    resizeHandler = () => {
-      updateMobileState();
-    };
-    window.addEventListener("resize", resizeHandler);
   });
 
   onDestroy(() => {
@@ -748,9 +709,6 @@
     }
     clearMarqueeDelay("mini");
     clearMarqueeDelay("expanded");
-    if (resizeHandler) {
-      window.removeEventListener("resize", resizeHandler);
-    }
   });
 </script>
 
@@ -844,10 +802,10 @@
     <!-- 收缩状态的迷你播放器（封面圆形） -->
     <div
       class="mini-player card-base bg-(--float-panel-bg) shadow-2xl rounded-2xl p-3 transition-all duration-500 ease-in-out"
-      hidden={isExpanded || isHidden || isMobileView}
-      class:opacity-0={isExpanded || isHidden || isMobileView}
-      class:scale-95={isExpanded || isHidden || isMobileView}
-      class:pointer-events-none={isExpanded || isHidden || isMobileView}
+      hidden={isExpanded || isHidden}
+      class:opacity-0={isExpanded || isHidden}
+      class:scale-95={isExpanded || isHidden}
+      class:pointer-events-none={isExpanded || isHidden}
     >
       <div class="flex items-center gap-3">
         <!-- 封面区域：点击控制播放/暂停 -->
@@ -1378,69 +1336,7 @@
       transform: scaleY(1.2);
       transition: transform 0.2s ease;
     }
-    @media (max-width: 768px) {
-      .music-player {
-        max-width: 280px !important;
-        /*left: 0.5rem !important;*/
-        bottom: 0.5rem !important;
-        right: 0.5rem !important;
-      }
-      .mini-player {
-        width: 280px;
-      }
-      .music-player.expanded {
-        width: calc(100vw - 16px);
-        max-width: none;
-        /*left: 0.5rem !important;*/
-        right: 0.5rem !important;
-      }
-      .playlist-panel {
-        width: 100% !important;
-        right: 0 !important;
-        max-width: none;
-      }
-      .controls {
-        gap: 8px;
-      }
-      .controls button {
-        width: 36px;
-        height: 36px;
-      }
-      .controls button:nth-child(3) {
-        width: 44px;
-        height: 44px;
-      }
-    }
-    @media (max-width: 480px) {
-      .music-player {
-        max-width: 260px;
-      }
-      .song-title {
-        font-size: 14px;
-      }
-      .song-artist {
-        font-size: 12px;
-      }
-      .controls {
-        gap: 6px;
-        margin-bottom: 12px;
-      }
-      .controls button {
-        width: 32px;
-        height: 32px;
-      }
-      .controls button:nth-child(3) {
-        width: 40px;
-        height: 40px;
-      }
-      .playlist-item {
-        padding: 8px 12px;
-      }
-      .playlist-item .w-10 {
-        width: 32px;
-        height: 32px;
-      }
-    }
+
     @keyframes slide-up {
       from {
         transform: translateY(100%);

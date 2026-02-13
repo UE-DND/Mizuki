@@ -96,7 +96,7 @@ export function setupScrollIntentSource(
 			if (
 				currentState.mode === "banner" &&
 				currentState.isHome &&
-				viewportWidth >= 1024
+				viewportWidth >= 1280
 			) {
 				const threshold = getCollapseScrollThreshold(
 					scrollTop,

@@ -140,35 +140,6 @@ const useJapaneseBadge = resolvedSiteSettings.settings.toc.useJapaneseBadge;
     border-radius: 2px;
   }
 
-  @media (max-width: 1560px) {
-    .floating-toc-btn {
-      box-shadow:
-        0 0 0 1px var(--btn-regular-bg),
-        0 0 1em var(--btn-regular-bg);
-    }
-  }
-
-  @media (max-width: 768px) {
-    .floating-toc-wrapper {
-      transform: none;
-      right: 2rem;
-      bottom: 6rem;
-      opacity: 0.6;
-    }
-
-    .floating-toc-wrapper:active,
-    .floating-toc-wrapper.active {
-      opacity: 1;
-    }
-
-    .floating-toc-panel {
-      width: 85vw;
-      max-width: 20rem;
-      right: 0;
-      bottom: 4.5rem;
-    }
-  }
-
   :global(.floating-toc-item) {
     display: flex;
     align-items: center;

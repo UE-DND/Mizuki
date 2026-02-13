@@ -11,12 +11,8 @@ export const setupPanelOutsideHandler = (panelManager: PanelManager): void => {
 	// 统一管理需要点击外部关闭的面板与忽略元素
 	const panelOutsideConfigs: PanelOutsideConfig[] = [
 		{
-			panelId: "nav-menu-panel",
-			ignores: ["nav-menu-panel", "nav-menu-switch"],
-		},
-		{
-			panelId: "mobile-toc-panel",
-			ignores: ["mobile-toc-panel", "mobile-toc-switch"],
+			panelId: "display-setting",
+			ignores: ["display-setting", "scheme-switch"],
 		},
 	];
 

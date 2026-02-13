@@ -1,15 +1,15 @@
 ---
 interface Props {
-  orientation?: "horizontal" | "vertical";
+  axis?: "horizontal" | "vertical";
   class?: string;
 }
 
-const { orientation = "horizontal", class: customClass = "" } = Astro.props;
+const { axis = "horizontal", class: customClass = "" } = Astro.props;
 ---
 
 <div
-  class={`custom-scrollbar ${orientation === "horizontal" ? "horizontal-scrollbar" : "vertical-scrollbar"} ${customClass}`}
-  data-orientation={orientation}
+  class={`custom-scrollbar ${axis === "horizontal" ? "horizontal-scrollbar" : "vertical-scrollbar"} ${customClass}`}
+  data-axis={axis}
 >
   <slot />
 </div>
@@ -149,7 +149,7 @@ const { orientation = "horizontal", class: customClass = "" } = Astro.props;
       thumb.style.zIndex = "10";
 
       // 根据方向设置轨道和拇指的位置和尺寸
-      if (el.dataset.orientation === "horizontal") {
+      if (el.dataset.axis === "horizontal") {
         track.style.bottom = "2px";
         track.style.left = "0";
         track.style.right = "0";
@@ -175,7 +175,7 @@ const { orientation = "horizontal", class: customClass = "" } = Astro.props;
 
       // 更新滚动条位置和尺寸的函数
       function updateScrollbar() {
-        if (el.dataset.orientation === "horizontal") {
+        if (el.dataset.axis === "horizontal") {
           const scrollWidth = el.scrollWidth;
           const clientWidth = el.clientWidth;
           const scrollLeft = el.scrollLeft;

@@ -1,6 +1,7 @@
 ---
 import ConfigCarrier from "@components/ConfigCarrier.astro";
 import MusicPlayer from "@components/widget/MusicPlayer.svelte";
+import DesktopOnlyNotice from "@components/misc/DesktopOnlyNotice.astro";
 import { buildLegacySiteConfig } from "@/config";
 import { getResolvedSiteSettings } from "@/server/site-settings/service";
 import type { ResolvedSiteSettings } from "@/types/site-settings";
@@ -8,6 +9,7 @@ import type { ResolvedSiteSettings } from "@/types/site-settings";
 const BANNER_HEIGHT = 35;
 const BANNER_HEIGHT_EXTEND = 30;
 const BANNER_HEIGHT_HOME = BANNER_HEIGHT + BANNER_HEIGHT_EXTEND;
+const DESKTOP_MIN_WIDTH = 1280;
 
 import {
   DARK_MODE,
@@ -18,7 +20,6 @@ import {
 import { defaultFavicons } from "../constants/icon";
 import type { Favicon } from "../types/config";
 import { pathsEqual, url } from "../utils/url-utils";
-import "../styles/mobile-navbar.css";
 import "../styles/wallpaper-navbar-transparent.css";
 import "../styles/fancybox-custom.css";
 import "../styles/expressive-code.css";
@@ -72,23 +73,6 @@ const getDefaultBanner = (): string => {
   }
   if (Array.isArray(src)) {
     return src[0] || "";
-  }
-  if (src && typeof src === "object") {
-    // 优先使用desktop，如果没有则使用mobile
-    const desktopSrc = src.desktop;
-    const mobileSrc = src.mobile;
-    if (typeof desktopSrc === "string") {
-      return desktopSrc;
-    }
-    if (Array.isArray(desktopSrc) && desktopSrc.length > 0) {
-      return desktopSrc[0];
-    }
-    if (typeof mobileSrc === "string") {
-      return mobileSrc;
-    }
-    if (Array.isArray(mobileSrc) && mobileSrc.length > 0) {
-      return mobileSrc[0];
-    }
   }
   return "";
 };
@@ -189,11 +173,58 @@ const bodyStyle = bodyFontFamily ? `font-family: ${bodyFontFamily};` : "";
 <!doctype html>
 <html
   lang={siteLang}
-  class="bg-(--page-bg) text-[14px] md:text-[16px]"
+  class="bg-(--page-bg) text-[16px]"
   style={`--page-width:${pageWidthRem};--hue:${configHue};`}
   data-overlayscrollbars-initialize
 >
   <head>
+    <script is:inline define:vars={{ DESKTOP_MIN_WIDTH }}>
+      (function () {
+        const runtimeWindow = window;
+        const DESKTOP_FORCE_BROWSE_KEY = "dacapo.desktop.force-browse";
+
+        const readForceBrowseFlag = () => {
+          try {
+            return sessionStorage.getItem(DESKTOP_FORCE_BROWSE_KEY) === "true";
+          } catch (error) {
+            console.warn("[layout] 读取强制浏览状态失败:", error);
+            return false;
+          }
+        };
+
+        const applyDesktopSupportState = () => {
+          const forceBrowse = readForceBrowseFlag();
+          const unsupported =
+            window.innerWidth < DESKTOP_MIN_WIDTH && !forceBrowse;
+          const unsupportedValue = unsupported ? "true" : "false";
+          const forceBrowseValue = forceBrowse ? "true" : "false";
+          document.documentElement.dataset.desktopUnsupported =
+            unsupportedValue;
+          document.documentElement.dataset.desktopForceBrowse =
+            forceBrowseValue;
+          if (document.body) {
+            document.body.dataset.desktopUnsupported = unsupportedValue;
+            document.body.dataset.desktopForceBrowse = forceBrowseValue;
+          }
+        };
+
+        applyDesktopSupportState();
+        if (!runtimeWindow.__desktopOnlyGuardBound) {
+          runtimeWindow.__desktopOnlyGuardBound = true;
+          window.addEventListener("resize", applyDesktopSupportState, {
+            passive: true,
+          });
+          document.addEventListener("swup:page:view", applyDesktopSupportState);
+          document.addEventListener(
+            "astro:after-swap",
+            applyDesktopSupportState,
+          );
+          window.addEventListener("desktop-force-browse-change", () => {
+            applyDesktopSupportState();
+          });
+        }
+      })();
+    </script>
     <!-- 第三方分析脚本 - 延迟加载优化 -->
     <script is:inline>
       // 使用 requestIdleCallback 延迟加载第三方脚本
@@ -283,6 +314,7 @@ const bodyStyle = bodyFontFamily ? `font-family: ${bodyFontFamily};` : "";
         BANNER_HEIGHT_EXTEND,
         PAGE_WIDTH,
         configHue,
+        DESKTOP_MIN_WIDTH,
         themeColorFixed: siteConfig.themeColor.fixed,
         pageScaling: siteConfig.pageScaling,
       }}
@@ -328,21 +360,12 @@ const bodyStyle = bodyFontFamily ? `font-family: ${bodyFontFamily};` : "";
       (function () {
         if (pageScaling && pageScaling.enable) {
           function adjustPageScale() {
-            const isTouch =
-              (window.matchMedia &&
-                (window.matchMedia("(pointer:coarse)").matches ||
-                  window.matchMedia("(hover: none)").matches)) ||
-              "ontouchstart" in window;
-            const isPortrait =
-              window.matchMedia &&
-              window.matchMedia("(orientation: portrait)").matches;
-            const isTabletLike = isTouch || window.innerWidth <= 1280;
-            if (isTabletLike || isPortrait) {
+            const currentWidth = document.documentElement.clientWidth;
+            if (currentWidth < DESKTOP_MIN_WIDTH) {
               document.documentElement.style.fontSize = "";
               return;
             }
             const targetWidth = pageScaling.targetWidth || 2000;
-            const currentWidth = document.documentElement.clientWidth;
             let scale = currentWidth / targetWidth;
             if (scale > 1) scale = 1;
             if (scale < 0.85) scale = 0.85;
@@ -357,7 +380,6 @@ const bodyStyle = bodyFontFamily ? `font-family: ${bodyFontFamily};` : "";
 
           // Swup 页面切换后也需要检查
           document.addEventListener("swup:page:view", adjustPageScale);
-          window.addEventListener("orientationchange", adjustPageScale);
         }
       })();
     </script>
@@ -382,25 +404,28 @@ const bodyStyle = bodyFontFamily ? `font-family: ${bodyFontFamily};` : "";
     data-route-archive={String(isArchivePage)}
     data-overlayscrollbars-initialize
   >
-    <ConfigCarrier resolvedSiteSettings={resolvedSiteSettings} />
-    <noscript>
-      <iframe
-        src="https://www.googletagmanager.com/ns.html?id=GTM-KRX3XGVH"
-        height="0"
-        width="0"
-        style="display:none;visibility:hidden"></iframe>
-    </noscript>
-    <slot />
+    <div data-desktop-app>
+      <ConfigCarrier resolvedSiteSettings={resolvedSiteSettings} />
+      <noscript>
+        <iframe
+          src="https://www.googletagmanager.com/ns.html?id=GTM-KRX3XGVH"
+          height="0"
+          width="0"
+          style="display:none;visibility:hidden"></iframe>
+      </noscript>
+      <slot />
 
-    <!-- Music Player - 仅在启用时加载 -->
-    {
-      musicPlayerSettings.enable && (
-        <MusicPlayer musicPlayer={musicPlayerSettings} client:idle />
-      )
-    }
+      <!-- Music Player - 仅在启用时加载 -->
+      {
+        musicPlayerSettings.enable && (
+          <MusicPlayer musicPlayer={musicPlayerSettings} client:idle />
+        )
+      }
 
-    <!-- increase the page height during page transition to prevent the scrolling animation from jumping -->
-    <div id="page-height-extend" class="hidden h-[300vh]"></div>
+      <!-- increase the page height during page transition to prevent the scrolling animation from jumping -->
+      <div id="page-height-extend" class="hidden h-[300vh]"></div>
+    </div>
+    <DesktopOnlyNotice />
   </body>
 </html>
 
@@ -415,6 +440,26 @@ const bodyStyle = bodyFontFamily ? `font-family: ${bodyFontFamily};` : "";
   @reference "../styles/main.css";
 
   @layer components {
+    #desktop-only-notice {
+      display: none;
+    }
+
+    html[data-desktop-unsupported="true"],
+    html[data-desktop-unsupported="true"] body {
+      overflow: hidden !important;
+      overscroll-behavior: none;
+    }
+
+    html[data-desktop-unsupported="true"] [data-desktop-app] {
+      visibility: hidden;
+      pointer-events: none !important;
+      user-select: none;
+    }
+
+    html[data-desktop-unsupported="true"] #desktop-only-notice {
+      display: flex;
+    }
+
     #page-height-extend {
       display: none !important;
     }

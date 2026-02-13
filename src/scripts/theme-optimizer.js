@@ -29,8 +29,6 @@ class ThemeOptimizer {
 			".float-panel",
 			"#navbar",
 			".music-player",
-			"#mobile-toc-panel",
-			"#nav-menu-panel",
 			".dropdown-content",
 			".widget",
 			".post-card",

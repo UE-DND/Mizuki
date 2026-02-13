@@ -95,14 +95,6 @@ const { articleId, authorId } = Astro.props;
       visibility: visible
       transform: translate(0, 0) scale(1)
       pointer-events: auto
-
-  @media (max-width: 1560px)
-    .article-manage-btn-wrap
-      box-shadow: none
-
-  @media (max-width: 1279px)
-    .article-manage-float
-      display: none !important
 </style>
 
 <script>
@@ -115,7 +107,8 @@ const { articleId, authorId } = Astro.props;
       ".article-manage-float",
     );
     if (!floatEl || floatEl.dataset.bound === "1") return;
-    floatEl.dataset.bound = "1";
+    const rootEl = floatEl;
+    rootEl.dataset.bound = "1";
 
     const rightSidebarSlot = document.getElementById("right-sidebar-slot");
     const tocWrapper = document.querySelector<HTMLElement>(
@@ -126,20 +119,20 @@ const { articleId, authorId } = Astro.props;
     );
     const mountTarget =
       tocWrapper || tocRoot?.parentElement || rightSidebarSlot || null;
-    if (mountTarget && floatEl.parentElement !== mountTarget) {
-      mountTarget.appendChild(floatEl);
+    if (mountTarget && rootEl.parentElement !== mountTarget) {
+      mountTarget.appendChild(rootEl);
     }
 
-    const articleId = String(floatEl.dataset.articleId || "");
-    const authorId = String(floatEl.dataset.authorId || "");
-    const btnWrap = floatEl.querySelector<HTMLElement>(
+    const articleId = String(rootEl.dataset.articleId || "");
+    const authorId = String(rootEl.dataset.authorId || "");
+    const btnWrap = rootEl.querySelector<HTMLElement>(
       ".article-manage-btn-wrap",
     );
-    const panel = floatEl.querySelector<HTMLElement>(".article-manage-panel");
-    const deleteBtn = floatEl.querySelector<HTMLButtonElement>(
+    const panel = rootEl.querySelector<HTMLElement>(".article-manage-panel");
+    const deleteBtn = rootEl.querySelector<HTMLButtonElement>(
       ".article-manage-delete",
     );
-    const editBtn = floatEl.querySelector<HTMLButtonElement>(
+    const editBtn = rootEl.querySelector<HTMLButtonElement>(
       ".article-manage-edit",
     );
 
@@ -150,7 +143,7 @@ const { articleId, authorId } = Astro.props;
         state.isLoggedIn &&
         Boolean(state.userId) &&
         (state.isAdmin || state.userId === authorId);
-      floatEl!.classList.toggle("visible", canManage);
+      rootEl.classList.toggle("visible", canManage);
     }
 
     function open(): void {
@@ -176,7 +169,7 @@ const { articleId, authorId } = Astro.props;
 
     document.addEventListener("click", (event) => {
       if (!isOpen) return;
-      if (!floatEl!.contains(event.target as Node)) {
+      if (!rootEl.contains(event.target as Node)) {
         close();
       }
     });

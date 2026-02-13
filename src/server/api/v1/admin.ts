@@ -239,31 +239,6 @@ function collectBannerAssetValues(value: unknown): string[] {
 			.map((entry) => (typeof entry === "string" ? entry : ""))
 			.filter(Boolean);
 	}
-	if (value && typeof value === "object") {
-		const record = value as {
-			desktop?: string | string[];
-			mobile?: string | string[];
-		};
-		const collected: string[] = [];
-		const append = (input: unknown): void => {
-			if (typeof input === "string") {
-				if (input.trim()) {
-					collected.push(input);
-				}
-				return;
-			}
-			if (Array.isArray(input)) {
-				for (const item of input) {
-					if (typeof item === "string" && item.trim()) {
-						collected.push(item);
-					}
-				}
-			}
-		};
-		append(record.desktop);
-		append(record.mobile);
-		return collected;
-	}
 	return [];
 }
 

@@ -43,32 +43,13 @@ export class WidgetManager {
 	/**
 	 * 根据位置获取组件列表
 	 * @param position 组件位置：'top' | 'sticky'
-	 * @param sidebar 侧边栏位置（可选）：'left' | 'right' | 'drawer'
-	 * @param deviceType 设备类型（可选）：'mobile' | 'tablet' | 'desktop'
+	 * @param sidebar 侧边栏位置（可选）：'left' | 'right'
 	 */
 	getComponentsByPosition(
 		position: "top" | "sticky",
-		sidebar: "left" | "right" | "drawer" = "left",
-		deviceType: "mobile" | "tablet" | "desktop" = "desktop",
+		sidebar: "left" | "right" = "left",
 	): WidgetComponentConfig[] {
-		let activeSidebar = sidebar;
-
-		// 手机端逻辑：完全由 drawer 决定，不合并左右侧栏
-		if (deviceType === "mobile") {
-			activeSidebar = "drawer";
-		}
-		// 平板端逻辑：在左侧有配置组件的情况下仅保留左侧组件，左侧没有配置组件时则将右侧的组件移到左侧
-		else if (deviceType === "tablet") {
-			if (sidebar === "right") {
-				return [];
-			}
-			if (sidebar === "left") {
-				activeSidebar =
-					this.config.components.left.length > 0 ? "left" : "right";
-			}
-		}
-
-		const componentTypes = this.config.components[activeSidebar] || [];
+		const componentTypes = this.config.components[sidebar] || [];
 
 		return componentTypes
 			.map((type) => {
@@ -123,23 +104,6 @@ export class WidgetManager {
 			classes.push(component.class);
 		}
 
-		// 添加响应式隐藏类名
-		if (component.responsive?.hidden) {
-			component.responsive.hidden.forEach((device) => {
-				switch (device) {
-					case "mobile":
-						classes.push("hidden", "md:block");
-						break;
-					case "tablet":
-						classes.push("md:hidden", "lg:block");
-						break;
-					case "desktop":
-						classes.push("lg:hidden");
-						break;
-				}
-			});
-		}
-
 		return classes.join(" ");
 	}
 
@@ -186,31 +150,13 @@ export class WidgetManager {
 	}
 
 	/**
-	 * 检查当前设备是否应该显示侧边栏
-	 * @param deviceType 设备类型
+	 * 检查是否应该显示侧边栏
 	 */
-	shouldShowSidebar(deviceType: "mobile" | "tablet" | "desktop"): boolean {
-		if (deviceType === "mobile") {
-			return this.config.components.drawer.length > 0;
-		}
-		if (deviceType === "tablet") {
-			return (
-				this.config.components.left.length > 0 ||
-				this.config.components.right.length > 0
-			);
-		}
-		// desktop
+	shouldShowSidebar(): boolean {
 		return (
 			this.config.components.left.length > 0 ||
 			this.config.components.right.length > 0
 		);
-	}
-
-	/**
-	 * 获取设备断点配置
-	 */
-	getBreakpoints(): SidebarLayoutConfig["responsive"]["breakpoints"] {
-		return this.config.responsive.breakpoints;
 	}
 
 	/**
@@ -228,7 +174,7 @@ export class WidgetManager {
 	 */
 	addComponentToLayout(
 		type: WidgetComponentType,
-		sidebar: "left" | "right" | "drawer" = "left",
+		sidebar: "left" | "right" = "left",
 	): void {
 		if (!this.config.components[sidebar].includes(type)) {
 			this.config.components[sidebar].push(type);
@@ -244,9 +190,6 @@ export class WidgetManager {
 			(t) => t !== type,
 		);
 		this.config.components.right = this.config.components.right.filter(
-			(t) => t !== type,
-		);
-		this.config.components.drawer = this.config.components.drawer.filter(
 			(t) => t !== type,
 		);
 	}
@@ -287,8 +230,7 @@ export function isComponentEnabled(
 	const config = widgetManager.getConfig().components;
 	return (
 		config.left.includes(componentType) ||
-		config.right.includes(componentType) ||
-		config.drawer.includes(componentType)
+		config.right.includes(componentType)
 	);
 }
 

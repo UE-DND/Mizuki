@@ -56,7 +56,7 @@ export function initLayoutController(
 
 	const reducerConfig = {
 		defaultWallpaperMode: deps.defaultWallpaperMode,
-		desktopCollapseMinWidth: 1024,
+		desktopCollapseMinWidth: 1280,
 	};
 
 	const dispatch = (intent: LayoutIntent): LayoutState => {

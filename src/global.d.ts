@@ -65,7 +65,6 @@ declare global {
 		) => Promise<{ pageviews?: number; visitors?: number }>;
 		clearUmamiShareCache?: () => void;
 
-		mobileTOCInit?: () => void;
 		floatingTOCInit?: () => void;
 		iconifyLoaded?: boolean;
 		__iconifyLoader?: {

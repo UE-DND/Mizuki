@@ -64,9 +64,8 @@ export class AnimationManager {
 		this.isAnimating = true;
 		document.documentElement.classList.add("is-leaving");
 
-		// 移动端优化：减少动画延迟，避免闪烁
-		const isMobile = window.innerWidth <= 768;
-		const delay = isMobile ? 10 : 30;
+		// 桌面端统一动画节奏
+		const delay = 30;
 
 		// 添加离开动画类到主要元素
 		const mainElements = document.querySelectorAll(".transition-leaving");

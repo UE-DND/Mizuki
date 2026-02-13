@@ -81,10 +81,7 @@ export const defaultSiteSettings: SiteSettingsPayload = {
 		defaultMode: "banner",
 	},
 	banner: {
-		src: {
-			desktop: "",
-			mobile: "",
-		},
+		src: [],
 		position: "center",
 		carousel: {
 			enable: true,
@@ -93,7 +90,6 @@ export const defaultSiteSettings: SiteSettingsPayload = {
 		waves: {
 			enable: true,
 			performanceMode: false,
-			mobileDisable: false,
 		},
 		imageApi: {
 			enable: false,
@@ -268,19 +264,11 @@ export const defaultSiteSettings: SiteSettingsPayload = {
 		components: {
 			left: ["profile", "announcement"],
 			right: [],
-			drawer: ["profile", "announcement"],
 		},
 		defaultAnimation: {
 			enable: true,
 			baseDelay: 0,
 			increment: 50,
-		},
-		responsive: {
-			breakpoints: {
-				mobile: 768,
-				tablet: 1280,
-				desktop: 1280,
-			},
 		},
 	},
 	sakura: {

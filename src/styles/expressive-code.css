@@ -157,43 +157,6 @@
 }
 
 /* 移动端适配 (Mobile) */
-@media (max-width: 768px) {
-  /* 调整复制按钮大小和位置 */
-  .expressive-code .copy-btn {
-    width: 1.75rem;
-    height: 1.75rem;
-    top: 0.5rem;
-    right: 0.5rem;
-  }
-
-  .expressive-code .copy-btn-icon {
-    width: 0.875rem;
-    height: 0.875rem;
-  }
-
-  /* 调整折叠按钮大小和位置 */
-  .expressive-code.collapsible .collapse-toggle-btn {
-    width: 1.75rem;
-    height: 1.75rem;
-    top: 0.5rem;
-    right: 3rem;
-  }
-
-  .expressive-code.collapsible .collapse-toggle-btn svg {
-    width: 0.875rem;
-    height: 0.875rem;
-  }
-
-  /* 折叠高度微调 */
-  .expressive-code.collapsed .frame pre {
-    max-height: 4.5rem;
-  }
-
-  /* 隐藏语言标签以节省空间 */
-  .expressive-code [data-language]::before {
-    display: none !important;
-  }
-}
 
 /* 主题适配 (Theme Support) */
 @media (prefers-color-scheme: light) {

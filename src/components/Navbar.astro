@@ -7,10 +7,8 @@ import { type NavBarLink } from "../types/config";
 import { isAdminOnlyLink } from "../utils/nav-link-utils";
 import { url } from "../utils/url-utils";
 import LightDarkSwitch from "./LightDarkSwitch.svelte";
-import MobileTOC from "./MobileTOC.svelte";
 import AuthStatus from "./auth/AuthStatus.astro";
 import DropdownMenu from "./widget/DropdownMenu.astro";
-import NavMenuPanel from "./widget/NavMenuPanel.astro";
 
 const className = Astro.props.class;
 const resolvedSiteSettings =
@@ -29,11 +27,8 @@ const navbarIconSrc =
   siteSettings.navbarTitle?.icon ||
   DEFAULT_NAV_ICON;
 
-// 获取导航栏透明模式配置
 const navbarTransparentMode =
   siteSettings.banner?.navbar?.transparentMode || "semi";
-
-// 检查是否为首页
 const isHomePage = Astro.url.pathname === "/" || Astro.url.pathname === "";
 
 function resolveLink(link: NavBarLink | LinkPreset): NavBarLink {
@@ -75,22 +70,22 @@ const links: NavBarLink[] = navBarConfig.links
   data-transparent-mode={navbarTransparentMode}
   data-is-home={isHomePage}
 >
-  <div class="absolute h-8 left-0 right-0 -top-8 bg-(--card-bg) transition">
+  <div
+    class="navbar-bg-strip absolute h-8 left-0 right-0 -top-8 bg-(--card-bg) transition"
+  >
   </div>
-  <!-- used for onload animation -->
   <div
     class:list={[
       className,
-      "overflow-visible! w-full min-w-0 max-w-(--page-width) h-[4.5rem] mx-auto flex items-center justify-between px-2 sm:px-4",
+      "navbar-shell overflow-visible! w-full min-w-0 max-w-(--page-width) h-[4.5rem] mx-auto flex items-center justify-between px-4",
     ]}
   >
     <a
       id="navbar-logo"
       href={url("/")}
-      class="btn-plain scale-animation rounded-lg h-[2.5rem] md:h-[3.25rem] md:in-[.enable-banner]:h-[2.5rem] md:in-[.enable-banner]:group-[.scrolled]:h-[3.25rem] px-3 sm:px-5 font-bold active:scale-95 min-w-0 max-w-[12rem] sm:max-w-[15rem] md:max-w-none transition-all duration-920"
+      class="btn-plain scale-animation rounded-lg h-[3.25rem] in-[.enable-banner]:!h-[2.5rem] in-[.enable-banner]:group-[.scrolled]:!h-[3.25rem] px-5 font-bold active:scale-95 min-w-0 max-w-none transition-all duration-920"
     >
       <div class="flex flex-row items-center min-w-0 text-md">
-        {/* 使用navbarTitle配置或默认配置 */}
         {
           siteSettings.navbarTitle ? (
             siteSettings.navbarTitle.mode === "logo" ? (
@@ -100,7 +95,7 @@ const links: NavBarLink[] = navBarConfig.links
                     "/assets/home/default-logo.png",
                 )}
                 alt={siteSettings.navbarTitle.text}
-                class="h-[2.5rem] md:h-[3.25rem] md:in-[.enable-banner]:h-[2.5rem] md:in-[.enable-banner]:group-[.scrolled]:h-[3.25rem] max-w-full object-contain transition-all duration-920"
+                class="h-[3.25rem] in-[.enable-banner]:!h-[2.5rem] in-[.enable-banner]:group-[.scrolled]:!h-[3.25rem] max-w-full object-contain transition-all duration-920"
                 loading="lazy"
               />
             ) : (
@@ -111,7 +106,7 @@ const links: NavBarLink[] = navBarConfig.links
                   class="h-[1.75rem] w-[1.75rem] mr-2 object-contain"
                   loading="lazy"
                 />
-                <span class="max-w-[8rem] sm:max-w-none truncate dark:text-white text-black">
+                <span class="max-w-none truncate dark:text-white text-black">
                   {siteSettings.navbarTitle.text}
                 </span>
               </>
@@ -122,7 +117,7 @@ const links: NavBarLink[] = navBarConfig.links
                 name="material-symbols:home-pin-outline"
                 class="text-[1.75rem] mr-2"
               />
-              <span class="max-w-[8rem] sm:max-w-none truncate dark:text-white text-black">
+              <span class="max-w-none truncate dark:text-white text-black">
                 {siteSettings.site.title}
               </span>
             </>
@@ -130,9 +125,10 @@ const links: NavBarLink[] = navBarConfig.links
         }
       </div>
     </a>
+
     <div
       id="navbar-links-container"
-      class="hidden md:flex items-center space-x-1 transition-opacity duration-300"
+      class="flex items-center space-x-1 transition-opacity duration-300"
     >
       {
         links.map((l) => {
@@ -140,20 +136,11 @@ const links: NavBarLink[] = navBarConfig.links
         })
       }
     </div>
-    <div class="flex shrink-0 items-center gap-0.5 sm:gap-1">
-      {siteSettings.toc.enable && <MobileTOC client:only="svelte" />}
+
+    <div class="flex shrink-0 items-center gap-1">
       <LightDarkSwitch client:only="svelte" />
-      <button
-        aria-label="Menu"
-        name="Nav Menu"
-        class="btn-plain scale-animation rounded-lg w-11 h-11 active:scale-90 md:hidden!"
-        id="nav-menu-switch"
-      >
-        <Icon name="material-symbols:unfold-more" class="text-[1.25rem]" />
-      </button>
       <AuthStatus />
     </div>
-    <NavMenuPanel links={links} />
   </div>
 </div>
 
@@ -165,6 +152,7 @@ const links: NavBarLink[] = navBarConfig.links
     type AuthState,
   } from "@/scripts/auth-state";
   import { showAuthRequiredDialog } from "@/scripts/dialogs";
+
   const navbarLinksContainer = document.getElementById(
     "navbar-links-container",
   );
@@ -365,32 +353,4 @@ const links: NavBarLink[] = navBarConfig.links
   if (navbarLinksContainer) {
     navbarLinksContainer.style.opacity = "1";
   }
-
-  async function loadButtonScript() {
-    try {
-      // 导入面板管理器
-      const { panelManager } = await import("../utils/panel-manager.js");
-
-      const menuBtn = document.getElementById("nav-menu-switch");
-      if (menuBtn) {
-        menuBtn.onclick = async function () {
-          await panelManager.togglePanel("nav-menu-panel");
-        };
-      }
-    } catch (error) {
-      console.error("Failed to load panel manager:", error);
-      // 备用逻辑
-      const menuBtn = document.getElementById("nav-menu-switch");
-      if (menuBtn) {
-        menuBtn.onclick = function () {
-          const menuPanel = document.getElementById("nav-menu-panel");
-          if (menuPanel) {
-            menuPanel.classList.toggle("float-panel-closed");
-          }
-        };
-      }
-    }
-  }
-
-  loadButtonScript();
 </script>

@@ -128,16 +128,16 @@ const items = result.status === "ok" ? result.data.items : [];
           <div class="space-y-4">
             {Array.from({ length: 3 }).map(() => (
               <article class="card-base flex flex-col w-full rounded-(--radius-large) overflow-hidden">
-                <div class="pl-6 md:pl-9 pr-6 md:pr-2 pt-6 md:pt-7 pb-6 space-y-4">
+                <div class="pl-6 pl-9 pr-6 pr-2 pt-6 pt-7 pb-6 space-y-4">
                   <div>
                     <div
                       class="md3-skeleton-text"
                       style="--skeleton-width: 44%; --skeleton-height: 2rem;"
                     />
                   </div>
-                  <div class="grid grid-cols-3 md:grid-cols-4 gap-2">
-                    <div class="md3-skeleton-block h-20 md:h-24 rounded-lg" />
-                    <div class="md3-skeleton-block h-20 md:h-24 rounded-lg" />
+                  <div class="grid grid-cols-3 grid-cols-4 gap-2">
+                    <div class="md3-skeleton-block h-20 h-24 rounded-lg" />
+                    <div class="md3-skeleton-block h-20 h-24 rounded-lg" />
                   </div>
                   <div class="flex items-center justify-between gap-3 mt-4">
                     <div class="flex items-center gap-1.5 min-w-0">
@@ -151,7 +151,7 @@ const items = result.status === "ok" ? result.data.items : [];
                         style="--skeleton-width: 7.5rem; --skeleton-height: 1.45rem;"
                       />
                     </div>
-                    <div class="flex items-center gap-3 md:gap-4">
+                    <div class="flex items-center gap-3 gap-4">
                       <div class="md3-skeleton-block h-6 w-8 rounded-lg" />
                       <div class="md3-skeleton-block h-6 w-8 rounded-lg" />
                       <div class="md3-skeleton-circle h-6 w-6 rounded-lg" />

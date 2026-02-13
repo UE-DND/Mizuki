@@ -146,11 +146,11 @@ const publishedMetaText = formatArticleMetaDate(article?.published_at);
         <article
           id="post-container"
           data-enter-skeleton-target="post-detail"
-          class="card-base p-6 md:p-8 rounded-(--radius-large) mb-4 relative"
+          class="card-base p-6 p-8 rounded-(--radius-large) mb-4 relative"
         >
           <div data-enter-skeleton-content>
             <header class="mb-6 space-y-3">
-              <h1 class="text-3xl md:text-4xl font-bold text-90">
+              <h1 class="text-3xl text-4xl font-bold text-90">
                 {article.title}
               </h1>
               <div class="flex flex-wrap items-center gap-3 text-sm text-60">
@@ -193,7 +193,7 @@ const publishedMetaText = formatArticleMetaDate(article?.published_at);
           <div
             data-enter-skeleton-placeholder
             aria-hidden="true"
-            class="absolute inset-0 z-20 pointer-events-none p-6 md:p-8"
+            class="absolute inset-0 z-20 pointer-events-none p-6 p-8"
           >
             <div class="space-y-4">
               <div
@@ -209,7 +209,7 @@ const publishedMetaText = formatArticleMetaDate(article?.published_at);
                 <div class="md3-skeleton-text" style="--skeleton-width: 66%;" />
               </div>
               {coverUrl && (
-                <div class="md3-skeleton-block h-[240px] md:h-[320px] w-full rounded-xl" />
+                <div class="md3-skeleton-block h-[240px] h-[320px] w-full rounded-xl" />
               )}
               <div class="space-y-3 pt-2">
                 <div

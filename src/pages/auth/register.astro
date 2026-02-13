@@ -143,7 +143,7 @@ const defaultAvatarPreviewSrc = defaultAvatarAsset.src;
     data-enter-skeleton-target="auth-register"
   >
     <div data-enter-skeleton-inline-content>
-      <div class="card-base rounded-(--radius-large) p-6 md:p-8 space-y-5">
+      <div class="card-base rounded-(--radius-large) p-6 p-8 space-y-5">
         <div class="flex items-center gap-3">
           <div
             class="w-12 h-12 rounded-2xl bg-(--btn-regular-bg) flex items-center justify-center"
@@ -211,7 +211,7 @@ const defaultAvatarPreviewSrc = defaultAvatarAsset.src;
               <p class="text-sm text-75">
                 {currentRegistrationStatus?.description || "申请状态已更新。"}
               </p>
-              <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 text-sm">
+              <div class="grid grid-cols-1 grid-cols-2 gap-3 text-sm">
                 <div class="rounded-lg border border-(--line-divider) bg-black/5 dark:bg-white/5 px-3 py-2.5">
                   <p class="text-60 text-xs mb-1">邮箱</p>
                   <p class="text-90 break-all">{currentRegistration.email}</p>
@@ -234,14 +234,14 @@ const defaultAvatarPreviewSrc = defaultAvatarAsset.src;
                     {currentRegistration.reviewed_at || "-"}
                   </p>
                 </div>
-                <div class="rounded-lg border border-(--line-divider) bg-black/5 dark:bg-white/5 px-3 py-2.5 sm:col-span-2">
+                <div class="rounded-lg border border-(--line-divider) bg-black/5 dark:bg-white/5 px-3 py-2.5 col-span-2">
                   <p class="text-60 text-xs mb-1">注册理由</p>
                   <p class="text-90 whitespace-pre-wrap break-all">
                     {currentRegistrationReason || "-"}
                   </p>
                 </div>
                 {currentRegistrationReviewReason ? (
-                  <div class="rounded-lg border border-red-500/35 bg-red-500/5 dark:border-red-400/35 dark:bg-red-500/12 px-3 py-2.5 sm:col-span-2">
+                  <div class="rounded-lg border border-red-500/35 bg-red-500/5 dark:border-red-400/35 dark:bg-red-500/12 px-3 py-2.5 col-span-2">
                     <p class="text-red-600 dark:text-red-300 text-xs mb-1">
                       审批说明
                     </p>
@@ -448,7 +448,7 @@ const defaultAvatarPreviewSrc = defaultAvatarAsset.src;
       </div>
     </div>
     <div data-enter-skeleton-inline-placeholder aria-hidden="true">
-      <div class="card-base rounded-(--radius-large) p-6 md:p-8 space-y-5">
+      <div class="card-base rounded-(--radius-large) p-6 p-8 space-y-5">
         <div class="flex items-center gap-3">
           <div class="md3-skeleton-block w-12 h-12 rounded-2xl"></div>
           <div class="space-y-2 flex-1">
@@ -529,10 +529,10 @@ const defaultAvatarPreviewSrc = defaultAvatarAsset.src;
     tabindex="-1"
   >
     <div
-      class="card-base w-full max-w-xl rounded-(--radius-large) border border-(--line-divider) p-5 sm:p-6 space-y-4 text-75"
+      class="card-base w-full max-w-xl rounded-(--radius-large) border border-(--line-divider) p-5 p-6 space-y-4 text-75"
     >
       <div class="flex items-center gap-2">
-        <h3 class="text-lg sm:text-xl font-semibold text-90">裁剪头像</h3>
+        <h3 class="text-lg text-xl font-semibold text-90">裁剪头像</h3>
       </div>
       <p class="text-sm text-60">建议使用方形图片，拖拽调整位置并缩放。</p>
       <div

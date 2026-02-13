@@ -159,7 +159,7 @@ const allTags = Array.from(new Set(friendsList.flatMap((item) => item.tags)));
           <!-- 友链卡片网格 -->
           <div
             id="friends-grid"
-            class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-6 mb-6"
+            class="grid grid-cols-1 grid-cols-2 xl:grid-cols-3 gap-6 mb-6"
           >
             {
               friendsList.map((item) => (
@@ -350,7 +350,7 @@ const allTags = Array.from(new Set(friendsList.flatMap((item) => item.tags)));
             }
           </div>
         </div>
-        <div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-6">
+        <div class="grid grid-cols-1 grid-cols-2 xl:grid-cols-3 gap-6">
           {
             Array.from({ length: 6 }).map(() => (
               <div class="rounded-xl border border-black/10 dark:border-white/10 p-6 space-y-4">

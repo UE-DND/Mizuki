@@ -914,7 +914,7 @@
             class="w-full px-3 py-2 rounded-lg border border-(--line-divider) bg-(--card-bg) text-90 focus:outline-none focus:ring-2 focus:ring-(--primary) transition resize-y"
           ></textarea>
         </div>
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div class="grid grid-cols-1 grid-cols-2 gap-4">
           <div>
             <label class="block text-sm font-medium mb-1 text-75" for="ed-cat"
               >分类</label
@@ -962,7 +962,7 @@
             />
           </div>
         </div>
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div class="grid grid-cols-1 grid-cols-3 gap-4">
           <div>
             <label
               class="block text-sm font-medium mb-1 text-75"
@@ -1123,7 +1123,7 @@
       {#if pendingLocalPhotos.length > 0}
         <div class="space-y-2">
           <p class="text-xs text-60">待上传本地图片</p>
-          <div class="grid grid-cols-2 sm:grid-cols-4 gap-2">
+          <div class="grid grid-cols-2 grid-cols-4 gap-2">
             {#each pendingLocalPhotos as item (item.id)}
               <div
                 class="relative rounded-lg overflow-hidden border border-(--line-divider) bg-(--card-bg)"
@@ -1181,8 +1181,8 @@
   {:else}
     <div
       class={mLayout === "masonry"
-        ? "dc-album-gallery columns-2 md:columns-3 gap-3"
-        : "dc-album-gallery grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3"}
+        ? "dc-album-gallery columns-2 columns-3 gap-3"
+        : "dc-album-gallery grid grid-cols-2 grid-cols-3 lg:grid-cols-4 gap-3"}
     >
       {#each mPhotos as photo, index (photo.id)}
         <figure

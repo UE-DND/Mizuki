@@ -5,7 +5,8 @@
   "scripts": {
     "dev": "astro dev",
     "start": "astro dev",
-    "check": "astro check",
+    "check": "node scripts/check-desktop-only.mjs && astro check",
+    "check:desktop-only": "node scripts/check-desktop-only.mjs",
     "update-anime": "node scripts/update-anime.mjs",
     "update-bangumi": "node scripts/update-bangumi.mjs",
     "update-bilibili": "node scripts/update-bilibili.mjs",

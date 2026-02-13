@@ -32,9 +32,7 @@ const iconName =
   <div
     class="card-base z-10 px-9 py-12 relative w-full flex flex-col items-center justify-center text-center content-not-visible-card"
   >
-    <div
-      class="text-8xl md:text-9xl font-bold text-(--primary) opacity-20 mb-4"
-    >
+    <div class="text-8xl font-bold text-(--primary) opacity-20 mb-4">
       {statusCode}
     </div>
 
@@ -42,7 +40,7 @@ const iconName =
       <Icon name={iconName} class="text-6xl text-(--primary)" />
     </div>
 
-    <h1 class="text-3xl md:text-4xl font-bold mb-4 text-90">
+    <h1 class="text-3xl font-bold mb-4 text-90">
       {title}
     </h1>
 
@@ -52,7 +50,7 @@ const iconName =
 
     <a
       href={backHref}
-      class="inline-flex items-center gap-2 px-6 py-3 bg-(--primary) text-white rounded-(--radius-large) hover:opacity-95 transition-colors transition-transform duration-200 font-medium content-not-visible-btn"
+      class="inline-flex items-center gap-2 px-6 py-3 bg-(--primary) text-white rounded-(--radius-large) hover:opacity-95 transition-colors duration-200 font-medium content-not-visible-btn"
     >
       <Icon name="material-symbols:arrow-back" class="text-xl" />
       {backLabel}

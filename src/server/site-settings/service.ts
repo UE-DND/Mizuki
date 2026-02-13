@@ -150,41 +150,6 @@ function normalizeBannerSrc(
 			.filter(Boolean);
 		return entries.length > 0 ? entries : "";
 	}
-	if (isRecord(value)) {
-		const desktopRaw = value.desktop;
-		const mobileRaw = value.mobile;
-		const normalized: {
-			desktop?: string | string[];
-			mobile?: string | string[];
-		} = {};
-		const normalizeSide = (
-			side: unknown,
-		): string | string[] | undefined => {
-			if (typeof side === "string") {
-				return normalizeAssetPath(side, "", true) || undefined;
-			}
-			if (Array.isArray(side)) {
-				const items = side
-					.map((entry) =>
-						normalizeAssetPath(String(entry || ""), "", true),
-					)
-					.filter(Boolean);
-				return items;
-			}
-			return undefined;
-		};
-		const desktop = normalizeSide(desktopRaw);
-		const mobile = normalizeSide(mobileRaw);
-		if (desktop !== undefined) {
-			normalized.desktop = desktop;
-		}
-		if (mobile !== undefined) {
-			normalized.mobile = mobile;
-		}
-		if (desktopRaw !== undefined || mobileRaw !== undefined) {
-			return normalized;
-		}
-	}
 	return fallback;
 }
 
@@ -302,10 +267,6 @@ function normalizeSettings(
 		performanceMode: Boolean(
 			merged.banner.waves?.performanceMode ??
 			base.banner.waves?.performanceMode,
-		),
-		mobileDisable: Boolean(
-			merged.banner.waves?.mobileDisable ??
-			base.banner.waves?.mobileDisable,
 		),
 	};
 	merged.banner.imageApi = {

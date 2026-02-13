@@ -558,11 +558,9 @@ type FaviconItem = {
 };
 
 let bannerDesktopDragSource: HTMLElement | null = null;
-let bannerMobileDragSource: HTMLElement | null = null;
 
 let faviconListContainer: HTMLElement | null = null;
 let bannerDesktopListContainer: HTMLElement | null = null;
-let bannerMobileListContainer: HTMLElement | null = null;
 let onFaviconRemoved: (() => void) | null = null;
 let onBannerRemoved: (() => void) | null = null;
 
@@ -727,35 +725,14 @@ const collectFaviconList = (container: HTMLElement): FaviconItem[] => {
 	return values.slice(0, 1);
 };
 
-const normalizeBannerEditorList = (
-	raw: unknown,
-): {
-	desktop: string[];
-	mobile: string[];
-} => {
+const normalizeBannerEditorList = (raw: unknown): string[] => {
 	if (typeof raw === "string") {
-		return { desktop: [raw], mobile: [raw] };
+		return [raw];
 	}
 	if (Array.isArray(raw)) {
-		return { desktop: raw.map(String), mobile: raw.map(String) };
+		return raw.map(String);
 	}
-	if (raw && typeof raw === "object") {
-		const record = raw as { desktop?: unknown; mobile?: unknown };
-		const toArray = (value: unknown): string[] => {
-			if (typeof value === "string") {
-				return [value];
-			}
-			if (Array.isArray(value)) {
-				return value.map((item) => String(item || "")).filter(Boolean);
-			}
-			return [];
-		};
-		return {
-			desktop: toArray(record.desktop),
-			mobile: toArray(record.mobile),
-		};
-	}
-	return { desktop: [], mobile: [] };
+	return [];
 };
 
 const uploadImageBlob = async (
@@ -862,24 +839,14 @@ const bindSettings = (s: SettingsObj): void => {
 		"ss-banner-carousel-interval",
 		String((banner.carousel as SettingsObj | undefined)?.interval ?? ""),
 	);
-	const bannerLists = normalizeBannerEditorList(banner.src);
+	const bannerDesktopList = normalizeBannerEditorList(banner.src);
 	if (bannerDesktopListContainer) {
 		fillBannerList(
-			bannerLists.desktop,
+			bannerDesktopList,
 			bannerDesktopListContainer,
 			() => bannerDesktopDragSource,
 			(el) => {
 				bannerDesktopDragSource = el;
-			},
-		);
-	}
-	if (bannerMobileListContainer) {
-		fillBannerList(
-			bannerLists.mobile,
-			bannerMobileListContainer,
-			() => bannerMobileDragSource,
-			(el) => {
-				bannerMobileDragSource = el;
 			},
 		);
 	}
@@ -954,18 +921,9 @@ const collectHomePayload = (current: SettingsObj): SettingsObj => ({
 	},
 	banner: {
 		...((current.banner ?? {}) as SettingsObj),
-		src: (() => {
-			const desktopList = bannerDesktopListContainer
-				? collectBannerList(bannerDesktopListContainer)
-				: [];
-			const mobileList = bannerMobileListContainer
-				? collectBannerList(bannerMobileListContainer)
-				: [];
-			return {
-				desktop: desktopList,
-				mobile: mobileList,
-			};
-		})(),
+		src: bannerDesktopListContainer
+			? collectBannerList(bannerDesktopListContainer)
+			: [],
 		carousel: {
 			...(((current.banner ?? {}) as SettingsObj).carousel ?? {}),
 			enable: checked("ss-banner-carousel-enable"),
@@ -1042,7 +1000,6 @@ export function initSiteSettingsPage(): void {
 	navLinksContainer = el("ss-nav-links-list");
 	faviconListContainer = el("ss-favicon-list");
 	bannerDesktopListContainer = el("ss-banner-desktop-list");
-	bannerMobileListContainer = el("ss-banner-mobile-list");
 
 	const cropModal = el("ss-image-crop-modal");
 	const cropPanel = el("ss-image-crop-panel");
@@ -1064,7 +1021,7 @@ export function initSiteSettingsPage(): void {
 	const cropZoomInput = el("ss-image-crop-zoom") as HTMLInputElement | null;
 	const cropMsg = el("ss-image-crop-msg");
 
-	type CropTarget = "favicon" | "banner-desktop" | "banner-mobile";
+	type CropTarget = "favicon" | "banner-desktop";
 	type CropTargetConfig = {
 		title: string;
 		help: string;
@@ -1126,32 +1083,6 @@ export function initSiteSettingsPage(): void {
 					() => bannerDesktopDragSource,
 					(el) => {
 						bannerDesktopDragSource = el;
-					},
-				),
-		},
-		"banner-mobile": {
-			title: "裁剪移动 Banner",
-			help: "建议使用竖图（9:16），拖拽调整位置并缩放。",
-			aspectWidth: 9,
-			aspectHeight: 16,
-			outputWidth: 900,
-			outputHeight: 1600,
-			outputMimeType: "image/jpeg",
-			outputFileExt: "jpg",
-			messageTarget: "ss-home-msg",
-			titlePrefix: "Banner Mobile",
-			useSequentialName: true,
-			useFixedName: false,
-			maxInputBytes: UPLOAD_LIMITS.banner,
-			purpose: "banner",
-			container: bannerMobileListContainer,
-			createRow: (value: string) =>
-				createBannerImageRow(
-					value,
-					bannerMobileListContainer as HTMLElement,
-					() => bannerMobileDragSource,
-					(el) => {
-						bannerMobileDragSource = el;
 					},
 				),
 		},
@@ -1717,7 +1648,6 @@ export function initSiteSettingsPage(): void {
 
 	bindCropUploadButton("ss-favicon-upload-btn", "favicon");
 	bindCropUploadButton("ss-banner-desktop-upload-btn", "banner-desktop");
-	bindCropUploadButton("ss-banner-mobile-upload-btn", "banner-mobile");
 
 	// ---- crop modal bindings ----
 

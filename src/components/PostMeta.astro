@@ -43,7 +43,6 @@ const {
   category,
   tags,
   hideUpdateDate,
-  hideTagsForMobile,
   isHome,
   className = "",
   id,
@@ -63,7 +62,7 @@ const shouldLoadPageViews = !isHome && umamiEnabled && Boolean(id);
 >
   <!-- publish date -->
   <div class="flex items-center">
-    <span class="text-50 text-xs md:text-sm font-medium"
+    <span class="text-50 text-sm font-medium"
       >{formatDateToYYYYMMDD(published)}</span
     >
   </div>
@@ -72,7 +71,7 @@ const shouldLoadPageViews = !isHome && umamiEnabled && Boolean(id);
   {
     !hideUpdateDate && updated && updated.getTime() !== published.getTime() && (
       <div class="flex items-center">
-        <span class="text-50 text-xs md:text-sm font-medium">
+        <span class="text-50 text-sm font-medium">
           {formatDateToYYYYMMDD(updated)}
         </span>
       </div>
@@ -85,7 +84,7 @@ const shouldLoadPageViews = !isHome && umamiEnabled && Boolean(id);
       <a
         href={getCategoryUrl(category || "")}
         aria-label={`View all posts in the ${category} category`}
-        class="link-lg transition text-50 text-xs md:text-sm font-medium
+        class="link-lg transition text-50 text-sm font-medium
 							 hover:text-(--primary) dark:hover:text-(--primary) whitespace-nowrap"
       >
         {category || i18n(I18nKey.uncategorized)}
@@ -97,7 +96,7 @@ const shouldLoadPageViews = !isHome && umamiEnabled && Boolean(id);
   {
     showWordCount && words && (
       <div class="flex items-center">
-        <span class="text-50 text-xs md:text-sm font-medium">
+        <span class="text-50 text-sm font-medium">
           {words}{" "}
           {words > 1 ? i18n(I18nKey.wordsCount) : i18n(I18nKey.wordCount)}
         </span>
@@ -108,12 +107,7 @@ const shouldLoadPageViews = !isHome && umamiEnabled && Boolean(id);
   <!-- tags (只有在不显示基本元数据时才显示) -->
   {
     !showOnlyBasicMeta && (
-      <div
-        class:list={[
-          "items-center",
-          { flex: !hideTagsForMobile, "hidden md:flex": hideTagsForMobile },
-        ]}
-      >
+      <div class:list={["items-center flex"]}>
         <div class="flex flex-row flex-nowrap items-center">
           {tags &&
             tags.length > 0 &&
@@ -122,7 +116,7 @@ const shouldLoadPageViews = !isHome && umamiEnabled && Boolean(id);
                 <div
                   class:list={[
                     { hidden: i === 0 },
-                    "mx-1.5 text-(--meta-divider) text-xs md:text-sm",
+                    "mx-1.5 text-(--meta-divider) text-sm",
                   ]}
                 >
                   /
@@ -130,7 +124,7 @@ const shouldLoadPageViews = !isHome && umamiEnabled && Boolean(id);
                 <a
                   href={getTagUrl(tag)}
                   aria-label={`View all posts with the ${tag.trim()} tag`}
-                  class="link-lg transition text-50 text-xs md:text-sm font-medium
+                  class="link-lg transition text-50 text-sm font-medium
 										 hover:text-(--primary) dark:hover:text-(--primary) whitespace-nowrap"
                 >
                   {tag.trim()}
@@ -138,7 +132,7 @@ const shouldLoadPageViews = !isHome && umamiEnabled && Boolean(id);
               </>
             ))}
           {!(tags && tags.length > 0) && (
-            <div class="transition text-50 text-xs md:text-sm font-medium">
+            <div class="transition text-50 text-sm font-medium">
               {i18n(I18nKey.noTags)}
             </div>
           )}

@@ -98,45 +98,6 @@
 }
 
 /* 响应式设计 */
-@media (max-width: 768px) {
-  .albums-grid {
-    grid-template-columns: 1fr;
-  }
-
-  .masonry-layout {
-    columns: 1;
-  }
-
-  .photo-gallery[data-columns="3"],
-  .photo-gallery[data-columns="4"] {
-    grid-template-columns: repeat(2, 1fr);
-  }
-
-  .lightbox-content {
-    padding: 1rem;
-  }
-
-  #lightbox-prev,
-  #lightbox-next {
-    width: 2.5rem;
-    height: 2.5rem;
-  }
-
-  #lightbox-info {
-    position: static;
-    margin-top: 1rem;
-  }
-}
-
-@media (max-width: 480px) {
-  .photo-gallery {
-    grid-template-columns: 1fr !important;
-  }
-
-  .masonry-layout {
-    columns: 1;
-  }
-}
 
 /* 加载动画 */
 @keyframes fadeInUp {

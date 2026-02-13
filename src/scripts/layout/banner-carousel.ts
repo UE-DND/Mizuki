@@ -44,13 +44,9 @@ export function initBannerCarousel(): void {
 
 	const carouselItems =
 		document.querySelectorAll<HTMLElement>(".carousel-item");
-	const isMobile = window.innerWidth < 768;
-	const validItems = Array.from(carouselItems).filter((item) => {
-		if (isMobile) {
-			return item.querySelector(".block.md\\:hidden");
-		}
-		return item.querySelector(".hidden.md\\:block");
-	});
+	const validItems = Array.from(carouselItems).filter((item) =>
+		item.querySelector(".banner-image"),
+	);
 	const carouselConfig =
 		runtimeWindow.__DACAPO_RUNTIME_SETTINGS__?.settings.banner.carousel;
 
@@ -62,10 +58,6 @@ export function initBannerCarousel(): void {
 	const interval = carouselConfig.interval || 6;
 	let carouselInterval: number | undefined;
 	let isPaused = false;
-
-	let startX = 0;
-	let startY = 0;
-	let isSwiping = false;
 
 	const carousel = document.getElementById(BANNER_CAROUSEL_ID);
 
@@ -89,67 +81,6 @@ export function initBannerCarousel(): void {
 	if (validItems.length > 0) {
 		validItems[0].classList.add("opacity-100", "scale-100");
 		validItems[0].classList.remove("opacity-0", "scale-110");
-	}
-
-	if (carousel && "ontouchstart" in window) {
-		carousel.addEventListener(
-			"touchstart",
-			(e) => {
-				startX = e.touches[0].clientX;
-				startY = e.touches[0].clientY;
-				isSwiping = false;
-				isPaused = true;
-				clearInterval(carouselInterval);
-			},
-			{ passive: true },
-		);
-
-		carousel.addEventListener(
-			"touchmove",
-			(e) => {
-				if (!startX || !startY) {
-					return;
-				}
-				const diffX = Math.abs(e.touches[0].clientX - startX);
-				const diffY = Math.abs(e.touches[0].clientY - startY);
-				if (diffX > diffY && diffX > 30) {
-					isSwiping = true;
-					e.preventDefault();
-				}
-			},
-			{ passive: false },
-		);
-
-		carousel.addEventListener(
-			"touchend",
-			(e) => {
-				if (!startX || !startY || !isSwiping) {
-					isPaused = false;
-					startCarousel();
-					return;
-				}
-
-				const endX = e.changedTouches[0].clientX;
-				const diffX = startX - endX;
-				if (Math.abs(diffX) > 50) {
-					if (diffX > 0) {
-						switchToSlide((currentIndex + 1) % validItems.length);
-					} else {
-						switchToSlide(
-							(currentIndex - 1 + validItems.length) %
-								validItems.length,
-						);
-					}
-				}
-
-				startX = 0;
-				startY = 0;
-				isSwiping = false;
-				isPaused = false;
-				startCarousel();
-			},
-			{ passive: true },
-		);
 	}
 
 	function startCarousel(): void {
@@ -191,14 +122,6 @@ export function showBanner(): void {
 		const banner = document.getElementById("banner");
 		if (banner) {
 			banner.classList.remove("opacity-0", "scale-105");
-		}
-
-		const mobileBanner = document.querySelector(
-			'.block.md\\:hidden[alt="Mobile banner image of the blog"]',
-		);
-		if (mobileBanner && !document.getElementById(BANNER_CAROUSEL_ID)) {
-			mobileBanner.classList.remove("opacity-0", "scale-105");
-			mobileBanner.classList.add("opacity-100");
 		}
 
 		if (document.getElementById(BANNER_CAROUSEL_ID)) {

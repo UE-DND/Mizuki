@@ -41,10 +41,7 @@ try {
       <div id="me-authenticated-sections" class="hidden space-y-4">
         <section class="card-base p-8 rounded-(--radius-large) space-y-4">
           <h2 class="text-2xl font-semibold text-90">个人资料</h2>
-          <form
-            id="me-profile-form"
-            class="grid grid-cols-1 md:grid-cols-2 gap-4"
-          >
+          <form id="me-profile-form" class="grid grid-cols-1 grid-cols-2 gap-4">
             <label class="space-y-1.5">
               <span class="text-sm text-60">邮箱</span>
               <input
@@ -103,9 +100,9 @@ try {
                 >
               </div>
             </label>
-            <div class="space-y-2 md:col-span-2">
+            <div class="space-y-2 col-span-2">
               <span class="text-sm text-60">头像</span>
-              <div class="flex flex-col sm:flex-row sm:items-center gap-4">
+              <div class="flex flex-col flex-row items-center gap-4">
                 <img
                   id="me-avatar-preview"
                   class="w-20 h-20 rounded-full object-cover border border-(--line-divider) bg-black/10 dark:bg-white/10"
@@ -149,7 +146,7 @@ try {
                 </div>
               </div>
             </div>
-            <label class="space-y-1.5 md:col-span-2">
+            <label class="space-y-1.5 col-span-2">
               <span class="text-sm text-60">简介</span>
               <button
                 type="button"
@@ -178,9 +175,7 @@ try {
                 </div>
               </div>
             </label>
-            <h3 class="text-lg font-medium text-75 md:col-span-2">
-              简介打字机
-            </h3>
+            <h3 class="text-lg font-medium text-75 col-span-2">简介打字机</h3>
             <label
               class="flex items-center gap-3 text-75 cursor-pointer select-none"
             >
@@ -204,7 +199,7 @@ try {
                 placeholder="80"
               />
             </label>
-            <div class="md:col-span-2 flex items-center gap-2">
+            <div class="col-span-2 flex items-center gap-2">
               <button
                 type="submit"
                 class="px-4 py-2 rounded-lg bg-(--btn-regular-bg) text-(--btn-content) text-sm"
@@ -236,7 +231,7 @@ try {
             <h3 class="text-xl font-medium text-75">内容展示</h3>
             <form
               id="me-privacy-form"
-              class="grid grid-cols-1 md:grid-cols-2 gap-4 text-base"
+              class="grid grid-cols-1 grid-cols-2 gap-4 text-base"
             >
               <label
                 class="flex items-center gap-3 text-75 cursor-pointer select-none"
@@ -316,7 +311,7 @@ try {
                 >
                 公开评论
               </label>
-              <div class="md:col-span-2 flex items-center gap-2 pt-4">
+              <div class="col-span-2 flex items-center gap-2 pt-4">
                 <button
                   type="submit"
                   class="px-4 py-2 rounded-lg bg-(--btn-regular-bg) text-(--btn-content) text-sm"
@@ -348,14 +343,14 @@ try {
           style="--skeleton-width: 22%; --skeleton-height: 1.6rem;"
         >
         </div>
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div class="grid grid-cols-1 grid-cols-2 gap-4">
           {
             Array.from({ length: 6 }).map(() => (
               <div class="md3-skeleton-block h-10 rounded-lg" />
             ))
           }
-          <div class="md3-skeleton-block h-28 rounded-lg md:col-span-2"></div>
-          <div class="md3-skeleton-block h-10 rounded-lg md:col-span-2"></div>
+          <div class="md3-skeleton-block h-28 rounded-lg col-span-2"></div>
+          <div class="md3-skeleton-block h-10 rounded-lg col-span-2"></div>
         </div>
       </section>
       <section class="card-base p-8 rounded-(--radius-large) space-y-4">
@@ -379,13 +374,13 @@ try {
           style="--skeleton-width: 18%; --skeleton-height: 1.6rem;"
         >
         </div>
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div class="grid grid-cols-1 grid-cols-2 gap-4">
           {
             Array.from({ length: 6 }).map(() => (
               <div class="md3-skeleton-block h-10 rounded-lg" />
             ))
           }
-          <div class="md3-skeleton-block h-10 rounded-lg md:col-span-2"></div>
+          <div class="md3-skeleton-block h-10 rounded-lg col-span-2"></div>
         </div>
       </section>
     </div>
@@ -398,10 +393,10 @@ try {
     tabindex="-1"
   >
     <div
-      class="card-base w-full max-w-xl rounded-(--radius-large) border border-(--line-divider) p-5 sm:p-6 space-y-4 text-75"
+      class="card-base w-full max-w-xl rounded-(--radius-large) border border-(--line-divider) p-5 p-6 space-y-4 text-75"
     >
       <div class="flex items-center gap-2">
-        <h3 class="text-lg sm:text-xl font-semibold text-90">裁剪头像</h3>
+        <h3 class="text-lg text-xl font-semibold text-90">裁剪头像</h3>
       </div>
       <p class="text-sm text-60">建议使用方形图片，拖拽调整位置并缩放。</p>
       <div

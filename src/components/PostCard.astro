@@ -55,7 +55,7 @@ const publishedDate =
 
 <div
   class:list={[
-    "card-base flex flex-col-reverse md:flex-col w-full rounded-(--radius-large) overflow-hidden relative",
+    "card-base flex flex-col w-full rounded-(--radius-large) overflow-hidden relative",
     className,
   ]}
   style={style}
@@ -68,21 +68,21 @@ const publishedDate =
   <div
     data-enter-skeleton-content
     class:list={[
-      "pl-6 md:pl-9 pr-6 md:pr-2 pt-6 md:pt-7 pb-6 relative",
+      "pl-9 pr-2 pt-7 pb-6 relative",
       {
-        "w-full md:w-[calc(100%-3.25rem-0.75rem)]": !hasCover,
-        "w-full md:w-[calc(100%-var(--coverWidth)-0.75rem)]": hasCover,
+        "w-[calc(100%-3.25rem-0.75rem)]": !hasCover,
+        "w-[calc(100%-var(--coverWidth)-0.75rem)]": hasCover,
       },
     ]}
   >
     <a
       href={url}
-      class="transition group w-full block font-bold mb-3 text-2xl md:text-3xl text-90
+      class="transition group w-full block font-bold mb-3 text-3xl text-90
         hover:text-(--primary) dark:hover:text-(--primary)
         active:text-(--title-active) dark:active:text-(--title-active)
         before:w-1 before:h-5 before:rounded-md before:bg-(--primary)
         before:absolute
-        before:top-[2.1875rem] before:left-[1.125rem] before:hidden md:before:block"
+        before:top-[2.1875rem] before:left-[1.125rem] before:block"
     >
       {
         pinned && (
@@ -94,26 +94,24 @@ const publishedDate =
       }
       {title}
       <Icon
-        class="inline text-[2rem] text-(--primary) md:hidden translate-y-0.5 absolute"
+        class="hidden text-[2rem] text-(--primary) translate-y-0.5 absolute"
         name="material-symbols:chevron-right-rounded"
       />
       <Icon
-        class="text-(--primary) text-[2rem] transition hidden md:inline absolute translate-y-0.5 opacity-0 group-hover:opacity-100 -translate-x-1 group-hover:translate-x-0"
+        class="text-(--primary) text-[2rem] transition inline absolute translate-y-0.5 opacity-0 group-hover:opacity-100 -translate-x-1 group-hover:translate-x-0"
         name="material-symbols:chevron-right-rounded"
       />
     </a>
 
     <div class="mb-4 h-5" aria-hidden="true"></div>
 
-    <div
-      class="transition text-75 -mt-3 mb-3.5 pr-4 line-clamp-2 md:line-clamp-1"
-    >
+    <div class="transition text-75 -mt-3 mb-3.5 pr-4 line-clamp-1">
       {excerpt}
     </div>
 
     <div class="flex items-center justify-between gap-3 mt-2">
       <div
-        class="flex min-w-0 items-center gap-1.5 text-50 text-xs md:text-sm font-medium leading-none"
+        class="flex min-w-0 items-center gap-1.5 text-50 text-sm font-medium leading-none"
       >
         <div class="max-w-[14rem] min-w-0 inline-flex items-baseline gap-1">
           <a
@@ -133,28 +131,22 @@ const publishedDate =
         <span>{publishedDate}</span>
       </div>
       <div
-        class="flex items-center gap-3 md:gap-4 ml-3 mr-2 shrink-0 post-card-actions leading-none"
+        class="flex items-center gap-4 ml-3 mr-2 shrink-0 post-card-actions leading-none"
       >
         <button
           type="button"
-          class="inline-flex h-6 items-center gap-1.5 text-50 text-sm md:text-base font-medium hover:text-(--primary) transition-colors post-card-action-btn"
+          class="inline-flex h-6 items-center gap-1.5 text-50 text-base font-medium hover:text-(--primary) transition-colors post-card-action-btn"
           data-action="toggle-like"
           aria-label="切换点赞"
         >
-          <Icon
-            name="material-symbols:thumb-up-rounded"
-            class="text-lg md:text-xl"
-          />
+          <Icon name="material-symbols:thumb-up-rounded" class="text-xl" />
           <span data-like-count>{like_count}</span>
         </button>
         <a
           href={`${url}#directus-comment-root`}
-          class="inline-flex h-6 items-center gap-1.5 text-50 text-sm md:text-base font-medium hover:text-(--primary) transition-colors"
+          class="inline-flex h-6 items-center gap-1.5 text-50 text-base font-medium hover:text-(--primary) transition-colors"
         >
-          <Icon
-            name="material-symbols:comment-rounded"
-            class="text-lg md:text-xl"
-          />
+          <Icon name="material-symbols:comment-rounded" class="text-xl" />
           <span>{comment_count}</span>
         </a>
         <details class="relative post-card-menu">
@@ -169,28 +161,28 @@ const publishedDate =
           >
             <button
               type="button"
-              class="hidden w-full text-left px-3 py-2 text-xs md:text-sm rounded-lg text-black/75 dark:text-white/75 hover:text-(--primary) hover:bg-(--btn-plain-bg-hover) post-card-action-btn transition-colors"
+              class="hidden w-full text-left px-3 py-2 text-sm rounded-lg text-black/75 dark:text-white/75 hover:text-(--primary) hover:bg-(--btn-plain-bg-hover) post-card-action-btn transition-colors"
               data-action="delete-own-article"
             >
               删除文章
             </button>
             <button
               type="button"
-              class="hidden w-full text-left px-3 py-2 text-xs md:text-sm rounded-lg text-black/75 dark:text-white/75 hover:text-(--primary) hover:bg-(--btn-plain-bg-hover) post-card-action-btn transition-colors"
+              class="hidden w-full text-left px-3 py-2 text-sm rounded-lg text-black/75 dark:text-white/75 hover:text-(--primary) hover:bg-(--btn-plain-bg-hover) post-card-action-btn transition-colors"
               data-action="delete-admin-article"
             >
               删除此文章【管理员】
             </button>
             <button
               type="button"
-              class="w-full text-left px-3 py-2 text-xs md:text-sm rounded-lg text-black/75 dark:text-white/75 hover:text-(--primary) hover:bg-(--btn-plain-bg-hover) post-card-action-btn transition-colors"
+              class="w-full text-left px-3 py-2 text-sm rounded-lg text-black/75 dark:text-white/75 hover:text-(--primary) hover:bg-(--btn-plain-bg-hover) post-card-action-btn transition-colors"
               data-action="block-user"
             >
               屏蔽用户
             </button>
             <button
               type="button"
-              class="w-full text-left px-3 py-2 text-xs md:text-sm rounded-lg text-amber-600 dark:text-amber-400 hover:bg-(--btn-plain-bg-hover) post-card-action-btn transition-colors"
+              class="w-full text-left px-3 py-2 text-sm rounded-lg text-amber-600 dark:text-amber-400 hover:bg-(--btn-plain-bg-hover) post-card-action-btn transition-colors"
               data-action="report-content"
             >
               举报内容
@@ -207,11 +199,8 @@ const publishedDate =
         data-enter-skeleton-content
         href={url}
         aria-label={title}
-        class:list={[
-          "group",
-          "max-h-[20vh] md:max-h-none mx-4 mt-4 -mb-2 md:mb-0 md:mx-0 md:mt-0",
-          "md:w-(--coverWidth) relative md:absolute md:top-3 md:bottom-3 md:right-3 rounded-xl overflow-hidden active:scale-95",
-        ]}
+        class="group absolute top-3 bottom-3 right-3 rounded-xl overflow-hidden active:scale-95"
+        style="width: var(--coverWidth);"
       >
         <div class="absolute pointer-events-none z-10 w-full h-full group-hover:bg-black/30 group-active:bg-black/50 transition" />
         <div class="absolute pointer-events-none z-20 w-full h-full flex items-center justify-center">
@@ -236,7 +225,7 @@ const publishedDate =
         data-enter-skeleton-content
         href={url}
         aria-label={title}
-        class="hidden md:flex btn-regular w-[3.25rem]
+        class="flex btn-regular w-[3.25rem]
          absolute right-3 top-3 bottom-3 rounded-xl bg-(--enter-btn-bg)
          hover:bg-(--enter-btn-bg-hover) active:bg-(--enter-btn-bg-active) active:scale-95"
       >
@@ -254,17 +243,16 @@ const publishedDate =
   >
     <div
       class:list={[
-        "pl-6 md:pl-9 pr-6 md:pr-2 pt-6 md:pt-7 pb-6 h-full flex flex-col",
+        "pl-9 pr-2 pt-7 pb-6 h-full flex flex-col",
         {
-          "w-full md:w-[calc(100%-3.25rem-0.75rem)]": !hasCover,
-          "w-full md:w-[calc(100%-var(--coverWidth)-0.75rem)]": hasCover,
+          "w-[calc(100%-3.25rem-0.75rem)]": !hasCover,
+          "w-[calc(100%-var(--coverWidth)-0.75rem)]": hasCover,
         },
       ]}
     >
       <div class="space-y-4">
         <div class="flex items-center gap-2.5">
-          <div class="hidden md:block md3-skeleton-block h-8 w-1 rounded-md">
-          </div>
+          <div class="block md3-skeleton-block h-8 w-1 rounded-md"></div>
           <div
             class="md3-skeleton-text"
             style="--skeleton-width: 42%; --skeleton-height: 2.2rem;"
@@ -292,7 +280,7 @@ const publishedDate =
           >
           </div>
         </div>
-        <div class="ml-3 mr-2 flex shrink-0 items-center gap-2.5 md:gap-4">
+        <div class="ml-3 mr-2 flex shrink-0 items-center gap-4">
           <div class="md3-skeleton-block h-6 w-8 rounded-lg"></div>
           <div class="md3-skeleton-block h-6 w-8 rounded-lg"></div>
           <div class="md3-skeleton-circle h-6 w-6"></div>
@@ -301,14 +289,17 @@ const publishedDate =
     </div>
     {
       hasCover ? (
-        <div class="max-h-[20vh] md:max-h-none mx-4 mt-4 -mb-2 md:mb-0 md:mx-0 md:mt-0 md:w-(--coverWidth) relative md:absolute md:top-3 md:bottom-3 md:right-3 rounded-xl overflow-hidden">
+        <div
+          class="absolute top-3 bottom-3 right-3 rounded-xl overflow-hidden"
+          style="width: var(--coverWidth);"
+        >
           <div class="md3-skeleton-block h-full w-full rounded-xl" />
           <div class="absolute inset-0 flex items-center justify-center">
             <div class="md3-skeleton-circle h-10 w-10" />
           </div>
         </div>
       ) : (
-        <div class="hidden md:flex absolute right-3 top-3 bottom-3 w-[3.25rem] rounded-xl overflow-hidden">
+        <div class="flex absolute right-3 top-3 bottom-3 w-[3.25rem] rounded-xl overflow-hidden">
           <div class="md3-skeleton-block h-full w-full rounded-xl" />
         </div>
       )
@@ -316,7 +307,7 @@ const publishedDate =
   </div>
 </div>
 <div
-  class="transition border-t border-dashed mx-6 border-black/10 dark:border-white/15 last:border-t-0 md:hidden"
+  class="transition border-t border-dashed mx-6 border-black/10 dark:border-white/15 last:border-t-0 hidden"
 >
 </div>
 

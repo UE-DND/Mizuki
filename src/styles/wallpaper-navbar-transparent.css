@@ -10,6 +10,7 @@
   --nav-blur: none;
   --nav-shadow: none;
   --nav-radius: var(--radius-std);
+  --nav-strip-opacity: 1;
 
   /* --- 面板变量 (默认跟随 Navbar，特定情况分离) --- */
   --panel-bg: var(--card-bg);
@@ -30,6 +31,31 @@
   --nav-bg: var(--page-bg);
   --nav-blur: none;
   --nav-shadow: none;
+  --nav-strip-opacity: 1;
+}
+
+/* Full (全透明) */
+#navbar[data-dynamic-transparent="full"],
+#navbar[data-transparent-mode="full"] {
+  --nav-bg: transparent;
+  --nav-blur: none;
+  --nav-shadow: none;
+  --nav-strip-opacity: 0;
+}
+
+/* SemiFull (顶部透明，滚动后显色) */
+#navbar[data-dynamic-transparent="semifull"],
+#navbar[data-transparent-mode="semifull"] {
+  --nav-bg: transparent;
+  --nav-blur: none;
+  --nav-shadow: none;
+  --nav-strip-opacity: 0;
+}
+
+#navbar[data-dynamic-transparent="semifull"].scrolled,
+#navbar[data-transparent-mode="semifull"].scrolled {
+  --nav-bg: var(--page-bg);
+  --nav-strip-opacity: 1;
 }
 
 /* None (实心) */
@@ -38,6 +64,7 @@
   --nav-bg: var(--page-bg);
   --nav-blur: none;
   --nav-shadow: none;
+  --nav-strip-opacity: 1;
 
   /* 联动子面板 */
   --panel-bg: var(--card-bg);
@@ -56,12 +83,20 @@
   border-radius: var(--nav-radius);
 
   /* 性能优化 */
-  will-change: background;
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  will-change: background, box-shadow, border-radius;
+  transition:
+    background-color 0.32s cubic-bezier(0.4, 0, 0.2, 1),
+    box-shadow 0.32s cubic-bezier(0.4, 0, 0.2, 1),
+    border-radius 0.32s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+#navbar .navbar-bg-strip {
+  opacity: var(--nav-strip-opacity);
+  transition: opacity 0.32s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 /* 子组件样式 (Sub-Components) */
-:is(.dropdown-content, #nav-menu-panel, #mobile-toc-panel, #display-setting, .music-player .mini-player, .float-panel) {
+:is(.dropdown-content, #display-setting, .music-player .mini-player, .float-panel) {
   /* 使用面板专用变量 */
   background: var(--panel-bg);
   box-shadow: var(--shadow-lg);
@@ -69,21 +104,6 @@
 
   /* 优化过渡 */
   transition: background 0.3s ease;
-}
-
-@media (max-width: 1279px) {
-  /* 修正移动端 Navbar 布局 */
-  #navbar > div {
-    border-radius: 0.5rem;
-    margin: 0;
-    width: 100%;
-    max-width: none;
-  }
-
-  /* 非首页时，移动端各个弹出面板不透明 */
-  #navbar:not([data-is-home="true"]) :is(#nav-menu-panel, #mobile-toc-panel, #display-setting) {
-    background: var(--card-bg);
-  }
 }
 
 /* Layout state machine override:

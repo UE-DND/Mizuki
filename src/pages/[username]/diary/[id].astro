@@ -75,7 +75,7 @@ const diary = result.status === "ok" ? result.data : null;
       <>
         <article
           id="post-container"
-          class="card-base p-6 md:p-8 rounded-(--radius-large) mb-4 text-90"
+          class="card-base p-6 p-8 rounded-(--radius-large) mb-4 text-90"
         >
           <a
             href={`/${username}/diary`}
@@ -115,7 +115,7 @@ const diary = result.status === "ok" ? result.data : null;
             </details>
           </div>
           <header class="mb-4 space-y-2">
-            <h1 class="text-2xl md:text-3xl font-bold text-90">日记详情</h1>
+            <h1 class="text-2xl text-3xl font-bold text-90">日记详情</h1>
             <div class="text-xs text-60 flex flex-wrap items-center gap-3">
               {diary.author?.name && <span>{diary.author.name}</span>}
               {diary.happened_at && (
@@ -133,7 +133,7 @@ const diary = result.status === "ok" ? result.data : null;
           </Markdown>
 
           {Array.isArray(diary.images) && diary.images.length > 0 && (
-            <div class="grid grid-cols-2 md:grid-cols-3 gap-3">
+            <div class="grid grid-cols-2 grid-cols-3 gap-3">
               {diary.images
                 .filter((image) => image.image_url || image.file_id)
                 .map((image) => (
@@ -150,7 +150,7 @@ const diary = result.status === "ok" ? result.data : null;
                           : "")
                       }
                       alt={image.caption || "diary image"}
-                      class="w-full h-36 md:h-44 object-cover rounded-xl border border-(--line-divider)"
+                      class="w-full h-36 h-44 object-cover rounded-xl border border-(--line-divider)"
                       loading="lazy"
                     />
                     {image.caption && (

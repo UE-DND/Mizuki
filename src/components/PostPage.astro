@@ -19,16 +19,15 @@ const { page, maxAnimationIndex } = Astro.props;
 
 // 检查是否启用右侧边栏（通过检查右侧是否有组件）
 const hasRightSidebars =
-  widgetManager.getComponentsByPosition("top", "right", "desktop").length > 0 ||
-  widgetManager.getComponentsByPosition("sticky", "right", "desktop").length >
-    0;
+  widgetManager.getComponentsByPosition("top", "right").length > 0 ||
+  widgetManager.getComponentsByPosition("sticky", "right").length > 0;
 
 const initialLayoutClass = "list-mode";
 ---
 
 <div
   id="post-list-container"
-  class={`transition-all duration-500 ease-in-out rounded-(--radius-large) bg-(--card-bg) md:bg-transparent mb-4 ${initialLayoutClass}`}
+  class={`transition-all duration-500 ease-in-out rounded-(--radius-large) bg-(--card-bg) bg-transparent mb-4 ${initialLayoutClass}`}
   data-both-sidebars={hasRightSidebars}
 >
   {

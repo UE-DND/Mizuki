@@ -195,9 +195,7 @@ html[data-theme="github-dark"] input[type="date"].date-picker-input::-webkit-cal
   .is-theme-transitioning .dropdown-content,
   .is-theme-transitioning .float-panel,
   .is-theme-transitioning #display-setting,
-  .is-theme-transitioning #nav-menu-panel,
-  .is-theme-transitioning #translate-panel,
-  .is-theme-transitioning #mobile-toc-panel {
+  .is-theme-transitioning #translate-panel {
     transition: none !important;
     backdrop-filter: none !important;
   }
@@ -418,36 +416,12 @@ html[data-theme="github-dark"] input[type="date"].date-picker-input::-webkit-cal
     @apply rounded-b-[calc(var(--radius-large)-0.5rem)];
   }
 
-  /* 移动端菜单样式 */
-  .mobile-submenu {
-    @apply max-h-0 overflow-hidden transition-all duration-300 ease-in-out;
-  }
-
-  .mobile-dropdown[data-expanded="true"] .mobile-submenu {
-    @apply max-h-96;
-  }
-
-  .mobile-dropdown[data-expanded="true"] .mobile-dropdown-arrow {
-    @apply rotate-180;
-  }
-
-  /* 响应式隐藏 */
-  @media (max-width: 768px) {
-    .dropdown-container {
-      @apply hidden;
-    }
-  }
-
   /* 无障碍支持 */
   .dropdown-container:focus-within .dropdown-menu {
     @apply opacity-100 visible pointer-events-auto translate-y-0;
   }
 
   .dropdown-item:focus {
-    @apply outline-none;
-  }
-
-  .mobile-dropdown button:focus {
     @apply outline-none;
   }
 
@@ -533,21 +507,6 @@ html[data-theme="github-dark"] input[type="date"].date-picker-input::-webkit-cal
 /* 浅色模式：使用更浅的主题色且完全不透明 */
 
 /* CSS-only移动端优化 - 避免JavaScript闪烁 */
-@media (max-width: 768px) {
-  /* 移动端强制列表模式，避免初始化闪烁 */
-  #post-list-container {
-    display: flex !important;
-    flex-direction: column !important;
-    gap: 0.5rem !important;
-    padding: 0 !important;
-    background: transparent !important;
-  }
-
-  /* 移动端文章卡片间距优化 */
-  #post-list-container .post-card-item {
-    margin-bottom: 0 !important;
-  }
-}
 
 /* 桌面端样式 */
 @media (min-width: 769px) {

@@ -16,7 +16,7 @@ import { url } from "../../utils/url-utils";
 
   <div
     id="auth-user"
-    class="hidden min-w-0 items-center gap-1 sm:gap-2 pl-1 sm:pl-2 pr-1 h-11 rounded-lg border border-(--line-divider) bg-(--card-bg)/50"
+    class="hidden min-w-0 items-center gap-2 pl-2 pr-1 h-11 rounded-lg border border-(--line-divider) bg-(--card-bg)/50"
   >
     <a
       id="auth-account"
@@ -41,7 +41,7 @@ import { url } from "../../utils/url-utils";
 
     <span
       id="auth-user-name"
-      class="hidden sm:block max-w-[7rem] text-sm text-black/70 dark:text-white/70 truncate"
+      class="block max-w-[7rem] text-sm text-black/70 dark:text-white/70 truncate"
     ></span>
 
     <a
@@ -254,9 +254,7 @@ import { url } from "../../utils/url-utils";
     display: none;
   }
 
-  @media (min-width: 640px) {
-    .auth-admin-only.auth-admin-visible {
-      display: flex;
-    }
+  .auth-admin-only.auth-admin-visible {
+    display: flex;
   }
 </style>

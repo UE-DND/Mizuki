@@ -20,7 +20,7 @@ const registerEnabled = Boolean(
     <div data-enter-skeleton-inline-content>
       <div class="home-layout">
         <div class="min-w-0">
-          <div class="card-base rounded-(--radius-large) p-6 md:p-8 login-card">
+          <div class="card-base rounded-(--radius-large) p-6 p-8 login-card">
             <div class="flex items-center gap-3 mb-2">
               <div
                 class="w-12 h-12 rounded-2xl bg-(--btn-regular-bg) flex items-center justify-center login-icon-box"
@@ -173,7 +173,7 @@ const registerEnabled = Boolean(
     <div data-enter-skeleton-inline-placeholder aria-hidden="true">
       <div class="home-layout">
         <div class="min-w-0">
-          <div class="card-base rounded-(--radius-large) p-6 md:p-8 space-y-6">
+          <div class="card-base rounded-(--radius-large) p-6 p-8 space-y-6">
             <div class="flex items-center gap-3">
               <div class="md3-skeleton-block w-12 h-12 rounded-2xl"></div>
               <div class="space-y-2 flex-1">
@@ -375,14 +375,6 @@ const registerEnabled = Boolean(
     }
     .home-sidebar-placeholder {
       /* 纯占位，不渲染任何内容 */
-    }
-    @media (max-width: 1024px) {
-      .home-layout {
-        grid-template-columns: 1fr;
-      }
-      .home-sidebar-placeholder {
-        display: none;
-      }
     }
 
     .login-card {

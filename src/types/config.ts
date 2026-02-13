@@ -62,13 +62,7 @@ export type SiteConfig = {
 	};
 
 	banner: {
-		src:
-			| string
-			| string[]
-			| {
-					desktop?: string | string[];
-					mobile?: string | string[];
-			  }; // 支持单个图片、图片数组或分别设置桌面端和移动端图片
+		src: string | string[]; // 仅支持桌面端 Banner 图片
 		position?: "top" | "center" | "bottom";
 		carousel?: {
 			enable: boolean; // 是否启用轮播
@@ -77,7 +71,6 @@ export type SiteConfig = {
 		waves?: {
 			enable: boolean; // 是否启用水波纹效果
 			performanceMode?: boolean; // 性能模式：减少动画复杂度
-			mobileDisable?: boolean; // 移动端禁用
 		};
 		imageApi?: {
 			enable: boolean; // 是否启用图片API
@@ -223,7 +216,6 @@ export type WidgetComponentConfig = {
 	style?: string; // 自定义内联样式
 	animationDelay?: number; // 动画延迟时间（毫秒）
 	responsive?: {
-		hidden?: ("mobile" | "tablet" | "desktop")[]; // 在指定设备上隐藏
 		collapseThreshold?: number; // 折叠阈值
 	};
 	customProps?: Record<string, JsonValue>; // 自定义属性，用于扩展组件功能（需可序列化）
@@ -234,19 +226,11 @@ export type SidebarLayoutConfig = {
 	components: {
 		left: WidgetComponentType[];
 		right: WidgetComponentType[];
-		drawer: WidgetComponentType[];
 	};
 	defaultAnimation: {
 		enable: boolean; // 是否启用默认动画
 		baseDelay: number; // 基础延迟时间（毫秒）
 		increment: number; // 每个组件递增的延迟时间（毫秒）
-	};
-	responsive: {
-		breakpoints: {
-			mobile: number; // 移动端断点（px）
-			tablet: number; // 平板端断点（px）
-			desktop: number; // 桌面端断点（px）
-		};
 	};
 };
 

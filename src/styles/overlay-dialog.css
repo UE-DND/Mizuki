@@ -286,19 +286,3 @@ textarea.overlay-dialog-field-control {
     animation-duration: 1ms !important;
   }
 }
-
-@media (max-width: 640px) {
-  .overlay-dialog-card {
-    width: calc(100% - 1.5rem);
-    max-height: 88vh;
-    padding: 1.25rem 1rem;
-  }
-
-  .overlay-dialog-content-two-columns {
-    grid-template-columns: 1fr;
-  }
-
-  .overlay-dialog-message {
-    margin-bottom: 1rem;
-  }
-}

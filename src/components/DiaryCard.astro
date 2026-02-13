@@ -96,7 +96,7 @@ function resolveDiaryImageSrc(image: AppDiaryImage): string {
   data-author-id={author_id}
   data-author-handle={authorHandle}
 >
-  <div class="pl-6 md:pl-9 pr-6 md:pr-2 pt-6 md:pt-7 pb-6 relative">
+  <div class="pl-9 pr-2 pt-7 pb-6 relative">
     <a href={diaryUrl} class="block space-y-3">
       <div class="flex flex-wrap items-center gap-2 text-xs text-60">
         {
@@ -119,19 +119,17 @@ function resolveDiaryImageSrc(image: AppDiaryImage): string {
           )
         }
       </div>
-      <p
-        class="transition text-75 pr-4 line-clamp-3 md:line-clamp-2 text-sm md:text-base leading-7"
-      >
+      <p class="transition text-75 pr-4 line-clamp-2 text-base leading-7">
         {excerpt}
       </p>
       {
         visibleImages.length > 0 && (
-          <div class="grid grid-cols-3 md:grid-cols-4 gap-2">
+          <div class="grid grid-cols-4 gap-2">
             {visibleImages.map((img) => (
               <img
                 src={resolveDiaryImageSrc(img)}
                 alt="日记配图"
-                class="w-full h-20 md:h-24 object-cover rounded-lg border border-(--line-divider)"
+                class="w-full h-24 object-cover rounded-lg border border-(--line-divider)"
                 loading="lazy"
               />
             ))}
@@ -142,7 +140,7 @@ function resolveDiaryImageSrc(image: AppDiaryImage): string {
 
     <div class="flex items-center justify-between gap-3 mt-4">
       <div
-        class="flex min-w-0 items-center gap-1.5 text-50 text-xs md:text-sm font-medium leading-none"
+        class="flex min-w-0 items-center gap-1.5 text-50 text-sm font-medium leading-none"
       >
         <div class="max-w-[14rem] min-w-0 inline-flex items-baseline gap-1">
           <a
@@ -162,28 +160,22 @@ function resolveDiaryImageSrc(image: AppDiaryImage): string {
         <span>{publishedDate}</span>
       </div>
       <div
-        class="flex items-center gap-3 md:gap-4 ml-3 mr-2 shrink-0 post-card-actions leading-none"
+        class="flex items-center gap-4 ml-3 mr-2 shrink-0 post-card-actions leading-none"
       >
         <button
           type="button"
-          class="inline-flex h-6 items-center gap-1.5 text-50 text-sm md:text-base font-medium hover:text-(--primary) transition-colors post-card-action-btn"
+          class="inline-flex h-6 items-center gap-1.5 text-50 text-base font-medium hover:text-(--primary) transition-colors post-card-action-btn"
           data-action="toggle-like"
           aria-label="切换点赞"
         >
-          <Icon
-            name="material-symbols:thumb-up-rounded"
-            class="text-lg md:text-xl"
-          />
+          <Icon name="material-symbols:thumb-up-rounded" class="text-xl" />
           <span data-like-count>{like_count}</span>
         </button>
         <a
           href={`${diaryUrl}#directus-comment-root`}
-          class="inline-flex h-6 items-center gap-1.5 text-50 text-sm md:text-base font-medium hover:text-(--primary) transition-colors"
+          class="inline-flex h-6 items-center gap-1.5 text-50 text-base font-medium hover:text-(--primary) transition-colors"
         >
-          <Icon
-            name="material-symbols:comment-rounded"
-            class="text-lg md:text-xl"
-          />
+          <Icon name="material-symbols:comment-rounded" class="text-xl" />
           <span>{comment_count}</span>
         </a>
         <details class="relative post-card-menu">
@@ -198,28 +190,28 @@ function resolveDiaryImageSrc(image: AppDiaryImage): string {
           >
             <button
               type="button"
-              class="hidden w-full text-left px-3 py-2 text-xs md:text-sm rounded-lg text-black/75 dark:text-white/75 hover:text-(--primary) hover:bg-(--btn-plain-bg-hover) post-card-action-btn transition-colors"
+              class="hidden w-full text-left px-3 py-2 text-sm rounded-lg text-black/75 dark:text-white/75 hover:text-(--primary) hover:bg-(--btn-plain-bg-hover) post-card-action-btn transition-colors"
               data-action="delete-own-diary"
             >
               删除日记
             </button>
             <button
               type="button"
-              class="hidden w-full text-left px-3 py-2 text-xs md:text-sm rounded-lg text-black/75 dark:text-white/75 hover:text-(--primary) hover:bg-(--btn-plain-bg-hover) post-card-action-btn transition-colors"
+              class="hidden w-full text-left px-3 py-2 text-sm rounded-lg text-black/75 dark:text-white/75 hover:text-(--primary) hover:bg-(--btn-plain-bg-hover) post-card-action-btn transition-colors"
               data-action="delete-admin-diary"
             >
               删除此日记(管理员)
             </button>
             <button
               type="button"
-              class="w-full text-left px-3 py-2 text-xs md:text-sm rounded-lg text-black/75 dark:text-white/75 hover:text-(--primary) hover:bg-(--btn-plain-bg-hover) post-card-action-btn transition-colors"
+              class="w-full text-left px-3 py-2 text-sm rounded-lg text-black/75 dark:text-white/75 hover:text-(--primary) hover:bg-(--btn-plain-bg-hover) post-card-action-btn transition-colors"
               data-action="block-user"
             >
               屏蔽用户
             </button>
             <button
               type="button"
-              class="w-full text-left px-3 py-2 text-xs md:text-sm rounded-lg text-amber-600 dark:text-amber-400 hover:bg-(--btn-plain-bg-hover) post-card-action-btn transition-colors"
+              class="w-full text-left px-3 py-2 text-sm rounded-lg text-amber-600 dark:text-amber-400 hover:bg-(--btn-plain-bg-hover) post-card-action-btn transition-colors"
               data-action="report-content"
             >
               举报内容
@@ -231,7 +223,7 @@ function resolveDiaryImageSrc(image: AppDiaryImage): string {
   </div>
 </div>
 <div
-  class="transition border-t border-dashed mx-6 border-black/10 dark:border-white/15 last:border-t-0 md:hidden"
+  class="transition border-t border-dashed mx-6 border-black/10 dark:border-white/15 last:border-t-0 hidden"
 >
 </div>
 

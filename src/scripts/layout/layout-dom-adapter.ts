@@ -40,7 +40,6 @@ function syncBannerAndMainPanel(next: LayoutState): void {
 
 	if (bannerWrapper) {
 		bannerWrapper.classList.toggle("wallpaper-layer-hidden", !isBannerMode);
-		bannerWrapper.classList.toggle("mobile-hide-banner", !isBannerMode);
 		if (isBannerMode) {
 			bannerWrapper.removeAttribute("aria-hidden");
 			bannerWrapper.removeAttribute("inert");
@@ -52,10 +51,6 @@ function syncBannerAndMainPanel(next: LayoutState): void {
 	}
 
 	if (mainPanelWrapper) {
-		mainPanelWrapper.classList.toggle(
-			"mobile-main-no-banner",
-			!isBannerMode,
-		);
 		mainPanelWrapper.classList.toggle("no-banner-layout", !isBannerMode);
 	}
 }
@@ -125,8 +120,8 @@ function compensateScrollForCollapse(
 	const currentScroll = documentRoot.scrollTop;
 	let targetScroll = getCollapseTargetScroll(currentScroll, deps);
 
-	// Prefer geometry-based compensation so breakpoint-specific layout top
-	// differences (for example tablet 70vh banner top) don't cause a snap.
+	// Prefer geometry-based compensation so layout top differences
+	// don't cause a snap.
 	const contentTopAfterCollapse = getContentWrapperViewportTop();
 	if (contentTopBeforeCollapse !== null && contentTopAfterCollapse !== null) {
 		targetScroll = Math.max(
