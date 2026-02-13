@@ -5,7 +5,6 @@ export const zh_TW: Translation = {
 	[Key.home]: "首頁",
 	[Key.about]: "關於我們",
 	[Key.archive]: "歸檔",
-	[Key.search]: "搜尋",
 	[Key.other]: "其他",
 
 	// 導航欄標題
@@ -28,7 +27,6 @@ export const zh_TW: Translation = {
 	[Key.comments]: "評論",
 	[Key.friends]: "友鏈",
 	[Key.friendsSubtitle]: "發現更多優秀網站",
-	[Key.friendsSearchPlaceholder]: "搜索友鏈名稱或描述...",
 	[Key.friendsFilterAll]: "全部",
 	[Key.friendsNoResults]: "未找到匹配的友鏈",
 	[Key.friendsVisit]: "訪問",

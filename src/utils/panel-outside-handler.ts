@@ -15,10 +15,6 @@ export const setupPanelOutsideHandler = (panelManager: PanelManager): void => {
 			ignores: ["nav-menu-panel", "nav-menu-switch"],
 		},
 		{
-			panelId: "search-panel",
-			ignores: ["search-panel", "search-bar", "search-switch"],
-		},
-		{
 			panelId: "mobile-toc-panel",
 			ignores: ["mobile-toc-panel", "mobile-toc-switch"],
 		},

@@ -5,7 +5,6 @@ export const en: Translation = {
 	[Key.home]: "Home",
 	[Key.about]: "About",
 	[Key.archive]: "Archive",
-	[Key.search]: "Search",
 	[Key.other]: "Other",
 
 	// Navigation bar titles
@@ -28,7 +27,6 @@ export const en: Translation = {
 	[Key.comments]: "Comments",
 	[Key.friends]: "Friends",
 	[Key.friendsSubtitle]: "Discover more great websites",
-	[Key.friendsSearchPlaceholder]: "Search friend's name or description...",
 	[Key.friendsFilterAll]: "All",
 	[Key.friendsNoResults]: "No matching friends found",
 	[Key.friendsVisit]: "Visit",

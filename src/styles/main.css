@@ -197,8 +197,7 @@ html[data-theme="github-dark"] input[type="date"].date-picker-input::-webkit-cal
   .is-theme-transitioning #display-setting,
   .is-theme-transitioning #nav-menu-panel,
   .is-theme-transitioning #translate-panel,
-  .is-theme-transitioning #mobile-toc-panel,
-  .is-theme-transitioning #search-panel {
+  .is-theme-transitioning #mobile-toc-panel {
     transition: none !important;
     backdrop-filter: none !important;
   }
@@ -283,10 +282,6 @@ html[data-theme="github-dark"] input[type="date"].date-picker-input::-webkit-cal
   .float-panel-closed {
     @apply -translate-y-1 opacity-0 pointer-events-none;
   }
-  .search-panel mark {
-    @apply bg-transparent text-(--primary);
-  }
-
   .btn-card {
     @apply transition-colors duration-150 flex items-center justify-center bg-(--card-bg) hover:bg-(--btn-card-bg-hover)
         active:bg-(--btn-card-bg-active);

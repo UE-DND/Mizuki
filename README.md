@@ -18,9 +18,8 @@
 - [x] 全设备响应式设计
 - [x] 使用 JetBrains Mono 字体的优美排版
 
-### 内容与搜索
+### 内容特性
 
-- [x] 基于 [Pagefind](https://pagefind.app/) 的高级搜索功能
 - [x] [增强的 Markdown 功能](#markdown-扩展语法)，支持语法高亮
 - [x] 交互式目录，支持自动滚动
 - [x] RSS 订阅生成

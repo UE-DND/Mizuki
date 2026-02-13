@@ -18,12 +18,11 @@
 	function initFriendsPage() {
 		console.log("[Friends Global] initFriendsPage called");
 
-		var searchInput = document.getElementById("friend-search");
 		var friendsGrid = document.getElementById("friends-grid");
 		var noResults = document.getElementById("no-results");
 
 		// 如果关键元素不存在，直接返回
-		if (!searchInput || !friendsGrid || !noResults) {
+		if (!friendsGrid || !noResults) {
 			return false;
 		}
 
@@ -70,28 +69,19 @@
 		}
 
 		var currentTag = "all";
-		var searchTerm = "";
 
 		// 过滤函数
 		function filterFriends() {
 			var visibleCount = 0;
 			for (var i = 0; i < friendCards.length; i++) {
 				var card = friendCards[i];
-				var title = (
-					card.getAttribute("data-title") || ""
-				).toLowerCase();
-				var desc = (card.getAttribute("data-desc") || "").toLowerCase();
 				var tags = card.getAttribute("data-tags") || "";
 
-				var matchesSearch =
-					!searchTerm ||
-					title.indexOf(searchTerm) >= 0 ||
-					desc.indexOf(searchTerm) >= 0;
 				var matchesTag =
 					currentTag === "all" ||
 					tags.split(",").indexOf(currentTag) >= 0;
 
-				if (matchesSearch && matchesTag) {
+				if (matchesTag) {
 					card.style.display = "";
 					visibleCount++;
 				} else {
@@ -107,18 +97,6 @@
 				friendsGrid.classList.remove("hidden");
 			}
 		}
-
-		// 搜索功能
-		var searchHandler = (e) => {
-			searchTerm = e.target.value.toLowerCase();
-			filterFriends();
-		};
-		searchInput.addEventListener("input", searchHandler);
-		window.friendsPageState.eventListeners.push([
-			searchInput,
-			"input",
-			searchHandler,
-		]);
 
 		// 标签筛选
 		for (var i = 0; i < tagFilters.length; i++) {
@@ -222,7 +200,6 @@
 							if (node.nodeType === 1) {
 								if (
 									node.id === "friends-grid" ||
-									node.id === "friend-search" ||
 									(node.querySelector &&
 										node.querySelector("#friends-grid"))
 								) {

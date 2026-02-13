@@ -31,7 +31,6 @@ class ThemeOptimizer {
 			".music-player",
 			"#mobile-toc-panel",
 			"#nav-menu-panel",
-			"#search-panel",
 			".dropdown-content",
 			".widget",
 			".post-card",

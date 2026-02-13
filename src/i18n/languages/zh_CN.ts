@@ -5,7 +5,6 @@ export const zh_CN: Translation = {
 	[Key.home]: "首页",
 	[Key.about]: "关于我们",
 	[Key.archive]: "归档",
-	[Key.search]: "搜索",
 	[Key.other]: "其他",
 
 	// 导航栏标题
@@ -28,7 +27,6 @@ export const zh_CN: Translation = {
 	[Key.comments]: "评论",
 	[Key.friends]: "友情链接",
 	[Key.friendsSubtitle]: "发现更多优质网站",
-	[Key.friendsSearchPlaceholder]: "搜索友情链接名称或描述...",
 	[Key.friendsFilterAll]: "全部",
 	[Key.friendsNoResults]: "未找到匹配的友情链接",
 	[Key.friendsVisit]: "访问",

@@ -3,11 +3,7 @@
  * 确保同一时间只有一个浮窗处于打开状态，并提供统一的动画效果
  */
 
-type PanelId =
-	| "mobile-toc-panel"
-	| "display-setting"
-	| "nav-menu-panel"
-	| "search-panel";
+type PanelId = "mobile-toc-panel" | "display-setting" | "nav-menu-panel";
 
 class PanelManager {
 	private activePanels: Set<PanelId> = new Set();

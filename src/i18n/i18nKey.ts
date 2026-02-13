@@ -2,7 +2,6 @@ enum I18nKey {
 	home = "home",
 	about = "about",
 	archive = "archive",
-	search = "search",
 	other = "other",
 
 	// 导航栏标题
@@ -48,7 +47,6 @@ enum I18nKey {
 	license = "license",
 	friends = "friends",
 	friendsSubtitle = "friendsSubtitle",
-	friendsSearchPlaceholder = "friendsSearchPlaceholder",
 	friendsFilterAll = "friendsFilterAll",
 	friendsNoResults = "friendsNoResults",
 	friendsVisit = "friendsVisit",

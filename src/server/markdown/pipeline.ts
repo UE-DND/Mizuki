@@ -67,7 +67,6 @@ const rehypeAutolinkPlugin: Pluggable = [
 			tagName: "span",
 			properties: {
 				className: ["anchor-icon"],
-				"data-pagefind-ignore": true,
 			},
 			children: [{ type: "text", value: "#" }],
 		},

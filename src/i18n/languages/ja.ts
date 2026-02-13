@@ -5,7 +5,6 @@ export const ja: Translation = {
 	[Key.home]: "ホーム",
 	[Key.about]: "このブログについて",
 	[Key.archive]: "アーカイブ",
-	[Key.search]: "検索",
 	[Key.other]: "その他",
 
 	// ナビゲーションバータイトル
@@ -28,7 +27,6 @@ export const ja: Translation = {
 	[Key.comments]: "コメント",
 	[Key.friends]: "友達",
 	[Key.friendsSubtitle]: "もっと素敵なウェブサイトを見つける",
-	[Key.friendsSearchPlaceholder]: "友達の名前または説明を検索...",
 	[Key.friendsFilterAll]: "すべて",
 	[Key.friendsNoResults]: "一致する友達が見つかりません",
 	[Key.friendsVisit]: "訪問",

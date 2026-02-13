@@ -180,9 +180,7 @@
   #banner-wrapper ~ * #nav-menu-panel,
   body:has(#banner-wrapper) #nav-menu-panel,
   #banner-wrapper ~ * #mobile-toc-panel,
-  body:has(#banner-wrapper) #mobile-toc-panel,
-  #banner-wrapper ~ * #search-panel,
-  body:has(#banner-wrapper) #search-panel {
+  body:has(#banner-wrapper) #mobile-toc-panel {
     background: var(--card-bg);
     box-shadow: var(--shadow-lg);
   }
@@ -198,7 +196,6 @@
   body:has(#banner-wrapper) #navbar[data-is-home="true"] ~ * #display-setting,
   body:has(#banner-wrapper) #navbar[data-is-home="true"] #nav-menu-panel,
   body:has(#banner-wrapper) #navbar[data-is-home="true"] #mobile-toc-panel,
-  body:has(#banner-wrapper) #navbar[data-is-home="true"] #search-panel,
   body:has(#banner-wrapper) #navbar[data-is-home="true"] #display-setting {
     background: var(--card-bg);
     box-shadow: var(--shadow-lg);
