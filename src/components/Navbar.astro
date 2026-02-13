@@ -180,6 +180,16 @@ const links: NavBarLink[] = navBarConfig.links
         // noop: keep rawHref fallback
       }
 
+      if (pathname === "/publish") {
+        anchor.setAttribute("data-no-swup", "");
+        if (isLoggedIn) {
+          anchor.removeAttribute("data-needs-login");
+        } else {
+          anchor.setAttribute("data-needs-login", "");
+        }
+        return;
+      }
+
       const hasUserPlaceholder = pathname
         .split("/")
         .filter(Boolean)

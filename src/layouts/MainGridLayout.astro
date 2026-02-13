@@ -664,6 +664,25 @@ const hasCarousel =
   }
 
   :global(
+    html.layout-banner-to-spec-transition.layout-banner-to-spec-transition-active.layout-banner-to-spec-navbar-sync
+      #navbar-logo
+  ),
+  :global(
+    html.layout-banner-to-spec-transition.layout-banner-to-spec-transition-active.layout-banner-to-spec-navbar-sync
+      #navbar-logo
+      img
+  ) {
+    transition-duration: var(
+      --layout-banner-route-transition-duration,
+      920ms
+    ) !important;
+    transition-timing-function: var(
+      --layout-banner-route-transition-easing,
+      cubic-bezier(0.22, 1, 0.36, 1)
+    ) !important;
+  }
+
+  :global(
     html.layout-banner-to-spec-transition.layout-banner-to-spec-navbar-commit-freeze
       #navbar
       > div

@@ -11,13 +11,17 @@ import "@/styles/markdown-extend.styl";
 
 export const prerender = false;
 
+const user = await getSessionUser(Astro);
+if (!user) {
+  return Astro.redirect(
+    `/auth/login?redirect=${encodeURIComponent(`${Astro.url.pathname}${Astro.url.search}`)}`,
+  );
+}
+
 try {
-  const user = await getSessionUser(Astro);
-  if (user) {
-    const profile = await loadPublicProfileByUserId(user.id);
-    if (profile) {
-      Astro.locals.sidebarProfile = profileToSidebarData(profile);
-    }
+  const profile = await loadPublicProfileByUserId(user.id);
+  if (profile) {
+    Astro.locals.sidebarProfile = profileToSidebarData(profile);
   }
 } catch (error) {
   console.warn("[publish] failed to load sidebar profile:", error);

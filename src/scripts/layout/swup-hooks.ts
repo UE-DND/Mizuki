@@ -290,6 +290,7 @@ export function setupSwupIntentSource(
 	let delayedPageViewTimerId: number | null = null;
 	let didReplaceContentDuringVisit = false;
 	let shouldDelayBannerToSpecMoveUntilReplace = false;
+	let didForceNavbarScrolledForBannerToSpec = false;
 
 	const setPageHeightExtendVisible = (_visible: boolean): void => {
 		const heightExtend = document.getElementById("page-height-extend");
@@ -306,6 +307,28 @@ export function setupSwupIntentSource(
 			window.clearTimeout(delayedPageViewTimerId);
 			delayedPageViewTimerId = null;
 		}
+	};
+
+	const forceNavbarScrolledForBannerToSpecTransition = (): void => {
+		const navbar = document.getElementById("navbar");
+		if (!(navbar instanceof HTMLElement)) {
+			return;
+		}
+		if (!navbar.classList.contains("scrolled")) {
+			navbar.classList.add("scrolled");
+			didForceNavbarScrolledForBannerToSpec = true;
+		}
+	};
+
+	const releaseForcedNavbarScrolledState = (): void => {
+		if (!didForceNavbarScrolledForBannerToSpec) {
+			return;
+		}
+		const navbar = document.getElementById("navbar");
+		if (navbar instanceof HTMLElement) {
+			navbar.classList.remove("scrolled");
+		}
+		didForceNavbarScrolledForBannerToSpec = false;
 	};
 
 	const setAwaitingReplaceState = (isAwaiting: boolean): void => {
@@ -333,6 +356,7 @@ export function setupSwupIntentSource(
 		clearDelayedPageViewTimer();
 		bannerToSpecAnimationStartedAt = null;
 		shouldDelayBannerToSpecMoveUntilReplace = false;
+		releaseForcedNavbarScrolledState();
 		const root = document.documentElement;
 		root.classList.remove(BANNER_TO_SPEC_TRANSITION_CLASS);
 		root.classList.remove(BANNER_TO_SPEC_TRANSITION_PREPARING_CLASS);
@@ -354,6 +378,7 @@ export function setupSwupIntentSource(
 			return;
 		}
 		const root = document.documentElement;
+		forceNavbarScrolledForBannerToSpecTransition();
 		root.classList.remove(BANNER_TO_SPEC_TRANSITION_PREPARING_CLASS);
 		root.classList.add(BANNER_TO_SPEC_TRANSITION_ACTIVE_CLASS);
 		root.classList.add(BANNER_TO_SPEC_NAVBAR_SYNC_CLASS);
@@ -681,11 +706,17 @@ export function setupSwupIntentSource(
 
 	swup.hooks.on("visit:end", () => {
 		setAwaitingReplaceState(false);
-		if (!didReplaceContentDuringVisit) {
+		const shouldForceCleanupForAbortedVisit = !didReplaceContentDuringVisit;
+		if (shouldForceCleanupForAbortedVisit) {
 			forceResetEnterSkeleton();
 		}
 		const remainingMs = getBannerToSpecRemainingMs();
-		if (remainingMs <= 0) {
+		const hasPendingBannerToSpecTransition =
+			pendingBannerToSpecRoutePath !== null;
+		if (
+			shouldForceCleanupForAbortedVisit ||
+			(!hasPendingBannerToSpecTransition && remainingMs <= 0)
+		) {
 			pendingBannerToSpecRoutePath = null;
 			pendingSidebarProfilePatch = null;
 			clearBannerToSpecTransitionVisualState();

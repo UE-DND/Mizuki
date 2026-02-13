@@ -39,6 +39,27 @@ const getLocalizedName = (name: string): string => {
   return name in navTitleMap ? i18n(navTitleMap[name]) : name;
 };
 
+const normalizePathname = (pathname: string): string => {
+  const normalized = pathname.replace(/\/+$/, "");
+  return normalized || "/";
+};
+
+const resolveHref = (rawUrl: string, isExternal?: boolean): string => {
+  return isExternal ? rawUrl : url(rawUrl);
+};
+
+const isPublishHref = (href: string, isExternal?: boolean): boolean => {
+  if (isExternal) {
+    return false;
+  }
+  try {
+    const parsed = new URL(href, "https://www.cqutccgal.com");
+    return normalizePathname(parsed.pathname) === "/publish";
+  } catch {
+    return false;
+  }
+};
+
 const children =
   link.children?.map((child) =>
     typeof child === "number" ? LinkPresets[child] : child,
@@ -46,6 +67,8 @@ const children =
 
 const hasChildren = children.length > 0;
 const isAdminOnly = isAdminOnlyLink(link);
+const linkHref = resolveHref(link.url, link.external);
+const linkIsPublish = isPublishHref(linkHref, link.external);
 ---
 
 <div
@@ -76,39 +99,44 @@ const isAdminOnly = isAdminOnlyLink(link);
 
         <div class="dropdown-menu" data-dropdown-menu>
           <div class="dropdown-content">
-            {children.map((child) => (
-              <a
-                href={child.external ? child.url : url(child.url)}
-                target={child.external ? "_blank" : null}
-                rel={child.external ? "noopener noreferrer" : null}
-                class:list={[
-                  "dropdown-item",
-                  isAdminOnlyLink(child) && "hidden",
-                ]}
-                data-admin-only={isAdminOnlyLink(child) ? "true" : undefined}
-                aria-label={child.name}
-              >
-                <div class="flex items-center">
-                  {child.icon && (
-                    <Icon name={child.icon} class="text-[1rem] mr-2" />
+            {children.map((child) => {
+              const childHref = resolveHref(child.url, child.external);
+              const childIsPublish = isPublishHref(childHref, child.external);
+              return (
+                <a
+                  href={childHref}
+                  target={child.external ? "_blank" : null}
+                  rel={child.external ? "noopener noreferrer" : null}
+                  class:list={[
+                    "dropdown-item",
+                    isAdminOnlyLink(child) && "hidden",
+                  ]}
+                  data-admin-only={isAdminOnlyLink(child) ? "true" : undefined}
+                  data-no-swup={childIsPublish ? "" : undefined}
+                  aria-label={child.name}
+                >
+                  <div class="flex items-center">
+                    {child.icon && (
+                      <Icon name={child.icon} class="text-[1rem] mr-2" />
+                    )}
+                    <span>{getLocalizedName(child.name)}</span>
+                  </div>
+                  {child.external && (
+                    <Icon
+                      name="fa7-solid:arrow-up-right-from-square"
+                      class="text-[0.75rem] text-black/25 dark:text-white/25 ml-2"
+                    />
                   )}
-                  <span>{getLocalizedName(child.name)}</span>
-                </div>
-                {child.external && (
-                  <Icon
-                    name="fa7-solid:arrow-up-right-from-square"
-                    class="text-[0.75rem] text-black/25 dark:text-white/25 ml-2"
-                  />
-                )}
-              </a>
-            ))}
+                </a>
+              );
+            })}
           </div>
         </div>
       </>
     ) : (
       <a
         aria-label={link.name}
-        href={link.external ? link.url : url(link.url)}
+        href={linkHref}
         target={link.external ? "_blank" : null}
         rel={link.external ? "noopener noreferrer" : null}
         class:list={[
@@ -116,6 +144,7 @@ const isAdminOnly = isAdminOnlyLink(link);
           isAdminOnly && "hidden",
         ]}
         data-admin-only={isAdminOnly ? "true" : undefined}
+        data-no-swup={linkIsPublish ? "" : undefined}
       >
         {link.icon && (
           <Icon name={link.icon} class="text-[1.1rem] lg:mr-2 shrink-0" />
