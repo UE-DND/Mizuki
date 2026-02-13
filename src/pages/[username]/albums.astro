@@ -266,69 +266,80 @@ function buildGoogleMapsSearchUrl(value: string | null | undefined): string {
                             {item.description}
                           </p>
                         )}
-                        <div class="text-xs md:text-sm text-60 font-semibold flex items-center gap-1.5 min-w-0">
-                          <span class="truncate text-90 border-b border-transparent hover:border-current transition-colors">
-                            {authorIdentity.displayName}
-                          </span>
-                          <span class="shrink-0 hover:text-(--primary) transition-colors">
-                            @{authorIdentity.username}
-                          </span>
-                          {formatAlbumDate(item.date) && (
-                            <>
-                              <span
-                                class="text-(--meta-divider)"
-                                aria-hidden="true"
-                              >
-                                ·
-                              </span>
-                              <span class="shrink-0 text-60">
-                                {formatAlbumDate(item.date)}
-                              </span>
-                            </>
-                          )}
-                        </div>
+                        <div
+                          class="h-px bg-(--line-divider)"
+                          aria-hidden="true"
+                        />
                       </a>
-                      <div class="text-xs md:text-sm text-60 flex flex-wrap items-center gap-2">
-                        {item.location && (
-                          <a
-                            class="inline-flex items-center gap-1 px-1.5 py-0.5 rounded transition-colors hover:bg-(--btn-plain-bg-hover) active:bg-(--btn-plain-bg-active) cursor-pointer"
-                            href={buildGoogleMapsSearchUrl(item.location)}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            aria-label={`使用 Google 地图搜索地址：${item.location}`}
-                          >
-                            <svg
-                              xmlns="http://www.w3.org/2000/svg"
-                              class="w-3.5 h-3.5"
-                              viewBox="0 0 24 24"
-                              fill="none"
-                              stroke="currentColor"
-                              stroke-width="2"
-                              stroke-linecap="round"
-                              stroke-linejoin="round"
+                      <div class="text-xs md:text-sm text-60 font-semibold flex items-center gap-1.5 min-w-0">
+                        <span class="truncate text-90 border-b border-transparent hover:border-current transition-colors">
+                          {authorIdentity.displayName}
+                        </span>
+                        <span class="shrink-0 hover:text-(--primary) transition-colors">
+                          @{authorIdentity.username}
+                        </span>
+                        {formatAlbumDate(item.date) && (
+                          <>
+                            <span
+                              class="text-(--meta-divider)"
                               aria-hidden="true"
                             >
-                              <path d="M12 22s8-6.2 8-12a8 8 0 10-16 0c0 5.8 8 12 8 12z" />
-                              <circle cx="12" cy="10" r="3" />
-                            </svg>
-                            {item.location}
-                          </a>
+                              ·
+                            </span>
+                            <span class="shrink-0 text-60">
+                              {formatAlbumDate(item.date)}
+                            </span>
+                          </>
                         )}
+                        {item.location && (
+                          <>
+                            <span
+                              class="text-(--meta-divider)"
+                              aria-hidden="true"
+                            >
+                              ·
+                            </span>
+                            <a
+                              class="inline-flex items-center gap-1 min-w-0 hover:text-(--primary) transition-colors"
+                              href={buildGoogleMapsSearchUrl(item.location)}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              aria-label={`使用 Google 地图搜索地址：${item.location}`}
+                            >
+                              <svg
+                                xmlns="http://www.w3.org/2000/svg"
+                                class="w-3.5 h-3.5 shrink-0"
+                                viewBox="0 0 24 24"
+                                fill="none"
+                                stroke="currentColor"
+                                stroke-width="2"
+                                stroke-linecap="round"
+                                stroke-linejoin="round"
+                                aria-hidden="true"
+                              >
+                                <path d="M12 22s8-6.2 8-12a8 8 0 10-16 0c0 5.8 8 12 8 12z" />
+                                <circle cx="12" cy="10" r="3" />
+                              </svg>
+                              <span class="truncate">{item.location}</span>
+                            </a>
+                          </>
+                        )}
+                      </div>
+                      <div class="text-xs md:text-sm text-60 flex flex-wrap items-center gap-2">
                         {item.category && (
                           <span class="px-1.5 py-0.5 rounded bg-(--btn-plain-bg-hover)">
                             {item.category}
                           </span>
                         )}
+                        {item.tags.length > 0 &&
+                          item.tags
+                            .slice(0, 4)
+                            .map((tag) => (
+                              <span class="btn-regular h-6 text-xs px-2.5 rounded-lg">
+                                #{tag}
+                              </span>
+                            ))}
                       </div>
-                      {item.tags.length > 0 && (
-                        <div class="flex flex-wrap gap-2 pt-1">
-                          {item.tags.slice(0, 4).map((tag) => (
-                            <span class="btn-regular h-6 text-xs px-2.5 rounded-lg">
-                              #{tag}
-                            </span>
-                          ))}
-                        </div>
-                      )}
                     </div>
                   </article>
                 );

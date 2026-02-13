@@ -1051,16 +1051,14 @@
             class="px-2 py-0.5 rounded bg-(--btn-plain-bg-hover) text-75"
             >{mCategory}</span
           >{/if}
-      </div>
-      {#if mDescription}
-        <p class="text-75">{mDescription}</p>
-      {/if}
-      {#if displayTags.length > 0}
-        <div class="flex flex-wrap gap-2">
+        {#if displayTags.length > 0}
           {#each displayTags as tag (tag)}
             <span class="btn-regular h-7 text-xs px-3 rounded-lg">#{tag}</span>
           {/each}
-        </div>
+        {/if}
+      </div>
+      {#if mDescription}
+        <p class="text-75">{mDescription}</p>
       {/if}
     {/if}
   </section>

@@ -232,22 +232,28 @@ function formatAlbumDate(value: string | null | undefined): string {
                 {album.location}
               </a>
             )}
-            {album.category && (
-              <span class="px-2 py-0.5 rounded bg-(--btn-plain-bg-hover) text-75">
-                {album.category}
+            {album.category ? (
+              <span class="inline-flex items-center gap-2 whitespace-nowrap shrink-0">
+                <span class="px-2 py-0.5 rounded bg-(--btn-plain-bg-hover) text-75">
+                  {album.category}
+                </span>
+                {album.tags.length > 0 &&
+                  album.tags.map((tag) => (
+                    <span class="btn-regular h-7 text-xs px-3 rounded-lg">
+                      #{tag}
+                    </span>
+                  ))}
               </span>
-            )}
-          </div>
-          {album.description && <p class="text-75">{album.description}</p>}
-          {album.tags.length > 0 && (
-            <div class="flex flex-wrap gap-2">
-              {album.tags.map((tag) => (
+            ) : (
+              album.tags.length > 0 &&
+              album.tags.map((tag) => (
                 <span class="btn-regular h-7 text-xs px-3 rounded-lg">
                   #{tag}
                 </span>
-              ))}
-            </div>
-          )}
+              ))
+            )}
+          </div>
+          {album.description && <p class="text-75">{album.description}</p>}
         </section>
 
         {album.photos.length === 0 ? (
