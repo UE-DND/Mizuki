@@ -11,6 +11,7 @@ type SupportedReferenceCollection =
 	| "app_articles"
 	| "app_anime_entries"
 	| "app_albums"
+	| "app_friends"
 	| "app_album_photos"
 	| "app_diary_images"
 	| "app_user_registration_requests"
@@ -26,6 +27,7 @@ const REFERENCE_TARGETS: ReferenceTarget[] = [
 	{ collection: "app_articles", field: "cover_file" },
 	{ collection: "app_anime_entries", field: "cover_file" },
 	{ collection: "app_albums", field: "cover_file" },
+	{ collection: "app_friends", field: "avatar_file" },
 	{ collection: "app_album_photos", field: "file_id" },
 	{ collection: "app_diary_images", field: "file_id" },
 	{ collection: "app_user_registration_requests", field: "avatar_file" },
@@ -75,6 +77,7 @@ async function collectFileIdsFromCollection(
 		| "app_articles"
 		| "app_anime_entries"
 		| "app_albums"
+		| "app_friends"
 		| "app_user_registration_requests",
 	field: "avatar_file" | "cover_file",
 	filter: JsonObject,

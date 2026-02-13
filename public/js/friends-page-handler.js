@@ -70,16 +70,43 @@
 
 		var currentTag = "all";
 
+		function parseCardTags(card) {
+			var jsonValue = card.getAttribute("data-tags-json") || "";
+			if (jsonValue) {
+				try {
+					var parsed = JSON.parse(jsonValue);
+					if (Array.isArray(parsed)) {
+						return parsed
+							.map((tag) => String(tag || "").trim())
+							.filter(Boolean);
+					}
+				} catch (error) {
+					console.warn(
+						"[Friends] Parse tags json failed:",
+						error,
+					);
+				}
+			}
+
+			var csvValue = card.getAttribute("data-tags") || "";
+			if (!csvValue) {
+				return [];
+			}
+			return csvValue
+				.split(",")
+				.map((tag) => String(tag || "").trim())
+				.filter(Boolean);
+		}
+
 		// 过滤函数
 		function filterFriends() {
 			var visibleCount = 0;
 			for (var i = 0; i < friendCards.length; i++) {
 				var card = friendCards[i];
-				var tags = card.getAttribute("data-tags") || "";
+				var tags = parseCardTags(card);
 
 				var matchesTag =
-					currentTag === "all" ||
-					tags.split(",").indexOf(currentTag) >= 0;
+					currentTag === "all" || tags.indexOf(currentTag) >= 0;
 
 				if (matchesTag) {
 					card.style.display = "";

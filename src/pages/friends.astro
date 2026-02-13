@@ -46,6 +46,31 @@ function shuffleList<T>(list: T[]): T[] {
   return shuffled;
 }
 
+function normalizeFriendTags(tags: string[]): string[] {
+  return Array.from(
+    new Set(tags.map((tag) => String(tag || "").trim()).filter(Boolean)),
+  );
+}
+
+function collectAllTags(items: FriendCardItem[]): string[] {
+  const output = new Set<string>();
+  for (const item of items) {
+    for (const tag of item.tags) {
+      const normalized = String(tag || "").trim();
+      if (!normalized) {
+        continue;
+      }
+      output.add(normalized);
+    }
+  }
+  return Array.from(output).sort((a, b) =>
+    a.localeCompare(b, "zh-Hans-CN-u-co-pinyin", {
+      sensitivity: "base",
+      numeric: true,
+    }),
+  );
+}
+
 let friendsDocHtml = "";
 try {
   const article = await loadPublicArticleBySlug("friends");
@@ -87,7 +112,7 @@ try {
         desc: String(item.description || "").trim(),
         siteurl,
         hostname: getSiteHostname(siteurl),
-        tags: safeCsv(item.tags),
+        tags: normalizeFriendTags(safeCsv(item.tags)),
       };
     })
     .filter((item): item is FriendCardItem => Boolean(item));
@@ -98,7 +123,7 @@ try {
 }
 
 // 获取所有标签
-const allTags = Array.from(new Set(friendsList.flatMap((item) => item.tags)));
+const allTags = collectAllTags(friendsList);
 ---
 
 <MainGridLayout
@@ -168,6 +193,7 @@ const allTags = Array.from(new Set(friendsList.flatMap((item) => item.tags)));
 								 overflow-hidden transition-all duration-300
 								 hover:shadow-xl hover:-translate-y-1"
                   data-tags={item.tags.join(",")}
+                  data-tags-json={JSON.stringify(item.tags)}
                 >
                   {/* 卡片内容 */}
                   <div class="p-6">

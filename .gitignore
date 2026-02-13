@@ -42,6 +42,9 @@ yarn.lock
 .idea
 *.iml
 
+# Directus
+/directus/
+
 # AGENTS & MCP
 .claude/
 .serena/
