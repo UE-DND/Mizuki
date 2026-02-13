@@ -792,6 +792,7 @@
         <button
           on:click={hideError}
           class="text-white/80 hover:text-white transition-colors"
+          aria-label="关闭提示"
         >
           <Icon icon="material-symbols:close" class="text-lg" />
         </button>
@@ -925,6 +926,7 @@
           <button
             class="btn-plain w-8 h-8 rounded-lg flex items-center justify-center"
             on:click|stopPropagation={toggleExpanded}
+            aria-label={i18n(Key.musicPlayerExpand)}
           >
             <Icon icon="material-symbols:expand-less" class="text-lg" />
           </button>
@@ -953,12 +955,13 @@
             <button
               class="btn-plain w-8 h-8 rounded-lg"
               on:click={togglePlaylist}
+              aria-label="关闭播放列表"
             >
               <Icon icon="material-symbols:close" class="text-lg" />
             </button>
           </div>
           <div class="playlist-content overflow-y-auto max-h-80">
-            {#each playlist as song, index (song.id)}
+            {#each playlist as song, index (`${song.id}-${index}`)}
               <div
                 class="playlist-item flex items-center gap-3 p-3 hover:bg-(--btn-plain-bg-hover) cursor-pointer transition-colors"
                 class:bg-(--btn-plain-bg)={index === currentIndex}
@@ -1109,6 +1112,7 @@
             class:btn-plain={!isShuffled}
             on:click={toggleShuffle}
             disabled={playlist.length <= 1}
+            aria-label={i18n(Key.musicPlayerShuffle)}
           >
             <Icon icon="material-symbols:shuffle" class="text-lg" />
           </button>
@@ -1116,6 +1120,7 @@
             class="btn-plain w-10 h-10 rounded-lg"
             on:click={previousSong}
             disabled={playlist.length <= 1}
+            aria-label={i18n(Key.musicPlayerPrevious)}
           >
             <Icon icon="material-symbols:skip-previous" class="text-xl" />
           </button>
@@ -1124,6 +1129,9 @@
             class:opacity-50={isLoading}
             disabled={isLoading}
             on:click={togglePlay}
+            aria-label={isPlaying
+              ? i18n(Key.musicPlayerPause)
+              : i18n(Key.musicPlayerPlay)}
           >
             {#if isLoading}
               <Icon icon="eos-icons:loading" class="text-xl" />
@@ -1137,6 +1145,7 @@
             class="btn-plain w-10 h-10 rounded-lg"
             on:click={() => nextSong()}
             disabled={playlist.length <= 1}
+            aria-label={i18n(Key.musicPlayerNext)}
           >
             <Icon icon="material-symbols:skip-next" class="text-xl" />
           </button>
@@ -1145,6 +1154,9 @@
             class:btn-regular={isRepeating > 0}
             class:btn-plain={isRepeating === 0}
             on:click={toggleRepeat}
+            aria-label={isRepeating === 1
+              ? i18n(Key.musicPlayerRepeatOne)
+              : i18n(Key.musicPlayerRepeat)}
           >
             {#if isRepeating === 1}
               <Icon icon="material-symbols:repeat-one" class="text-lg" />
@@ -1156,7 +1168,11 @@
           </button>
         </div>
         <div class="bottom-controls flex items-center gap-2">
-          <button class="btn-plain w-8 h-8 rounded-lg" on:click={toggleMute}>
+          <button
+            class="btn-plain w-8 h-8 rounded-lg"
+            on:click={toggleMute}
+            aria-label={i18n(Key.musicPlayerVolume)}
+          >
             {#if isMuted || volume === 0}
               <Icon icon="material-symbols:volume-off" class="text-lg" />
             {:else if volume < 0.5}
@@ -1194,6 +1210,7 @@
             class:text-(--primary)={showPlaylist}
             on:click={togglePlaylist}
             title={i18n(Key.musicPlayerPlaylist)}
+            aria-label={i18n(Key.musicPlayerPlaylist)}
           >
             <Icon icon="material-symbols:queue-music" class="text-lg" />
           </button>
