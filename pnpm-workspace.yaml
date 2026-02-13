@@ -3,4 +3,3 @@ onlyBuiltDependencies:
   - esbuild
   - sharp
   - swup
-  - ttf2woff2

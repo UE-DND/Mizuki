@@ -122,11 +122,12 @@
   fill: var(--btn-content);
   transition: transform 0.3s ease;
   pointer-events: none;
+  transform: rotate(180deg);
 }
 
-/* 折叠状态下的图标旋转 */
+/* 折叠状态下图标朝下，表示可展开 */
 .expressive-code.collapsed .collapse-toggle-btn svg {
-  transform: rotate(180deg);
+  transform: rotate(0deg);
 }
 
 /* 代码内容折叠状态 */
