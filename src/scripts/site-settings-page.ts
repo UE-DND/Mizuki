@@ -58,6 +58,9 @@ const el = (id: string): HTMLElement | null => document.getElementById(id);
 const inputVal = (id: string): string =>
 	String((el(id) as HTMLInputElement | null)?.value ?? "").trim();
 
+const textareaVal = (id: string): string =>
+	String((el(id) as HTMLTextAreaElement | null)?.value ?? "");
+
 const checked = (id: string): boolean =>
 	Boolean((el(id) as HTMLInputElement | null)?.checked);
 
@@ -91,6 +94,11 @@ const setMsg = (id: string, text: string): void => {
 
 const clamp = (value: number, min: number, max: number): number =>
 	Math.min(max, Math.max(min, value));
+
+const numberOrFallback = (value: unknown, fallback: number): number => {
+	const parsed = Number(value);
+	return Number.isFinite(parsed) ? parsed : fallback;
+};
 
 // ---------------------------------------------------------------------------
 // Asset helpers
@@ -646,6 +654,40 @@ const createFaviconRow = (item: FaviconItem): HTMLElement => {
 	preview.alt = "Favicon preview";
 	row.appendChild(preview);
 
+	const srcInput = document.createElement("input");
+	srcInput.type = "text";
+	srcInput.placeholder = "URL / 文件 ID";
+	srcInput.value = row.dataset.src ?? "";
+	srcInput.className = `${INPUT_CLS} flex-1 min-w-[14rem]`;
+	srcInput.addEventListener("input", () => {
+		row.dataset.src = srcInput.value.trim();
+		updateImagePreview(preview, row.dataset.src ?? "");
+	});
+	row.appendChild(srcInput);
+
+	const themeSelect = document.createElement("select");
+	themeSelect.className = `${INPUT_CLS} w-28`;
+	themeSelect.innerHTML = `
+		<option value="">默认</option>
+		<option value="light">light</option>
+		<option value="dark">dark</option>
+	`;
+	themeSelect.value = row.dataset.theme ?? "";
+	themeSelect.addEventListener("change", () => {
+		row.dataset.theme = themeSelect.value;
+	});
+	row.appendChild(themeSelect);
+
+	const sizesInput = document.createElement("input");
+	sizesInput.type = "text";
+	sizesInput.placeholder = "sizes";
+	sizesInput.value = row.dataset.sizes ?? "";
+	sizesInput.className = `${INPUT_CLS} w-28`;
+	sizesInput.addEventListener("input", () => {
+		row.dataset.sizes = sizesInput.value.trim();
+	});
+	row.appendChild(sizesInput);
+
 	const removeBtn = document.createElement("button");
 	removeBtn.type = "button";
 	removeBtn.textContent = "删除";
@@ -681,9 +723,8 @@ const fillFaviconList = (
 	container: HTMLElement,
 ): void => {
 	container.innerHTML = "";
-	const first = items.find((item) => String(item.src || "").trim());
-	if (first) {
-		container.appendChild(createFaviconRow(first));
+	for (const item of items) {
+		container.appendChild(createFaviconRow(item));
 	}
 };
 
@@ -722,7 +763,7 @@ const collectFaviconList = (container: HTMLElement): FaviconItem[] => {
 		}
 		values.push(entry);
 	}
-	return values.slice(0, 1);
+	return values;
 };
 
 const normalizeBannerEditorList = (raw: unknown): string[] => {
@@ -786,14 +827,31 @@ type SettingsObj = Record<string, unknown>;
 
 const bindSettings = (s: SettingsObj): void => {
 	const site = (s.site ?? {}) as SettingsObj;
+	const auth = (s.auth ?? {}) as SettingsObj;
+	const profile = (s.profile ?? {}) as SettingsObj;
 	const navbarTitle = (s.navbarTitle ?? {}) as SettingsObj;
 	const wallpaperMode = (s.wallpaperMode ?? {}) as SettingsObj;
 	const banner = (s.banner ?? {}) as SettingsObj;
+	const bannerCarousel = (banner.carousel ?? {}) as SettingsObj;
+	const bannerWaves = (banner.waves ?? {}) as SettingsObj;
+	const bannerImageApi = (banner.imageApi ?? {}) as SettingsObj;
+	const bannerNavbar = (banner.navbar ?? {}) as SettingsObj;
+	const bannerHomeText = (banner.homeText ?? {}) as SettingsObj;
+	const bannerHomeTypewriter = (bannerHomeText.typewriter ??
+		{}) as SettingsObj;
 	const toc = (s.toc ?? {}) as SettingsObj;
+	const license = (s.license ?? {}) as SettingsObj;
 	const announcement = (s.announcement ?? {}) as SettingsObj;
 	const annLink = (announcement.link ?? {}) as SettingsObj;
 	const musicPlayer = (s.musicPlayer ?? {}) as SettingsObj;
+	const footer = (s.footer ?? {}) as SettingsObj;
+	const sidebarLayout = (s.sidebarLayout ?? {}) as SettingsObj;
 	const sakura = (s.sakura ?? {}) as SettingsObj;
+	const sakuraSize = (sakura.size ?? {}) as SettingsObj;
+	const sakuraOpacity = (sakura.opacity ?? {}) as SettingsObj;
+	const sakuraSpeed = (sakura.speed ?? {}) as SettingsObj;
+	const sakuraSpeedHorizontal = (sakuraSpeed.horizontal ?? {}) as SettingsObj;
+	const sakuraSpeedVertical = (sakuraSpeed.vertical ?? {}) as SettingsObj;
 	const umami = (s.umami ?? {}) as SettingsObj;
 	const navBar = (s.navBar ?? {}) as SettingsObj;
 
@@ -807,6 +865,9 @@ const bindSettings = (s: SettingsObj): void => {
 			: "",
 	);
 	setVal("ss-start-date", String(site.siteStartDate ?? ""));
+	setChecked("ss-register-enabled", Boolean(auth.register_enabled));
+	setVal("ss-profile-name", String(profile.name ?? ""));
+	setVal("ss-profile-avatar", String(profile.avatar ?? ""));
 	setChecked("ss-umami-enabled", Boolean(umami.enabled));
 	setVal("ss-umami-url", String(umami.baseUrl ?? ""));
 	setVal("ss-umami-scripts", String(umami.scripts ?? ""));
@@ -820,6 +881,12 @@ const bindSettings = (s: SettingsObj): void => {
 	// Section 2 — 导航栏
 	setSelect("ss-navbar-mode", String(navbarTitle.mode ?? "logo"));
 	setVal("ss-navbar-text", String(navbarTitle.text ?? ""));
+	setVal("ss-navbar-icon", String(navbarTitle.icon ?? ""));
+	setVal("ss-navbar-logo", String(navbarTitle.logo ?? ""));
+	setSelect(
+		"ss-navbar-transparent-mode",
+		String(bannerNavbar.transparentMode ?? "semi"),
+	);
 
 	// Nav links → visual editor
 	if (navLinksContainer) {
@@ -831,13 +898,46 @@ const bindSettings = (s: SettingsObj): void => {
 		"ss-wallpaper-mode",
 		String(wallpaperMode.defaultMode ?? "banner"),
 	);
+	setSelect("ss-banner-position", String(banner.position ?? "center"));
 	setChecked(
 		"ss-banner-carousel-enable",
-		Boolean((banner.carousel as SettingsObj | undefined)?.enable ?? false),
+		Boolean(bannerCarousel.enable ?? false),
 	);
 	setVal(
 		"ss-banner-carousel-interval",
-		String((banner.carousel as SettingsObj | undefined)?.interval ?? ""),
+		String(bannerCarousel.interval ?? ""),
+	);
+	setChecked("ss-banner-image-api-enable", Boolean(bannerImageApi.enable));
+	setVal("ss-banner-image-api-url", String(bannerImageApi.url ?? ""));
+	setChecked("ss-banner-home-text-enable", Boolean(bannerHomeText.enable));
+	setVal("ss-banner-home-text-title", String(bannerHomeText.title ?? ""));
+	const homeSubtitle = bannerHomeText.subtitle;
+	const subtitleLines = Array.isArray(homeSubtitle)
+		? homeSubtitle.map((item) => String(item || "").trim()).filter(Boolean)
+		: String(homeSubtitle ?? "").trim()
+			? [String(homeSubtitle ?? "").trim()]
+			: [];
+	setVal("ss-banner-home-text-subtitle", subtitleLines.join("\n"));
+	setChecked(
+		"ss-banner-home-typewriter-enable",
+		Boolean(bannerHomeTypewriter.enable),
+	);
+	setVal(
+		"ss-banner-home-typewriter-speed",
+		String(bannerHomeTypewriter.speed ?? ""),
+	);
+	setVal(
+		"ss-banner-home-typewriter-delete-speed",
+		String(bannerHomeTypewriter.deleteSpeed ?? ""),
+	);
+	setVal(
+		"ss-banner-home-typewriter-pause-time",
+		String(bannerHomeTypewriter.pauseTime ?? ""),
+	);
+	setChecked("ss-banner-waves-enable", Boolean(bannerWaves.enable));
+	setChecked(
+		"ss-banner-waves-performance",
+		Boolean(bannerWaves.performanceMode),
 	);
 	const bannerDesktopList = normalizeBannerEditorList(banner.src);
 	if (bannerDesktopListContainer) {
@@ -859,13 +959,39 @@ const bindSettings = (s: SettingsObj): void => {
 	setVal("ss-music-server", String(musicPlayer.server ?? ""));
 	setVal("ss-music-type", String(musicPlayer.type ?? ""));
 	setVal("ss-music-marquee", String(musicPlayer.marqueeSpeed ?? ""));
+	setChecked("ss-footer-enable", Boolean(footer.enable));
+	setVal("ss-footer-html", String(footer.customHtml ?? ""));
+	const sidebarJson = (() => {
+		try {
+			return JSON.stringify(sidebarLayout, null, 2);
+		} catch {
+			return "{}";
+		}
+	})();
+	setVal("ss-sidebar-layout-json", sidebarJson);
 	setChecked("ss-sakura-enable", Boolean(sakura.enable));
+	setVal("ss-sakura-num", String(sakura.sakuraNum ?? ""));
+	setVal("ss-sakura-limit-times", String(sakura.limitTimes ?? ""));
+	setVal("ss-sakura-size-min", String(sakuraSize.min ?? ""));
+	setVal("ss-sakura-size-max", String(sakuraSize.max ?? ""));
+	setVal("ss-sakura-opacity-min", String(sakuraOpacity.min ?? ""));
+	setVal("ss-sakura-opacity-max", String(sakuraOpacity.max ?? ""));
+	setVal("ss-sakura-speed-h-min", String(sakuraSpeedHorizontal.min ?? ""));
+	setVal("ss-sakura-speed-h-max", String(sakuraSpeedHorizontal.max ?? ""));
+	setVal("ss-sakura-speed-v-min", String(sakuraSpeedVertical.min ?? ""));
+	setVal("ss-sakura-speed-v-max", String(sakuraSpeedVertical.max ?? ""));
+	setVal("ss-sakura-speed-rotation", String(sakuraSpeed.rotation ?? ""));
+	setVal("ss-sakura-speed-fade", String(sakuraSpeed.fadeSpeed ?? ""));
+	setVal("ss-sakura-z-index", String(sakura.zIndex ?? ""));
 
 	// Section 4 — 文章设置
 	setChecked("ss-toc-enable", Boolean(toc.enable));
 	setChecked("ss-toc-jp", Boolean(toc.useJapaneseBadge));
 	setSelect("ss-toc-mode", String(toc.mode ?? "sidebar"));
 	setSelect("ss-toc-depth", String(toc.depth ?? 2));
+	setChecked("ss-license-enable", Boolean(license.enable));
+	setVal("ss-license-name", String(license.name ?? ""));
+	setVal("ss-license-url", String(license.url ?? ""));
 
 	// Section 5 — 公告
 	setVal("ss-ann-title", String(announcement.title ?? ""));
@@ -873,6 +999,7 @@ const bindSettings = (s: SettingsObj): void => {
 	setChecked("ss-ann-link-enable", Boolean(annLink.enable));
 	setVal("ss-ann-link-text", String(annLink.text ?? ""));
 	setVal("ss-ann-link-url", String(annLink.url ?? ""));
+	setChecked("ss-ann-link-external", Boolean(annLink.external));
 	setChecked("ss-ann-closable", Boolean(announcement.closable));
 };
 
@@ -894,11 +1021,19 @@ const collectSitePayload = (current: SettingsObj): SettingsObj => ({
 			? collectFaviconList(faviconListContainer)
 			: ((current.site as SettingsObj | undefined)?.favicon ?? []),
 	},
+	auth: {
+		...((current.auth ?? {}) as SettingsObj),
+		register_enabled: checked("ss-register-enabled"),
+	},
+	profile: {
+		...((current.profile ?? {}) as SettingsObj),
+		name: inputVal("ss-profile-name"),
+		avatar: inputVal("ss-profile-avatar"),
+	},
 	umami: {
 		enabled: checked("ss-umami-enabled"),
 		baseUrl: inputVal("ss-umami-url"),
-		scripts:
-			(el("ss-umami-scripts") as HTMLTextAreaElement | null)?.value ?? "",
+		scripts: textareaVal("ss-umami-scripts"),
 	},
 });
 
@@ -907,6 +1042,15 @@ const collectNavPayload = (current: SettingsObj): SettingsObj => ({
 		...((current.navbarTitle ?? {}) as SettingsObj),
 		mode: inputVal("ss-navbar-mode") || "logo",
 		text: inputVal("ss-navbar-text"),
+		icon: inputVal("ss-navbar-icon"),
+		logo: inputVal("ss-navbar-logo"),
+	},
+	banner: {
+		...((current.banner ?? {}) as SettingsObj),
+		navbar: {
+			...(((current.banner ?? {}) as SettingsObj).navbar ?? {}),
+			transparentMode: inputVal("ss-navbar-transparent-mode") || "semi",
+		},
 	},
 	navBar: {
 		links: navLinksContainer
@@ -915,52 +1059,182 @@ const collectNavPayload = (current: SettingsObj): SettingsObj => ({
 	},
 });
 
-const collectHomePayload = (current: SettingsObj): SettingsObj => ({
-	wallpaperMode: {
-		defaultMode: inputVal("ss-wallpaper-mode") || "banner",
-	},
-	banner: {
-		...((current.banner ?? {}) as SettingsObj),
-		src: bannerDesktopListContainer
-			? collectBannerList(bannerDesktopListContainer)
-			: [],
-		carousel: {
-			...(((current.banner ?? {}) as SettingsObj).carousel ?? {}),
-			enable: checked("ss-banner-carousel-enable"),
-			interval:
-				Number(inputVal("ss-banner-carousel-interval") || 0) ||
-				Number(
-					(
-						((current.banner ?? {}) as SettingsObj)
-							.carousel as SettingsObj
-					)?.interval ?? 5,
-				),
+const collectHomePayload = (current: SettingsObj): SettingsObj => {
+	const currentBanner = (current.banner ?? {}) as SettingsObj;
+	const currentBannerCarousel = (currentBanner.carousel ?? {}) as SettingsObj;
+	const currentBannerImageApi = (currentBanner.imageApi ?? {}) as SettingsObj;
+	const currentBannerHomeText = (currentBanner.homeText ?? {}) as SettingsObj;
+	const currentBannerTypewriter = (currentBannerHomeText.typewriter ??
+		{}) as SettingsObj;
+	const currentBannerWaves = (currentBanner.waves ?? {}) as SettingsObj;
+
+	return {
+		wallpaperMode: {
+			...((current.wallpaperMode ?? {}) as SettingsObj),
+			defaultMode: inputVal("ss-wallpaper-mode") || "banner",
 		},
-	},
-});
+		banner: {
+			...currentBanner,
+			position: inputVal("ss-banner-position") || "center",
+			src: bannerDesktopListContainer
+				? collectBannerList(bannerDesktopListContainer)
+				: [],
+			carousel: {
+				...currentBannerCarousel,
+				enable: checked("ss-banner-carousel-enable"),
+				interval:
+					Number(inputVal("ss-banner-carousel-interval") || 0) ||
+					Number(currentBannerCarousel.interval ?? 5),
+			},
+			imageApi: {
+				...currentBannerImageApi,
+				enable: checked("ss-banner-image-api-enable"),
+				url: inputVal("ss-banner-image-api-url"),
+			},
+			homeText: {
+				...currentBannerHomeText,
+				enable: checked("ss-banner-home-text-enable"),
+				title: inputVal("ss-banner-home-text-title"),
+				subtitle: textareaVal("ss-banner-home-text-subtitle")
+					.split(/\r?\n/u)
+					.map((item) => item.trim())
+					.filter(Boolean),
+				typewriter: {
+					...currentBannerTypewriter,
+					enable: checked("ss-banner-home-typewriter-enable"),
+					speed: numberOrFallback(
+						inputVal("ss-banner-home-typewriter-speed"),
+						100,
+					),
+					deleteSpeed: numberOrFallback(
+						inputVal("ss-banner-home-typewriter-delete-speed"),
+						50,
+					),
+					pauseTime: numberOrFallback(
+						inputVal("ss-banner-home-typewriter-pause-time"),
+						2000,
+					),
+				},
+			},
+			waves: {
+				...currentBannerWaves,
+				enable: checked("ss-banner-waves-enable"),
+				performanceMode: checked("ss-banner-waves-performance"),
+			},
+		},
+	};
+};
 
-const collectOtherPayload = (current: SettingsObj): SettingsObj => ({
-	musicPlayer: {
-		enable: checked("ss-music-enable"),
-		mode: inputVal("ss-music-mode") || "meting",
-		meting_api: inputVal("ss-music-api"),
-		id: inputVal("ss-music-id"),
-		server: inputVal("ss-music-server"),
-		type: inputVal("ss-music-type"),
-		marqueeSpeed: Number(inputVal("ss-music-marquee") || 0) || undefined,
-	},
-	sakura: {
-		...((current.sakura ?? {}) as SettingsObj),
-		enable: checked("ss-sakura-enable"),
-	},
-});
+const collectOtherPayload = (current: SettingsObj): SettingsObj => {
+	const sidebarLayoutRaw = textareaVal("ss-sidebar-layout-json").trim();
+	let sidebarLayout: SettingsObj = (current.sidebarLayout ??
+		{}) as SettingsObj;
+	if (sidebarLayoutRaw) {
+		try {
+			const parsed = JSON.parse(sidebarLayoutRaw) as unknown;
+			if (
+				!parsed ||
+				typeof parsed !== "object" ||
+				Array.isArray(parsed)
+			) {
+				throw new Error("invalid");
+			}
+			sidebarLayout = parsed as SettingsObj;
+		} catch {
+			throw new Error("侧边栏布局 JSON 格式错误");
+		}
+	}
+	const currentSakura = (current.sakura ?? {}) as SettingsObj;
+	const currentSakuraSize = (currentSakura.size ?? {}) as SettingsObj;
+	const currentSakuraOpacity = (currentSakura.opacity ?? {}) as SettingsObj;
+	const currentSakuraSpeed = (currentSakura.speed ?? {}) as SettingsObj;
+	const currentSakuraHorizontal = (currentSakuraSpeed.horizontal ??
+		{}) as SettingsObj;
+	const currentSakuraVertical = (currentSakuraSpeed.vertical ??
+		{}) as SettingsObj;
 
-const collectFeaturePayload = (_current: SettingsObj): SettingsObj => ({
+	return {
+		musicPlayer: {
+			...((current.musicPlayer ?? {}) as SettingsObj),
+			enable: checked("ss-music-enable"),
+			mode: inputVal("ss-music-mode") || "meting",
+			meting_api: inputVal("ss-music-api"),
+			id: inputVal("ss-music-id"),
+			server: inputVal("ss-music-server"),
+			type: inputVal("ss-music-type"),
+			marqueeSpeed: numberOrFallback(inputVal("ss-music-marquee"), 10),
+		},
+		footer: {
+			...((current.footer ?? {}) as SettingsObj),
+			enable: checked("ss-footer-enable"),
+			customHtml: textareaVal("ss-footer-html"),
+		},
+		sidebarLayout,
+		sakura: {
+			...currentSakura,
+			enable: checked("ss-sakura-enable"),
+			sakuraNum: numberOrFallback(inputVal("ss-sakura-num"), 21),
+			limitTimes: numberOrFallback(inputVal("ss-sakura-limit-times"), -1),
+			size: {
+				...currentSakuraSize,
+				min: numberOrFallback(inputVal("ss-sakura-size-min"), 0.5),
+				max: numberOrFallback(inputVal("ss-sakura-size-max"), 1.1),
+			},
+			opacity: {
+				...currentSakuraOpacity,
+				min: numberOrFallback(inputVal("ss-sakura-opacity-min"), 0.3),
+				max: numberOrFallback(inputVal("ss-sakura-opacity-max"), 0.9),
+			},
+			speed: {
+				...currentSakuraSpeed,
+				horizontal: {
+					...currentSakuraHorizontal,
+					min: numberOrFallback(
+						inputVal("ss-sakura-speed-h-min"),
+						-1.7,
+					),
+					max: numberOrFallback(
+						inputVal("ss-sakura-speed-h-max"),
+						-1.2,
+					),
+				},
+				vertical: {
+					...currentSakuraVertical,
+					min: numberOrFallback(
+						inputVal("ss-sakura-speed-v-min"),
+						1.5,
+					),
+					max: numberOrFallback(
+						inputVal("ss-sakura-speed-v-max"),
+						2.2,
+					),
+				},
+				rotation: numberOrFallback(
+					inputVal("ss-sakura-speed-rotation"),
+					0.03,
+				),
+				fadeSpeed: numberOrFallback(
+					inputVal("ss-sakura-speed-fade"),
+					0.03,
+				),
+			},
+			zIndex: numberOrFallback(inputVal("ss-sakura-z-index"), 100),
+		},
+	};
+};
+
+const collectFeaturePayload = (current: SettingsObj): SettingsObj => ({
 	toc: {
 		enable: checked("ss-toc-enable"),
 		useJapaneseBadge: checked("ss-toc-jp"),
 		mode: inputVal("ss-toc-mode") || "sidebar",
 		depth: Number(inputVal("ss-toc-depth") || 2),
+	},
+	license: {
+		...((current.license ?? {}) as SettingsObj),
+		enable: checked("ss-license-enable"),
+		name: inputVal("ss-license-name"),
+		url: inputVal("ss-license-url"),
 	},
 });
 
@@ -968,14 +1242,14 @@ const collectAnnouncePayload = (current: SettingsObj): SettingsObj => ({
 	announcement: {
 		...((current.announcement ?? {}) as SettingsObj),
 		title: inputVal("ss-ann-title"),
-		content:
-			(el("ss-ann-content") as HTMLTextAreaElement | null)?.value ?? "",
+		content: textareaVal("ss-ann-content"),
 		closable: checked("ss-ann-closable"),
 		link: {
 			...(((current.announcement ?? {}) as SettingsObj).link ?? {}),
 			enable: checked("ss-ann-link-enable"),
 			text: inputVal("ss-ann-link-text"),
 			url: inputVal("ss-ann-link-url"),
+			external: checked("ss-ann-link-external"),
 		},
 	},
 });
@@ -1476,14 +1750,6 @@ export function initSiteSettingsPage(): void {
 					activeCropTarget === "favicon" ? "ico" : undefined,
 				purpose: config.purpose,
 			});
-			if (activeCropTarget === "favicon") {
-				for (const child of [...config.container.children]) {
-					if ((child as HTMLElement).tagName !== "BUTTON") {
-						cleanupPendingBlob(child as HTMLElement);
-					}
-				}
-				config.container.innerHTML = "";
-			}
 			config.container.appendChild(row);
 			closeCropModal();
 		} finally {
@@ -1563,6 +1829,12 @@ export function initSiteSettingsPage(): void {
 				const preview = row.querySelector("img");
 				if (preview) {
 					updateImagePreview(preview as HTMLImageElement, fileId);
+				}
+				const srcInput = row.querySelector(
+					'input[type="text"]',
+				) as HTMLInputElement | null;
+				if (srcInput) {
+					srcInput.value = fileId;
 				}
 				URL.revokeObjectURL(pending.objectUrl);
 				pendingCropBlobs.delete(row);
@@ -1648,6 +1920,19 @@ export function initSiteSettingsPage(): void {
 
 	bindCropUploadButton("ss-favicon-upload-btn", "favicon");
 	bindCropUploadButton("ss-banner-desktop-upload-btn", "banner-desktop");
+	const faviconAddButton = el(
+		"ss-favicon-add-btn",
+	) as HTMLButtonElement | null;
+	if (faviconAddButton && !faviconAddButton.hasAttribute(DATA_BOUND)) {
+		faviconAddButton.setAttribute(DATA_BOUND, "1");
+		faviconAddButton.addEventListener("click", () => {
+			if (!faviconListContainer) {
+				return;
+			}
+			faviconListContainer.appendChild(createFaviconRow({ src: "" }));
+			setMsg("ss-site-msg", "已新增图标条目，点击“保存站点信息”生效");
+		});
+	}
 
 	// ---- crop modal bindings ----
 

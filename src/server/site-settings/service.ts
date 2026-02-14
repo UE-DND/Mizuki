@@ -35,12 +35,21 @@ function mergeWithDefaults<T>(defaults: T, patch: unknown): T {
 		if (!isRecord(patch)) {
 			return defaults;
 		}
+		const defaultsRecord = defaults as Record<string, unknown>;
 		const result: Record<string, unknown> = {};
-		for (const key of Object.keys(defaults)) {
-			result[key] = mergeWithDefaults(
-				(defaults as Record<string, unknown>)[key],
-				patch[key],
-			);
+		const keys = new Set<string>([
+			...Object.keys(defaultsRecord),
+			...Object.keys(patch),
+		]);
+		for (const key of keys) {
+			if (Object.prototype.hasOwnProperty.call(defaultsRecord, key)) {
+				result[key] = mergeWithDefaults(
+					defaultsRecord[key],
+					patch[key],
+				);
+				continue;
+			}
+			result[key] = structuredClone(patch[key]);
 		}
 		return result as T;
 	}
@@ -54,6 +63,32 @@ function mergeWithDefaults<T>(defaults: T, patch: unknown): T {
 		default:
 			return defaults;
 	}
+}
+
+function clampInteger(
+	value: unknown,
+	fallback: number,
+	min: number,
+	max: number,
+): number {
+	const parsed = Number(value);
+	if (!Number.isFinite(parsed)) {
+		return fallback;
+	}
+	return Math.max(min, Math.min(max, Math.floor(parsed)));
+}
+
+function clampNumber(
+	value: unknown,
+	fallback: number,
+	min: number,
+	max: number,
+): number {
+	const parsed = Number(value);
+	if (!Number.isFinite(parsed)) {
+		return fallback;
+	}
+	return Math.max(min, Math.min(max, parsed));
 }
 
 function isSafeNavigationUrl(url: string, allowHash = false): boolean {
@@ -184,7 +219,7 @@ function normalizeSettings(
 	merged.site.siteStartDate = merged.site.siteStartDate
 		? String(merged.site.siteStartDate).trim()
 		: null;
-	merged.site.favicon = Array.isArray(merged.site.favicon)
+	const normalizedFavicons = Array.isArray(merged.site.favicon)
 		? merged.site.favicon
 				.map((item) => {
 					if (!isRecord(item)) {
@@ -213,8 +248,11 @@ function normalizeSettings(
 				.filter((item): item is NonNullable<typeof item> =>
 					Boolean(item),
 				)
-				.slice(0, 1)
-		: base.site.favicon;
+		: [];
+	merged.site.favicon =
+		normalizedFavicons.length > 0
+			? normalizedFavicons.slice(0, 8)
+			: base.site.favicon;
 
 	merged.auth.register_enabled = Boolean(
 		merged.auth.register_enabled ?? base.auth.register_enabled,
@@ -225,8 +263,14 @@ function normalizeSettings(
 		base.navbarTitle.text;
 	merged.navbarTitle.mode =
 		merged.navbarTitle.mode === "text-icon" ? "text-icon" : "logo";
-	merged.navbarTitle.icon = "assets/home/home.png";
-	merged.navbarTitle.logo = "assets/home/default-logo.png";
+	merged.navbarTitle.icon = normalizeAssetPath(
+		String(merged.navbarTitle.icon || ""),
+		base.navbarTitle.icon || "assets/home/home.png",
+	);
+	merged.navbarTitle.logo = normalizeAssetPath(
+		String(merged.navbarTitle.logo || ""),
+		base.navbarTitle.logo || "assets/home/default-logo.png",
+	);
 
 	merged.wallpaperMode.defaultMode =
 		merged.wallpaperMode.defaultMode === "none" ? "none" : "banner";
@@ -246,18 +290,11 @@ function normalizeSettings(
 		enable: Boolean(
 			merged.banner.carousel?.enable ?? base.banner.carousel?.enable,
 		),
-		interval: Math.max(
+		interval: clampInteger(
+			merged.banner.carousel?.interval,
+			base.banner.carousel?.interval ?? 5,
 			1,
-			Math.min(
-				120,
-				Math.floor(
-					Number(
-						merged.banner.carousel?.interval ??
-							base.banner.carousel?.interval ??
-							5,
-					),
-				),
-			),
+			120,
 		),
 	};
 	merged.banner.waves = {
@@ -269,14 +306,18 @@ function normalizeSettings(
 			base.banner.waves?.performanceMode,
 		),
 	};
+	const imageApiUrl = String(
+		merged.banner.imageApi?.url ?? base.banner.imageApi?.url ?? "",
+	).trim();
 	merged.banner.imageApi = {
 		enable: Boolean(
 			merged.banner.imageApi?.enable ?? base.banner.imageApi?.enable,
 		),
-		url: String(
-			merged.banner.imageApi?.url ?? base.banner.imageApi?.url ?? "",
-		).trim(),
+		url: isSafeNavigationUrl(imageApiUrl)
+			? imageApiUrl
+			: String(base.banner.imageApi?.url ?? "").trim(),
 	};
+
 	const baseHomeText = base.banner.homeText ?? {
 		enable: true,
 		title: "",
@@ -308,59 +349,38 @@ function normalizeSettings(
 		subtitle: normalizedSubtitle,
 		typewriter: {
 			enable: Boolean(homeTypewriter.enable),
-			speed: Math.max(
+			speed: clampInteger(
+				homeTypewriter.speed,
+				baseTypewriter.speed ?? 100,
 				10,
-				Math.min(
-					500,
-					Math.floor(
-						Number(
-							homeTypewriter.speed ?? baseTypewriter.speed ?? 100,
-						),
-					),
-				),
+				500,
 			),
-			deleteSpeed: Math.max(
+			deleteSpeed: clampInteger(
+				homeTypewriter.deleteSpeed,
+				baseTypewriter.deleteSpeed ?? 50,
 				10,
-				Math.min(
-					500,
-					Math.floor(
-						Number(
-							homeTypewriter.deleteSpeed ??
-								baseTypewriter.deleteSpeed ??
-								50,
-						),
-					),
-				),
+				500,
 			),
-			pauseTime: Math.max(
+			pauseTime: clampInteger(
+				homeTypewriter.pauseTime,
+				baseTypewriter.pauseTime ?? 2000,
 				100,
-				Math.min(
-					10000,
-					Math.floor(
-						Number(
-							homeTypewriter.pauseTime ??
-								baseTypewriter.pauseTime ??
-								2000,
-						),
-					),
-				),
+				10000,
 			),
 		},
 	};
 	merged.banner.navbar = {
 		transparentMode:
+			merged.banner.navbar?.transparentMode === "semi" ||
 			merged.banner.navbar?.transparentMode === "full" ||
 			merged.banner.navbar?.transparentMode === "semifull"
 				? merged.banner.navbar.transparentMode
-				: "semi",
+				: base.banner.navbar?.transparentMode || "semi",
 	};
 
 	merged.toc.enable = Boolean(merged.toc.enable);
 	merged.toc.mode = merged.toc.mode === "float" ? "float" : "sidebar";
-	merged.toc.depth = Math.max(
-		1,
-		Math.min(3, Math.floor(Number(merged.toc.depth) || 2)),
-	) as 1 | 2 | 3;
+	merged.toc.depth = clampInteger(merged.toc.depth, 2, 1, 3) as 1 | 2 | 3;
 	merged.toc.useJapaneseBadge = Boolean(merged.toc.useJapaneseBadge);
 
 	const normalizedLinks = Array.isArray(merged.navBar.links)
@@ -391,22 +411,37 @@ function normalizeSettings(
 		merged.announcement.content || "",
 	).trim();
 	merged.announcement.closable = Boolean(merged.announcement.closable);
-	if (merged.announcement.link) {
-		merged.announcement.link.enable = Boolean(
-			merged.announcement.link.enable,
-		);
-		merged.announcement.link.text = String(
-			merged.announcement.link.text || "",
-		).trim();
-		merged.announcement.link.url = isSafeNavigationUrl(
-			String(merged.announcement.link.url || ""),
+	const baseAnnouncementLink = base.announcement.link ?? {
+		enable: false,
+		text: "",
+		url: "/about",
+		external: false,
+	};
+	type AnnouncementLinkLike = {
+		enable?: unknown;
+		text?: unknown;
+		url?: unknown;
+		external?: unknown;
+	};
+	const announcementLink = isRecord(merged.announcement.link)
+		? (merged.announcement.link as AnnouncementLinkLike)
+		: {};
+	merged.announcement.link = {
+		enable: Boolean(announcementLink.enable ?? baseAnnouncementLink.enable),
+		text: String(
+			announcementLink.text ?? baseAnnouncementLink.text ?? "",
+		).trim(),
+		url: isSafeNavigationUrl(
+			String(announcementLink.url ?? baseAnnouncementLink.url ?? ""),
 		)
-			? String(merged.announcement.link.url || "").trim()
-			: base.announcement.link?.url || "/about";
-		merged.announcement.link.external = Boolean(
-			merged.announcement.link.external,
-		);
-	}
+			? String(
+					announcementLink.url ?? baseAnnouncementLink.url ?? "",
+				).trim()
+			: baseAnnouncementLink.url || "/about",
+		external: Boolean(
+			announcementLink.external ?? baseAnnouncementLink.external,
+		),
+	};
 
 	merged.musicPlayer.enable = Boolean(merged.musicPlayer.enable);
 	merged.musicPlayer.mode =
@@ -417,12 +452,11 @@ function normalizeSettings(
 	merged.musicPlayer.id = String(merged.musicPlayer.id || "").trim();
 	merged.musicPlayer.server = String(merged.musicPlayer.server || "").trim();
 	merged.musicPlayer.type = String(merged.musicPlayer.type || "").trim();
-	merged.musicPlayer.marqueeSpeed = Math.max(
+	merged.musicPlayer.marqueeSpeed = clampInteger(
+		merged.musicPlayer.marqueeSpeed,
+		10,
 		1,
-		Math.min(
-			120,
-			Math.floor(Number(merged.musicPlayer.marqueeSpeed) || 10),
-		),
+		120,
 	);
 
 	merged.footer.enable = Boolean(merged.footer.enable);
@@ -431,6 +465,114 @@ function normalizeSettings(
 	);
 
 	merged.sakura.enable = Boolean(merged.sakura.enable);
+	merged.sakura.sakuraNum = clampInteger(
+		merged.sakura.sakuraNum,
+		base.sakura.sakuraNum,
+		1,
+		240,
+	);
+	merged.sakura.limitTimes = clampInteger(
+		merged.sakura.limitTimes,
+		base.sakura.limitTimes,
+		-1,
+		1000,
+	);
+	const sakuraSizeMin = clampNumber(
+		merged.sakura.size?.min,
+		base.sakura.size.min,
+		0.1,
+		8,
+	);
+	const sakuraSizeMax = Math.max(
+		sakuraSizeMin,
+		clampNumber(
+			merged.sakura.size?.max,
+			base.sakura.size.max,
+			sakuraSizeMin,
+			8,
+		),
+	);
+	merged.sakura.size = {
+		min: sakuraSizeMin,
+		max: sakuraSizeMax,
+	};
+	const sakuraOpacityMin = clampNumber(
+		merged.sakura.opacity?.min,
+		base.sakura.opacity.min,
+		0,
+		1,
+	);
+	const sakuraOpacityMax = Math.max(
+		sakuraOpacityMin,
+		clampNumber(
+			merged.sakura.opacity?.max,
+			base.sakura.opacity.max,
+			sakuraOpacityMin,
+			1,
+		),
+	);
+	merged.sakura.opacity = {
+		min: sakuraOpacityMin,
+		max: sakuraOpacityMax,
+	};
+	const horizontalSpeedMin = clampNumber(
+		merged.sakura.speed?.horizontal?.min,
+		base.sakura.speed.horizontal.min,
+		-20,
+		20,
+	);
+	const horizontalSpeedMax = Math.max(
+		horizontalSpeedMin,
+		clampNumber(
+			merged.sakura.speed?.horizontal?.max,
+			base.sakura.speed.horizontal.max,
+			horizontalSpeedMin,
+			20,
+		),
+	);
+	const verticalSpeedMin = clampNumber(
+		merged.sakura.speed?.vertical?.min,
+		base.sakura.speed.vertical.min,
+		-20,
+		20,
+	);
+	const verticalSpeedMax = Math.max(
+		verticalSpeedMin,
+		clampNumber(
+			merged.sakura.speed?.vertical?.max,
+			base.sakura.speed.vertical.max,
+			verticalSpeedMin,
+			20,
+		),
+	);
+	merged.sakura.speed = {
+		horizontal: {
+			min: horizontalSpeedMin,
+			max: horizontalSpeedMax,
+		},
+		vertical: {
+			min: verticalSpeedMin,
+			max: verticalSpeedMax,
+		},
+		rotation: clampNumber(
+			merged.sakura.speed?.rotation,
+			base.sakura.speed.rotation,
+			-5,
+			5,
+		),
+		fadeSpeed: clampNumber(
+			merged.sakura.speed?.fadeSpeed,
+			base.sakura.speed.fadeSpeed,
+			0,
+			5,
+		),
+	};
+	merged.sakura.zIndex = clampInteger(
+		merged.sakura.zIndex,
+		base.sakura.zIndex,
+		0,
+		9999,
+	);
 
 	merged.umami.enabled = Boolean(merged.umami.enabled);
 	merged.umami.baseUrl = String(merged.umami.baseUrl || "").trim();

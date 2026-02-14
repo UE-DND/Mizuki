@@ -19,13 +19,24 @@ const navBarConfig = siteSettings.navBar;
 const DEFAULT_NAV_ICON = "/assets/home/home.png";
 
 function resolveAssetSrc(path: string): string {
-  return path.startsWith("/") ? url(path) : path;
+  if (!path) {
+    return "";
+  }
+  if (path.startsWith("/")) {
+    return url(path);
+  }
+  if (path.startsWith("assets/")) {
+    return url(`/${path}`);
+  }
+  return path;
 }
 
 const navbarIconSrc =
-  siteSettings.site.favicon[0]?.src ||
   siteSettings.navbarTitle?.icon ||
+  siteSettings.site.favicon[0]?.src ||
   DEFAULT_NAV_ICON;
+const navbarLogoSrc =
+  siteSettings.navbarTitle?.logo || "/assets/home/default-logo.png";
 
 const navbarTransparentMode =
   siteSettings.banner?.navbar?.transparentMode || "semi";
@@ -90,10 +101,7 @@ const links: NavBarLink[] = navBarConfig.links
           siteSettings.navbarTitle ? (
             siteSettings.navbarTitle.mode === "logo" ? (
               <img
-                src={url(
-                  siteSettings.navbarTitle.logo ||
-                    "/assets/home/default-logo.png",
-                )}
+                src={resolveAssetSrc(navbarLogoSrc)}
                 alt={siteSettings.navbarTitle.text}
                 class="h-[3.25rem] in-[.enable-banner]:!h-[2.5rem] in-[.enable-banner]:group-[.scrolled]:!h-[3.25rem] max-w-full object-contain transition-all duration-920"
                 loading="lazy"

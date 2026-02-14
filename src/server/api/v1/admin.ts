@@ -244,18 +244,22 @@ function collectBannerAssetValues(value: unknown): string[] {
 
 function collectSettingsFileIds(settings: SiteSettingsPayload): Set<string> {
 	const ids = new Set<string>();
-	for (const item of settings.site.favicon || []) {
-		const fileId = extractDirectusFileIdFromAssetValue(item.src);
+	const collectSingleAsset = (value: unknown): void => {
+		const fileId = extractDirectusFileIdFromAssetValue(value);
 		if (fileId) {
 			ids.add(fileId);
 		}
+	};
+
+	for (const item of settings.site.favicon || []) {
+		collectSingleAsset(item.src);
 	}
 	for (const source of collectBannerAssetValues(settings.banner.src)) {
-		const fileId = extractDirectusFileIdFromAssetValue(source);
-		if (fileId) {
-			ids.add(fileId);
-		}
+		collectSingleAsset(source);
 	}
+	collectSingleAsset(settings.navbarTitle.icon);
+	collectSingleAsset(settings.navbarTitle.logo);
+	collectSingleAsset(settings.profile.avatar);
 	return ids;
 }
 

@@ -62,6 +62,35 @@ export const prerender = false;
                 class="date-picker-input w-full rounded-lg border border-(--line-divider) px-3.5 py-2.5 bg-transparent text-75"
               />
             </label>
+            <label
+              class="flex items-center gap-3 text-75 cursor-pointer select-none col-span-2"
+            >
+              <input
+                type="checkbox"
+                id="ss-register-enabled"
+                class="toggle-checkbox"
+              />
+              <span class="toggle-track"><span class="toggle-knob"></span></span
+              >
+              允许公开注册
+            </label>
+            <label class="space-y-1.5">
+              <span class="text-sm text-60">站点资料名称（Footer/License）</span
+              >
+              <input
+                id="ss-profile-name"
+                class="w-full rounded-lg border border-(--line-divider) px-3.5 py-2.5 bg-transparent text-75 placeholder:text-50"
+                placeholder="站点昵称"
+              />
+            </label>
+            <label class="space-y-1.5">
+              <span class="text-sm text-60">站点资料头像 URL / 文件 ID</span>
+              <input
+                id="ss-profile-avatar"
+                class="w-full rounded-lg border border-(--line-divider) px-3.5 py-2.5 bg-transparent text-75 placeholder:text-50"
+                placeholder="/api/v1/public/assets/..."
+              />
+            </label>
             <hr class="border-(--line-divider) col-span-2" />
             <h3 class="text-lg font-medium text-75 col-span-2">站点图标</h3>
             <div class="col-span-2 space-y-2">
@@ -86,6 +115,12 @@ export const prerender = false;
                       x2="12"
                       y2="15"></line></svg
                   >上传图片</button
+                >
+                <button
+                  type="button"
+                  id="ss-favicon-add-btn"
+                  class="px-3 h-9 rounded-lg text-sm font-medium cursor-pointer border border-(--line-divider) text-75 hover:border-(--primary) hover:text-(--primary) transition"
+                  >新增条目</button
                 >
                 <span class="text-xs text-50">支持 PNG/JPG/ICO，最大 500KB</span
                 >
@@ -156,6 +191,33 @@ export const prerender = false;
                 placeholder="Site Title"
               />
             </label>
+            <label class="space-y-1.5">
+              <span class="text-sm text-60">导航图标 URL / 文件 ID</span>
+              <input
+                id="ss-navbar-icon"
+                class="w-full rounded-lg border border-(--line-divider) px-3.5 py-2.5 bg-transparent text-75 placeholder:text-50"
+                placeholder="/api/v1/public/assets/..."
+              />
+            </label>
+            <label class="space-y-1.5">
+              <span class="text-sm text-60">导航 Logo URL / 文件 ID</span>
+              <input
+                id="ss-navbar-logo"
+                class="w-full rounded-lg border border-(--line-divider) px-3.5 py-2.5 bg-transparent text-75 placeholder:text-50"
+                placeholder="/api/v1/public/assets/..."
+              />
+            </label>
+            <label class="space-y-1.5">
+              <span class="text-sm text-60">横幅模式下导航透明度</span>
+              <select
+                id="ss-navbar-transparent-mode"
+                class="w-full rounded-lg border border-(--line-divider) px-3.5 py-2.5 bg-transparent text-75"
+              >
+                <option value="semi">semi</option>
+                <option value="full">full</option>
+                <option value="semifull">semifull</option>
+              </select>
+            </label>
             <div class="col-span-2 space-y-1.5">
               <span class="text-sm text-60">导航链接</span>
               <div id="ss-nav-links-list" class="space-y-2"></div>
@@ -186,6 +248,17 @@ export const prerender = false;
                 <option value="none">none</option>
               </select>
             </label>
+            <label class="space-y-1.5">
+              <span class="text-sm text-60">Banner 图片对齐</span>
+              <select
+                id="ss-banner-position"
+                class="w-full rounded-lg border border-(--line-divider) px-3.5 py-2.5 bg-transparent text-75"
+              >
+                <option value="top">top</option>
+                <option value="center">center</option>
+                <option value="bottom">bottom</option>
+              </select>
+            </label>
             <label
               class="flex items-center gap-3 text-75 cursor-pointer select-none col-span-2"
             >
@@ -208,6 +281,124 @@ export const prerender = false;
                 class="w-full rounded-lg border border-(--line-divider) px-3.5 py-2.5 bg-transparent text-75"
                 placeholder="5"
               />
+            </label>
+            <hr class="border-(--line-divider) col-span-2" />
+            <h3 class="text-lg font-medium text-75 col-span-2">
+              图片源与首页文案
+            </h3>
+            <label
+              class="flex items-center gap-3 text-75 cursor-pointer select-none col-span-2"
+            >
+              <input
+                type="checkbox"
+                id="ss-banner-image-api-enable"
+                class="toggle-checkbox"
+              />
+              <span class="toggle-track"><span class="toggle-knob"></span></span
+              >
+              启用 Banner 图片 API
+            </label>
+            <label class="space-y-1.5 col-span-2">
+              <span class="text-sm text-60">Banner 图片 API URL</span>
+              <input
+                id="ss-banner-image-api-url"
+                class="w-full rounded-lg border border-(--line-divider) px-3.5 py-2.5 bg-transparent text-75 placeholder:text-50"
+                placeholder="https://example.com/api/banner"
+              />
+            </label>
+            <label
+              class="flex items-center gap-3 text-75 cursor-pointer select-none col-span-2"
+            >
+              <input
+                type="checkbox"
+                id="ss-banner-home-text-enable"
+                class="toggle-checkbox"
+              />
+              <span class="toggle-track"><span class="toggle-knob"></span></span
+              >
+              首页显示 Banner 文案
+            </label>
+            <label class="space-y-1.5">
+              <span class="text-sm text-60">首页文案主标题</span>
+              <input
+                id="ss-banner-home-text-title"
+                class="w-full rounded-lg border border-(--line-divider) px-3.5 py-2.5 bg-transparent text-75 placeholder:text-50"
+                placeholder="我的小屋"
+              />
+            </label>
+            <label class="space-y-1.5">
+              <span class="text-sm text-60">首页文案副标题（每行一条）</span>
+              <textarea
+                id="ss-banner-home-text-subtitle"
+                class="w-full min-h-24 rounded-lg border border-(--line-divider) px-3.5 py-2.5 bg-transparent text-75 placeholder:text-50"
+                placeholder="第一行
+第二行"></textarea>
+            </label>
+            <label
+              class="flex items-center gap-3 text-75 cursor-pointer select-none col-span-2"
+            >
+              <input
+                type="checkbox"
+                id="ss-banner-home-typewriter-enable"
+                class="toggle-checkbox"
+              />
+              <span class="toggle-track"><span class="toggle-knob"></span></span
+              >
+              启用首页副标题打字机效果
+            </label>
+            <label class="space-y-1.5">
+              <span class="text-sm text-60">打字速度（毫秒）</span>
+              <input
+                id="ss-banner-home-typewriter-speed"
+                type="number"
+                min="10"
+                max="500"
+                class="w-full rounded-lg border border-(--line-divider) px-3.5 py-2.5 bg-transparent text-75"
+              />
+            </label>
+            <label class="space-y-1.5">
+              <span class="text-sm text-60">删除速度（毫秒）</span>
+              <input
+                id="ss-banner-home-typewriter-delete-speed"
+                type="number"
+                min="10"
+                max="500"
+                class="w-full rounded-lg border border-(--line-divider) px-3.5 py-2.5 bg-transparent text-75"
+              />
+            </label>
+            <label class="space-y-1.5">
+              <span class="text-sm text-60">停顿时间（毫秒）</span>
+              <input
+                id="ss-banner-home-typewriter-pause-time"
+                type="number"
+                min="100"
+                max="10000"
+                class="w-full rounded-lg border border-(--line-divider) px-3.5 py-2.5 bg-transparent text-75"
+              />
+            </label>
+            <label
+              class="flex items-center gap-3 text-75 cursor-pointer select-none"
+            >
+              <input
+                type="checkbox"
+                id="ss-banner-waves-enable"
+                class="toggle-checkbox"
+              />
+              <span class="toggle-track"><span class="toggle-knob"></span></span
+              >
+              启用水波纹效果
+            </label>
+            <label
+              class="flex items-center gap-3 text-75 cursor-pointer select-none"
+            >
+              <input
+                type="checkbox"
+                id="ss-banner-waves-performance"
+                class="toggle-checkbox"
+              />
+              <span class="toggle-track"><span class="toggle-knob"></span></span
+              >
+              水波纹性能模式
             </label>
             <div class="col-span-2 space-y-2">
               <h4 class="text-base font-medium text-75">桌面端壁纸</h4>
@@ -296,6 +487,36 @@ export const prerender = false;
                 <option value="3">3</option>
               </select>
             </label>
+            <hr class="border-(--line-divider) col-span-2" />
+            <h3 class="text-lg font-medium text-75 col-span-2">文章版权信息</h3>
+            <label
+              class="flex items-center gap-3 text-75 cursor-pointer select-none col-span-2"
+            >
+              <input
+                type="checkbox"
+                id="ss-license-enable"
+                class="toggle-checkbox"
+              />
+              <span class="toggle-track"><span class="toggle-knob"></span></span
+              >
+              启用版权声明区块
+            </label>
+            <label class="space-y-1.5">
+              <span class="text-sm text-60">版权名称</span>
+              <input
+                id="ss-license-name"
+                class="w-full rounded-lg border border-(--line-divider) px-3.5 py-2.5 bg-transparent text-75 placeholder:text-50"
+                placeholder="CC BY-NC-SA 4.0"
+              />
+            </label>
+            <label class="space-y-1.5">
+              <span class="text-sm text-60">版权链接</span>
+              <input
+                id="ss-license-url"
+                class="w-full rounded-lg border border-(--line-divider) px-3.5 py-2.5 bg-transparent text-75 placeholder:text-50"
+                placeholder="https://creativecommons.org/licenses/by-nc-sa/4.0/"
+              />
+            </label>
             <div class="col-span-2 flex items-center gap-2 pt-2">
               <button
                 type="submit"
@@ -369,6 +590,18 @@ export const prerender = false;
                 class="w-full rounded-lg border border-(--line-divider) px-3.5 py-2.5 bg-transparent text-75 placeholder:text-50"
                 placeholder="https://..."
               />
+            </label>
+            <label
+              class="flex items-center gap-3 text-75 cursor-pointer select-none col-span-2"
+            >
+              <input
+                type="checkbox"
+                id="ss-ann-link-external"
+                class="toggle-checkbox"
+              />
+              <span class="toggle-track"><span class="toggle-knob"></span></span
+              >
+              公告链接使用新窗口打开
             </label>
             <div class="col-span-2 flex items-center gap-2 pt-2">
               <button
@@ -451,6 +684,39 @@ export const prerender = false;
               />
             </label>
             <hr class="border-(--line-divider) col-span-2" />
+            <h3 class="text-lg font-medium text-75 col-span-2">
+              页脚与侧栏布局
+            </h3>
+            <label
+              class="flex items-center gap-3 text-75 cursor-pointer select-none col-span-2"
+            >
+              <input
+                type="checkbox"
+                id="ss-footer-enable"
+                class="toggle-checkbox"
+              />
+              <span class="toggle-track"><span class="toggle-knob"></span></span
+              >
+              启用 Footer 自定义 HTML
+            </label>
+            <label class="space-y-1.5 col-span-2">
+              <span class="text-sm text-60">Footer 自定义 HTML</span>
+              <textarea
+                id="ss-footer-html"
+                class="w-full min-h-24 rounded-lg border border-(--line-divider) px-3.5 py-2.5 bg-transparent text-75 font-mono text-xs placeholder:text-50"
+                placeholder="<span>备案信息</span>"></textarea>
+            </label>
+            <label class="space-y-1.5 col-span-2">
+              <span class="text-sm text-60"
+                >侧边栏布局 JSON（sidebarLayout.*）</span
+              >
+              <textarea
+                id="ss-sidebar-layout-json"
+                class="w-full min-h-52 rounded-lg border border-(--line-divider) px-3.5 py-2.5 bg-transparent text-75 font-mono text-xs placeholder:text-50"
+                placeholder='{"properties":[],"components":{"left":[],"right":[]},"defaultAnimation":{"enable":true,"baseDelay":0,"increment":50}}'
+              ></textarea>
+            </label>
+            <hr class="border-(--line-divider) col-span-2" />
             <h3 class="text-lg font-medium text-75 col-span-2">樱花特效</h3>
             <label
               class="flex items-center gap-3 text-75 cursor-pointer select-none"
@@ -463,6 +729,146 @@ export const prerender = false;
               <span class="toggle-track"><span class="toggle-knob"></span></span
               >
               启用全屏樱花特效
+            </label>
+            <label class="space-y-1.5">
+              <span class="text-sm text-60">樱花数量</span>
+              <input
+                id="ss-sakura-num"
+                type="number"
+                min="1"
+                max="240"
+                class="w-full rounded-lg border border-(--line-divider) px-3.5 py-2.5 bg-transparent text-75"
+              />
+            </label>
+            <label class="space-y-1.5">
+              <span class="text-sm text-60">越界重置次数（-1 无限）</span>
+              <input
+                id="ss-sakura-limit-times"
+                type="number"
+                min="-1"
+                max="1000"
+                class="w-full rounded-lg border border-(--line-divider) px-3.5 py-2.5 bg-transparent text-75"
+              />
+            </label>
+            <label class="space-y-1.5">
+              <span class="text-sm text-60">尺寸最小值</span>
+              <input
+                id="ss-sakura-size-min"
+                type="number"
+                step="0.01"
+                min="0.1"
+                max="8"
+                class="w-full rounded-lg border border-(--line-divider) px-3.5 py-2.5 bg-transparent text-75"
+              />
+            </label>
+            <label class="space-y-1.5">
+              <span class="text-sm text-60">尺寸最大值</span>
+              <input
+                id="ss-sakura-size-max"
+                type="number"
+                step="0.01"
+                min="0.1"
+                max="8"
+                class="w-full rounded-lg border border-(--line-divider) px-3.5 py-2.5 bg-transparent text-75"
+              />
+            </label>
+            <label class="space-y-1.5">
+              <span class="text-sm text-60">透明度最小值</span>
+              <input
+                id="ss-sakura-opacity-min"
+                type="number"
+                step="0.01"
+                min="0"
+                max="1"
+                class="w-full rounded-lg border border-(--line-divider) px-3.5 py-2.5 bg-transparent text-75"
+              />
+            </label>
+            <label class="space-y-1.5">
+              <span class="text-sm text-60">透明度最大值</span>
+              <input
+                id="ss-sakura-opacity-max"
+                type="number"
+                step="0.01"
+                min="0"
+                max="1"
+                class="w-full rounded-lg border border-(--line-divider) px-3.5 py-2.5 bg-transparent text-75"
+              />
+            </label>
+            <label class="space-y-1.5">
+              <span class="text-sm text-60">水平速度最小值</span>
+              <input
+                id="ss-sakura-speed-h-min"
+                type="number"
+                step="0.01"
+                min="-20"
+                max="20"
+                class="w-full rounded-lg border border-(--line-divider) px-3.5 py-2.5 bg-transparent text-75"
+              />
+            </label>
+            <label class="space-y-1.5">
+              <span class="text-sm text-60">水平速度最大值</span>
+              <input
+                id="ss-sakura-speed-h-max"
+                type="number"
+                step="0.01"
+                min="-20"
+                max="20"
+                class="w-full rounded-lg border border-(--line-divider) px-3.5 py-2.5 bg-transparent text-75"
+              />
+            </label>
+            <label class="space-y-1.5">
+              <span class="text-sm text-60">垂直速度最小值</span>
+              <input
+                id="ss-sakura-speed-v-min"
+                type="number"
+                step="0.01"
+                min="-20"
+                max="20"
+                class="w-full rounded-lg border border-(--line-divider) px-3.5 py-2.5 bg-transparent text-75"
+              />
+            </label>
+            <label class="space-y-1.5">
+              <span class="text-sm text-60">垂直速度最大值</span>
+              <input
+                id="ss-sakura-speed-v-max"
+                type="number"
+                step="0.01"
+                min="-20"
+                max="20"
+                class="w-full rounded-lg border border-(--line-divider) px-3.5 py-2.5 bg-transparent text-75"
+              />
+            </label>
+            <label class="space-y-1.5">
+              <span class="text-sm text-60">旋转速度</span>
+              <input
+                id="ss-sakura-speed-rotation"
+                type="number"
+                step="0.01"
+                min="-5"
+                max="5"
+                class="w-full rounded-lg border border-(--line-divider) px-3.5 py-2.5 bg-transparent text-75"
+              />
+            </label>
+            <label class="space-y-1.5">
+              <span class="text-sm text-60">消失速度</span>
+              <input
+                id="ss-sakura-speed-fade"
+                type="number"
+                step="0.01"
+                min="0"
+                max="5"
+                class="w-full rounded-lg border border-(--line-divider) px-3.5 py-2.5 bg-transparent text-75"
+              />
+            </label>
+            <label class="space-y-1.5">
+              <span class="text-sm text-60">Canvas z-index</span>
+              <input
+                id="ss-sakura-z-index"
+                type="number"
+                min="0"
+                max="9999"
+                class="w-full rounded-lg border border-(--line-divider) px-3.5 py-2.5 bg-transparent text-75"
+              />
             </label>
             <div class="col-span-2 flex items-center gap-2 pt-2">
               <button
