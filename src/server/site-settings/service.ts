@@ -249,10 +249,7 @@ function normalizeSettings(
 					Boolean(item),
 				)
 		: [];
-	merged.site.favicon =
-		normalizedFavicons.length > 0
-			? normalizedFavicons.slice(0, 8)
-			: base.site.favicon;
+	merged.site.favicon = normalizedFavicons.slice(0, 8);
 
 	merged.auth.register_enabled = Boolean(
 		merged.auth.register_enabled ?? base.auth.register_enabled,
@@ -388,8 +385,7 @@ function normalizeSettings(
 				.map((link) => normalizeNavLink(link))
 				.filter((entry): entry is NavLinkLike => Boolean(entry))
 		: [];
-	merged.navBar.links =
-		normalizedLinks.length > 0 ? normalizedLinks : base.navBar.links;
+	merged.navBar.links = normalizedLinks;
 
 	merged.profile.avatar = normalizeAssetPath(
 		String(merged.profile.avatar || ""),

@@ -104,6 +104,20 @@ if (title) {
 const favicons: Favicon[] =
   siteConfig.favicon.length > 0 ? siteConfig.favicon : defaultFavicons;
 
+const resolveFaviconHref = (src: string): string => {
+  const value = String(src || "").trim();
+  if (!value) {
+    return "";
+  }
+  if (value.startsWith("/")) {
+    return url(value);
+  }
+  if (value.startsWith("assets/")) {
+    return url(`/${value}`);
+  }
+  return value;
+};
+
 // const siteLang = siteConfig.lang.replace('_', '-')
 if (!lang) {
   lang = `${siteConfig.lang}`;
@@ -297,7 +311,7 @@ const bodyStyle = bodyFontFamily ? `font-family: ${bodyFontFamily};` : "";
       favicons.map((favicon) => (
         <link
           rel="icon"
-          href={favicon.src.startsWith("/") ? url(favicon.src) : favicon.src}
+          href={resolveFaviconHref(favicon.src)}
           sizes={favicon.sizes}
           media={favicon.theme && `(prefers-color-scheme: ${favicon.theme})`}
         />

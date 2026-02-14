@@ -827,7 +827,6 @@ type SettingsObj = Record<string, unknown>;
 
 const bindSettings = (s: SettingsObj): void => {
 	const site = (s.site ?? {}) as SettingsObj;
-	const auth = (s.auth ?? {}) as SettingsObj;
 	const profile = (s.profile ?? {}) as SettingsObj;
 	const navbarTitle = (s.navbarTitle ?? {}) as SettingsObj;
 	const wallpaperMode = (s.wallpaperMode ?? {}) as SettingsObj;
@@ -865,7 +864,6 @@ const bindSettings = (s: SettingsObj): void => {
 			: "",
 	);
 	setVal("ss-start-date", String(site.siteStartDate ?? ""));
-	setChecked("ss-register-enabled", Boolean(auth.register_enabled));
 	setVal("ss-profile-name", String(profile.name ?? ""));
 	setVal("ss-profile-avatar", String(profile.avatar ?? ""));
 	setChecked("ss-umami-enabled", Boolean(umami.enabled));
@@ -1020,10 +1018,6 @@ const collectSitePayload = (current: SettingsObj): SettingsObj => ({
 		favicon: faviconListContainer
 			? collectFaviconList(faviconListContainer)
 			: ((current.site as SettingsObj | undefined)?.favicon ?? []),
-	},
-	auth: {
-		...((current.auth ?? {}) as SettingsObj),
-		register_enabled: checked("ss-register-enabled"),
 	},
 	profile: {
 		...((current.profile ?? {}) as SettingsObj),
