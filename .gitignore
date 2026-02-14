@@ -48,6 +48,7 @@ yarn.lock
 # AGENTS & MCP
 .claude/
 .serena/
+.vscode/mcp.json
 
 # Wiki 仓库
 DaCapo.wiki/

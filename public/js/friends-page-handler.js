@@ -81,10 +81,7 @@
 							.filter(Boolean);
 					}
 				} catch (error) {
-					console.warn(
-						"[Friends] Parse tags json failed:",
-						error,
-					);
+					console.warn("[Friends] Parse tags json failed:", error);
 				}
 			}
 
