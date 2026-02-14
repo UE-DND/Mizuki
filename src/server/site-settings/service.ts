@@ -134,6 +134,21 @@ function isLikelyDirectusFileId(value: string): boolean {
 	);
 }
 
+const GTM_ID_PATTERN = /^GTM-[A-Z0-9]+$/i;
+const CLARITY_ID_PATTERN = /^[a-z0-9]{4,64}$/i;
+
+function normalizeAnalyticsId(
+	value: unknown,
+	fallback: string,
+	pattern: RegExp,
+): string {
+	const raw = String(value ?? "").trim();
+	if (!raw) {
+		return "";
+	}
+	return pattern.test(raw) ? raw : fallback;
+}
+
 type NavLinkLike = {
 	name: string;
 	url: string;
@@ -573,6 +588,25 @@ function normalizeSettings(
 	merged.umami.enabled = Boolean(merged.umami.enabled);
 	merged.umami.baseUrl = String(merged.umami.baseUrl || "").trim();
 	merged.umami.scripts = String(merged.umami.scripts || "").trim();
+	const baseAnalytics = base.analytics ?? {
+		gtmId: "",
+		clarityId: "",
+	};
+	const mergedAnalytics = (
+		isRecord(merged.analytics) ? merged.analytics : {}
+	) as Record<string, unknown>;
+	merged.analytics = {
+		gtmId: normalizeAnalyticsId(
+			mergedAnalytics.gtmId,
+			String(baseAnalytics.gtmId ?? "").trim(),
+			GTM_ID_PATTERN,
+		),
+		clarityId: normalizeAnalyticsId(
+			mergedAnalytics.clarityId,
+			String(baseAnalytics.clarityId ?? "").trim(),
+			CLARITY_ID_PATTERN,
+		),
+	};
 
 	return merged;
 }

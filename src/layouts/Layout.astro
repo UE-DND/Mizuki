@@ -52,6 +52,12 @@ const umamiConfig = {
   baseUrl: resolvedSiteSettings.settings.umami.baseUrl,
   scripts: resolvedSiteSettings.settings.umami.scripts,
 };
+const analyticsConfig = {
+  gtmId: String(resolvedSiteSettings.settings.analytics.gtmId || "").trim(),
+  clarityId: String(
+    resolvedSiteSettings.settings.analytics.clarityId || "",
+  ).trim(),
+};
 
 // apply a class to the body element to decide the height of the banner, only used for initial page load
 // Swup can update the body for each page visit, but it's after the page transition, causing a delay for banner height change
@@ -137,6 +143,9 @@ const bannerHeightVh = `${BANNER_HEIGHT}vh`;
 
 const umamiEnabled = umamiConfig.enabled || false;
 const umamiScripts = umamiConfig.scripts || ""; // 获取Umami scripts配置
+const gtmId = analyticsConfig.gtmId;
+const clarityId = analyticsConfig.clarityId;
+const analyticsEnabled = Boolean(gtmId || clarityId);
 const bodyClassName = [
   "min-h-screen",
   isHomePage ? "lg:is-home" : "",
@@ -239,45 +248,50 @@ const bodyStyle = bodyFontFamily ? `font-family: ${bodyFontFamily};` : "";
         }
       })();
     </script>
-    <!-- 第三方分析脚本 - 延迟加载优化 -->
-    <script is:inline>
-      // 使用 requestIdleCallback 延迟加载第三方脚本
-      function loadAnalytics() {
-        // Google Tag Manager
-        (function (w, d, s, l, i) {
-          w[l] = w[l] || [];
-          w[l].push({
-            "gtm.start": new Date().getTime(),
-            event: "gtm.js",
-          });
-          var f = d.getElementsByTagName(s)[0],
-            j = d.createElement(s),
-            dl = l != "dataLayer" ? "&l=" + l : "";
-          j.async = true;
-          j.src = "https://www.googletagmanager.com/gtm.js?id=" + i + dl;
-          f.parentNode.insertBefore(j, f);
-        })(window, document, "script", "dataLayer", "GTM-KRX3XGVH");
+    <script is:inline define:vars={{ gtmId, clarityId, analyticsEnabled }}>
+      if (analyticsEnabled) {
+        // 使用 requestIdleCallback 延迟加载第三方脚本
+        const loadAnalytics = () => {
+          // Google Tag Manager
+          if (gtmId) {
+            (function (w, d, s, l, i) {
+              w[l] = w[l] || [];
+              w[l].push({
+                "gtm.start": new Date().getTime(),
+                event: "gtm.js",
+              });
+              var f = d.getElementsByTagName(s)[0],
+                j = d.createElement(s),
+                dl = l != "dataLayer" ? "&l=" + l : "";
+              j.async = true;
+              j.src = "https://www.googletagmanager.com/gtm.js?id=" + i + dl;
+              f.parentNode.insertBefore(j, f);
+            })(window, document, "script", "dataLayer", gtmId);
+          }
 
-        // Clarity
-        (function (c, l, a, r, i, t, y) {
-          c[a] =
-            c[a] ||
-            function () {
-              (c[a].q = c[a].q || []).push(arguments);
-            };
-          t = l.createElement(r);
-          t.async = 1;
-          t.src = "https://www.clarity.ms/tag/" + i;
-          y = l.getElementsByTagName(r)[0];
-          y.parentNode.insertBefore(t, y);
-        })(window, document, "clarity", "script", "tjr3vkhj8i");
-      }
+          // Clarity
+          if (clarityId) {
+            (function (c, l, a, r, i, t, y) {
+              c[a] =
+                c[a] ||
+                function () {
+                  (c[a].q = c[a].q || []).push(arguments);
+                };
+              t = l.createElement(r);
+              t.async = 1;
+              t.src = "https://www.clarity.ms/tag/" + i;
+              y = l.getElementsByTagName(r)[0];
+              y.parentNode.insertBefore(t, y);
+            })(window, document, "clarity", "script", clarityId);
+          }
+        };
 
-      // 在浏览器空闲时加载，或者在 3 秒后加载
-      if ("requestIdleCallback" in window) {
-        requestIdleCallback(loadAnalytics, { timeout: 3000 });
-      } else {
-        setTimeout(loadAnalytics, 3000);
+        // 在浏览器空闲时加载，或者在 3 秒后加载
+        if ("requestIdleCallback" in window) {
+          requestIdleCallback(loadAnalytics, { timeout: 3000 });
+        } else {
+          setTimeout(loadAnalytics, 3000);
+        }
       }
     </script>
 
@@ -420,13 +434,18 @@ const bodyStyle = bodyFontFamily ? `font-family: ${bodyFontFamily};` : "";
   >
     <div data-desktop-app>
       <ConfigCarrier resolvedSiteSettings={resolvedSiteSettings} />
-      <noscript>
-        <iframe
-          src="https://www.googletagmanager.com/ns.html?id=GTM-KRX3XGVH"
-          height="0"
-          width="0"
-          style="display:none;visibility:hidden"></iframe>
-      </noscript>
+      {
+        gtmId && (
+          <noscript>
+            <iframe
+              src={`https://www.googletagmanager.com/ns.html?id=${encodeURIComponent(gtmId)}`}
+              height="0"
+              width="0"
+              style="display:none;visibility:hidden"
+            />
+          </noscript>
+        )
+      }
       <slot />
 
       <!-- Music Player - 仅在启用时加载 -->

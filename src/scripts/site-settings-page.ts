@@ -852,6 +852,7 @@ const bindSettings = (s: SettingsObj): void => {
 	const sakuraSpeedHorizontal = (sakuraSpeed.horizontal ?? {}) as SettingsObj;
 	const sakuraSpeedVertical = (sakuraSpeed.vertical ?? {}) as SettingsObj;
 	const umami = (s.umami ?? {}) as SettingsObj;
+	const analytics = (s.analytics ?? {}) as SettingsObj;
 	const navBar = (s.navBar ?? {}) as SettingsObj;
 
 	// Section 1 — 站点信息（含统计）
@@ -869,6 +870,8 @@ const bindSettings = (s: SettingsObj): void => {
 	setChecked("ss-umami-enabled", Boolean(umami.enabled));
 	setVal("ss-umami-url", String(umami.baseUrl ?? ""));
 	setVal("ss-umami-scripts", String(umami.scripts ?? ""));
+	setVal("ss-gtm-id", String(analytics.gtmId ?? ""));
+	setVal("ss-clarity-id", String(analytics.clarityId ?? ""));
 	if (faviconListContainer) {
 		fillFaviconList(
 			Array.isArray(site.favicon) ? (site.favicon as FaviconItem[]) : [],
@@ -1028,6 +1031,11 @@ const collectSitePayload = (current: SettingsObj): SettingsObj => ({
 		enabled: checked("ss-umami-enabled"),
 		baseUrl: inputVal("ss-umami-url"),
 		scripts: textareaVal("ss-umami-scripts"),
+	},
+	analytics: {
+		...((current.analytics ?? {}) as SettingsObj),
+		gtmId: inputVal("ss-gtm-id"),
+		clarityId: inputVal("ss-clarity-id"),
 	},
 });
 

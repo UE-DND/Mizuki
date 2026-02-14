@@ -303,6 +303,10 @@ export const defaultSiteSettings: SiteSettingsPayload = {
 		scripts:
 			'<script defer src="XXXX.XXX" data-website-id="ABCD1234"></script>',
 	},
+	analytics: {
+		gtmId: "GTM-KRX3XGVH",
+		clarityId: "tjr3vkhj8i",
+	},
 };
 
 export function buildLegacySiteConfig(

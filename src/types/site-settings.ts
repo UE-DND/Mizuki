@@ -24,6 +24,11 @@ export type UmamiRuntimeSettings = {
 	scripts: string;
 };
 
+export type AnalyticsRuntimeSettings = {
+	gtmId: string;
+	clarityId: string;
+};
+
 export type EditableSiteSettings = {
 	site: {
 		title: string;
@@ -48,6 +53,7 @@ export type EditableSiteSettings = {
 	sidebarLayout: SidebarLayoutConfig;
 	sakura: SakuraConfig;
 	umami: UmamiRuntimeSettings;
+	analytics: AnalyticsRuntimeSettings;
 };
 
 export type SiteSettingsPayload = EditableSiteSettings;

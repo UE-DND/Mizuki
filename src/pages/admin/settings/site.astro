@@ -146,6 +146,27 @@ export const prerender = false;
                 class="w-full min-h-24 rounded-lg border border-(--line-divider) px-3.5 py-2.5 bg-transparent text-75 font-mono text-xs placeholder:text-50"
                 placeholder="<script ...></script>"></textarea>
             </label>
+            <hr class="border-(--line-divider) col-span-2" />
+            <h3 class="text-lg font-medium text-75 col-span-2">
+              统计（GTM / Clarity）
+            </h3>
+            <label class="space-y-1.5">
+              <span class="text-sm text-60">Google Tag Manager ID</span>
+              <input
+                id="ss-gtm-id"
+                class="w-full rounded-lg border border-(--line-divider) px-3.5 py-2.5 bg-transparent text-75 placeholder:text-50"
+                placeholder="GTM-XXXXXXX"
+              />
+            </label>
+            <label class="space-y-1.5">
+              <span class="text-sm text-60">Microsoft Clarity ID</span>
+              <input
+                id="ss-clarity-id"
+                class="w-full rounded-lg border border-(--line-divider) px-3.5 py-2.5 bg-transparent text-75 placeholder:text-50"
+                placeholder="abcd1234ef"
+              />
+            </label>
+            <p class="col-span-2 text-xs text-50">留空表示禁用对应统计脚本。</p>
             <div class="col-span-2 flex items-center gap-2 pt-2">
               <button
                 type="submit"
