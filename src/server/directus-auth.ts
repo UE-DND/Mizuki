@@ -12,6 +12,7 @@ import {
 
 import type { JsonObject, JsonValue } from "@/types/json";
 import { getJsonString, isJsonObject } from "@/utils/json-utils";
+import { internal } from "@/server/api/errors";
 
 type DirectusAuthTokens = {
 	accessToken: string;
@@ -133,7 +134,7 @@ export function getRememberCookieOptions(params: {
 export function getDirectusUrl(): string {
 	const url = process.env.DIRECTUS_URL || import.meta.env.DIRECTUS_URL || "";
 	if (!url.trim()) {
-		throw new Error("DIRECTUS_URL 未配置");
+		throw internal("DIRECTUS_URL 未配置");
 	}
 	return url.trim().replace(/\/+$/, "");
 }
@@ -143,7 +144,7 @@ export function getDirectusStaticToken(): string {
 		process.env.DIRECTUS_STATIC_TOKEN ||
 		import.meta.env.DIRECTUS_STATIC_TOKEN;
 	if (!token || !token.trim()) {
-		throw new Error("DIRECTUS_STATIC_TOKEN 未配置");
+		throw internal("DIRECTUS_STATIC_TOKEN 未配置");
 	}
 	return token.trim();
 }
@@ -278,7 +279,7 @@ function parseExpiresMs(value: JsonValue | undefined): number | undefined {
 
 function parseTokens(payload: JsonValue): DirectusAuthTokens {
 	if (!isJsonObject(payload)) {
-		throw new Error("Directus 登录/刷新响应不是对象");
+		throw internal("Directus 登录/刷新响应不是对象");
 	}
 
 	const accessToken = getJsonString(payload, "access_token") ?? "";
@@ -288,7 +289,7 @@ function parseTokens(payload: JsonValue): DirectusAuthTokens {
 		payload.expires ?? payload.expires_in ?? payload.expires_at;
 
 	if (!accessToken || !refreshToken) {
-		throw new Error("Directus 登录/刷新响应缺少 token");
+		throw internal("Directus 登录/刷新响应缺少 token");
 	}
 
 	const expiresMs = parseExpiresMs(expiresRaw);

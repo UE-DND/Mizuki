@@ -210,7 +210,7 @@ const { articleId, authorId } = Astro.props;
           if (!response.ok || !data?.ok) {
             await showNoticeDialog({
               ariaLabel: "删除失败",
-              message: data?.message || "删除失败",
+              message: data?.error?.message || "删除失败",
             });
             return;
           }

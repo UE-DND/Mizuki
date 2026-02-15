@@ -712,7 +712,8 @@ const defaultAvatarPreviewSrc = defaultAvatarAsset.src;
     }
 
     function resolveRegisterError(data) {
-      const code = String(data?.code || "");
+      const error = data?.error;
+      const code = String(error?.code || "");
       if (code === "REGISTER_DISABLED") {
         return "注册入口未开启";
       }
@@ -743,7 +744,7 @@ const defaultAvatarPreviewSrc = defaultAvatarAsset.src;
       if (code === "REGISTRATION_PASSWORD_TOO_LONG") {
         return "密码长度不能超过 20 位";
       }
-      return String(data?.message || "提交失败");
+      return String(error?.message || "提交失败");
     }
 
     function persistReapplyDraft(draft) {
@@ -964,7 +965,11 @@ const defaultAvatarPreviewSrc = defaultAvatarAsset.src;
               setFieldHint(emailHintEl, "邮箱可用", "success");
               return true;
             }
-            setFieldHint(emailHintEl, result?.message || "邮箱不可用", "error");
+            setFieldHint(
+              emailHintEl,
+              result?.error?.message || "邮箱不可用",
+              "error",
+            );
             return false;
           } catch (error) {
             if (currentSeq !== emailCheckSeq) {
@@ -1025,7 +1030,7 @@ const defaultAvatarPreviewSrc = defaultAvatarAsset.src;
             }
             setFieldHint(
               usernameHintEl,
-              result?.message || "用户名不可用",
+              result?.error?.message || "用户名不可用",
               "error",
             );
             return false;

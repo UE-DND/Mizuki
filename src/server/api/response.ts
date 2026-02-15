@@ -21,9 +21,11 @@ export function ok<T>(data: T, init?: ResponseInit): Response {
 export function fail(message: string, status = 400, code?: string): Response {
 	return json(
 		{
-			ok: false,
-			...(code ? { code } : {}),
-			message,
+			ok: false as const,
+			error: {
+				code: code || "UNKNOWN_ERROR",
+				message,
+			},
 		},
 		{ status },
 	);

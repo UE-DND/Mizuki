@@ -63,7 +63,8 @@ const setRegisterMessage = (message: string) => {
 type UnknownRecord = Record<string, unknown>;
 
 const resolveErrorMessage = (data: UnknownRecord | null, fallback: string) => {
-	const code = String(data?.code || "");
+	const error = data?.error as UnknownRecord | undefined;
+	const code = String(error?.code || "");
 	if (code === "REGISTER_DISABLED") {
 		return "注册入口未开启";
 	}
@@ -79,7 +80,7 @@ const resolveErrorMessage = (data: UnknownRecord | null, fallback: string) => {
 	if (code === "REGISTRATION_STATUS_CONFLICT") {
 		return "申请状态冲突，请刷新后重试";
 	}
-	return String(data?.message || fallback || "请求失败");
+	return String(error?.message || fallback || "请求失败");
 };
 
 let registrationRequestMap = new Map<string, UnknownRecord>();

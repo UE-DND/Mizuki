@@ -19,6 +19,7 @@ import {
 } from "../../../server/auth/registration-request-cookie";
 import { readMany } from "../../../server/directus/client";
 import { checkLoginRateLimitDistributed } from "../../../server/security/login-rate-limit";
+import { AppError } from "../../../server/api/errors";
 import type { JsonObject, JsonValue } from "../../../types/json";
 import { getJsonString, isJsonObject } from "../../../utils/json-utils";
 
@@ -110,8 +111,8 @@ export async function POST(context: APIContext): Promise<Response> {
 		rate = await checkLoginRateLimitDistributed(ip);
 	} catch (error) {
 		if (
-			error instanceof Error &&
-			error.message.includes("UPSTASH_RATE_LIMIT_NOT_CONFIGURED")
+			error instanceof AppError &&
+			error.message.includes("限流服务未配置")
 		) {
 			return json(
 				{ ok: false, message: "登录限流服务未配置" },

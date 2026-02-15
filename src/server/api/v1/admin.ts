@@ -29,6 +29,7 @@ import {
 	updateDirectusUser,
 	updateOne,
 } from "@/server/directus/client";
+import { badRequest, conflict, notFound } from "@/server/api/errors";
 import { fail, ok } from "@/server/api/response";
 import {
 	parseJsonBody,
@@ -271,7 +272,10 @@ function parseOptionalRegistrationReason(raw: unknown): string | null {
 		return null;
 	}
 	if (reason.length > REGISTRATION_REASON_MAX_LENGTH) {
-		throw new Error("REGISTRATION_REASON_TOO_LONG");
+		throw badRequest(
+			"REGISTRATION_REASON_TOO_LONG",
+			"注册理由最多 500 字符",
+		);
 	}
 	return reason;
 }
@@ -281,11 +285,11 @@ function parseNormalizedEmail(raw: unknown): string {
 		.trim()
 		.toLowerCase();
 	if (!email) {
-		throw new Error("EMAIL_EMPTY");
+		throw badRequest("EMAIL_EMPTY", "邮箱不能为空");
 	}
 	const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 	if (!emailPattern.test(email)) {
-		throw new Error("EMAIL_INVALID");
+		throw badRequest("EMAIL_INVALID", "邮箱格式不正确");
 	}
 	return email;
 }
@@ -297,7 +301,7 @@ async function assertDirectusEmailAvailable(email: string): Promise<void> {
 		fields: ["id"],
 	});
 	if (rows.length > 0) {
-		throw new Error("EMAIL_EXISTS");
+		throw conflict("EMAIL_EXISTS", "邮箱已存在");
 	}
 }
 
@@ -401,7 +405,10 @@ function ensurePendingRegistrationStatus(
 	status: RegistrationRequestStatus,
 ): void {
 	if (status !== "pending") {
-		throw new Error("REGISTRATION_STATUS_CONFLICT");
+		throw conflict(
+			"REGISTRATION_STATUS_CONFLICT",
+			"申请状态冲突，请刷新后重试",
+		);
 	}
 }
 
@@ -681,7 +688,10 @@ export async function handleAdminUsers(
 
 		if (context.request.method === "DELETE") {
 			if (required.access.user.id === userId) {
-				throw new Error("USER_DELETE_SELF_FORBIDDEN");
+				throw badRequest(
+					"USER_DELETE_SELF_FORBIDDEN",
+					"不能删除当前登录账号",
+				);
 			}
 			let candidateFileIds: string[] = [];
 			try {
@@ -854,7 +864,10 @@ export async function handleAdminRegistrationRequests(
 				"pending",
 			);
 			if (normalized !== statusRaw) {
-				throw new Error("REGISTRATION_STATUS_INVALID");
+				throw badRequest(
+					"REGISTRATION_STATUS_INVALID",
+					"申请状态参数无效",
+				);
 			}
 			statusFilter = normalized;
 		}
@@ -908,7 +921,7 @@ export async function handleAdminRegistrationRequests(
 		const action = parseBodyTextField(body, "action");
 		const target = await readRegistrationRequestById(requestId);
 		if (!target) {
-			throw new Error("REGISTRATION_NOT_FOUND");
+			throw notFound("REGISTRATION_NOT_FOUND", "申请不存在");
 		}
 		ensurePendingRegistrationStatus(
 			normalizeRegistrationRequestStatus(
@@ -923,7 +936,10 @@ export async function handleAdminRegistrationRequests(
 		if (action === "approve") {
 			const password = String(target.registration_password || "");
 			if (!password) {
-				throw new Error("REGISTRATION_PASSWORD_MISSING");
+				throw badRequest(
+					"REGISTRATION_PASSWORD_MISSING",
+					"申请缺少密码，请让用户重新提交申请",
+				);
 			}
 
 			const created = await createManagedUser({
@@ -983,7 +999,7 @@ export async function handleAdminRegistrationRequests(
 			return ok({ item: updated });
 		}
 
-		throw new Error("REGISTRATION_ACTION_INVALID");
+		throw badRequest("REGISTRATION_ACTION_INVALID", "不支持的申请操作");
 	}
 
 	return fail("未找到接口", 404);

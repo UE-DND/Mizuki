@@ -378,6 +378,14 @@ function removeCardsByAuthorId(authorId: string) {
 	});
 }
 
+function getErrorMessage(
+	data: Record<string, unknown> | null,
+	fallback: string,
+): string {
+	const error = data?.error as Record<string, unknown> | undefined;
+	return (error?.message as string | undefined) || fallback;
+}
+
 async function requestDeleteArticle(articleId: string) {
 	const response = await fetch(
 		`/api/v1/me/articles/${encodeURIComponent(articleId)}`,
@@ -388,7 +396,7 @@ async function requestDeleteArticle(articleId: string) {
 	);
 	const data = await response.json().catch(() => ({}));
 	if (!response.ok || !data?.ok) {
-		throw new Error(data?.message || "删除失败");
+		throw new Error(getErrorMessage(data, "删除失败"));
 	}
 }
 
@@ -402,7 +410,7 @@ async function requestDeleteDiary(diaryId: string) {
 	);
 	const data = await response.json().catch(() => ({}));
 	if (!response.ok || !data?.ok) {
-		throw new Error(data?.message || "删除失败");
+		throw new Error(getErrorMessage(data, "删除失败"));
 	}
 }
 
@@ -420,7 +428,7 @@ async function requestBlockUser(blockedUserId: string, reason?: string) {
 	});
 	const data = await response.json().catch(() => ({}));
 	if (!response.ok || !data?.ok) {
-		throw new Error(data?.message || "屏蔽失败");
+		throw new Error(getErrorMessage(data, "屏蔽失败"));
 	}
 }
 
@@ -447,7 +455,7 @@ async function requestReportContent(input: {
 	});
 	const data = await response.json().catch(() => ({}));
 	if (!response.ok || !data?.ok) {
-		throw new Error(data?.message || "举报失败");
+		throw new Error(getErrorMessage(data, "举报失败"));
 	}
 }
 
@@ -467,7 +475,7 @@ async function requestToggleLike(articleId: string): Promise<{
 	});
 	const data = await response.json().catch(() => ({}));
 	if (!response.ok || !data?.ok) {
-		throw new Error(data?.message || "点赞操作失败");
+		throw new Error(getErrorMessage(data, "点赞操作失败"));
 	}
 	return {
 		liked: Boolean(data.liked),
@@ -491,7 +499,7 @@ async function requestToggleDiaryLike(diaryId: string): Promise<{
 	});
 	const data = await response.json().catch(() => ({}));
 	if (!response.ok || !data?.ok) {
-		throw new Error(data?.message || "点赞操作失败");
+		throw new Error(getErrorMessage(data, "点赞操作失败"));
 	}
 	return {
 		liked: Boolean(data.liked),

@@ -725,7 +725,7 @@ const hasDirectusTarget = Boolean(moduleName && contentId);
         }
         if (!response.ok || !data?.ok) {
           previewHtml = "";
-          previewError = data?.message || "预览生成失败";
+          previewError = data?.error?.message || "预览生成失败";
           previewDirty = true;
           return;
         }
@@ -921,7 +921,7 @@ const hasDirectusTarget = Boolean(moduleName && contentId);
         });
         const data = await response.json().catch(() => null);
         if (!response.ok || !data?.ok) {
-          setFormError(data?.message || "评论提交失败");
+          setFormError(data?.error?.message || "评论提交失败");
           return;
         }
         bodyEl.value = "";
@@ -956,7 +956,7 @@ const hasDirectusTarget = Boolean(moduleName && contentId);
       if (!response.ok || !data?.ok) {
         await showNoticeDialog({
           ariaLabel: "删除失败",
-          message: data?.message || "删除失败",
+          message: data?.error?.message || "删除失败",
         });
         return;
       }

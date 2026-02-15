@@ -4,6 +4,7 @@ import {
 	USERNAME_MAX_WEIGHT,
 	DISPLAY_NAME_MAX_WEIGHT,
 } from "@/constants/text-limits";
+import { badRequest } from "@/server/api/errors";
 
 const USERNAME_ALLOWED_PATTERN = /^[A-Za-z0-9_-]+$/;
 
@@ -42,13 +43,16 @@ function normalizeAutoUsernameBase(input: string): string {
 export function normalizeRequestedUsername(input: string): string {
 	const normalized = normalizeRequestedUsernameBase(input);
 	if (!normalized) {
-		throw new Error("USERNAME_EMPTY");
+		throw badRequest("USERNAME_EMPTY", "用户名不能为空");
 	}
 	if (!USERNAME_ALLOWED_PATTERN.test(normalized)) {
-		throw new Error("USERNAME_INVALID");
+		throw badRequest(
+			"USERNAME_INVALID",
+			"用户名仅支持英文、数字、下划线和短横线",
+		);
 	}
 	if (weightedCharLength(normalized) > USERNAME_MAX_WEIGHT) {
-		throw new Error("USERNAME_TOO_LONG");
+		throw badRequest("USERNAME_TOO_LONG", "用户名最多 14 字符");
 	}
 	return normalized;
 }
@@ -86,13 +90,16 @@ const DISPLAY_NAME_INVALID_PATTERN = /[\x00-\x1F\x7F]/;
 export function validateDisplayName(input: string): string {
 	const value = String(input || "").trim();
 	if (!value) {
-		throw new Error("DISPLAY_NAME_EMPTY");
+		throw badRequest("DISPLAY_NAME_EMPTY", "昵称不能为空");
 	}
 	if (DISPLAY_NAME_INVALID_PATTERN.test(value)) {
-		throw new Error("DISPLAY_NAME_INVALID");
+		throw badRequest("DISPLAY_NAME_INVALID", "昵称包含非法字符");
 	}
 	if (weightedCharLength(value) > DISPLAY_NAME_MAX_WEIGHT) {
-		throw new Error("DISPLAY_NAME_TOO_LONG");
+		throw badRequest(
+			"DISPLAY_NAME_TOO_LONG",
+			"昵称最多 20 字符（中文按 2 字符计）",
+		);
 	}
 	return value;
 }

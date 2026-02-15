@@ -49,6 +49,14 @@ const api = async (url: string, init: RequestInit = {}): Promise<ApiResult> => {
 	return { response, data };
 };
 
+const getErrorMessage = (
+	data: Record<string, unknown> | null,
+	fallback: string,
+): string => {
+	const error = data?.error as Record<string, unknown> | undefined;
+	return (error?.message as string | undefined) || fallback;
+};
+
 // ---------------------------------------------------------------------------
 // DOM helpers
 // ---------------------------------------------------------------------------
@@ -804,10 +812,7 @@ const uploadImageBlob = async (
 			!data?.ok ||
 			!(data?.file as Record<string, unknown> | undefined)?.id
 		) {
-			setMsg(
-				messageTarget,
-				(data?.message as string | undefined) || "图片上传失败",
-			);
+			setMsg(messageTarget, getErrorMessage(data, "图片上传失败"));
 			return null;
 		}
 		setMsg(messageTarget, "");
@@ -1855,10 +1860,7 @@ export function initSiteSettingsPage(): void {
 				},
 			);
 			if (!response.ok || !data?.ok) {
-				setMsg(
-					msgId,
-					(data?.message as string | undefined) || "保存失败",
-				);
+				setMsg(msgId, getErrorMessage(data, "保存失败"));
 				return;
 			}
 			currentSettings = (data.settings ?? payload) as SettingsObj;

@@ -7,6 +7,7 @@ declare namespace App {
 	interface Locals {
 		sidebarProfile?: import("./types/app").SidebarProfileData;
 		siteSettings?: import("./types/site-settings").ResolvedSiteSettings;
+		requestId?: string;
 	}
 }
 

@@ -346,7 +346,7 @@ const registerEnabled = Boolean(
 
           const data = await resp.json().catch(() => null);
           if (!resp.ok || !data?.ok) {
-            setError(data?.message || "登录失败");
+            setError(data?.error?.message || "登录失败");
             return;
           }
 

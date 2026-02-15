@@ -11,6 +11,7 @@ import {
 	normalizeAutoUsername,
 	normalizeRequestedUsername,
 } from "@/server/auth/username";
+import { conflict, forbidden } from "@/server/api/errors";
 
 import type { SessionUser } from "./session";
 
@@ -219,7 +220,7 @@ export function assertCan(
 	if (permission in access.permissions) {
 		const flag = access.permissions[permission];
 		if (typeof flag === "boolean" && !flag) {
-			throw new Error("FORBIDDEN");
+			throw forbidden();
 		}
 	}
 }
@@ -232,7 +233,7 @@ export function assertOwnerOrAdmin(
 		return;
 	}
 	if (access.user.id !== ownerId) {
-		throw new Error("FORBIDDEN");
+		throw forbidden();
 	}
 }
 
@@ -252,7 +253,7 @@ export async function updateProfileUsername(
 		fields: ["id"],
 	});
 	if (rows.length > 0) {
-		throw new Error("USERNAME_EXISTS");
+		throw conflict("USERNAME_EXISTS", "用户名已存在");
 	}
 	await updateOne("app_user_profiles", profileId, {
 		username: normalized,

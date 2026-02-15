@@ -37,6 +37,13 @@ import {
 	setRegistrationRequestCookie,
 } from "@/server/auth/registration-request-cookie";
 import { getSessionUser } from "@/server/auth/session";
+import {
+	AppError,
+	badRequest,
+	conflict,
+	forbidden,
+	notFound,
+} from "@/server/api/errors";
 
 import {
 	DEFAULT_LIST_LIMIT,
@@ -62,17 +69,20 @@ function assertRegisterEnabled(context: APIContext): void {
 		context.locals.siteSettings?.settings.auth?.register_enabled,
 	);
 	if (!enabled) {
-		throw new Error("REGISTER_DISABLED");
+		throw notFound("REGISTER_DISABLED", "资源不存在");
 	}
 }
 
 function parseRegistrationReason(raw: unknown): string {
 	const reason = String(raw || "").trim();
 	if (!reason) {
-		throw new Error("REGISTRATION_REASON_EMPTY");
+		throw badRequest("REGISTRATION_REASON_EMPTY", "注册理由不能为空");
 	}
 	if (reason.length > REGISTRATION_REASON_MAX_LENGTH) {
-		throw new Error("REGISTRATION_REASON_TOO_LONG");
+		throw badRequest(
+			"REGISTRATION_REASON_TOO_LONG",
+			"注册理由最多 500 字符",
+		);
 	}
 	return reason;
 }
@@ -80,16 +90,22 @@ function parseRegistrationReason(raw: unknown): string {
 function parseRegistrationPassword(raw: unknown): string {
 	const password = String(raw ?? "");
 	if (!password.trim()) {
-		throw new Error("REGISTRATION_PASSWORD_REQUIRED");
+		throw badRequest("REGISTRATION_PASSWORD_REQUIRED", "密码不能为空");
 	}
 	if (!REGISTRATION_PASSWORD_ALLOWED_PATTERN.test(password)) {
-		throw new Error("REGISTRATION_PASSWORD_INVALID");
+		throw badRequest(
+			"REGISTRATION_PASSWORD_INVALID",
+			"密码仅支持数字、字母、@ 和下划线",
+		);
 	}
 	if (password.length < REGISTRATION_PASSWORD_MIN_LENGTH) {
-		throw new Error("REGISTRATION_PASSWORD_TOO_SHORT");
+		throw badRequest("REGISTRATION_PASSWORD_TOO_SHORT", "密码至少 8 位");
 	}
 	if (password.length > REGISTRATION_PASSWORD_MAX_LENGTH) {
-		throw new Error("REGISTRATION_PASSWORD_TOO_LONG");
+		throw badRequest(
+			"REGISTRATION_PASSWORD_TOO_LONG",
+			"密码长度不能超过 20 位",
+		);
 	}
 	return password;
 }
@@ -99,11 +115,11 @@ function parseRegistrationEmail(raw: unknown): string {
 		.trim()
 		.toLowerCase();
 	if (!email) {
-		throw new Error("EMAIL_EMPTY");
+		throw badRequest("EMAIL_EMPTY", "邮箱不能为空");
 	}
 	const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 	if (!emailPattern.test(email)) {
-		throw new Error("EMAIL_INVALID");
+		throw badRequest("EMAIL_INVALID", "邮箱格式不正确");
 	}
 	return email;
 }
@@ -115,7 +131,7 @@ async function assertRegistrationEmailAvailable(email: string): Promise<void> {
 		fields: ["id"],
 	});
 	if (rows.length > 0) {
-		throw new Error("EMAIL_EXISTS");
+		throw conflict("EMAIL_EXISTS", "邮箱已存在");
 	}
 }
 
@@ -128,7 +144,7 @@ async function assertRegistrationUsernameAvailable(
 		fields: ["id"],
 	});
 	if (rows.length > 0) {
-		throw new Error("USERNAME_EXISTS");
+		throw conflict("USERNAME_EXISTS", "用户名已存在");
 	}
 }
 
@@ -152,7 +168,10 @@ async function assertNoPendingRegistrationConflict(
 		fields: ["id"],
 	});
 	if (rows.length > 0) {
-		throw new Error("REGISTRATION_REQUEST_EXISTS");
+		throw conflict(
+			"REGISTRATION_REQUEST_EXISTS",
+			"该邮箱或用户名已有待处理申请",
+		);
 	}
 }
 
@@ -170,7 +189,10 @@ async function assertNoPendingRegistrationEmailConflict(
 		fields: ["id"],
 	});
 	if (rows.length > 0) {
-		throw new Error("REGISTRATION_REQUEST_EXISTS");
+		throw conflict(
+			"REGISTRATION_REQUEST_EXISTS",
+			"该邮箱或用户名已有待处理申请",
+		);
 	}
 }
 
@@ -188,7 +210,10 @@ async function assertNoPendingRegistrationUsernameConflict(
 		fields: ["id"],
 	});
 	if (rows.length > 0) {
-		throw new Error("REGISTRATION_REQUEST_EXISTS");
+		throw conflict(
+			"REGISTRATION_REQUEST_EXISTS",
+			"该邮箱或用户名已有待处理申请",
+		);
 	}
 }
 
@@ -380,13 +405,16 @@ async function handlePublicRegistrationRequests(
 			context.cookies.get(REGISTRATION_REQUEST_COOKIE_NAME)?.value,
 		);
 		if (!cookieRequestId || cookieRequestId !== requestId) {
-			throw new Error("REGISTRATION_REQUEST_FORBIDDEN");
+			throw forbidden(
+				"REGISTRATION_REQUEST_FORBIDDEN",
+				"无法操作当前申请，请刷新后重试",
+			);
 		}
 
 		const body = await parseJsonBody(context.request);
 		const action = String(body.action || "").trim();
 		if (action !== "cancel") {
-			throw new Error("REGISTRATION_ACTION_INVALID");
+			throw badRequest("REGISTRATION_ACTION_INVALID", "不支持的申请操作");
 		}
 
 		const rows = await readMany("app_user_registration_requests", {
@@ -396,10 +424,13 @@ async function handlePublicRegistrationRequests(
 		});
 		const target = rows[0];
 		if (!target) {
-			throw new Error("REGISTRATION_NOT_FOUND");
+			throw notFound("REGISTRATION_NOT_FOUND", "申请不存在");
 		}
 		if (String(target.request_status || "").trim() !== "pending") {
-			throw new Error("REGISTRATION_STATUS_CONFLICT");
+			throw conflict(
+				"REGISTRATION_STATUS_CONFLICT",
+				"申请状态冲突，请刷新后重试",
+			);
 		}
 
 		const updated = await updateOne(
@@ -547,8 +578,12 @@ async function handlePublicAsset(
 		if (response.status === 404 || response.status === 403) {
 			return fail("资源不存在", 404);
 		}
-		throw new Error(
-			`ASSET_FETCH_FAILED:${response.status}:${response.statusText}`,
+		throw new AppError(
+			"ASSET_FETCH_FAILED",
+			`资源获取失败: ${response.status} ${response.statusText}`,
+			response.status >= 400 && response.status < 500
+				? response.status
+				: 502,
 		);
 	}
 

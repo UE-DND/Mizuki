@@ -22,6 +22,7 @@ import {
 
 import type { AppUser } from "@/types/app";
 import type { JsonObject } from "@/types/json";
+import { AppError, internal } from "@/server/api/errors";
 import { getDirectusUrl } from "@/server/directus-auth";
 import type { DirectusSchema } from "./schema";
 
@@ -44,7 +45,7 @@ function getStaticToken(): string {
 		process.env.DIRECTUS_STATIC_TOKEN ||
 		import.meta.env.DIRECTUS_STATIC_TOKEN;
 	if (!token || !token.trim()) {
-		throw new Error("DIRECTUS_STATIC_TOKEN 未配置");
+		throw internal("DIRECTUS_STATIC_TOKEN 未配置");
 	}
 	return token.trim();
 }
@@ -77,11 +78,14 @@ function getDirectusErrorCodes(error: unknown): string[] {
 		);
 }
 
-function toDirectusError(action: string, error: unknown): Error {
+function toDirectusError(action: string, error: unknown): AppError {
 	if (!isDirectusError(error)) {
+		if (error instanceof AppError) {
+			return error;
+		}
 		return error instanceof Error
-			? error
-			: new Error(`[directus/client] ${action}失败: ${String(error)}`);
+			? internal(`[directus/client] ${action}失败: ${error.message}`)
+			: internal(`[directus/client] ${action}失败: ${String(error)}`);
 	}
 
 	const status = getDirectusErrorStatus(error);
@@ -97,9 +101,15 @@ function toDirectusError(action: string, error: unknown): Error {
 			.join("; ") || error.message;
 
 	const suffix = codeText ? ` codes=${codeText}` : "";
-	return new Error(
-		`[directus/client] ${action}失败 ${statusText}${suffix}: ${detail}`,
-	);
+	const message = `[directus/client] ${action}失败 ${statusText}${suffix}: ${detail}`;
+
+	if (status === 403) {
+		return new AppError("DIRECTUS_FORBIDDEN", message, 403);
+	}
+	if (status === 404) {
+		return new AppError("DIRECTUS_NOT_FOUND", message, 404);
+	}
+	return new AppError("DIRECTUS_ERROR", message, status || 500);
 }
 
 function isDirectusItemNotFound(error: unknown): boolean {
@@ -123,8 +133,8 @@ async function runDirectusRequest<T>(
 
 function assertNonSystemCollection(collection: keyof DirectusSchema): void {
 	if (collection === "directus_users" || collection === "directus_files") {
-		throw new Error(
-			`[directus/client] 请勿使用通用 items 接口写入系统集合: ${String(collection)}`,
+		throw internal(
+			`请勿使用通用 items 接口写入系统集合: ${String(collection)}`,
 		);
 	}
 }
@@ -282,7 +292,7 @@ export async function createDirectusUser(payload: {
 			? ((created as { id: string }).id ?? "")
 			: String((created as { id?: unknown }).id ?? "");
 	if (!id) {
-		throw new Error("[directus/client] 创建用户成功但未返回 id");
+		throw internal("创建用户成功但未返回 id");
 	}
 	return { id };
 }
@@ -308,7 +318,7 @@ export async function updateDirectusUser(
 			? ((updated as { id: string }).id ?? "")
 			: String((updated as { id?: unknown }).id ?? "");
 	if (!userId) {
-		throw new Error("[directus/client] 更新用户成功但未返回 id");
+		throw internal("更新用户成功但未返回 id");
 	}
 	return { id: userId };
 }
@@ -379,7 +389,7 @@ export async function uploadDirectusFile(params: {
 			? ((data as { id: string }).id ?? "")
 			: String((data as { id?: unknown }).id ?? "");
 	if (!id) {
-		throw new Error("[directus/client] 文件上传成功但响应中缺少 id");
+		throw internal("文件上传成功但响应中缺少 id");
 	}
 
 	return {
@@ -512,5 +522,5 @@ export async function readDirectusAssetResponse(params: {
 	if (result instanceof Response) {
 		return result;
 	}
-	throw new Error("[directus/client] 资源响应格式无效");
+	throw internal("资源响应格式无效");
 }

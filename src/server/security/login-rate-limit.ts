@@ -1,6 +1,8 @@
 import { Ratelimit } from "@upstash/ratelimit";
 import { Redis } from "@upstash/redis";
 
+import { internal } from "@/server/api/errors";
+
 type RateLimitRecord = { count: number; resetAt: number };
 
 const memoryRateLimit = new Map<string, RateLimitRecord>();
@@ -40,7 +42,7 @@ function getRatelimit(limit: number, windowMs: number): Ratelimit {
 
 	const config = getUpstashConfig();
 	if (!config) {
-		throw new Error("UPSTASH_RATE_LIMIT_NOT_CONFIGURED");
+		throw internal("Upstash 限流服务未配置");
 	}
 
 	const redis = new Redis({
@@ -99,7 +101,7 @@ export async function checkLoginRateLimitDistributed(
 
 	if (!hasUpstash) {
 		if (isProduction) {
-			throw new Error("UPSTASH_RATE_LIMIT_NOT_CONFIGURED");
+			throw internal("Upstash 限流服务未配置");
 		}
 		return fallbackMemoryRateLimit(cleanIp, limit, windowMs);
 	}

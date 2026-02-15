@@ -183,7 +183,8 @@ function getApiMessage(
 	data: Record<string, unknown> | null,
 	fallback: string,
 ): string {
-	const message = toStringValue(data?.message);
+	const error = data?.error as Record<string, unknown> | undefined;
+	const message = toStringValue(error?.message);
 	return message || fallback;
 }
 

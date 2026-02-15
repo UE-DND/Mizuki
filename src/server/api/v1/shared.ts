@@ -21,6 +21,7 @@ import {
 	weightedCharLength,
 	PROFILE_BIO_MAX_LENGTH,
 } from "@/constants/text-limits";
+import { badRequest, conflict } from "@/server/api/errors";
 import { fail } from "@/server/api/response";
 import {
 	toBooleanValue,
@@ -403,7 +404,10 @@ export function parseProfileBioField(
 		return null;
 	}
 	if (weightedCharLength(value) > PROFILE_BIO_MAX_LENGTH) {
-		throw new Error("PROFILE_BIO_TOO_LONG");
+		throw badRequest(
+			"PROFILE_BIO_TOO_LONG",
+			"个人简介最多 30 字符（中文按 2 字符计）",
+		);
 	}
 	return value;
 }
@@ -426,15 +430,15 @@ export function parseSocialLinks(
 		return null;
 	}
 	if (!Array.isArray(input)) {
-		throw new Error("SOCIAL_LINKS_INVALID");
+		throw badRequest("SOCIAL_LINKS_INVALID", "社交链接格式不正确");
 	}
 	if (input.length > SOCIAL_LINKS_MAX) {
-		throw new Error("SOCIAL_LINKS_TOO_MANY");
+		throw badRequest("SOCIAL_LINKS_TOO_MANY", "社交链接最多 20 条");
 	}
 	const result: SocialLink[] = [];
 	for (const item of input) {
 		if (!item || typeof item !== "object" || Array.isArray(item)) {
-			throw new Error("SOCIAL_LINKS_INVALID");
+			throw badRequest("SOCIAL_LINKS_INVALID", "社交链接格式不正确");
 		}
 		const record = item as Record<string, unknown>;
 		const platform = String(record.platform || "").trim();
@@ -443,7 +447,7 @@ export function parseSocialLinks(
 			continue;
 		}
 		if (url.length > SOCIAL_LINK_URL_MAX_LENGTH) {
-			throw new Error("SOCIAL_LINKS_INVALID");
+			throw badRequest("SOCIAL_LINKS_INVALID", "社交链接格式不正确");
 		}
 		const enabled =
 			record.enabled === undefined ? true : Boolean(record.enabled);
@@ -482,7 +486,7 @@ export async function ensureUsernameAvailable(
 		fields: ["id"],
 	});
 	if (rows.length > 0) {
-		throw new Error("USERNAME_EXISTS");
+		throw conflict("USERNAME_EXISTS", "用户名已存在");
 	}
 }
 
@@ -501,191 +505,6 @@ export function parseVisibilityPatch(body: JsonObject): JsonObject {
 		payload.show_on_profile = toBooleanValue(body.show_on_profile, true);
 	}
 	return payload;
-}
-
-export function toErrorResponse(
-	error: unknown,
-	context?: APIContext,
-): Response {
-	const message = String((error as Error)?.message ?? error);
-	if (message.includes("REGISTRATION_REQUEST_FORBIDDEN")) {
-		return fail(
-			"无法操作当前申请，请刷新后重试",
-			403,
-			"REGISTRATION_REQUEST_FORBIDDEN",
-		);
-	}
-	if (message.includes("ACCOUNT_SUSPENDED")) {
-		return fail("账号已被停用", 403, "ACCOUNT_SUSPENDED");
-	}
-	if (message.includes("INVALID_JSON")) {
-		return fail("请求体不是合法 JSON", 400, "INVALID_JSON");
-	}
-	if (message.includes("USERNAME_EXISTS")) {
-		return fail("用户名已存在", 409, "USERNAME_EXISTS");
-	}
-	if (message.includes("EMAIL_EXISTS")) {
-		return fail("邮箱已存在", 409, "EMAIL_EXISTS");
-	}
-	if (message.includes("EMAIL_EMPTY")) {
-		return fail("邮箱不能为空", 400, "EMAIL_EMPTY");
-	}
-	if (message.includes("EMAIL_INVALID")) {
-		return fail("邮箱格式不正确", 400, "EMAIL_INVALID");
-	}
-	if (message.includes("REGISTER_DISABLED")) {
-		return fail("资源不存在", 404, "REGISTER_DISABLED");
-	}
-	if (message.includes("REGISTRATION_REQUEST_EXISTS")) {
-		return fail(
-			"该邮箱或用户名已有待处理申请",
-			409,
-			"REGISTRATION_REQUEST_EXISTS",
-		);
-	}
-	if (message.includes("REGISTRATION_NOT_FOUND")) {
-		return fail("申请不存在", 404, "REGISTRATION_NOT_FOUND");
-	}
-	if (message.includes("REGISTRATION_STATUS_CONFLICT")) {
-		return fail(
-			"申请状态冲突，请刷新后重试",
-			409,
-			"REGISTRATION_STATUS_CONFLICT",
-		);
-	}
-	if (message.includes("REGISTRATION_STATUS_INVALID")) {
-		return fail("申请状态参数无效", 400, "REGISTRATION_STATUS_INVALID");
-	}
-	if (message.includes("REGISTRATION_REASON_EMPTY")) {
-		return fail("注册理由不能为空", 400, "REGISTRATION_REASON_EMPTY");
-	}
-	if (message.includes("REGISTRATION_REASON_TOO_LONG")) {
-		return fail(
-			"注册理由最多 500 字符",
-			400,
-			"REGISTRATION_REASON_TOO_LONG",
-		);
-	}
-	if (message.includes("REGISTRATION_PASSWORD_REQUIRED")) {
-		return fail("密码不能为空", 400, "REGISTRATION_PASSWORD_REQUIRED");
-	}
-	if (message.includes("REGISTRATION_PASSWORD_INVALID")) {
-		return fail(
-			"密码仅支持数字、字母、@ 和下划线",
-			400,
-			"REGISTRATION_PASSWORD_INVALID",
-		);
-	}
-	if (message.includes("REGISTRATION_PASSWORD_TOO_SHORT")) {
-		return fail("密码至少 8 位", 400, "REGISTRATION_PASSWORD_TOO_SHORT");
-	}
-	if (message.includes("REGISTRATION_PASSWORD_TOO_LONG")) {
-		return fail(
-			"密码长度不能超过 20 位",
-			400,
-			"REGISTRATION_PASSWORD_TOO_LONG",
-		);
-	}
-	if (message.includes("REGISTRATION_PASSWORD_MISSING")) {
-		return fail(
-			"申请缺少密码，请让用户重新提交申请",
-			400,
-			"REGISTRATION_PASSWORD_MISSING",
-		);
-	}
-	if (message.includes("REGISTRATION_ACTION_INVALID")) {
-		return fail("不支持的申请操作", 400, "REGISTRATION_ACTION_INVALID");
-	}
-	if (message.includes("REGISTRATION_APPROVE_PASSWORD_REQUIRED")) {
-		return fail(
-			"审批通过时必须设置初始密码",
-			400,
-			"REGISTRATION_APPROVE_PASSWORD_REQUIRED",
-		);
-	}
-	if (message.includes("LEGACY_ENDPOINT_DISABLED")) {
-		return fail("接口不存在", 404, "LEGACY_ENDPOINT_DISABLED");
-	}
-	if (message.includes("USER_DELETE_SELF_FORBIDDEN")) {
-		return fail("不能删除当前登录账号", 400, "USER_DELETE_SELF_FORBIDDEN");
-	}
-	if (message.includes("FORBIDDEN") && message.includes("directus/client")) {
-		return fail("删除账号失败，权限不足", 403, "USER_DELETE_FORBIDDEN");
-	}
-	if (
-		message.includes("删除 Directus 用户") &&
-		/(constraint|foreign key|violat)/i.test(message)
-	) {
-		return fail(
-			"删除账号失败，请先处理该用户关联内容",
-			409,
-			"USER_DELETE_CONSTRAINT",
-		);
-	}
-	if (message.includes("删除 Directus 用户失败")) {
-		return fail(
-			"删除账号失败，请先处理该用户关联内容",
-			409,
-			"USER_DELETE_CONSTRAINT",
-		);
-	}
-	if (message.includes("USERNAME_EMPTY")) {
-		return fail("用户名不能为空", 400, "USERNAME_EMPTY");
-	}
-	if (message.includes("USERNAME_INVALID")) {
-		return fail(
-			"用户名仅支持英文、数字、下划线和短横线",
-			400,
-			"USERNAME_INVALID",
-		);
-	}
-	if (message.includes("USERNAME_TOO_LONG")) {
-		return fail("用户名最多 14 字符", 400, "USERNAME_TOO_LONG");
-	}
-	if (message.includes("PROFILE_BIO_TOO_LONG")) {
-		return fail(
-			"个人简介最多 30 字符（中文按 2 字符计）",
-			400,
-			"PROFILE_BIO_TOO_LONG",
-		);
-	}
-	if (message.includes("DISPLAY_NAME_EMPTY")) {
-		return fail("昵称不能为空", 400, "DISPLAY_NAME_EMPTY");
-	}
-	if (message.includes("DISPLAY_NAME_INVALID")) {
-		return fail("昵称包含非法字符", 400, "DISPLAY_NAME_INVALID");
-	}
-	if (message.includes("DISPLAY_NAME_TOO_LONG")) {
-		return fail(
-			"昵称最多 20 字符（中文按 2 字符计）",
-			400,
-			"DISPLAY_NAME_TOO_LONG",
-		);
-	}
-	if (message.includes("SOCIAL_LINKS_INVALID")) {
-		return fail("社交链接格式不正确", 400, "SOCIAL_LINKS_INVALID");
-	}
-	if (message.includes("SOCIAL_LINKS_TOO_MANY")) {
-		return fail("社交链接最多 20 条", 400, "SOCIAL_LINKS_TOO_MANY");
-	}
-	if (message.includes("FORBIDDEN")) {
-		return fail("权限不足", 403, "FORBIDDEN");
-	}
-	if (message.includes("ITEM_NOT_FOUND")) {
-		return fail("资源不存在", 404, "ITEM_NOT_FOUND");
-	}
-	if (message.includes("UNAUTHORIZED")) {
-		return fail("未登录", 401, "UNAUTHORIZED");
-	}
-	console.error("[api/v1] unexpected error:", {
-		method: context?.request.method,
-		url: context?.url.pathname,
-		error:
-			error instanceof Error
-				? { message: error.message, stack: error.stack }
-				: error,
-	});
-	return fail("服务端错误", 500, "INTERNAL_ERROR");
 }
 
 export async function loadPublicArticleById(

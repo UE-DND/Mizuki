@@ -168,7 +168,8 @@
     data: Record<string, unknown> | null,
     fallback = "未知错误",
   ): string {
-    const message = data?.message;
+    const error = data?.error as Record<string, unknown> | undefined;
+    const message = error?.message;
     return typeof message === "string" && message.trim() ? message : fallback;
   }
 

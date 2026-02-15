@@ -59,6 +59,14 @@ const api = async (url: string, init: RequestInit = {}): Promise<ApiResult> => {
 	return { response, data };
 };
 
+const getErrorMessage = (
+	data: Record<string, unknown> | null,
+	fallback: string,
+): string => {
+	const error = data?.error as Record<string, unknown> | undefined;
+	return (error?.message as string | undefined) || fallback;
+};
+
 const clamp = (value: number, min: number, max: number): number =>
 	Math.min(max, Math.max(min, value));
 
@@ -1141,9 +1149,7 @@ export function initMePage(): void {
 			!data?.ok ||
 			!(data?.file as Record<string, unknown> | undefined)?.id
 		) {
-			setProfileMessage(
-				(data?.message as string | undefined) || "头像上传失败",
-			);
+			setProfileMessage(getErrorMessage(data, "头像上传失败"));
 			return false;
 		}
 		clearPendingAvatarUpload(true);
@@ -1315,9 +1321,7 @@ export function initMePage(): void {
 				body: JSON.stringify(payload),
 			});
 			if (!response.ok || !data?.ok) {
-				setProfileMessage(
-					(data?.message as string | undefined) || "保存失败",
-				);
+				setProfileMessage(getErrorMessage(data, "保存失败"));
 				return;
 			}
 			setProfileMessage("已保存，正在刷新...");
@@ -1597,9 +1601,7 @@ export function initMePage(): void {
 					body: JSON.stringify({ social_links: links }),
 				});
 				if (!response.ok || !data?.ok) {
-					setSocialMsg(
-						(data?.message as string | undefined) || "保存失败",
-					);
+					setSocialMsg(getErrorMessage(data, "保存失败"));
 					return;
 				}
 				setSocialMsg("已保存，正在刷新...");
@@ -1654,8 +1656,7 @@ export function initMePage(): void {
 						window.location.reload();
 					}, 120);
 				} else {
-					privacyMsg.textContent =
-						(data?.message as string | undefined) || "保存失败";
+					privacyMsg.textContent = getErrorMessage(data, "保存失败");
 				}
 			}
 		});

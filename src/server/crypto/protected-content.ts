@@ -1,5 +1,7 @@
 import { webcrypto } from "node:crypto";
 
+import { badRequest } from "@/server/api/errors";
+
 const MARKER = "DACAPO-VERIFY:";
 const VERSION_PREFIX = "DC2:";
 const PBKDF2_ITERATIONS = 210_000;
@@ -66,7 +68,7 @@ export async function encryptProtectedContent(
 ): Promise<string> {
 	const cleanPassword = String(password || "").trim();
 	if (!cleanPassword) {
-		throw new Error("PASSWORD_REQUIRED");
+		throw badRequest("PASSWORD_REQUIRED", "请输入密码");
 	}
 
 	const source = `${MARKER}${String(html || "")}`;

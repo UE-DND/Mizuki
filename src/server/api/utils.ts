@@ -1,4 +1,5 @@
 import type { JsonObject, JsonValue } from "@/types/json";
+import { badRequest } from "@/server/api/errors";
 import { isJsonObject } from "@/utils/json-utils";
 
 export function parsePagination(url: URL): {
@@ -23,10 +24,10 @@ export async function parseJsonBody(request: Request): Promise<JsonObject> {
 	try {
 		payload = (await request.json()) as JsonValue;
 	} catch {
-		throw new Error("INVALID_JSON");
+		throw badRequest("INVALID_JSON", "请求体不是合法 JSON");
 	}
 	if (!isJsonObject(payload)) {
-		throw new Error("INVALID_JSON_OBJECT");
+		throw badRequest("INVALID_JSON_OBJECT", "请求体必须是 JSON 对象");
 	}
 	return payload;
 }

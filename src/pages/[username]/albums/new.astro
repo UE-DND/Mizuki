@@ -162,7 +162,7 @@ Astro.locals.sidebarProfile = profileToSidebarData(profile);
       });
       const data = await res.json();
       if (!res.ok || !data.item) {
-        showError(data.error || data.message || "创建失败，请重试");
+        showError(data.error?.message || "创建失败，请重试");
         submitBtn?.removeAttribute("disabled");
         submitBtn.textContent = "创建相册";
         return;
