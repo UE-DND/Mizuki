@@ -1,14 +1,8 @@
 import type { AppProfile, AppUser } from "@/types/app";
 import type { JsonObject } from "@/types/json";
+import { cacheManager } from "@/server/cache/manager";
 import { readMany } from "@/server/directus/client";
-import { buildDirectusAssetUrl } from "@/server/directus-auth";
-
-const AUTHOR_CACHE_TTL_MS = 5 * 60 * 1000;
-
-type CachedAuthorBundle = {
-	expiresAt: number;
-	value: AuthorBundleItem;
-};
+import { buildPublicAssetUrl } from "@/server/directus-auth";
 
 export type AuthorBundleItem = {
 	id: string;
@@ -21,12 +15,6 @@ export type AuthorBundleItem = {
 type ProfileWithRelationUser = AppProfile & {
 	user?: Partial<AppUser> | null;
 };
-
-const authorCache = new Map<string, CachedAuthorBundle>();
-
-function nowMs(): number {
-	return Date.now();
-}
 
 function computeDisplayName(
 	user?: Partial<AppUser> | null,
@@ -74,14 +62,14 @@ function resolveAvatarUrl(
 		return profile.avatar_url;
 	}
 	if (profile?.avatar_file) {
-		return buildDirectusAssetUrl(profile.avatar_file, {
+		return buildPublicAssetUrl(profile.avatar_file, {
 			width: 96,
 			height: 96,
 			fit: "cover",
 		});
 	}
 	if (user?.avatar) {
-		return buildDirectusAssetUrl(user.avatar, {
+		return buildPublicAssetUrl(user.avatar, {
 			width: 96,
 			height: 96,
 			fit: "cover",
@@ -105,34 +93,6 @@ function toAuthorBundle(
 		username,
 		avatar_url: resolveAvatarUrl(profile, user),
 	};
-}
-
-function getCached(userId: string): AuthorBundleItem | null {
-	const cached = authorCache.get(userId);
-	if (!cached) {
-		return null;
-	}
-	if (cached.expiresAt <= nowMs()) {
-		authorCache.delete(userId);
-		return null;
-	}
-	return cached.value;
-}
-
-function setCached(userId: string, value: AuthorBundleItem): void {
-	authorCache.set(userId, {
-		expiresAt: nowMs() + AUTHOR_CACHE_TTL_MS,
-		value,
-	});
-}
-
-function pruneExpiredCache(): void {
-	const now = nowMs();
-	for (const [key, value] of authorCache.entries()) {
-		if (value.expiresAt <= now) {
-			authorCache.delete(key);
-		}
-	}
 }
 
 function uniqueUserIds(userIds: string[]): string[] {
@@ -244,7 +204,10 @@ async function fetchAuthorsForUsers(
 }
 
 export function invalidateAuthorCache(userId: string): void {
-	authorCache.delete(String(userId || "").trim());
+	const id = String(userId || "").trim();
+	if (id) {
+		void cacheManager.invalidate("author", id);
+	}
 }
 
 export function invalidateAuthorCacheByUsers(userIds: string[]): void {
@@ -256,14 +219,15 @@ export function invalidateAuthorCacheByUsers(userIds: string[]): void {
 export async function getAuthorBundle(
 	userIds: string[],
 ): Promise<Map<string, AuthorBundleItem>> {
-	pruneExpiredCache();
-
 	const normalizedIds = uniqueUserIds(userIds);
 	const result = new Map<string, AuthorBundleItem>();
 	const missIds: string[] = [];
 
 	for (const userId of normalizedIds) {
-		const cached = getCached(userId);
+		const cached = await cacheManager.get<AuthorBundleItem>(
+			"author",
+			userId,
+		);
 		if (cached) {
 			result.set(userId, cached);
 			continue;
@@ -274,7 +238,7 @@ export async function getAuthorBundle(
 	if (missIds.length > 0) {
 		const fetched = await fetchAuthorsForUsers(missIds);
 		for (const [userId, bundle] of fetched.entries()) {
-			setCached(userId, bundle);
+			void cacheManager.set("author", userId, bundle);
 			result.set(userId, bundle);
 		}
 	}

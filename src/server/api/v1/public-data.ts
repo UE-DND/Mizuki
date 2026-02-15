@@ -11,8 +11,9 @@ import type {
 	SidebarProfileData,
 } from "@/types/app";
 import type { JsonObject } from "@/types/json";
+import { cacheManager } from "@/server/cache/manager";
 import { countItems, readMany } from "@/server/directus/client";
-import { buildDirectusAssetUrl } from "@/server/directus-auth";
+import { buildPublicAssetUrl } from "@/server/directus-auth";
 import { isShortId } from "@/server/utils/short-id";
 
 import type { AuthorBundleItem } from "./shared/author-cache";
@@ -181,7 +182,7 @@ export async function loadUserHomeData(
 		avatar_url:
 			profile.avatar_url ||
 			(profile.avatar_file
-				? buildDirectusAssetUrl(profile.avatar_file, {
+				? buildPublicAssetUrl(profile.avatar_file, {
 						width: 128,
 						height: 128,
 						fit: "cover",
@@ -710,7 +711,7 @@ export async function loadUserAlbumDetail(
 
 export function profileToSidebarData(profile: AppProfile): SidebarProfileData {
 	const avatarUrl = profile.avatar_file
-		? buildDirectusAssetUrl(profile.avatar_file)
+		? buildPublicAssetUrl(profile.avatar_file)
 		: profile.avatar_url || null;
 
 	return {
@@ -765,20 +766,17 @@ export async function loadProfileForViewerByUserId(
 	return loadPublicProfileByUserId(userId);
 }
 
-let officialSidebarCache: {
-	data: SidebarProfileData;
-	expiry: number;
-} | null = null;
-
-const OFFICIAL_CACHE_TTL = 10 * 60 * 1000;
-
 export function invalidateOfficialSidebarCache(): void {
-	officialSidebarCache = null;
+	void cacheManager.invalidate("sidebar", "official");
 }
 
 export async function loadOfficialSidebarProfile(): Promise<SidebarProfileData> {
-	if (officialSidebarCache && Date.now() < officialSidebarCache.expiry) {
-		return officialSidebarCache.data;
+	const cached = await cacheManager.get<SidebarProfileData>(
+		"sidebar",
+		"official",
+	);
+	if (cached) {
+		return cached;
 	}
 
 	const rows = await readMany("app_user_profiles", {
@@ -806,9 +804,6 @@ export async function loadOfficialSidebarProfile(): Promise<SidebarProfileData> 
 	}
 
 	const data = profileToSidebarData(profile);
-	officialSidebarCache = {
-		data,
-		expiry: Date.now() + OFFICIAL_CACHE_TTL,
-	};
+	void cacheManager.set("sidebar", "official", data);
 	return data;
 }

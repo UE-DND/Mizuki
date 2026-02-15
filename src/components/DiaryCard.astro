@@ -3,7 +3,7 @@ import { Icon } from "astro-icon/components";
 
 import type { AppDiary, AppDiaryImage } from "@/types/app";
 import type { AuthorBundleItem } from "@/server/api/v1/shared/author-cache";
-import { buildDirectusAssetUrl } from "@/server/directus-auth";
+import { buildPublicAssetUrl } from "@/server/directus-auth";
 import { resolveAuthorIdentity } from "@/utils/author-identity";
 
 interface Props {
@@ -78,7 +78,7 @@ function resolveDiaryImageSrc(image: AppDiaryImage): string {
   if (!assetId) {
     return "";
   }
-  return buildDirectusAssetUrl(assetId, {
+  return buildPublicAssetUrl(assetId, {
     width: 200,
     height: 200,
     fit: "cover",

@@ -69,7 +69,7 @@ export type SiteConfig = {
 			interval: number; // 轮播间隔时间（秒）
 		};
 		waves?: {
-			enable: boolean; // 是否启用水波纹效果
+			enable: boolean; // 是否启用波浪效果
 			performanceMode?: boolean; // 性能模式：减少动画复杂度
 		};
 		imageApi?: {

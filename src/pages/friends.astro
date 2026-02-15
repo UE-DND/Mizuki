@@ -6,7 +6,7 @@ import {
   loadPublicFriends,
   safeCsv,
 } from "@/server/api/v1/shared";
-import { buildDirectusAssetUrl } from "@/server/directus-auth";
+import { buildPublicAssetUrl } from "@/server/directus-auth";
 // import Icon from "../components/misc/Icon.astro";
 import I18nKey from "../i18n/i18nKey";
 import { i18n } from "../i18n/translation";
@@ -98,7 +98,7 @@ try {
         return null;
       }
       const imgurl = item.avatar_file
-        ? buildDirectusAssetUrl(item.avatar_file, {
+        ? buildPublicAssetUrl(item.avatar_file, {
             width: 128,
             height: 128,
             fit: "cover",

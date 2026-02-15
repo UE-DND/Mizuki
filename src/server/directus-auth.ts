@@ -194,8 +194,63 @@ export function buildDirectusAssetUrl(
 	return `${url.pathname}${url.search}`;
 }
 
-function getDirectusAuthClient() {
+/**
+ * 构建公开资源直链 URL。当配置了 PUBLIC_ASSET_BASE_URL 时直接拼接外部地址，
+ * 否则回退到 BFF 代理路径。
+ */
+export function buildPublicAssetUrl(
+	fileId: string,
+	options?: {
+		width?: number;
+		height?: number;
+		fit?: string;
+		quality?: number;
+		format?: string;
+	},
+): string {
+	const baseUrl = (
+		process.env.PUBLIC_ASSET_BASE_URL ||
+		import.meta.env.PUBLIC_ASSET_BASE_URL ||
+		""
+	)
+		.toString()
+		.trim();
+	if (!baseUrl) {
+		return buildDirectusAssetUrl(fileId, options);
+	}
+
+	const url = new URL(`/${encodeURIComponent(fileId)}`, baseUrl);
+	if (options?.width) {
+		url.searchParams.set("width", String(options.width));
+	}
+	if (options?.height) {
+		url.searchParams.set("height", String(options.height));
+	}
+	if (options?.fit) {
+		url.searchParams.set("fit", options.fit);
+	}
+	if (options?.quality) {
+		url.searchParams.set("quality", String(options.quality));
+	}
+	if (options?.format) {
+		url.searchParams.set("format", options.format);
+	}
+	return url.toString();
+}
+
+// 提取构建逻辑，让 TypeScript 推断包含 rest() 扩展（.request() 方法）的完整类型
+function buildDirectusAuthClient() {
 	return createDirectus(getDirectusUrl()).with(rest());
+}
+
+let authClientSingleton: ReturnType<typeof buildDirectusAuthClient> | null =
+	null;
+
+function getDirectusAuthClient() {
+	if (authClientSingleton) return authClientSingleton;
+	authClientSingleton = buildDirectusAuthClient();
+	console.info("[directus/auth] 认证客户端初始化");
+	return authClientSingleton;
 }
 
 export class DirectusAuthError extends Error {

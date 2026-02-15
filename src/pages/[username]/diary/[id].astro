@@ -2,9 +2,9 @@
 import Comment from "@components/comment/index.astro";
 import ContentNotVisible from "@components/misc/ContentNotVisible.astro";
 import Markdown from "@components/misc/Markdown.astro";
+import ResponsiveImage from "@components/misc/ResponsiveImage.astro";
 import MainGridLayout from "@layouts/MainGridLayout.astro";
 import { renderMarkdown } from "@/server/markdown/render";
-import { buildDirectusAssetUrl } from "@/server/directus-auth";
 import {
   loadProfileForViewer,
   loadUserDiaryDetail,
@@ -138,21 +138,22 @@ const diary = result.status === "ok" ? result.data : null;
                 .filter((image) => image.image_url || image.file_id)
                 .map((image) => (
                   <figure class="space-y-2">
-                    <img
-                      src={
-                        image.image_url ||
-                        (image.file_id
-                          ? buildDirectusAssetUrl(image.file_id, {
-                              width: 960,
-                              height: 960,
-                              fit: "cover",
-                            })
-                          : "")
-                      }
-                      alt={image.caption || "diary image"}
-                      class="w-full h-36 h-44 object-cover rounded-xl border border-(--line-divider)"
-                      loading="lazy"
-                    />
+                    {image.file_id ? (
+                      <ResponsiveImage
+                        fileId={image.file_id}
+                        alt={image.caption || "diary image"}
+                        preset="diary"
+                        isPublic
+                        class="w-full h-36 h-44 object-cover rounded-xl border border-(--line-divider)"
+                      />
+                    ) : (
+                      <img
+                        src={image.image_url || ""}
+                        alt={image.caption || "diary image"}
+                        class="w-full h-36 h-44 object-cover rounded-xl border border-(--line-divider)"
+                        loading="lazy"
+                      />
+                    )}
                     {image.caption && (
                       <figcaption class="text-xs text-60">
                         {image.caption}

@@ -50,10 +50,20 @@ function getStaticToken(): string {
 	return token.trim();
 }
 
-function getDirectusClient() {
+// 提取构建逻辑，让 TypeScript 推断包含 rest() 扩展（.request() 方法）的完整类型
+function buildDirectusClient() {
 	return createDirectus<DirectusSchema>(getDirectusUrl())
 		.with(staticToken(getStaticToken()))
 		.with(rest());
+}
+
+let clientSingleton: ReturnType<typeof buildDirectusClient> | null = null;
+
+function getDirectusClient() {
+	if (clientSingleton) return clientSingleton;
+	clientSingleton = buildDirectusClient();
+	console.info("[directus/client] 客户端初始化");
+	return clientSingleton;
 }
 
 function getDirectusErrorStatus(error: unknown): number | null {

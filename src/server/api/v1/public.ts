@@ -11,6 +11,8 @@ import type {
 	AppProfile,
 } from "@/types/app";
 import type { JsonObject } from "@/types/json";
+import { cacheManager } from "@/server/cache/manager";
+import { hashParams } from "@/server/cache/key-utils";
 import {
 	createOne,
 	countItems,
@@ -18,7 +20,7 @@ import {
 	readMany,
 	updateOne,
 } from "@/server/directus/client";
-import { buildDirectusAssetUrl } from "@/server/directus-auth";
+import { buildPublicAssetUrl } from "@/server/directus-auth";
 import { getPublicSiteSettings } from "@/server/site-settings/service";
 import { fail, ok } from "@/server/api/response";
 import {
@@ -606,9 +608,14 @@ async function handlePublicAsset(
 	if (lastModified) {
 		headers.set("last-modified", lastModified);
 	}
+
+	// 图片资源使用长缓存（文件 ID 内容寻址，更换文件 = 新 ID）
+	const isImage = Boolean(contentType && contentType.startsWith("image/"));
 	headers.set(
 		"cache-control",
-		cacheControl || "public, max-age=300, s-maxage=300",
+		isImage
+			? "public, max-age=31536000, immutable"
+			: cacheControl || "public, max-age=300, s-maxage=300",
 	);
 
 	return new Response(response.body, {
@@ -641,6 +648,21 @@ async function handlePublicArticles(
 		const authorHandle = normalizeAuthorHandle(
 			(context.url.searchParams.get("author") || "").slice(0, 100),
 		);
+
+		// 缓存查询
+		const cacheKey = hashParams({
+			page,
+			limit,
+			tag,
+			category,
+			q,
+			author: authorHandle,
+		});
+		const cached = await cacheManager.get<unknown>(
+			"article-list",
+			cacheKey,
+		);
+		if (cached) return ok(cached);
 
 		const andFilters: JsonObject[] = [filterPublicStatus()];
 		if (authorHandle) {
@@ -693,12 +715,9 @@ async function handlePublicArticles(
 			author: readAuthor(authorMap, row.author_id),
 		}));
 
-		return ok({
-			items,
-			page,
-			limit,
-			total,
-		});
+		const result = { items, page, limit, total };
+		void cacheManager.set("article-list", cacheKey, result);
+		return ok(result);
 	}
 
 	if (segments.length === 3) {
@@ -706,6 +725,14 @@ async function handlePublicArticles(
 		if (!articleId) {
 			return fail("缺少文章 ID", 400);
 		}
+
+		// 缓存查询
+		const cached = await cacheManager.get<unknown>(
+			"article-detail",
+			articleId,
+		);
+		if (cached) return ok(cached);
+
 		const articleById = await loadPublicArticleById(articleId);
 		const article =
 			articleById ||
@@ -716,13 +743,15 @@ async function handlePublicArticles(
 			return fail("文章不存在", 404);
 		}
 		const authorMap = await getAuthorBundle([article.author_id]);
-		return ok({
+		const result = {
 			item: {
 				...article,
 				tags: safeCsv(article.tags),
 				author: readAuthor(authorMap, article.author_id),
 			},
-		});
+		};
+		void cacheManager.set("article-detail", articleId, result);
+		return ok(result);
 	}
 
 	return fail("未找到接口", 404);
@@ -738,6 +767,12 @@ async function handlePublicDiaries(
 
 	if (segments.length === 2) {
 		const { page, limit, offset } = parsePagination(context.url);
+
+		// 缓存查询
+		const cacheKey = hashParams({ page, limit });
+		const cached = await cacheManager.get<unknown>("diary-list", cacheKey);
+		if (cached) return ok(cached);
+
 		const filter = filterPublicStatus();
 		const [rows, total] = await Promise.all([
 			readMany("app_diaries", {
@@ -784,12 +819,9 @@ async function handlePublicDiaries(
 			images: imageMap.get(row.id) || [],
 		}));
 
-		return ok({
-			items,
-			page,
-			limit,
-			total,
-		});
+		const result = { items, page, limit, total };
+		void cacheManager.set("diary-list", cacheKey, result);
+		return ok(result);
 	}
 
 	if (segments.length === 3) {
@@ -797,6 +829,11 @@ async function handlePublicDiaries(
 		if (!id) {
 			return fail("缺少日记 ID", 400);
 		}
+
+		// 缓存查询
+		const cached = await cacheManager.get<unknown>("diary-detail", id);
+		if (cached) return ok(cached);
+
 		const diary = await loadPublicDiaryById(id);
 		if (!diary) {
 			return fail("日记不存在", 404);
@@ -816,13 +853,15 @@ async function handlePublicDiaries(
 			getAuthorBundle([diary.author_id]),
 		]);
 
-		return ok({
+		const result = {
 			item: {
 				...diary,
 				author: readAuthor(authorMap, diary.author_id),
 				images,
 			},
-		});
+		};
+		void cacheManager.set("diary-detail", id, result);
+		return ok(result);
 	}
 
 	return fail("未找到接口", 404);
@@ -945,6 +984,12 @@ async function handlePublicAlbums(
 		const authorHandle = normalizeAuthorHandle(
 			(context.url.searchParams.get("author") || "").slice(0, 100),
 		);
+
+		// 缓存查询
+		const cacheKey = hashParams({ page, limit, author: authorHandle });
+		const cached = await cacheManager.get<unknown>("album-list", cacheKey);
+		if (cached) return ok(cached);
+
 		const andFilters: JsonObject[] = [filterPublicStatus()];
 		if (authorHandle) {
 			const profile = await loadProfileByUsername(authorHandle);
@@ -980,12 +1025,9 @@ async function handlePublicAlbums(
 			author: readAuthor(authorMap, row.author_id),
 		}));
 
-		return ok({
-			items,
-			page,
-			limit,
-			total,
-		});
+		const result = { items, page, limit, total };
+		void cacheManager.set("album-list", cacheKey, result);
+		return ok(result);
 	}
 
 	if (segments.length === 3) {
@@ -993,6 +1035,11 @@ async function handlePublicAlbums(
 		if (!albumId) {
 			return fail("缺少相册 ID", 400);
 		}
+
+		// 缓存查询
+		const cached = await cacheManager.get<unknown>("album-detail", albumId);
+		if (cached) return ok(cached);
+
 		const album = await loadPublicAlbumById(albumId);
 		if (!album) {
 			return fail("相册不存在", 404);
@@ -1013,7 +1060,7 @@ async function handlePublicAlbums(
 			getAuthorBundle([album.author_id]),
 		]);
 
-		return ok({
+		const result = {
 			item: {
 				...album,
 				tags: safeCsv(album.tags),
@@ -1023,7 +1070,9 @@ async function handlePublicAlbums(
 					tags: safeCsv(photo.tags),
 				})),
 			},
-		});
+		};
+		void cacheManager.set("album-detail", albumId, result);
+		return ok(result);
 	}
 
 	return fail("未找到接口", 404);
@@ -1382,7 +1431,7 @@ async function handleUserHome(
 			avatar_url:
 				profile.avatar_url ||
 				(profile.avatar_file
-					? buildDirectusAssetUrl(profile.avatar_file, {
+					? buildPublicAssetUrl(profile.avatar_file, {
 							width: 128,
 							height: 128,
 							fit: "cover",

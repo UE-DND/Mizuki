@@ -2,9 +2,10 @@
 import Comment from "@components/comment/index.astro";
 import ContentNotVisible from "@components/misc/ContentNotVisible.astro";
 import Markdown from "@components/misc/Markdown.astro";
+import ResponsiveImage from "@components/misc/ResponsiveImage.astro";
 import MainGridLayout from "@layouts/MainGridLayout.astro";
 import { renderMarkdown } from "@/server/markdown/render";
-import { buildDirectusAssetUrl } from "@/server/directus-auth";
+import { buildPublicAssetUrl } from "@/server/directus-auth";
 import {
   isSpecialArticleSlug,
   loadArticleByShortIdLoose,
@@ -97,15 +98,26 @@ if (rawId) {
   Astro.response.status = 404;
 }
 
+const hasCoverFile = Boolean(article?.cover_file);
 const coverUrl = article?.cover_url
   ? article.cover_url
   : article?.cover_file
-    ? buildDirectusAssetUrl(article.cover_file, {
+    ? buildPublicAssetUrl(article.cover_file, {
         width: 1600,
         height: 900,
         fit: "cover",
       })
     : null;
+
+// LCP preload: 当文章有 Directus 封面文件时，预加载 WebP 格式
+const coverPreloadUrl = article?.cover_file
+  ? buildPublicAssetUrl(article.cover_file, {
+      width: 1200,
+      height: 675,
+      fit: "cover",
+      format: "webp",
+    })
+  : null;
 
 function formatArticleMetaDate(input: string | null | undefined): string {
   if (!input) {
@@ -132,6 +144,17 @@ const publishedMetaText = formatArticleMetaDate(article?.published_at);
   title={article?.title || "文章未找到"}
   description={article?.summary || ""}
 >
+  {
+    coverPreloadUrl && (
+      <link
+        slot="head"
+        rel="preload"
+        as="image"
+        type="image/webp"
+        href={coverPreloadUrl}
+      />
+    )
+  }
   {
     !article ? (
       <ContentNotVisible
@@ -177,12 +200,23 @@ const publishedMetaText = formatArticleMetaDate(article?.published_at);
 
             {coverUrl && (
               <div class="mb-6">
-                <img
-                  src={coverUrl}
-                  alt={article.title}
-                  class="w-full max-h-[420px] object-cover rounded-xl border border-(--line-divider)"
-                  loading="lazy"
-                />
+                {hasCoverFile && article?.cover_file ? (
+                  <ResponsiveImage
+                    fileId={article.cover_file}
+                    alt={article.title}
+                    preset="cover"
+                    eager
+                    isPublic
+                    class="w-full max-h-[420px] object-cover rounded-xl border border-(--line-divider)"
+                  />
+                ) : (
+                  <img
+                    src={coverUrl}
+                    alt={article.title}
+                    class="w-full max-h-[420px] object-cover rounded-xl border border-(--line-divider)"
+                    loading="lazy"
+                  />
+                )}
               </div>
             )}
 

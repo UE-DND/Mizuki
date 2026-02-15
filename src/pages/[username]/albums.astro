@@ -1,7 +1,7 @@
 ---
 import ContentNotVisible from "@components/misc/ContentNotVisible.astro";
 import MainGridLayout from "@layouts/MainGridLayout.astro";
-import { buildDirectusAssetUrl } from "@/server/directus-auth";
+import { buildPublicAssetUrl } from "@/server/directus-auth";
 import { resolveAuthorIdentity } from "@/utils/author-identity";
 import {
   loadProfileForViewer,
@@ -106,11 +106,11 @@ function coverUrl(item: {
   }
   if (item.cover_file) {
     if (item.layout === "masonry") {
-      return buildDirectusAssetUrl(item.cover_file, {
+      return buildPublicAssetUrl(item.cover_file, {
         width: 960,
       });
     }
-    return buildDirectusAssetUrl(item.cover_file, {
+    return buildPublicAssetUrl(item.cover_file, {
       width: 960,
       height: 640,
       fit: "cover",

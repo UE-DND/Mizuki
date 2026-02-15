@@ -1,7 +1,7 @@
 ---
 import ContentNotVisible from "@components/misc/ContentNotVisible.astro";
 import MainGridLayout from "@layouts/MainGridLayout.astro";
-import { buildDirectusAssetUrl } from "@/server/directus-auth";
+import { buildPublicAssetUrl } from "@/server/directus-auth";
 import {
   loadProfileForViewer,
   loadUserAnimeList,
@@ -74,7 +74,7 @@ function coverUrl(item: {
     return item.cover_url;
   }
   if (item.cover_file) {
-    return buildDirectusAssetUrl(item.cover_file, {
+    return buildPublicAssetUrl(item.cover_file, {
       width: 640,
       height: 900,
       fit: "cover",

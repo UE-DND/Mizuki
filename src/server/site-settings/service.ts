@@ -1,4 +1,5 @@
 import { defaultSiteSettings, systemSiteConfig } from "@/config";
+import { cacheManager } from "@/server/cache/manager";
 import { buildDirectusAssetUrl } from "@/server/directus-auth";
 import { readMany } from "@/server/directus/client";
 import { sanitizeMarkdownHtml } from "@/server/markdown/sanitize";
@@ -9,15 +10,10 @@ import type {
 	SiteSettingsPayload,
 } from "@/types/site-settings";
 
-const SETTINGS_CACHE_TTL_MS = 60 * 1000;
-
-type CacheEntry = {
-	expiresAt: number;
+type SiteSettingsCacheValue = {
 	resolved: ResolvedSiteSettings;
 	updatedAt: string | null;
 };
-
-let cacheEntry: CacheEntry | null = null;
 
 function isRecord(value: unknown): value is Record<string, unknown> {
 	return typeof value === "object" && value !== null && !Array.isArray(value);
@@ -651,20 +647,23 @@ export function resolveSiteSettingsPayload(
 }
 
 export async function getResolvedSiteSettings(): Promise<ResolvedSiteSettings> {
-	const now = Date.now();
-	if (cacheEntry && cacheEntry.expiresAt > now) {
-		return cacheEntry.resolved;
+	const cached = await cacheManager.get<SiteSettingsCacheValue>(
+		"site-settings",
+		"default",
+	);
+	if (cached) {
+		return cached.resolved;
 	}
 
 	const defaultResolved = buildDefaultResolvedSettings();
 	try {
 		const row = await readSiteSettingsRow();
 		if (!row) {
-			cacheEntry = {
-				expiresAt: now + SETTINGS_CACHE_TTL_MS,
+			const value: SiteSettingsCacheValue = {
 				resolved: defaultResolved,
 				updatedAt: null,
 			};
+			void cacheManager.set("site-settings", "default", value);
 			return defaultResolved;
 		}
 
@@ -672,19 +671,19 @@ export async function getResolvedSiteSettings(): Promise<ResolvedSiteSettings> {
 			system: systemSiteConfig,
 			settings: normalizeSettings(row.settings, defaultSiteSettings),
 		};
-		cacheEntry = {
-			expiresAt: now + SETTINGS_CACHE_TTL_MS,
+		const value: SiteSettingsCacheValue = {
 			resolved,
 			updatedAt: row.updatedAt,
 		};
+		void cacheManager.set("site-settings", "default", value);
 		return resolved;
 	} catch (error) {
 		console.error("[site-settings] failed to load settings:", error);
-		cacheEntry = {
-			expiresAt: now + SETTINGS_CACHE_TTL_MS,
+		const value: SiteSettingsCacheValue = {
 			resolved: defaultResolved,
 			updatedAt: null,
 		};
+		void cacheManager.set("site-settings", "default", value);
 		return defaultResolved;
 	}
 }
@@ -694,14 +693,18 @@ export async function getPublicSiteSettings(): Promise<{
 	updatedAt: string | null;
 }> {
 	const resolved = await getResolvedSiteSettings();
+	const cached = await cacheManager.get<SiteSettingsCacheValue>(
+		"site-settings",
+		"default",
+	);
 	return {
 		settings: resolved.settings,
-		updatedAt: cacheEntry?.updatedAt || null,
+		updatedAt: cached?.updatedAt || null,
 	};
 }
 
 export function invalidateSiteSettingsCache(): void {
-	cacheEntry = null;
+	void cacheManager.invalidate("site-settings", "default");
 }
 
 export async function mergeSiteSettingsPatch(

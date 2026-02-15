@@ -1,3 +1,5 @@
+import { createHash } from "node:crypto";
+
 import { parse as htmlParser } from "node-html-parser";
 import { pluginCollapsibleSections } from "@expressive-code/plugin-collapsible-sections";
 import { pluginLineNumbers } from "@expressive-code/plugin-line-numbers";
@@ -10,6 +12,8 @@ import rehypeStringify from "rehype-stringify";
 import remarkParse from "remark-parse";
 import remarkRehype from "remark-rehype";
 import { unified } from "unified";
+
+import { cacheManager } from "@/server/cache/manager";
 
 import { pluginCustomCopyButton } from "../../plugins/expressive-code/custom-copy-button";
 import { pluginLanguageBadge } from "../../plugins/expressive-code/language-badge";
@@ -128,6 +132,14 @@ export async function renderMarkdown(
 		return "";
 	}
 
+	// 构建缓存键：target + content hash（feed 模式额外拼入 site.href）
+	const hashInput = target === "feed" && site ? source + site.href : source;
+	const hash = createHash("sha256").update(hashInput).digest("hex");
+	const cacheKey = `${target}:${hash}`;
+
+	const cached = await cacheManager.get<string>("markdown", cacheKey);
+	if (cached !== null) return cached;
+
 	const rendered = await markdownProcessor.process(source);
 	const sanitizedHtml = sanitizeMarkdownHtml(String(rendered.value || ""));
 	if (!sanitizedHtml) {
@@ -136,17 +148,22 @@ export async function renderMarkdown(
 
 	if (target === "feed") {
 		// Feed 仅保留纯净 HTML 代码块，不注入 Expressive Code UI 包装。
-		return normalizeFeedHtml(sanitizedHtml, site);
+		const result = normalizeFeedHtml(sanitizedHtml, site);
+		void cacheManager.set("markdown", cacheKey, result);
+		return result;
 	}
 
 	if (!sanitizedHtml.includes("<pre><code")) {
+		void cacheManager.set("markdown", cacheKey, sanitizedHtml);
 		return sanitizedHtml;
 	}
 
 	try {
 		const highlighted =
 			await expressiveCodeProcessor.process(sanitizedHtml);
-		return String(highlighted.value || "");
+		const result = String(highlighted.value || "");
+		void cacheManager.set("markdown", cacheKey, result);
+		return result;
 	} catch (error) {
 		console.error("[markdown] expressive code render failed:", error);
 		return sanitizedHtml;

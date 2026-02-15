@@ -55,6 +55,7 @@ import {
 	toSpecialArticleSlug,
 	hasOwn,
 } from "./shared";
+import { cacheManager } from "@/server/cache/manager";
 import { invalidateAuthorCache } from "./shared/author-cache";
 import { invalidateOfficialSidebarCache } from "./public-data";
 import {
@@ -823,6 +824,7 @@ async function handleMeArticles(
 			if (created?.cover_file) {
 				await bindFileOwnerToUser(created.cover_file, access.user.id);
 			}
+			void cacheManager.invalidateByDomain("article-list");
 			return ok({ item: { ...created, tags: safeCsv(created?.tags) } });
 		}
 	}
@@ -900,6 +902,8 @@ async function handleMeArticles(
 			) {
 				await cleanupOrphanDirectusFiles([prevCoverFile]);
 			}
+			void cacheManager.invalidateByDomain("article-list");
+			void cacheManager.invalidate("article-detail", id);
 			return ok({ item: { ...updated, tags: safeCsv(updated.tags) } });
 		}
 
@@ -909,6 +913,8 @@ async function handleMeArticles(
 			if (coverFile) {
 				await cleanupOrphanDirectusFiles([coverFile]);
 			}
+			void cacheManager.invalidateByDomain("article-list");
+			void cacheManager.invalidate("article-detail", id);
 			return ok({ id });
 		}
 	}
@@ -979,6 +985,7 @@ async function handleMeDiaries(
 				diaryPayload,
 				createOne,
 			);
+			void cacheManager.invalidateByDomain("diary-list");
 			return ok({ item: created });
 		}
 	}
@@ -1028,6 +1035,8 @@ async function handleMeDiaries(
 			}
 			Object.assign(payload, parseVisibilityPatch(body));
 			const updated = await updateOne("app_diaries", id, payload);
+			void cacheManager.invalidateByDomain("diary-list");
+			void cacheManager.invalidate("diary-detail", id);
 			return ok({ item: updated });
 		}
 
@@ -1035,6 +1044,8 @@ async function handleMeDiaries(
 			const fileIds = await collectDiaryFileIds(id);
 			await deleteOne("app_diaries", id);
 			await cleanupOrphanDirectusFiles(fileIds);
+			void cacheManager.invalidateByDomain("diary-list");
+			void cacheManager.invalidate("diary-detail", id);
 			return ok({ id });
 		}
 	}
@@ -1298,6 +1309,7 @@ async function handleMeAlbums(
 			if (created?.cover_file) {
 				await bindFileOwnerToUser(created.cover_file, access.user.id);
 			}
+			void cacheManager.invalidateByDomain("album-list");
 			return ok({ item: { ...created, tags: safeCsv(created?.tags) } });
 		}
 	}
@@ -1407,6 +1419,8 @@ async function handleMeAlbums(
 			) {
 				await cleanupOrphanDirectusFiles([prevCoverFile]);
 			}
+			void cacheManager.invalidateByDomain("album-list");
+			void cacheManager.invalidate("album-detail", id);
 			return ok({ item: { ...updated, tags: safeCsv(updated.tags) } });
 		}
 
@@ -1414,6 +1428,8 @@ async function handleMeAlbums(
 			const fileIds = await collectAlbumFileIds(id, target.cover_file);
 			await deleteOne("app_albums", id);
 			await cleanupOrphanDirectusFiles(fileIds);
+			void cacheManager.invalidateByDomain("album-list");
+			void cacheManager.invalidate("album-detail", id);
 			return ok({ id });
 		}
 	}
@@ -1463,6 +1479,7 @@ async function handleMeAlbumPhotos(
 		if (created.file_id) {
 			await bindFileOwnerToUser(created.file_id, access.user.id);
 		}
+		void cacheManager.invalidate("album-detail", albumId);
 		return ok({ item: { ...created, tags: safeCsv(created.tags) } });
 	}
 
@@ -1544,6 +1561,7 @@ async function handleMeAlbumPhotos(
 			) {
 				await cleanupOrphanDirectusFiles([prevFileId]);
 			}
+			void cacheManager.invalidate("album-detail", photo.album_id);
 			return ok({ item: { ...updated, tags: safeCsv(updated.tags) } });
 		}
 
@@ -1553,6 +1571,7 @@ async function handleMeAlbumPhotos(
 			if (fileId) {
 				await cleanupOrphanDirectusFiles([fileId]);
 			}
+			void cacheManager.invalidate("album-detail", photo.album_id);
 			return ok({ id: photoId });
 		}
 	}
@@ -1592,6 +1611,7 @@ async function handleMeDiaryImages(
 		if (created.file_id) {
 			await bindFileOwnerToUser(created.file_id, access.user.id);
 		}
+		void cacheManager.invalidate("diary-detail", diaryId);
 		return ok({ item: created });
 	}
 
@@ -1661,6 +1681,7 @@ async function handleMeDiaryImages(
 			) {
 				await cleanupOrphanDirectusFiles([prevFileId]);
 			}
+			void cacheManager.invalidate("diary-detail", image.diary_id);
 			return ok({ item: updated });
 		}
 
@@ -1670,6 +1691,7 @@ async function handleMeDiaryImages(
 			if (fileId) {
 				await cleanupOrphanDirectusFiles([fileId]);
 			}
+			void cacheManager.invalidate("diary-detail", image.diary_id);
 			return ok({ id: imageId });
 		}
 	}

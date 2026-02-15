@@ -11,6 +11,7 @@ import {
 	updateOne,
 } from "@/server/directus/client";
 import { fail, ok } from "@/server/api/response";
+import { cacheManager } from "@/server/cache/manager";
 import {
 	parseJsonBody,
 	toBooleanValue,
@@ -231,6 +232,7 @@ async function handleArticleComments(
 				is_public: toBooleanValue(body.is_public, true),
 				show_on_profile: toBooleanValue(body.show_on_profile, true),
 			});
+			void cacheManager.invalidate("article-detail", articleId);
 			return ok({
 				item: {
 					...created,
@@ -287,6 +289,7 @@ async function handleArticleComments(
 				commentId,
 				payload,
 			);
+			void cacheManager.invalidate("article-detail", comment.article_id);
 			return ok({
 				item: {
 					...updated,
@@ -301,6 +304,7 @@ async function handleArticleComments(
 				"app_article_comments",
 				commentId,
 			);
+			void cacheManager.invalidate("article-detail", comment.article_id);
 			return ok({ id: commentId });
 		}
 	}
@@ -404,6 +408,7 @@ async function handleDiaryComments(
 				is_public: toBooleanValue(body.is_public, true),
 				show_on_profile: toBooleanValue(body.show_on_profile, true),
 			});
+			void cacheManager.invalidate("diary-detail", diaryId);
 			return ok({
 				item: {
 					...created,
@@ -460,6 +465,7 @@ async function handleDiaryComments(
 				commentId,
 				payload,
 			);
+			void cacheManager.invalidate("diary-detail", comment.diary_id);
 			return ok({
 				item: {
 					...updated,
@@ -471,6 +477,7 @@ async function handleDiaryComments(
 
 		if (context.request.method === "DELETE") {
 			await deleteCommentWithDescendants("app_diary_comments", commentId);
+			void cacheManager.invalidate("diary-detail", comment.diary_id);
 			return ok({ id: commentId });
 		}
 	}

@@ -6,7 +6,7 @@ import type {
 } from "@/types/app";
 import type { JsonObject } from "@/types/json";
 import { readMany } from "@/server/directus/client";
-import { buildDirectusAssetUrl } from "@/server/directus-auth";
+import { buildPublicAssetUrl } from "@/server/directus-auth";
 import I18nKey from "@i18n/i18nKey";
 import { i18n } from "@i18n/translation";
 import { getCategoryUrl } from "@utils/url-utils";
@@ -79,7 +79,7 @@ function resolveCoverImage(post: AppArticle): string | undefined {
 		return undefined;
 	}
 
-	return buildDirectusAssetUrl(coverFile, {
+	return buildPublicAssetUrl(coverFile, {
 		width: 1200,
 		height: 675,
 		fit: "cover",
@@ -169,13 +169,13 @@ function buildAuthor(
 	if (profile?.avatar_url?.trim()) {
 		avatarUrl = profile.avatar_url;
 	} else if (profile?.avatar_file) {
-		avatarUrl = buildDirectusAssetUrl(profile.avatar_file, {
+		avatarUrl = buildPublicAssetUrl(profile.avatar_file, {
 			width: 96,
 			height: 96,
 			fit: "cover",
 		});
 	} else if (user?.avatar) {
-		avatarUrl = buildDirectusAssetUrl(user.avatar, {
+		avatarUrl = buildPublicAssetUrl(user.avatar, {
 			width: 96,
 			height: 96,
 			fit: "cover",

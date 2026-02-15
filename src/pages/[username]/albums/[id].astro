@@ -2,7 +2,7 @@
 import ContentNotVisible from "@components/misc/ContentNotVisible.astro";
 import MainGridLayout from "@layouts/MainGridLayout.astro";
 import AlbumDetailEditor from "@components/album/AlbumDetailEditor.svelte";
-import { buildDirectusAssetUrl } from "@/server/directus-auth";
+import { buildPublicAssetUrl } from "@/server/directus-auth";
 import {
   loadProfileForViewer,
   loadUserAlbumDetail,
@@ -92,11 +92,11 @@ function photoUrl(
   }
   if (photo.file_id) {
     if (layout === "masonry") {
-      return buildDirectusAssetUrl(photo.file_id, {
+      return buildPublicAssetUrl(photo.file_id, {
         width: 1920,
       });
     }
-    return buildDirectusAssetUrl(photo.file_id, {
+    return buildPublicAssetUrl(photo.file_id, {
       width: 1200,
       height: 900,
       fit: "cover",
@@ -113,7 +113,7 @@ function photoPreviewUrl(photo: {
     return photo.image_url;
   }
   if (photo.file_id) {
-    return buildDirectusAssetUrl(photo.file_id, {
+    return buildPublicAssetUrl(photo.file_id, {
       width: 1920,
     });
   }

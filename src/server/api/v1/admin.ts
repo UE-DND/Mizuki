@@ -68,6 +68,7 @@ import {
 	requireAdmin,
 } from "./shared";
 import { invalidateAuthorCache } from "./shared/author-cache";
+import { cacheManager } from "@/server/cache/manager";
 
 function extractPermissionPatch(body: JsonObject): JsonObject {
 	const permissionFields: (keyof AppPermissions)[] = [
@@ -1107,6 +1108,17 @@ export async function handleAdminContent(
 				);
 			}
 			const updated = await updateOne(collection, id, payload);
+			// 失效缓存
+			if (module === "articles") {
+				void cacheManager.invalidateByDomain("article-list");
+				void cacheManager.invalidate("article-detail", id);
+			} else if (module === "diaries") {
+				void cacheManager.invalidateByDomain("diary-list");
+				void cacheManager.invalidate("diary-detail", id);
+			} else if (module === "albums") {
+				void cacheManager.invalidateByDomain("album-list");
+				void cacheManager.invalidate("album-detail", id);
+			}
 			return ok({ item: updated });
 		}
 
@@ -1152,6 +1164,17 @@ export async function handleAdminContent(
 			}
 			await deleteOne(collection, id);
 			await cleanupOrphanDirectusFiles(candidateFileIds);
+			// 失效缓存
+			if (module === "articles") {
+				void cacheManager.invalidateByDomain("article-list");
+				void cacheManager.invalidate("article-detail", id);
+			} else if (module === "diaries") {
+				void cacheManager.invalidateByDomain("diary-list");
+				void cacheManager.invalidate("diary-detail", id);
+			} else if (module === "albums") {
+				void cacheManager.invalidateByDomain("album-list");
+				void cacheManager.invalidate("album-detail", id);
+			}
 			return ok({ id, module });
 		}
 	}
