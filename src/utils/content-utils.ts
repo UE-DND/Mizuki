@@ -48,41 +48,8 @@ export type DirectusPostEntry = {
 };
 
 function normalizeTags(tags: AppArticle["tags"]): string[] {
-	if (!tags) {
-		return [];
-	}
-
-	const cleanTag = (raw: string): string =>
-		String(raw)
-			.trim()
-			.replace(/^(?:["']|\[)+/, "")
-			.replace(/(?:["']|\])+$/, "")
-			.trim();
-
-	const normalizeList = (value: string[]): string[] =>
-		value.map((tag) => cleanTag(String(tag))).filter(Boolean);
-
-	if (Array.isArray(tags)) {
-		return normalizeList(tags);
-	}
-
-	const raw = String(tags).trim();
-	if (!raw) {
-		return [];
-	}
-
-	if (raw.startsWith("[") && raw.endsWith("]")) {
-		try {
-			const parsed = JSON.parse(raw) as unknown;
-			if (Array.isArray(parsed)) {
-				return normalizeList(parsed.map((entry) => String(entry)));
-			}
-		} catch (error) {
-			console.warn("[content-utils] failed to parse tags json:", error);
-		}
-	}
-
-	return normalizeList(raw.split(","));
+	if (!tags || !Array.isArray(tags)) return [];
+	return tags.map((s) => String(s).trim()).filter(Boolean);
 }
 
 function resolvePublishedAt(post: AppArticle): Date {

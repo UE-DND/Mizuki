@@ -1,6 +1,6 @@
 import type { APIContext } from "astro";
 
-import type { AppAlbum, AppArticle, AppDiary } from "@/types/app";
+import type { AppAlbum } from "@/types/app";
 import {
 	ALBUM_PHOTO_MAX,
 	ALBUM_TITLE_MAX,
@@ -57,22 +57,16 @@ import {
 } from "./shared";
 import { invalidateAuthorCache } from "./shared/author-cache";
 import { invalidateOfficialSidebarCache } from "./public-data";
-import { generateShortId } from "@/server/utils/short-id";
+import {
+	createWithShortId,
+	isUniqueConstraintError,
+} from "@/server/utils/short-id";
 import {
 	cleanupOrphanDirectusFiles,
 	collectAlbumFileIds,
 	collectDiaryFileIds,
 	normalizeDirectusFileId,
 } from "./shared/file-cleanup";
-
-function isUniqueConstraintError(error: unknown): boolean {
-	const message = String(error).toLowerCase();
-	return (
-		message.includes("unique") ||
-		message.includes("duplicate") ||
-		message.includes("not_unique")
-	);
-}
 
 function isSlugUniqueConflict(error: unknown): boolean {
 	const message = String(error).toLowerCase();
@@ -825,26 +819,11 @@ async function handleMeArticles(
 						: toOptionalString(body.published_at),
 			};
 
-			let created: AppArticle | null = null;
-			const MAX_SHORT_ID_RETRIES = 3;
-			for (let attempt = 0; attempt < MAX_SHORT_ID_RETRIES; attempt++) {
-				try {
-					created = await createOne("app_articles", {
-						...articlePayload,
-						short_id: generateShortId(),
-					});
-					break;
-				} catch (error) {
-					const msg = String(error);
-					if (
-						(msg.includes("unique") || msg.includes("duplicate")) &&
-						attempt < MAX_SHORT_ID_RETRIES - 1
-					) {
-						continue;
-					}
-					throw error;
-				}
-			}
+			const created = await createWithShortId(
+				"app_articles",
+				articlePayload,
+				createOne,
+			);
 			if (created?.cover_file) {
 				await bindFileOwnerToUser(created.cover_file, access.user.id);
 			}
@@ -999,26 +978,11 @@ async function handleMeDiaries(
 				show_on_profile: toBooleanValue(body.show_on_profile, true),
 			};
 
-			let created: AppDiary | null = null;
-			const MAX_DIARY_SID_RETRIES = 3;
-			for (let attempt = 0; attempt < MAX_DIARY_SID_RETRIES; attempt++) {
-				try {
-					created = await createOne("app_diaries", {
-						...diaryPayload,
-						short_id: generateShortId(),
-					});
-					break;
-				} catch (error) {
-					const msg = String(error);
-					if (
-						(msg.includes("unique") || msg.includes("duplicate")) &&
-						attempt < MAX_DIARY_SID_RETRIES - 1
-					) {
-						continue;
-					}
-					throw error;
-				}
-			}
+			const created = await createWithShortId(
+				"app_diaries",
+				diaryPayload,
+				createOne,
+			);
 			return ok({ item: created });
 		}
 	}
@@ -1316,22 +1280,20 @@ async function handleMeAlbums(
 				attempt++
 			) {
 				try {
-					created = await createOne("app_albums", {
-						...albumPayload,
-						slug: nextSlug,
-						short_id: generateShortId(),
-					});
+					created = await createWithShortId(
+						"app_albums",
+						{ ...albumPayload, slug: nextSlug },
+						createOne,
+					);
 					break;
 				} catch (error) {
-					const isUniqueError = isUniqueConstraintError(error);
 					if (
-						isUniqueError &&
+						isUniqueConstraintError(error) &&
+						isSlugUniqueConflict(error) &&
 						attempt < MAX_ALBUM_CREATE_RETRIES - 1
 					) {
-						if (isSlugUniqueConflict(error)) {
-							slugSuffix += 1;
-							nextSlug = `${baseSlug}-${slugSuffix}`;
-						}
+						slugSuffix += 1;
+						nextSlug = `${baseSlug}-${slugSuffix}`;
 						continue;
 					}
 					throw error;

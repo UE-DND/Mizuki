@@ -192,8 +192,7 @@ const allTags = collectAllTags(friendsList);
                   class="friend-card group relative bg-transparent rounded-xl border border-black/10 dark:border-white/10
 								 overflow-hidden transition-all duration-300
 								 hover:shadow-xl hover:-translate-y-1"
-                  data-tags={item.tags.join(",")}
-                  data-tags-json={JSON.stringify(item.tags)}
+                  data-tags={JSON.stringify(item.tags)}
                 >
                   {/* 卡片内容 */}
                   <div class="p-6">

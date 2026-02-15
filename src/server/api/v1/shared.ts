@@ -219,41 +219,9 @@ export function normalizeRegistrationRequestStatus(
 	return fallback;
 }
 
-export function safeCsv(value: string[] | string | null | undefined): string[] {
-	const cleanEntry = (entry: string): string =>
-		String(entry)
-			.trim()
-			.replace(/^(?:["']|\[)+/, "")
-			.replace(/(?:["']|\])+$/, "")
-			.trim();
-
-	const normalizeList = (entries: string[]): string[] =>
-		entries.map((entry) => cleanEntry(entry)).filter(Boolean);
-
-	if (!value) {
-		return [];
-	}
-	if (Array.isArray(value)) {
-		return normalizeList(value);
-	}
-
-	const raw = String(value).trim();
-	if (!raw) {
-		return [];
-	}
-
-	if (raw.startsWith("[") && raw.endsWith("]")) {
-		try {
-			const parsed = JSON.parse(raw) as string[];
-			if (Array.isArray(parsed)) {
-				return normalizeList(parsed);
-			}
-		} catch (error) {
-			console.warn("[api/v1] failed to parse csv json value:", error);
-		}
-	}
-
-	return normalizeList(raw.split(","));
+export function safeCsv(value: string[] | null | undefined): string[] {
+	if (!value || !Array.isArray(value)) return [];
+	return value.map((s) => String(s).trim()).filter(Boolean);
 }
 
 export function hasOwn<T extends object, K extends PropertyKey>(

@@ -96,9 +96,9 @@ ACL 判定顺序：未登录拒绝写 → `is_suspended` 拒绝 → admin 放行
 - 前端不可直连 Directus 资源，必须通过代理：`/api/v1/public/assets/:id`
 - 构建图片 URL 统一使用 `buildDirectusAssetUrl()`（`src/server/directus-auth.ts`）
 
-## 标签与 CSV 字段
+## 标签字段
 
-`tags/genres` 可能是 JSON 字符串、CSV 字符串或数组，读取时必须走统一解析：
+`tags/genres` 字段为 `json` 类型，存储原生 JSON 数组。读取端使用以下函数确保返回 `string[]`：
 
 - API 层：`safeCsv`（`src/server/api/v1/shared.ts`）
 - 页面层：`normalizeTags`（`src/utils/content-utils.ts`）

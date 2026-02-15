@@ -71,28 +71,21 @@
 		var currentTag = "all";
 
 		function parseCardTags(card) {
-			var jsonValue = card.getAttribute("data-tags-json") || "";
-			if (jsonValue) {
-				try {
-					var parsed = JSON.parse(jsonValue);
-					if (Array.isArray(parsed)) {
-						return parsed
-							.map((tag) => String(tag || "").trim())
-							.filter(Boolean);
-					}
-				} catch (error) {
-					console.warn("[Friends] Parse tags json failed:", error);
+			var jsonValue = card.getAttribute("data-tags") || "";
+			if (!jsonValue) return [];
+			try {
+				var parsed = JSON.parse(jsonValue);
+				if (Array.isArray(parsed)) {
+					return parsed
+						.map(function (tag) {
+							return String(tag || "").trim();
+						})
+						.filter(Boolean);
 				}
+			} catch (error) {
+				console.warn("[Friends] Parse tags json failed:", error);
 			}
-
-			var csvValue = card.getAttribute("data-tags") || "";
-			if (!csvValue) {
-				return [];
-			}
-			return csvValue
-				.split(",")
-				.map((tag) => String(tag || "").trim())
-				.filter(Boolean);
+			return [];
 		}
 
 		// 过滤函数
