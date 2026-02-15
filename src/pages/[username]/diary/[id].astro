@@ -178,6 +178,7 @@ const diary = result.status === "ok" ? result.data : null;
   import { getAuthState, subscribeAuthState } from "@/scripts/auth-state";
   import type { AuthState } from "@/scripts/auth-state";
   import { navigateToPage } from "@/utils/navigation-utils";
+  import { getCsrfToken } from "@/utils/csrf";
 
   const diaryManageRoot = document.getElementById("diary-manage-root");
 
@@ -211,7 +212,10 @@ const diary = result.status === "ok" ? result.data : null;
             {
               method: "DELETE",
               credentials: "include",
-              headers: { Accept: "application/json" },
+              headers: {
+                Accept: "application/json",
+                "x-csrf-token": getCsrfToken(),
+              },
             },
           );
           const data = await response.json().catch(() => null);

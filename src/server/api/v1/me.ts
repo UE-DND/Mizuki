@@ -523,13 +523,11 @@ async function handleMeReports(
 
 async function getArticleLikeCount(articleId: string): Promise<number> {
 	return await countItems("app_article_likes", {
-		filter: {
-			_and: [
-				{ article_id: { _eq: articleId } },
-				{ status: { _eq: "published" } },
-			],
-		} as JsonObject,
-	});
+		_and: [
+			{ article_id: { _eq: articleId } },
+			{ status: { _eq: "published" } },
+		],
+	} as JsonObject);
 }
 
 async function handleMeArticleLikes(
@@ -638,13 +636,11 @@ async function handleMeArticleLikes(
 
 async function getDiaryLikeCount(diaryId: string): Promise<number> {
 	return await countItems("app_diary_likes", {
-		filter: {
-			_and: [
-				{ diary_id: { _eq: diaryId } },
-				{ status: { _eq: "published" } },
-			],
-		} as JsonObject,
-	});
+		_and: [
+			{ diary_id: { _eq: diaryId } },
+			{ status: { _eq: "published" } },
+		],
+	} as JsonObject);
 }
 
 async function handleMeDiaryLikes(

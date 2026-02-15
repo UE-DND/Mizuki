@@ -10,6 +10,11 @@ import {
 	updateDirectusFileMetadata,
 } from "@/server/directus/client";
 import { fail, ok } from "@/server/api/response";
+import {
+	validateFileMagicBytes,
+	validateImageDimensions,
+} from "@/server/security/file-validation";
+import { sanitizeImage } from "@/server/security/image-sanitize";
 
 import { requireAccess } from "./shared";
 
@@ -34,17 +39,12 @@ function toIcoBufferFromPngBuffer(pngBuffer: Buffer): Buffer {
 	return Buffer.concat([header, directoryEntry, pngBuffer]);
 }
 
-async function convertImageFileToIco(file: File): Promise<File> {
-	const inputBuffer = Buffer.from(await file.arrayBuffer());
+async function convertBufferToIco(inputBuffer: Buffer): Promise<Buffer> {
 	const pngBuffer = await sharp(inputBuffer)
 		.resize(256, 256, { fit: "cover" })
 		.png()
 		.toBuffer();
-	const icoBuffer = toIcoBufferFromPngBuffer(pngBuffer);
-	const baseName = file.name.replace(/\.[^/.]+$/u, "") || "favicon";
-	return new File([new Uint8Array(icoBuffer)], `${baseName}.ico`, {
-		type: "image/x-icon",
-	});
+	return Buffer.from(toIcoBufferFromPngBuffer(pngBuffer));
 }
 
 function resolvePurpose(raw: FormDataEntryValue | null): UploadPurpose {
@@ -58,9 +58,13 @@ export async function handleUploads(context: APIContext): Promise<Response> {
 	if (context.request.method !== "POST") {
 		return fail("方法不允许", 405);
 	}
+
+	// 1. formData 解析 + purpose 解析
 	const formData = await context.request.formData();
 	const purpose = resolvePurpose(formData.get("purpose"));
 	let ownerUserId: string | null;
+
+	// 2. ACL 校验
 	if (purpose !== "registration-avatar") {
 		const required = await requireAccess(context);
 		if ("response" in required) {
@@ -74,32 +78,63 @@ export async function handleUploads(context: APIContext): Promise<Response> {
 		ownerUserId = sessionUser?.id || null;
 	}
 
+	// 3. 文件存在性检查
 	const file = formData.get("file");
 	if (!(file instanceof File)) {
 		return fail("缺少上传文件", 400);
 	}
+
 	const targetFormatRaw = formData.get("target_format");
 	const targetFormat =
 		typeof targetFormatRaw === "string" ? targetFormatRaw : "";
+
+	// 4. 文件大小限制检查
 	const maxSize = UPLOAD_LIMITS[purpose];
 	const label = UPLOAD_LIMIT_LABELS[purpose];
-
 	if (file.size > maxSize) {
 		return fail(`文件过大，最大允许 ${label}`, 413);
 	}
 
-	let uploadFile = file;
+	// 5. 读取 buffer
+	let buffer = Buffer.from(await file.arrayBuffer());
+
+	// 6. 魔数校验
+	const magic = validateFileMagicBytes(buffer, purpose);
+	if (!magic.valid) {
+		return fail("不支持的文件类型", 400, "UNSUPPORTED_FILE_TYPE");
+	}
+
+	// 7. 图片尺寸校验
+	const dims = await validateImageDimensions(buffer, purpose);
+	if (!dims.valid) {
+		return fail(dims.message || "图片尺寸过大", 400, "IMAGE_TOO_LARGE");
+	}
+
+	// 8. EXIF/GPS 清理
+	buffer = Buffer.from(await sanitizeImage(buffer, magic.detectedMime));
+
+	// 9. ICO 转换
+	let uploadFileName = file.name;
+	let uploadMime = file.type;
 	if (targetFormat === "ico") {
 		try {
-			uploadFile = await convertImageFileToIco(file);
+			buffer = Buffer.from(await convertBufferToIco(buffer));
+			const baseName = file.name.replace(/\.[^/.]+$/u, "") || "favicon";
+			uploadFileName = `${baseName}.ico`;
+			uploadMime = "image/x-icon";
 		} catch (error) {
 			console.error("[uploads] favicon ico conversion failed", error);
 			return fail("站点图标转换失败", 400);
 		}
-		if (uploadFile.size > maxSize) {
+		if (buffer.length > maxSize) {
 			return fail(`站点图标过大，最大允许 ${label}`, 413);
 		}
 	}
+
+	// 10. 重建 File 对象 → uploadDirectusFile
+	const uploadFile = new File([new Uint8Array(buffer)], uploadFileName, {
+		type: uploadMime,
+	});
 
 	const titleRaw = formData.get("title");
 	const folderRaw = formData.get("folder");

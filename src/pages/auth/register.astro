@@ -614,6 +614,10 @@ const defaultAvatarPreviewSrc = defaultAvatarAsset.src;
     const API_UPLOAD = "/api/v1/uploads";
     const DATA_BOUND = "data-register-bound";
     const REAPPLY_DRAFT_STORAGE_KEY = "dc_registration_reapply_draft_v1";
+    function getCsrfToken() {
+      const m = document.cookie.match(/(?:^|;\s*)dacapo_csrf=([^;]*)/);
+      return m ? decodeURIComponent(m[1]) : "";
+    }
     const AVATAR_OUTPUT_SIZE = 512;
     const AVATAR_ZOOM_MIN = 100;
     const AVATAR_ZOOM_MAX = 300;
@@ -1331,6 +1335,7 @@ const defaultAvatarPreviewSrc = defaultAvatarAsset.src;
         const response = await fetch(API_UPLOAD, {
           method: "POST",
           credentials: "include",
+          headers: { "x-csrf-token": getCsrfToken() },
           body: formData,
         });
         const data = await response.json().catch(() => null);
@@ -1528,6 +1533,7 @@ const defaultAvatarPreviewSrc = defaultAvatarAsset.src;
             headers: {
               "Content-Type": "application/json",
               Accept: "application/json",
+              "x-csrf-token": getCsrfToken(),
             },
             body: JSON.stringify(payload),
           });
@@ -1572,6 +1578,7 @@ const defaultAvatarPreviewSrc = defaultAvatarAsset.src;
               credentials: "include",
               headers: {
                 Accept: "application/json",
+                "x-csrf-token": getCsrfToken(),
               },
             });
             const data = await response.json().catch(() => null);
@@ -1623,6 +1630,7 @@ const defaultAvatarPreviewSrc = defaultAvatarAsset.src;
                 headers: {
                   "Content-Type": "application/json",
                   Accept: "application/json",
+                  "x-csrf-token": getCsrfToken(),
                 },
                 body: JSON.stringify({
                   action: "cancel",

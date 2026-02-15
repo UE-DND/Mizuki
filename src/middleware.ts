@@ -1,6 +1,7 @@
 import { defineMiddleware } from "astro:middleware";
 
 import { assertRequiredEnv } from "@/server/env/required";
+import { ensureCsrfCookie } from "@/server/security/csrf";
 import { getResolvedSiteSettings } from "@/server/site-settings/service";
 
 function buildEnvErrorResponse(pathname: string): Response {
@@ -53,10 +54,13 @@ export const onRequest = defineMiddleware(async (context, next) => {
 		console.error("[middleware] failed to load site settings:", error);
 	}
 
-	// 4. 执行后续处理
+	// 4. 确保 CSRF cookie 存在
+	ensureCsrfCookie(context);
+
+	// 5. 执行后续处理
 	const response = await next();
 
-	// 5. 响应头附加 requestId
+	// 6. 响应头附加 requestId
 	response.headers.set("X-Request-ID", requestId);
 	return response;
 });

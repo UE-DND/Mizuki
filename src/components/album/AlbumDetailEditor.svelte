@@ -2,6 +2,7 @@
   import { onDestroy, onMount } from "svelte";
   import { showConfirmDialog, showNoticeDialog } from "@/scripts/dialogs";
   import { navigateToPage } from "@/utils/navigation-utils";
+  import { getCsrfToken } from "@/utils/csrf";
   import {
     UPLOAD_LIMITS,
     UPLOAD_LIMIT_LABELS,
@@ -151,6 +152,7 @@
       credentials: "include",
       headers: {
         Accept: "application/json",
+        "x-csrf-token": getCsrfToken(),
         ...(init.body && !isFormData
           ? { "Content-Type": "application/json" }
           : {}),

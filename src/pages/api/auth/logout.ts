@@ -6,6 +6,7 @@ import {
 	getCookieOptions,
 	REMEMBER_COOKIE_NAME,
 } from "../../../server/directus-auth";
+import { assertCsrfToken } from "../../../server/security/csrf";
 
 export const prerender = false;
 
@@ -54,6 +55,9 @@ export async function POST(context: APIContext): Promise<Response> {
 	if (origin && origin !== url.origin) {
 		return json({ ok: false, message: "非法来源请求" }, { status: 403 });
 	}
+
+	const csrfDenied = assertCsrfToken(context);
+	if (csrfDenied) return csrfDenied;
 
 	const refreshToken = cookies.get(DIRECTUS_REFRESH_COOKIE_NAME)?.value || "";
 

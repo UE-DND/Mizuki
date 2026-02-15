@@ -72,6 +72,7 @@ import { url } from "../../utils/url-utils";
 <script>
   import { emitAuthState } from "@/scripts/auth-state";
   import { buildLoginUrl } from "@utils/login-url";
+  import { getCsrfToken } from "@/utils/csrf";
 
   const API_ME = "/api/auth/me";
   const API_LOGOUT = "/api/auth/logout";
@@ -224,7 +225,10 @@ import { url } from "../../utils/url-utils";
             await fetch(API_LOGOUT, {
               method: "POST",
               credentials: "include",
-              headers: { "Content-Type": "application/json" },
+              headers: {
+                "Content-Type": "application/json",
+                "x-csrf-token": getCsrfToken(),
+              },
               body: JSON.stringify({}),
             });
           } catch (error) {

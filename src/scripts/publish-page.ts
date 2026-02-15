@@ -7,6 +7,7 @@ import {
 import { setupCodeCopyDelegation } from "@/scripts/code-copy";
 import { showAuthRequiredDialog } from "@/scripts/dialogs";
 import { refreshGithubCards } from "@/scripts/github-card-runtime";
+import { getCsrfToken } from "@/utils/csrf";
 
 type ContentType = "article" | "diary";
 type EditorMode = "edit" | "preview";
@@ -225,6 +226,7 @@ async function api(url: string, init: RequestInit = {}): Promise<ApiResult> {
 		credentials: "include",
 		headers: {
 			Accept: "application/json",
+			"x-csrf-token": getCsrfToken(),
 			...(init.body && !isFormData
 				? { "Content-Type": "application/json" }
 				: {}),

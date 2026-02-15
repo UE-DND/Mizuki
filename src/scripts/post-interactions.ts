@@ -9,6 +9,7 @@ import {
 	showFormDialog,
 	showNoticeDialog,
 } from "@/scripts/dialogs";
+import { getCsrfToken } from "@/utils/csrf";
 
 type CalendarFilterDetail = {
 	type: "day" | "month" | "year";
@@ -392,6 +393,7 @@ async function requestDeleteArticle(articleId: string) {
 		{
 			method: "DELETE",
 			credentials: "include",
+			headers: { "x-csrf-token": getCsrfToken() },
 		},
 	);
 	const data = await response.json().catch(() => ({}));
@@ -406,6 +408,7 @@ async function requestDeleteDiary(diaryId: string) {
 		{
 			method: "DELETE",
 			credentials: "include",
+			headers: { "x-csrf-token": getCsrfToken() },
 		},
 	);
 	const data = await response.json().catch(() => ({}));
@@ -420,6 +423,7 @@ async function requestBlockUser(blockedUserId: string, reason?: string) {
 		credentials: "include",
 		headers: {
 			"content-type": "application/json",
+			"x-csrf-token": getCsrfToken(),
 		},
 		body: JSON.stringify({
 			blocked_user_id: blockedUserId,
@@ -444,6 +448,7 @@ async function requestReportContent(input: {
 		credentials: "include",
 		headers: {
 			"content-type": "application/json",
+			"x-csrf-token": getCsrfToken(),
 		},
 		body: JSON.stringify({
 			target_type: input.targetType,
@@ -468,6 +473,7 @@ async function requestToggleLike(articleId: string): Promise<{
 		credentials: "include",
 		headers: {
 			"content-type": "application/json",
+			"x-csrf-token": getCsrfToken(),
 		},
 		body: JSON.stringify({
 			article_id: articleId,
@@ -492,6 +498,7 @@ async function requestToggleDiaryLike(diaryId: string): Promise<{
 		credentials: "include",
 		headers: {
 			"content-type": "application/json",
+			"x-csrf-token": getCsrfToken(),
 		},
 		body: JSON.stringify({
 			diary_id: diaryId,

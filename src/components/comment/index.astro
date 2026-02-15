@@ -225,6 +225,7 @@ const hasDirectusTarget = Boolean(moduleName && contentId);
     showNoticeDialog,
   } from "@/scripts/dialogs";
   import { refreshGithubCards } from "@/scripts/github-card-runtime";
+  import { getCsrfToken } from "@/utils/csrf";
 
   type CommentAuthor = {
     name?: string | null;
@@ -716,6 +717,7 @@ const hasDirectusTarget = Boolean(moduleName && contentId);
           headers: {
             "Content-Type": "application/json",
             Accept: "application/json",
+            "x-csrf-token": getCsrfToken(),
           },
           body: JSON.stringify({ body: text }),
         });
@@ -913,6 +915,7 @@ const hasDirectusTarget = Boolean(moduleName && contentId);
           headers: {
             "Content-Type": "application/json",
             Accept: "application/json",
+            "x-csrf-token": getCsrfToken(),
           },
           body: JSON.stringify({
             body,
@@ -950,7 +953,7 @@ const hasDirectusTarget = Boolean(moduleName && contentId);
       const response = await fetch(commentItemApi(commentId), {
         method: "DELETE",
         credentials: "include",
-        headers: { Accept: "application/json" },
+        headers: { Accept: "application/json", "x-csrf-token": getCsrfToken() },
       });
       const data = await response.json().catch(() => null);
       if (!response.ok || !data?.ok) {

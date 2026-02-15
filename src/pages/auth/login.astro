@@ -232,6 +232,10 @@ const registerEnabled = Boolean(
 
   <script is:inline>
     const API_LOGIN = "/api/auth/login";
+    function getCsrfToken() {
+      const m = document.cookie.match(/(?:^|;\s*)dacapo_csrf=([^;]*)/);
+      return m ? decodeURIComponent(m[1]) : "";
+    }
 
     function normalizeRedirectTarget(redirect) {
       const candidate = String(redirect || "").trim();
@@ -336,6 +340,7 @@ const registerEnabled = Boolean(
             headers: {
               "Content-Type": "application/json",
               Accept: "application/json",
+              "x-csrf-token": getCsrfToken(),
             },
             body: JSON.stringify({
               email,

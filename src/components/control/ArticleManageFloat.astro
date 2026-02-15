@@ -102,6 +102,7 @@ const { articleId, authorId } = Astro.props;
   import type { AuthState } from "@/scripts/auth-state";
   import { showConfirmDialog, showNoticeDialog } from "@/scripts/dialogs";
   import { navigateToPage } from "@/utils/navigation-utils";
+  import { getCsrfToken } from "@/utils/csrf";
 
   function initArticleManageFloat(): void {
     const floatEl = document.querySelector<HTMLElement>(
@@ -203,7 +204,10 @@ const { articleId, authorId } = Astro.props;
             {
               method: "DELETE",
               credentials: "include",
-              headers: { Accept: "application/json" },
+              headers: {
+                Accept: "application/json",
+                "x-csrf-token": getCsrfToken(),
+              },
             },
           );
           const data = await response.json().catch(() => null);

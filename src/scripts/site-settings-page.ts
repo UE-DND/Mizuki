@@ -11,6 +11,7 @@
 
 import type { UploadPurpose } from "@/constants/upload-limits";
 import { UPLOAD_LIMITS, UPLOAD_LIMIT_LABELS } from "@/constants/upload-limits";
+import { getCsrfToken } from "@/utils/csrf";
 
 const DATA_BOUND = "data-ss-bound";
 
@@ -36,6 +37,7 @@ const api = async (url: string, init: RequestInit = {}): Promise<ApiResult> => {
 		credentials: "include",
 		headers: {
 			Accept: "application/json",
+			"x-csrf-token": getCsrfToken(),
 			...(init.body && !isFormData
 				? { "Content-Type": "application/json" }
 				: {}),

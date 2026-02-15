@@ -94,6 +94,10 @@ Astro.locals.sidebarProfile = profileToSidebarData(profile);
 <script define:vars={{ username }} is:inline>
   const ALBUM_TITLE_MAX = 20;
   const CJK_RE = /[\u2E80-\u9FFF\uF900-\uFAFF\uFE30-\uFE4F\uFF00-\uFFEF]/;
+  function getCsrfToken() {
+    const m = document.cookie.match(/(?:^|;\s*)dacapo_csrf=([^;]*)/);
+    return m ? decodeURIComponent(m[1]) : "";
+  }
   function wcLen(s) {
     let n = 0;
     for (const c of s) n += CJK_RE.test(c) ? 2 : 1;
@@ -157,7 +161,10 @@ Astro.locals.sidebarProfile = profileToSidebarData(profile);
     try {
       const res = await fetch("/api/v1/me/albums", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          "Content-Type": "application/json",
+          "x-csrf-token": getCsrfToken(),
+        },
         body: JSON.stringify({ title, status: "draft" }),
       });
       const data = await res.json();

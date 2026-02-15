@@ -1,5 +1,6 @@
 import { showConfirmDialog } from "@/scripts/dialogs";
 import { showOverlayDialog } from "@/scripts/overlay-dialog";
+import { getCsrfToken } from "@/utils/csrf";
 
 const normalizeApiUrl = (input: string): string => {
 	const [pathname, search = ""] = String(input || "").split("?");
@@ -14,6 +15,7 @@ const api = async (url: string, init: RequestInit = {}) => {
 		credentials: "include",
 		headers: {
 			Accept: "application/json",
+			"x-csrf-token": getCsrfToken(),
 			...(init.body ? { "Content-Type": "application/json" } : {}),
 			...((init.headers as Record<string, string>) || {}),
 		},

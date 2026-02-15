@@ -18,7 +18,11 @@ import {
 	REGISTRATION_REQUEST_COOKIE_NAME,
 } from "../../../server/auth/registration-request-cookie";
 import { readMany } from "../../../server/directus/client";
-import { checkLoginRateLimitDistributed } from "../../../server/security/login-rate-limit";
+import {
+	applyRateLimit,
+	rateLimitResponse,
+} from "../../../server/security/rate-limit";
+import { assertCsrfToken } from "../../../server/security/csrf";
 import { AppError } from "../../../server/api/errors";
 import type { JsonObject, JsonValue } from "../../../types/json";
 import { getJsonString, isJsonObject } from "../../../utils/json-utils";
@@ -105,10 +109,13 @@ export async function POST(context: APIContext): Promise<Response> {
 		return json({ ok: false, message: "非法来源请求" }, { status: 403 });
 	}
 
+	const csrfDenied = assertCsrfToken(context);
+	if (csrfDenied) return csrfDenied;
+
 	const ip = resolveTrustedClientIp(request.headers);
-	let rate: Awaited<ReturnType<typeof checkLoginRateLimitDistributed>>;
+	let rate: Awaited<ReturnType<typeof applyRateLimit>>;
 	try {
-		rate = await checkLoginRateLimitDistributed(ip);
+		rate = await applyRateLimit(ip, "auth");
 	} catch (error) {
 		if (
 			error instanceof AppError &&
@@ -123,20 +130,7 @@ export async function POST(context: APIContext): Promise<Response> {
 		return json({ ok: false, message: "限流检查失败" }, { status: 500 });
 	}
 	if (!rate.ok) {
-		const retryAfter = Math.max(
-			1,
-			Math.ceil((rate.resetAt - Date.now()) / 1000),
-		);
-		return json(
-			{ ok: false, message: "请求过于频繁，请稍后再试" },
-			{
-				status: 429,
-				headers: {
-					"Retry-After": String(retryAfter),
-					"X-RateLimit-Remaining": "0",
-				},
-			},
-		);
+		return rateLimitResponse(rate);
 	}
 
 	let body: JsonValue;
